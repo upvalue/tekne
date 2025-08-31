@@ -10,6 +10,7 @@ declare global {
   interface Window {
     dbHandle: PGlite
     db: Kysely<Database>
+    PGlite: typeof PGlite   
   }
 }
 
@@ -30,7 +31,8 @@ export const dbMemory = async () => {
   }
 
   // Ensure path is in idb:// format for PGlite
-  const formattedPath = `idb://${dbPath.split('/pglite')[1]}`;
+  const formattedPath = `idb://${dbPath}`;
+  console.log('Loading PGlite from', formattedPath)
   const handle = new PGlite(formattedPath)
 
   window.dbHandle = handle
@@ -40,6 +42,7 @@ export const dbMemory = async () => {
   })
 
   window.db = db
+  window.PGlite = PGlite
 
   await migrateToLatest(db)
 
