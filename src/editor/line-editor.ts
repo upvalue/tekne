@@ -45,8 +45,6 @@ export type LineWithIdx = {
   lineIdx: number
 }
 
-
-
 /**
  * Sets up a Codemirror editor
  *

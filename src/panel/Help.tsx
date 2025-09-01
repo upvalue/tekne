@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useMemo, useCallback } from 'react'
 import { Badge } from '@/components/vendor/Badge'
 import {
   DescriptionDetails,
@@ -66,28 +66,30 @@ const SyntaxHelp = () => {
 
 }
 
-export const Help = () => {
+export const Help = React.memo(() => {
   const [selectedPage, setSelectedPage] = useState<'syntax' | 'keybindings' | string>('syntax')
 
   // Build navigation items
-  const helpItems = [
-    { id: 'syntax', title: 'Editor Syntax', type: 'help' },
-    { id: 'keybindings', title: 'Keyboard Shortcuts', type: 'help' },
-    { id: 'version', title: 'Version', type: 'version' }
-  ]
+  const allItems = useMemo(() => {
+    const helpItems = [
+      { id: 'syntax', title: 'Editor Syntax', type: 'help' },
+      { id: 'keybindings', title: 'Keyboard Shortcuts', type: 'help' },
+      { id: 'version', title: 'Version', type: 'version' }
+    ]
 
-  const docItems = manifest.files.map(file => {
-    const filename = file.outputFile.split('/').pop()?.replace('.tsx', '') || ''
-    return {
-      id: filename,
-      title: file.metadata.title || filename,
-      type: 'doc'
-    }
-  })
+    const docItems = manifest.files.map(file => {
+      const filename = file.outputFile.split('/').pop()?.replace('.tsx', '') || ''
+      return {
+        id: filename,
+        title: file.metadata.title || filename,
+        type: 'doc'
+      }
+    })
 
-  const allItems = [...helpItems, ...docItems].sort((a, b) => a.title.localeCompare(b.title))
+    return [...helpItems, ...docItems].sort((a, b) => a.title.localeCompare(b.title))
+  }, [])
 
-  const renderContent = () => {
+  const renderContent = useCallback(() => {
     if (selectedPage === 'syntax') {
       return (
         <div className="p-4">
@@ -121,7 +123,7 @@ export const Help = () => {
     } catch (error) {
       return <div className="p-4 text-red-400">Error loading documentation</div>
     }
-  }
+  }, [selectedPage])
 
   return (
     <div className="flex flex-col h-full">
@@ -144,4 +146,4 @@ export const Help = () => {
       </div>
     </div>
   )
-}
+})

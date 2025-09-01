@@ -8,7 +8,7 @@ import { docAtom } from '@/editor/state'
 import { Button } from '@/components/vendor/Button'
 import { PgliteDevtools } from './PgliteDevtools'
 
-const RawDocument = () => {
+const RawDocument = ({ isActive }: { isActive: boolean }) => {
   const [doc, setDoc] = useAtom(docAtom)
   const [message, setMessage] = useState<string>('')
 
@@ -44,6 +44,10 @@ const RawDocument = () => {
     }
   }
 
+  if (!isActive) {
+    return <div className="p-4 text-gray-500">Document content will load when tab is active</div>
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex gap-2 items-center">
@@ -66,8 +70,13 @@ const RawDocument = () => {
   )
 }
 
-const TreeDocument = () => {
+const TreeDocument = ({ isActive }: { isActive: boolean }) => {
   const [doc] = useAtom(docAtom)
+  
+  if (!isActive) {
+    return <div className="p-4 text-gray-500">Tree document will load when tab is active</div>
+  }
+
   return (
     <div className="whitespace-pre-wrap font-mono">
       {JSON.stringify(analyzeDoc(doc), null, 2)}
@@ -79,10 +88,11 @@ const TreeDocument = () => {
 
 export const DevTools = () => {
   const usingPglite = !!window.dbHandle;
+  const [activeTab, setActiveTab] = useState("raw")
 
   const router = useRouter()
   return (
-    <Tabs>
+    <Tabs value={activeTab} onValueChange={setActiveTab}>
       <TabsList>
         <TabsTrigger value="raw">Document Content</TabsTrigger>
         <TabsTrigger value="tree">Tree Document</TabsTrigger>
@@ -92,10 +102,10 @@ export const DevTools = () => {
         <TabsTrigger value="tanstackdev">TanStack Devtools</TabsTrigger>
       </TabsList>
       <TabsContent value="raw">
-        <RawDocument />
+        <RawDocument isActive={activeTab === "raw"} />
       </TabsContent>
       <TabsContent value="tree">
-        <TreeDocument />
+        <TreeDocument isActive={activeTab === "tree"} />
       </TabsContent>
       {usingPglite &&
         <TabsContent value="pglite">
