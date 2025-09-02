@@ -261,7 +261,7 @@ export const PgliteDevtools = () => {
                     <div>
                         <h3 className="text-sm font-medium mb-1">Current Database</h3>
                         <code className="text-xs text-zinc-600 dark:text-zinc-400">
-                            {displayName(currentDbPath)}
+                            {currentDbPath}
                         </code>
                     </div>
                     <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>

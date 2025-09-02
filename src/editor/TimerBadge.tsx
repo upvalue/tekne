@@ -94,7 +94,7 @@ export const TimerBadge = ({
     if (notificationPermission === 'granted' && 'Notification' in window) {
       new Notification('Timer Complete', {
         body: message,
-        icon: '/favicon.ico'
+        icon: '/favicon/tekne32-emerald.png'
       })
     }
   }, [notificationPermission])
