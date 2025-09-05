@@ -8,7 +8,7 @@ ARG GIT_MESSAGE
 RUN npm install -g pnpm
 
 RUN apk update && \
-  apk add --force --no-cache bash curl postgresql 
+  apk add --force --no-cache bash curl postgresql deno
 
 ADD .npmrc package.json pnpm-lock.yaml ./
 

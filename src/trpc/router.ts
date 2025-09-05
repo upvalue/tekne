@@ -255,12 +255,15 @@ export const appRouter = router({
 
       // If running on server
       if(typeof process !== 'undefined') {
-        if(input.hook === 'timer-start' || input.hook === 'timer-stop') {
-          const {line} = argument;
-          if(fs.existsSync('hooks/timer-start')) {
-            child_process.execSync('hooks/timer-start', { input: JSON.stringify({
+        if(hook === 'timer-start' || hook === 'timer-stop') {
+          const {line, lineIdx, doc} = argument;
+
+          if(fs.existsSync(`hooks/${hook}`)) {
+            child_process.execSync(`hooks/${hook}`, { input: JSON.stringify({
               type: 'timer-event',
-              line
+              line,
+              lineIdx,
+              doc,
             })});
           }
         } 

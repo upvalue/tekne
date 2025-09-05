@@ -1,5 +1,5 @@
 export interface TimerHookEvent {
-  doc: string;
+  doc: any;
   line: string;
   type: 'timer-event';
 }

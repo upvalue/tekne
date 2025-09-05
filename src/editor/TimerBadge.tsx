@@ -10,7 +10,7 @@ import {
   DialogTitle,
 } from '@/components/vendor/Dialog'
 import type { LineWithIdx } from './line-editor'
-import { useDocLine, globalTimerAtom, notificationPermissionAtom } from './state'
+import { useDocLine, globalTimerAtom, notificationPermissionAtom, docAtom } from './state'
 import { Input } from '@/components/vendor/Input'
 import parseDuration from 'parse-duration'
 import { Button } from '@/components/vendor/Button'
@@ -72,6 +72,7 @@ export const TimerBadge = ({
 }) => {
 
   const execHook = trpc.execHook.useMutation();
+  const doc = useAtomValue(docAtom);
   const [, setLine] = useDocLine(lineInfo.lineIdx)
   const [globalTimer, setGlobalTimer] = useAtom(globalTimerAtom)
   const [notificationPermission, setNotificationPermission] = useAtom(notificationPermissionAtom)
@@ -149,7 +150,9 @@ export const TimerBadge = ({
 
     execHook.mutate({
       hook: 'timer-start', argument: {
+        doc,
         line: lineInfo.line.mdContent,
+        lineIdx: lineInfo.lineIdx,
       }
     })
   }, [lineContent, execHook, lineInfo.line.mdContent, setLine, globalTimer, setGlobalTimer, isAnyTimerActive, isThisTimerActive, lineInfo.lineIdx, sendNotification])
@@ -164,7 +167,9 @@ export const TimerBadge = ({
 
     execHook.mutate({
       hook: 'timer-stop', argument: {
+        doc,
         line: lineInfo.line.mdContent,
+        lineIdx: lineInfo.lineIdx,
       }
     })
 

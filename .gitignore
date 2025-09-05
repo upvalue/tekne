@@ -15,6 +15,5 @@ count.txt
 ./dev/data
 /.playwright-mcp
 
-# Ignore testing hooks
-/hooks/timer-start
-/hooks/timer-stop
+# Ignore hooks except for sample hooks
+/hooks/*

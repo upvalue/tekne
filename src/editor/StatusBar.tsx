@@ -39,6 +39,7 @@ export const StatusBar = () => {
     execHook.mutate({
       hook: 'timer-stop',
       argument: {
+        doc,
         line: globalTimer.lineContent || '',
       }
     })
