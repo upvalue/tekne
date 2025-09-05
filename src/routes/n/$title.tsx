@@ -14,7 +14,6 @@ import { Panel } from '@/panel/Panel'
 import { TitleBar } from '@/editor/TitleBar'
 import { StatusBar } from '@/editor/StatusBar'
 import { setMainTitle } from '@/lib/title'
-import { useInterval } from 'usehooks-ts';
 
 const DOC_SAVE_INTERVAL = 5000
 

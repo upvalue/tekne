@@ -21,6 +21,9 @@ const makeWikiLinkDecoration = (link: string) => {
   })
 }
 
+/**
+ * WikiLink plugin, handles decorating and clicking on [[WikiLinks]]
+ */
 export const wikiLinkPlugin = ViewPlugin.fromClass(
   class implements PluginValue {
     decorations = Decoration.none
