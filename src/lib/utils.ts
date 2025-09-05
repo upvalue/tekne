@@ -25,3 +25,7 @@ export const getDocTitle = () => {
   }
   return null
 }
+
+export const docRoute = (name: string) => {
+  return `/n/${encodeURIComponent(name)}`
+}

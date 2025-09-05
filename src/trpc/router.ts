@@ -6,9 +6,9 @@ import { sql, type Kysely } from 'kysely'
 import { documentNameSchema } from '@/lib/validation'
 import { makeTutorial } from '@/lib/tutorial'
 
-
 import fs from 'fs'
 import child_process from 'child_process'
+import type { DBNote } from '@/db/types'
 
 export const t = initTRPC.context<{ db: Kysely<Database> }>().create({
   allowOutsideOfServer: true,
@@ -25,10 +25,6 @@ export const proc = t.procedure
 const docMigrator = (doc: any): any => {
   doc.body.children = doc.body.children.map((child: any) => {
     const mod = { ...child }
-    if (!child.createdAt) {
-      mod.createdAt = new Date().toISOString()
-      mod.updatedAt = new Date().toISOString()
-    }
     if (!child.timeCreated) {
       mod.timeCreated = mod.createdAt
     }
@@ -69,6 +65,19 @@ const isDailyDocument = (name: string): boolean => {
   return /^\d{4}-\d{2}-\d{2}$/.test(name)
 }
 
+// TODO: Fix any 
+const createFromTemplate = (doc: ZDoc, tmpl: any): ZDoc => {
+  console.log({doc, tmpl});
+  return {
+    ...doc,
+    children: tmpl.body.children.map(c => ({
+      ...c,
+      timeCreated: new Date().toISOString(),
+      timeUpdated: new Date().toISOString(),
+    })),
+  }
+}
+
 const createNewDocument = async (db: Kysely<Database>, name: string): Promise<ZDoc> => {
   let newDoc: ZDoc = {
     type: 'doc',
@@ -87,7 +96,7 @@ const createNewDocument = async (db: Kysely<Database>, name: string): Promise<ZD
     
     if (dailyTemplate) {
       const templateDoc = docMigrator(dailyTemplate)
-      newDoc.children = templateDoc.body.children
+      newDoc = createFromTemplate(newDoc, templateDoc)
     } else {
       console.log('$Daily template not found, using default content')
     }

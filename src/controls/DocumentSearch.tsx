@@ -4,6 +4,7 @@ import { KBarProvider, useKBar, useRegisterActions, type Action } from 'kbar'
 import { trpc } from '@/trpc/client'
 import { useMemo, useEffect, useState } from 'react'
 import { KBarModal, KBarSearchInput, KBarResultRenderer } from './KBar'
+import { docRoute } from '@/lib/utils'
 
 const DocumentSearchContent = () => {
   const navigate = useNavigate()
@@ -42,7 +43,7 @@ const DocumentSearchContent = () => {
           name: doc.title,
           // TODO: Get a descriptive subtitle
           subtitle: 'Open document',
-          perform: () => navigate({ to: `/n/${doc.id}` }),
+          perform: () => navigate({ to: docRoute(doc.id) }),
           keywords: doc.title.toLowerCase(),
         }
       })
@@ -54,7 +55,7 @@ const DocumentSearchContent = () => {
         name: `Create document titled ${query}`,
         subtitle: 'Create a new document',
         perform: () => {
-          navigate({ to: `/n/${encodeURIComponent(query)}` })
+          navigate({ to: docRoute(query) })
         },
         keywords: `create ${query}`,
       })
