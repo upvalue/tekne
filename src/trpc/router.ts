@@ -25,10 +25,10 @@ export const proc = t.procedure
 const docMigrator = (doc: any): any => {
   doc.body.children = doc.body.children.map((child: any) => {
     const mod = { ...child }
-    if (!child.timeCreated) {
+    if (!child.timeCreated && child.createdAt) {
       mod.timeCreated = mod.createdAt
     }
-    if (!child.timeUpdated) {
+    if (!child.timeUpdated && child.updatedAt) {
       mod.timeUpdated = mod.updatedAt
     }
     if (child.datumTaskStatus) {
