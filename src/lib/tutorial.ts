@@ -45,6 +45,7 @@ export const makeTutorial = () => {
     lineMake(1, 'This line is a timer', {
       datumTime: 0,
     }),
+    lineMake(1, 'Try clicking on them to see what they do'),
     lineMake(0, 'For more help, see the help section of the side panel'),
   ]
 }

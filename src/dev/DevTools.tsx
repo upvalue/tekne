@@ -8,7 +8,8 @@ import {
 } from '@/components/vendor/Tabs'
 import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
 import { useAtom } from 'jotai'
-import { analyzeDoc, zdoc } from '@/editor/schema'
+import { zdoc } from '@/editor/schema'
+import { treeifyDoc } from '@/editor/doc-analysis'
 import { docAtom } from '@/editor/state'
 import { Button } from '@/components/vendor/Button'
 import { PgliteDevtools } from './PgliteDevtools'
@@ -92,7 +93,7 @@ const TreeDocument = ({ isActive }: { isActive: boolean }) => {
 
   return (
     <div className="whitespace-pre-wrap font-mono">
-      {JSON.stringify(analyzeDoc(doc), null, 2)}
+      {JSON.stringify(treeifyDoc(doc), null, 2)}
     </div>
   )
 }

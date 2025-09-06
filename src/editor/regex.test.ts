@@ -1,5 +1,5 @@
 import { describe, test, expect } from 'vitest'
-import { InternalLinkRegex, TagRegex } from './syntax-plugin'
+import { InternalLinkRegex, TagRegex } from './regex'
 
 describe('InternalLinkRegex', () => {
   test('matches simple internal link', () => {

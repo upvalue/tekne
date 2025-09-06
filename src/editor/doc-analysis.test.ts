@@ -1,11 +1,12 @@
 import { describe, test, expect } from 'vitest'
-import { analyzeDoc, lineMake, docMake, type ZDoc } from './schema'
+import { treeifyDoc } from './doc-analysis'
+import { lineMake, docMake, type ZDoc } from './schema'
 
-describe('analyzeDoc', () => {
+describe('treeifyDoc', () => {
   test('should handle empty document', () => {
     const doc: ZDoc = docMake([])
 
-    const result = analyzeDoc(doc)
+    const result = treeifyDoc(doc)
 
     expect(result).toEqual({
       type: 'doc',
@@ -21,7 +22,7 @@ describe('analyzeDoc', () => {
       { ...lineMake(0, 'Third line') },
     ])
 
-    const result = analyzeDoc(doc)
+    const result = treeifyDoc(doc)
 
     expect(result.children).toHaveLength(3)
     expect(result.children[0]).toEqual({
@@ -52,7 +53,7 @@ describe('analyzeDoc', () => {
       { ...lineMake(0, 'Parent 2') },
     ])
 
-    const result = analyzeDoc(doc)
+    const result = treeifyDoc(doc)
 
     expect(result.children).toHaveLength(2)
 
@@ -76,7 +77,7 @@ describe('analyzeDoc', () => {
       { ...lineMake(1, 'Back to Level 1') },
     ])
 
-    const result = analyzeDoc(doc)
+    const result = treeifyDoc(doc)
 
     expect(result.children).toHaveLength(1)
 
@@ -113,7 +114,7 @@ describe('analyzeDoc', () => {
       { ...lineMake(2, 'Grandchild 2.2.2') },
     ])
 
-    const result = analyzeDoc(doc)
+    const result = treeifyDoc(doc)
 
     expect(result.children).toHaveLength(2)
 
@@ -141,7 +142,7 @@ describe('analyzeDoc', () => {
     const line = lineMake(0, 'Only line')
     const doc: ZDoc = docMake([line])
 
-    const result = analyzeDoc(doc)
+    const result = treeifyDoc(doc)
 
     expect(result.children).toHaveLength(1)
     expect(result.children[0]).toEqual({
@@ -164,7 +165,7 @@ describe('analyzeDoc', () => {
       },
     ])
 
-    const result = analyzeDoc(doc)
+    const result = treeifyDoc(doc)
 
     expect(result.children).toHaveLength(1)
     expect(result.children[0].datumTaskStatus).toBe('incomplete')
@@ -179,7 +180,7 @@ describe('analyzeDoc', () => {
       { ...lineMake(1, 'Level 1') },
     ])
 
-    const result = analyzeDoc(doc)
+    const result = treeifyDoc(doc)
 
     expect(result.children).toHaveLength(1)
 
@@ -198,7 +199,7 @@ describe('analyzeDoc', () => {
       { ...lineMake(1, 'Line 2') },
     ])
 
-    const result = analyzeDoc(doc)
+    const result = treeifyDoc(doc)
 
     // Check that all lines have empty tags and children arrays
     expect(result.children[0].tags).toEqual([])

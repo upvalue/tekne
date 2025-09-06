@@ -14,10 +14,10 @@ import {
 } from '@lezer/markdown'
 import { tags as t } from '@lezer/highlight'
 import { emitCodemirrorEvent } from './cm-events'
+import { InternalLinkRegex, TagRegex } from '../regex'
 
 const LBRACKET_CHAR_CODE = 91
 
-export const InternalLinkRegex = new RegExp('[a-zA-Z0-9]+\]\]')
 
 const InternalLinkConfig: MarkdownConfig = {
   defineNodes: [
@@ -67,7 +67,6 @@ const InternalLinkConfig: MarkdownConfig = {
 
 const POUND_CHAR_CODE = 35
 
-export const TagRegex = new RegExp('^[a-zA-Z][a-zA-Z0-9-]*(?=\\s|$)')
 
 const TagConfig: MarkdownConfig = {
   defineNodes: [

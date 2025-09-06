@@ -10,17 +10,34 @@ import {
 import {
   WrenchScrewdriverIcon,
   QuestionMarkCircleIcon,
+  CircleStackIcon,
 } from '@heroicons/react/24/solid'
 import { useState } from 'react'
 
 export function Panel() {
-  const [activeTab, setActiveTab] = useState('devtools')
+  const [activeTab, setActiveTab] = useState('aggregate')
 
   return (
     <div className="flex flex-col h-[100vh]">
       <div className="flex items-center border-b border-zinc-800 px-2 py-1 flex-shrink-0">
         <Navbar className="bg-transparent p-0 h-auto gap-1">
           <NavbarSection>
+            <NavbarItem
+              current={activeTab === 'aggregate'}
+              onClick={() => setActiveTab('aggregate')}
+            >
+              <CircleStackIcon className="w-4 h-4" data-slot="icon" />
+              <NavbarLabel>Aggregate</NavbarLabel>
+            </NavbarItem>
+
+            <NavbarItem
+              current={activeTab === 'help'}
+              onClick={() => setActiveTab('help')}
+            >
+              <QuestionMarkCircleIcon className="w-4 h-4" data-slot="icon" />
+              <NavbarLabel>Help</NavbarLabel>
+            </NavbarItem>
+
             <NavbarItem
               current={activeTab === 'devtools'}
               onClick={() => setActiveTab('devtools')}
@@ -37,13 +54,6 @@ export function Panel() {
               <NavbarLabel>Search</NavbarLabel>
             </NavbarItem>
             */}
-            <NavbarItem
-              current={activeTab === 'help'}
-              onClick={() => setActiveTab('help')}
-            >
-              <QuestionMarkCircleIcon className="w-4 h-4" data-slot="icon" />
-              <NavbarLabel>Help</NavbarLabel>
-            </NavbarItem>
           </NavbarSection>
         </Navbar>
       </div>

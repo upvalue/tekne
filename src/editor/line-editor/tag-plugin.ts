@@ -6,7 +6,7 @@ import {
   type PluginValue,
 } from '@codemirror/view'
 import { RangeSetBuilder } from '@codemirror/state'
-import { tagPattern } from '../schema'
+import { tagPattern } from '../doc-analysis'
 
 const makeTagDecoration = (tag: string) => {
   return Decoration.mark({
