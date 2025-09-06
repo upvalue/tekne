@@ -60,6 +60,13 @@
   outline: none;
 }
 
+  .cm-hidden {
+    display: none;
+  }
+.cm-hidden:after {
+  content:"wut";
+}
+
 
 .editor-line-blue {
   background-color: color-mix(

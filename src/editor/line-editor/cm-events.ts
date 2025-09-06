@@ -1,4 +1,4 @@
-import { TypedEventEmitter, useEventListener } from '@/lib/events'
+import { TypedEventEmitter, useCustomEventListener } from '@/lib/events'
 import type { LineColor } from '../schema'
 
 export type TagClickEventDetail = {
@@ -50,7 +50,7 @@ export const useCodemirrorEvent = <K extends keyof CodemirrorEvents>(
     ? () => void
     : (data: CodemirrorEvents[K]) => void
 ) => {
-  useEventListener(codemirrorEmitter, event, handler)
+  useCustomEventListener(codemirrorEmitter, event, handler)
 }
 
 export const emitCodemirrorEvent = <K extends keyof CodemirrorEvents>(

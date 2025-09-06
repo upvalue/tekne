@@ -7,13 +7,15 @@ import { truncate } from 'lodash-es'
 import { Provider } from 'jotai'
 import { trpc } from '@/trpc'
 import { createFileRoute, useBlocker, useNavigate } from '@tanstack/react-router'
-import { use, useCallback, useEffect, useMemo, useRef } from 'react'
+import { useCallback, useEffect, useMemo, useRef } from 'react'
 import { useCodemirrorEvent } from '@/editor/line-editor'
 import { EditorLayout } from '@/layout/EditorLayout'
 import { Panel } from '@/panel/Panel'
 import { TitleBar } from '@/editor/TitleBar'
 import { StatusBar } from '@/editor/StatusBar'
 import { setMainTitle } from '@/lib/title'
+import { useEventListener } from '@/hooks/useEventListener'
+import { useInterval } from 'usehooks-ts'
 
 const DOC_SAVE_INTERVAL = 5000
 
@@ -32,6 +34,9 @@ function RouteComponent() {
   })
 
   const docLastSaved = useRef<Date>(new Date());
+  const docDirty = useRef<boolean>(false);
+  const userNavigatingAway = useRef<boolean>(false);
+  // TODO: this whole thing needs a bit of cleanup
 
   useEffect(() => {
     setMainTitle(title)
@@ -54,7 +59,14 @@ function RouteComponent() {
 
   const loadDocQuery = trpc.loadDoc.useQuery({ name: title })
 
-  // This is going to be a little overzealous in saving the doc
+  // Document saving functionality
+  // On an interval, if the document has changed this will send an updateDoc mutation
+
+  // It tries not to do anything if (1) less than 5 seconds have elapsed since last updateDoc
+  // or (2) doc has not changed
+
+  // It also uses beforeunload to try to prevent user from navigating away if 
+
   const saveDocument = useCallback(() => {
     if (loadDocQuery.isLoading) {
       return
@@ -67,29 +79,63 @@ function RouteComponent() {
     updateDocMutation.mutate({
       name: title,
       doc: store.get(docAtom),
+    }, {
+      onSuccess: () => {
+        docDirty.current = false;
+        docLastSaved.current = new Date();
+
+        if (userNavigatingAway.current) {
+          toast.info('Your changes have been saved, you can navigate away now');
+          userNavigatingAway.current = false;
+        }
+      }
     })
   }, [title, store, updateDocMutation, loadDocQuery.isLoading])
 
   // Try to save document if user navigates away while a change is present
+  // We don't use "enableBeforeUnload" right now because it always registers
+  // a beforeunload handler, which is a little overzealous in prompting;
+  // this could probably be used better
+
+  // Probably 
   useBlocker({
     shouldBlockFn: () => {
+      console.log('tanstack blocker triggered save');
       saveDocument();
       return false;
-    }
+    },
+    enableBeforeUnload: false,
   })
+
+  useEventListener('beforeunload', (event: BeforeUnloadEvent) => {
+    userNavigatingAway.current = true;
+    if (docDirty.current) {
+      saveDocument();
+      event.preventDefault();
+      event.returnValue = 'You have unsaved changes. Are you sure you want to leave?';
+    }
+    return false;
+  })
+
+  useInterval(() => {
+    if (!docDirty.current) {
+      return;
+    }
+    if (new Date().getTime() - docLastSaved.current.getTime() < DOC_SAVE_INTERVAL) {
+      return;
+    }
+    saveDocument();
+  }, 1000)
 
   useEffect(() => {
     if (loadDocQuery.isLoading) {
       return
     }
     const unsub = store.sub(docAtom, () => {
-      // Check for whether change interval has elapsed, then leave
-      if (new Date().getTime() - docLastSaved.current.getTime() < DOC_SAVE_INTERVAL) {
-        console.log('has been less than five seconds since last save');
-        return;
-      }
-      docLastSaved.current = new Date();
-      saveDocument();
+      // Document changed, mark dirty
+      docDirty.current = true;
+      // Don't try to save if less than five seconds have elapsed
+      // saveDocument();
     })
 
     return () => {

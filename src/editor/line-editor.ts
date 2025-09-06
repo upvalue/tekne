@@ -4,7 +4,7 @@ import { useEffect, useRef } from 'react'
 
 import { EditorView, keymap} from '@codemirror/view'
 import { emacsStyleKeymap } from '@codemirror/commands'
-import { EditorSelection, EditorState, Transaction, type Extension } from '@codemirror/state'
+import { Annotation, EditorSelection, EditorState, Transaction, type Extension } from '@codemirror/state'
 import { type ZLine, type LineColor } from './schema'
 import { useAtom, useSetAtom, useStore } from 'jotai'
 import { docAtom, focusedLineAtom, requestFocusLineAtom } from './state'
@@ -44,6 +44,8 @@ export type LineWithIdx = {
   line: ZLine
   lineIdx: number
 }
+
+const isActive = Annotation.define<boolean>();
 
 /**
  * Sets up a Codemirror editor
@@ -94,6 +96,9 @@ export const useCodeMirror = (lineInfo: LineWithIdx) => {
       if (!update.focusChanged) return
       if (update.view.hasFocus) {
         setFocusedLine(lineInfo.lineIdx)
+        // state.update({annotations: isActive.of(true) });
+      } else {
+        // state.update({annotations: isActive.of(false)}); 
       }
     })
 
@@ -106,7 +111,10 @@ export const useCodeMirror = (lineInfo: LineWithIdx) => {
       return 'The world is your canvas';
     }, (view) => {
       // If line is collapsed, we show a placeholder indicating collapsed line details
-      if(store.get(docAtom).children[lineInfo.lineIdx].collapsed) return true;
+      const doc = store.get(docAtom)
+
+      if(!doc || !doc.children || !doc.children[lineInfo.lineIdx]) return false;
+      if(doc.children[lineInfo.lineIdx].collapsed) return true;
 
       // Don't show placeholder if:
       // There's any content on the line
@@ -116,7 +124,7 @@ export const useCodeMirror = (lineInfo: LineWithIdx) => {
       if(lineInfo.lineIdx !== 0) return false;
 
       // There's more than one line in the doc
-      if(store.get(docAtom).children.length > 1) return false;
+      if(doc.children.length > 1) return false;
 
       // Otherwise, do show the placeholder
       return true;

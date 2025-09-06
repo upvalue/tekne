@@ -20,13 +20,7 @@ import { useCallback, useRef } from 'react'
 import { useAtom, useAtomValue, useSetAtom } from 'jotai'
 import { setDetailTitle } from '@/lib/title'
 import { trpc } from '@/trpc/client'
-
-const useEventListener = (event: string, handler: (event: Event) => void) => {
-  React.useEffect(() => {
-    window.addEventListener(event, handler)
-    return () => window.removeEventListener(event, handler)
-  }, [event, handler])
-}
+import { useEventListener } from '@/hooks/useEventListener'
 
 const renderTime = (seconds: number) => {
   if (seconds === 0) return '0s'

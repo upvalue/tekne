@@ -148,8 +148,8 @@ export function useEventEmitter<
   return emitterRef.current
 }
 
-// Hook: useEventListener
-export function useEventListener<
+// Hook: useCustomEventListener
+export function useCustomEventListener<
   TEvents extends Record<string, any>,
   K extends keyof TEvents,
 >(
