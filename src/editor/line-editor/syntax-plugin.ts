@@ -265,8 +265,6 @@ class SyntaxPlugin implements PluginValue {
         }
 
         if (node.type.name === 'Link') {
-          const urlNode = node.getChild('URL')
-          const url = src.slice(urlNode.from, urlNode.to)
           if (hasFocus) {
             builder.add(
               node.from,
@@ -277,13 +275,17 @@ class SyntaxPlugin implements PluginValue {
               })
             )
           } else {
-            builder.add(
-              node.from,
-              node.to,
-              Decoration.widget({
-                widget: new LinkWidget(url, url),
-              })
-            )
+            const urlNode = node.getChild('URL')
+            if (urlNode) {
+              const url = src.slice(urlNode.from, urlNode.to)
+              builder.add(
+                node.from,
+                node.to,
+                Decoration.widget({
+                  widget: new LinkWidget(url, url),
+                })
+              )
+            }
           }
         }
 
@@ -336,9 +338,6 @@ class SyntaxPlugin implements PluginValue {
   }
 }
 
-/**
- * WikiLink plugin, handles decorating and clicking on [[WikiLinks]]
- */
 export const syntaxPlugin = ViewPlugin.fromClass(SyntaxPlugin, {
   decorations: (value) => value.decorations,
 })

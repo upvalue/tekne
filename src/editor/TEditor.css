@@ -28,15 +28,22 @@
 .ELine-focused {
   background-color: color-mix(
     in srgb,
-    var(--color-emerald-500) 10%,
+    var(--color-sky-400) 15%,
     transparent
   );
 }
 
+.ELine-header {
+  @apply text-2xl;
+  @apply mt-2;
+  @apply mb-2;
+}
+
+
 .StatusBar {
   background-color: color-mix(
     in srgb,
-    var(--color-emerald-200) 10%,
+    var(--color-sky-300) 10%,
     transparent
   );
 }
@@ -65,7 +72,7 @@
 .cm-tag,
 .cm-internal-link,
 .cm-link {
-  @apply text-emerald-500;
+  @apply text-sky-500;
   @apply cursor-pointer;
 }
 

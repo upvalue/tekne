@@ -38,6 +38,9 @@ export const ELine = (lineInfo: ELineProps) => {
     return `editor-line-${color}`
   }
 
+  // Disabled for now, experiment
+  const lineIsHeader = false; // line.indent === 0 && line.mdContent.startsWith('# ');
+
   return (
     <div
       className={cn(
@@ -50,20 +53,24 @@ export const ELine = (lineInfo: ELineProps) => {
       <div className="ELine-gutter text-zinc-600 text-sm flex-shrink-0 justify-end flex font-mono">
         {timestamp || ''}
       </div>
-      <div
-        style={{
-          flex: 'none',
-          width: `${line.indent * INDENT_WIDTH_PIXELS}px`,
-        }}
-      />
-      <div className="flex items-center">
-        &nbsp;
-        {collapseState === 'collapse-start' ? (
-          <CircleDot width={8} height={8} />
-        ) : (
-          <Circle width={8} height={8} />
-        )}
-      </div>
+      {!lineIsHeader &&
+        <>
+          <div
+            style={{
+              flex: 'none',
+              width: `${line.indent * INDENT_WIDTH_PIXELS}px`,
+            }}
+          />
+          <div className="flex items-center">
+            &nbsp;
+            {collapseState === 'collapse-start' ? (
+              <CircleDot width={8} height={8} />
+            ) : (
+              <Circle width={8} height={8} />
+            )}
+          </div>
+        </>
+      }
       {line.datumTime !== undefined && (
         <TimerBadge lineInfo={lineInfo} time={line.datumTime} />
       )}
@@ -82,8 +89,9 @@ export const ELine = (lineInfo: ELineProps) => {
           }}
         />
       )}
+
       <div
-        className="cm-editor-container w-full ml-2"
+        className={cn("cm-editor-container w-full ml-2", lineIsHeader && "ELine-header")}
         ref={cmRef}
         data-line-idx={lineInfo.lineIdx}
       />

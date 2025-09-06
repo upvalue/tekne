@@ -19,7 +19,7 @@ export function Version() {
           <div className="bg-zinc-800 rounded p-3 font-mono text-sm">
             <div className="mb-2">
               <span className="text-zinc-400">Hash:</span>{' '}
-              <span className="text-emerald-400">{fullHash}</span>
+              <span className="text-zinc-400">{fullHash}</span>
             </div>
             <div>
               <span className="text-zinc-400">Message:</span>{' '}

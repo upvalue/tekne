@@ -14,14 +14,14 @@ export const ExternalLink = ({
     <div className="inline">
       <div
         className={cn(
-          'text-emerald-400 inline-flex items-center gap-1',
+          'text-sky-400 inline-flex items-center gap-1',
           className
         )}
       >
         <a href={href} target="_blank" rel="noopener noreferrer">
           {children}
         </a>
-        <LinkIcon className="w-4 h-4 text-emerald-400" />
+        <LinkIcon className="w-4 h-4 text-sky-400" />
       </div>
     </div>
   )

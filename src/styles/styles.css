@@ -41,5 +41,5 @@ body {
 }
 
 .link-styles a {
-  @apply text-emerald-400;
+  @apply text-sky-400;
 }

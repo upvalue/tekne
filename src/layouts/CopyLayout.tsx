@@ -61,14 +61,14 @@ export default function CopyLayout({
             {primaryAction.onClick ? (
               <button
                 onClick={primaryAction.onClick}
-                className="rounded-md cursor-pointer bg-emerald-400 px-3.5 py-2.5 text-sm font-semibold text-white shadow-xs hover:bg-emerald-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600 dark:bg-emerald-500 dark:hover:bg-emerald-400 dark:focus-visible:outline-emerald-500"
+                className="rounded-md cursor-pointer bg-sky-400 px-3.5 py-2.5 text-sm font-semibold text-white shadow-xs hover:bg-sky-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-600 dark:bg-sky-500 dark:hover:bg-sky-400 dark:focus-visible:outline-sky-500"
               >
                 {primaryAction.text}
               </button>
             ) : (
               <a
                 href={primaryAction.href}
-                className="rounded-md cursor-pointer bg-emerald-400 px-3.5 py-2.5 text-sm font-semibold text-white shadow-xs hover:bg-emerald-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600 dark:bg-emerald-500 dark:hover:bg-emerald-400 dark:focus-visible:outline-emerald-500"
+                className="rounded-md cursor-pointer bg-sky-400 px-3.5 py-2.5 text-sm font-semibold text-white shadow-xs hover:bg-sky-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-600 dark:bg-sky-500 dark:hover:bg-sky-400 dark:focus-visible:outline-sky-500"
               >
                 {primaryAction.text}
               </a>
