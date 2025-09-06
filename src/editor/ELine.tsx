@@ -14,6 +14,34 @@ type ELineProps = LineWithIdx & {
 
 const INDENT_WIDTH_PIXELS = 24
 
+const cycleCheckboxStatus = (status: 'complete' | 'incomplete' | 'unset') => {
+  switch (status) {
+    case 'complete':
+      return 'incomplete'
+    case 'incomplete':
+      return 'unset'
+    case 'unset':
+      return 'complete'
+  }
+}
+
+const checkboxStatus = (status: 'complete' | 'incomplete' | 'unset') => {
+  switch (status) {
+    case 'complete': return {
+      checked: true,
+      indeterminate: false,
+    }
+    case 'incomplete': return {
+      checked: true,
+      indeterminate: true,
+    }
+    case 'unset': return {
+      checked: false,
+      indeterminate: false,
+    }
+  }
+}
+
 /**
  * The individual line editor React component. Note that the bulk of
  * the logic is contained in the line-editor.ts file which handles
@@ -76,13 +104,11 @@ export const ELine = (lineInfo: ELineProps) => {
         <Checkbox
           className="ml-2"
           tabIndex={-1}
-          checked={line.datumTaskStatus === 'complete'}
+          {...checkboxStatus(line.datumTaskStatus)}
           onChange={(e) => {
             // TOOD: This pattern repeats itself and could be turned into a hook
             setDoc((draft) => {
-              draft.children[lineInfo.lineIdx].datumTaskStatus = e
-                ? 'complete'
-                : 'incomplete'
+              draft.children[lineInfo.lineIdx].datumTaskStatus = cycleCheckboxStatus(draft.children[lineInfo.lineIdx].datumTaskStatus)
             })
           }}
         />

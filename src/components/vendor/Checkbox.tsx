@@ -148,7 +148,7 @@ export function Checkbox({
           {/* Indeterminate icon */}
           <path
             className="opacity-0 group-data-indeterminate:opacity-100"
-            d="M3 7H11"
+            d="M4 4L10 10M10 4L4 10"
             strokeWidth={2}
             strokeLinecap="round"
             strokeLinejoin="round"
