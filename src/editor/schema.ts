@@ -100,12 +100,17 @@ const analyzeDoc = (doc: ZDoc): ZDocTree => {
   return root
 }
 
-const lineMake = (indent: number, mdContent: string = ''): ZLine => ({
+const lineMake = (
+  indent: number,
+  mdContent: string = '',
+  rest?: Partial<ZLine>
+): ZLine => ({
   type: 'line',
   mdContent,
   indent,
   timeCreated: new Date().toISOString(),
   timeUpdated: new Date().toISOString(),
+  ...(rest ? rest : {}),
 })
 
 const CURRENT_SCHEMA_VERSION = 1

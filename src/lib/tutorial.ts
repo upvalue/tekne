@@ -30,6 +30,21 @@ export const makeTutorial = () => {
       1,
       'As well as [links](https://example.com) (click this line to see the syntax)'
     ),
+    lineMake(
+      0,
+      'You can link to [[NewDocuments]] within Tekne, and click to navigate to them'
+    ),
+    lineMake(
+      1,
+      'Try clicking NewDocument and then navigating back with the browser'
+    ),
+    lineMake(0, 'You can attach data like timers and tasks to lines'),
+    lineMake(1, 'This line is a task', {
+      datumTaskStatus: 'incomplete',
+    }),
+    lineMake(1, 'This line is a timer', {
+      datumTime: 0,
+    }),
     lineMake(0, 'For more help, see the help section of the side panel'),
   ]
 }
