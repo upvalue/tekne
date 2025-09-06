@@ -1,10 +1,11 @@
-import z from 'zod'
+import z, { ZodError } from 'zod'
 import { lineMake, zdoc, type ZDoc } from '@/editor/schema'
 import { initTRPC } from '@trpc/server'
 import type { Database } from '@/db'
 import { sql, type Kysely } from 'kysely'
 import { documentNameSchema } from '@/lib/validation'
 import { makeTutorial } from '@/lib/tutorial'
+import { docMigrator, migrateDocWithReport, validateDocumentWithMigrationCheck } from '@/editor/doc-migrator'
 
 import fs from 'fs'
 import child_process from 'child_process'
@@ -17,34 +18,6 @@ export const t = initTRPC.context<{ db: Kysely<Database> }>().create({
 export const router = t.router
 export const proc = t.procedure
 
-/**
- * While developing, it's sometimes useful to just change
- * the schema of data on the fly while not making a big deal
- * out of it with the database
- */
-const docMigrator = (doc: any): any => {
-  doc.body.children = doc.body.children.map((child: any) => {
-    const mod = { ...child }
-    if (!child.timeCreated && child.createdAt) {
-      mod.timeCreated = mod.createdAt
-    }
-    if (!child.timeUpdated && child.updatedAt) {
-      mod.timeUpdated = mod.updatedAt
-    }
-    if (child.datumTaskStatus) {
-      mod.datumTaskStatus = child.datumTaskStatus
-    }
-    return mod
-  })
-  return {
-    ...doc,
-    body: {
-      ...doc.body,
-      schemaVersion: 1,
-    },
-  }
-}
-
 const upsertNote = (db: Kysely<Database>, name: string, body: ZDoc) => {
   const r = db
     .insertInto('notes')
@@ -56,6 +29,8 @@ const upsertNote = (db: Kysely<Database>, name: string, body: ZDoc) => {
     })
     .onConflict((oc) => oc.column('title').doUpdateSet({ body }))
     .execute()
+
+  // Analyze doc to
 
   console.log('upsertNote', r)
   return r
@@ -70,7 +45,7 @@ const createFromTemplate = (doc: ZDoc, tmpl: any): ZDoc => {
   console.log({ doc, tmpl })
   return {
     ...doc,
-    children: tmpl.body.children.map((c) => ({
+    children: tmpl.body.children.map((c: any) => ({
       ...c,
       timeCreated: new Date().toISOString(),
       timeUpdated: new Date().toISOString(),
@@ -116,6 +91,71 @@ export const appRouter = router({
       .execute()
 
     return q
+  }),
+
+  validateAllDocs: proc.query(async ({ ctx: { db } }) => {
+    const allDocs = await db.selectFrom('notes').selectAll().execute()
+
+    const results = allDocs.map((doc) => {
+      return validateDocumentWithMigrationCheck(doc)
+    })
+
+    const validDocs = results.filter((r) => r.valid)
+    const invalidDocs = results.filter((r) => !r.valid)
+    const fixableDocs = invalidDocs.filter((r) => r.canBeFxedByMigration)
+    const unfixableDocs = invalidDocs.filter((r) => !r.canBeFxedByMigration)
+
+    const summary = {
+      totalDocs: results.length,
+      validDocs: validDocs.length,
+      invalidDocs: invalidDocs.length,
+      fixableByMigration: fixableDocs.length,
+      unfixable: unfixableDocs.length,
+    }
+
+    return {
+      summary,
+      results: invalidDocs, // Return all invalid docs with migration info
+    }
+  }),
+
+  migrateAllDocs: proc.mutation(async ({ ctx: { db } }) => {
+    const allDocs = await db.selectFrom('notes').selectAll().execute()
+
+    const migrationReports = []
+    let migratedCount = 0
+
+    // Process each document
+    for (const doc of allDocs) {
+      const { migratedDoc, report } = migrateDocWithReport(doc)
+
+      migrationReports.push(report)
+
+      if (report.migrated) {
+        // Update the document in the database
+        await db
+          .updateTable('notes')
+          .set({
+            body: migratedDoc.body,
+            updatedAt: new Date(),
+          })
+          .where('title', '=', doc.title)
+          .execute()
+
+        migratedCount++
+      }
+    }
+
+    const summary = {
+      totalDocs: allDocs.length,
+      migratedDocs: migratedCount,
+      unchangedDocs: allDocs.length - migratedCount,
+    }
+
+    return {
+      summary,
+      reports: migrationReports.filter((r) => r.migrated), // Only return docs that were actually migrated
+    }
   }),
 
   ping: proc.query(() => {

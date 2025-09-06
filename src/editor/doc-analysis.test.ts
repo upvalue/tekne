@@ -207,4 +207,85 @@ describe('treeifyDoc', () => {
     expect(result.children[0].children[0].tags).toEqual([])
     expect(result.children[0].children[0].children).toEqual([])
   })
+
+  test('should extract tags from mdContent', () => {
+    const doc: ZDoc = docMake([
+      { ...lineMake(0, 'Parent with #tag1') },
+      { ...lineMake(0, 'Another line with #tag2 and #tag3') },
+    ])
+
+    const result = treeifyDoc(doc)
+
+    expect(result.children[0].tags).toEqual(['#tag1'])
+    expect(result.children[1].tags).toEqual(['#tag2', '#tag3'])
+  })
+
+  test('should propagate tags from parent to direct children only', () => {
+    const doc: ZDoc = docMake([
+      { ...lineMake(0, 'Parent with #tag1') },
+      { ...lineMake(1, 'Child of parent') },
+      { ...lineMake(2, 'Grandchild #tag2') },
+      { ...lineMake(0, 'Another parent #tag3') },
+      { ...lineMake(1, 'Child of second parent') },
+    ])
+
+    const result = treeifyDoc(doc)
+
+    // Parent node should have its own tag
+    expect(result.children[0].tags).toEqual(['#tag1'])
+    
+    // Direct child should inherit parent's tags
+    expect(result.children[0].children[0].tags).toEqual(['#tag1'])
+    
+    // Grandchild should inherit parent's tags plus its own
+    expect(result.children[0].children[0].children[0].tags).toEqual(['#tag2', '#tag1'])
+    
+    // Second parent should have its own tag
+    expect(result.children[1].tags).toEqual(['#tag3'])
+    
+    // Child of second parent should inherit second parent's tags
+    expect(result.children[1].children[0].tags).toEqual(['#tag3'])
+  })
+
+  test('should not propagate tags to siblings', () => {
+    const doc: ZDoc = docMake([
+      { ...lineMake(0, 'First sibling #tag1') },
+      { ...lineMake(0, 'Second sibling') },
+      { ...lineMake(1, 'Child of second sibling') },
+    ])
+
+    const result = treeifyDoc(doc)
+
+    expect(result.children[0].tags).toEqual(['#tag1'])
+    expect(result.children[1].tags).toEqual([])
+    expect(result.children[1].children[0].tags).toEqual([])
+  })
+
+  test('should handle multiple tags on same node with propagation', () => {
+    const doc: ZDoc = docMake([
+      { ...lineMake(0, 'Parent with #tag1 and #tag2') },
+      { ...lineMake(1, 'Child with #tag3') },
+    ])
+
+    const result = treeifyDoc(doc)
+
+    expect(result.children[0].tags).toEqual(['#tag1', '#tag2'])
+    expect(result.children[0].children[0].tags).toEqual(['#tag3', '#tag1', '#tag2'])
+  })
+
+  test('should handle nodes with no tags in propagation', () => {
+    const doc: ZDoc = docMake([
+      { ...lineMake(0, 'Parent with no tags') },
+      { ...lineMake(1, 'Child with no tags') },
+      { ...lineMake(0, 'Another parent #tag1') },
+      { ...lineMake(1, 'Child should inherit') },
+    ])
+
+    const result = treeifyDoc(doc)
+
+    expect(result.children[0].tags).toEqual([])
+    expect(result.children[0].children[0].tags).toEqual([])
+    expect(result.children[1].tags).toEqual(['#tag1'])
+    expect(result.children[1].children[0].tags).toEqual(['#tag1'])
+  })
 })

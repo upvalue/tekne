@@ -56,6 +56,12 @@ export const treeifyDoc = (doc: ZDoc): ZDocTree => {
       stack.pop()
     }
 
+    // Propagate tags from direct parent only (after stack is adjusted)
+    if (stack.length > 0) {
+      const parent = stack[stack.length - 1]
+      node.tags.push(...parent.tags)
+    }
+
     if (stack.length === 0) {
       root.children.push(node)
     } else {
@@ -68,7 +74,57 @@ export const treeifyDoc = (doc: ZDoc): ZDocTree => {
   return root
 }
 
-/*
-const extractDocData = (doc: ZDocTree) => {
+/**
+ *
+ */
+const zdocDatum = z.object({
+  lineIdx: z.number(),
+  timeCreated: z.string().datetime(),
+  timeUpdated: z.string().datetime(),
+  datumTag: z.string(),
+  datumStatus: z.optional(z.enum(['complete', 'incomplete', 'unset'])),
+  datumTimeSeconds: z.optional(z.number()),
+})
 
-}*/
+type ZDocDatum = z.infer<typeof zdocDatum>
+const makeDatum = (tag: string, tline: ZTreeLine): ZDocDatum => {
+  return {
+    lineIdx: tline.arrayIdx,
+    timeCreated: tline.timeCreated,
+    timeUpdated: tline.timeUpdated,
+    datumTag: tag,
+  }
+}
+
+const extractDocDataImpl = (
+  ln: ZTreeLine,
+  accum: Array<ZDocDatum>
+): Array<ZDocDatum> => {
+  for (const child of ln.children) {
+    // console.log({ child })
+    extractDocDataImpl(child, accum)
+  }
+
+  for (const tag of ln.tags) {
+    if (ln.datumTaskStatus) {
+      const datum = makeDatum(tag, ln)
+      datum.datumStatus = ln.datumTaskStatus
+      accum.push(datum)
+    }
+
+    if (ln.datumTimeSeconds) {
+      const datum = makeDatum(tag, ln)
+      datum.datumTimeSeconds = ln.datumTimeSeconds
+      accum.push(datum)
+    }
+  }
+  return []
+}
+
+export const extractDocData = (doc: ZDocTree): Array<ZDocDatum> => {
+  const ret: Array<ZDocDatum> = []
+  for (const child of doc.children) {
+    extractDocDataImpl(child, ret)
+  }
+  return ret
+}

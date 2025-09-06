@@ -140,7 +140,7 @@ export const TimerBadge = ({
           if (remaining === 0) {
             clearInterval(intervalRef.current!)
             setLine((line) => {
-              line.datumTime = (line.datumTime || 0) + prev.targetDuration
+              line.datumTimeSeconds = (line.datumTimeSeconds || 0) + prev.targetDuration
             })
             sendNotification(`Timer completed for: ${prev.lineContent}`)
             setDetailTitle(null)
@@ -204,14 +204,14 @@ export const TimerBadge = ({
         ? Math.floor((Date.now() - globalTimer.startTime) / 1000)
         : globalTimer.elapsedTime
       setLine((line) => {
-        line.datumTime = finalElapsed
+        line.datumTimeSeconds = finalElapsed
       })
     } else if (globalTimer.mode === 'countdown') {
       const timeWorked = globalTimer.startTime
         ? Math.floor((Date.now() - globalTimer.startTime) / 1000)
         : 0
       setLine((line) => {
-        line.datumTime = Math.min(timeWorked, globalTimer.targetDuration)
+        line.datumTimeSeconds = Math.min(timeWorked, globalTimer.targetDuration)
       })
     }
 
@@ -255,7 +255,7 @@ export const TimerBadge = ({
     if (duration !== null) {
       setLine((line) => {
         if (!line) return;
-        line.datumTime = duration
+        line.datumTimeSeconds = duration
       })
     }
   }, [timeInput, setLine])

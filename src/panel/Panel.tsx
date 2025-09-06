@@ -13,6 +13,7 @@ import {
   CircleStackIcon,
 } from '@heroicons/react/24/solid'
 import { useState } from 'react'
+import { ErrorBoundary } from '@/components/ErrorBoundary'
 
 export function Panel() {
   const [activeTab, setActiveTab] = useState('aggregate')
@@ -58,13 +59,15 @@ export function Panel() {
         </Navbar>
       </div>
       <div className="flex-1 overflow-auto min-h-0">
-        {activeTab === 'search' && <Search />}
-        {activeTab === 'help' && <Help />}
-        {activeTab === 'devtools' && (
-          <div className="p-4 h-full">
-            <DevTools />
-          </div>
-        )}
+        <ErrorBoundary title="Panel crashed">
+          {activeTab === 'search' && <Search />}
+          {activeTab === 'help' && <Help />}
+          {activeTab === 'devtools' && (
+            <div className="p-4 h-full">
+              <DevTools />
+            </div>
+          )}
+        </ErrorBoundary>
       </div>
     </div>
   )

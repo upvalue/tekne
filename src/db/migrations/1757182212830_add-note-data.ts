@@ -8,15 +8,15 @@ export async function up(db: Kysely<any>): Promise<void> {
     .execute()
   db.schema
     .createTable('note_data')
-    .addColumn('note_id', 'text', (col) =>
+    .addColumn('note_title', 'text', (col) =>
       col.references('notes.title').onDelete('cascade').notNull()
     )
     .addColumn('line_idx', 'integer', (col) => col.notNull())
     .addColumn('time_created', 'timestamp', (col) => col.notNull())
     .addColumn('time_updated', 'timestamp', (col) => col.notNull())
-    .addColumn('data_tag', 'text', (col) => col.notNull())
-    .addColumn('data_status', sql`note_data_status_t`)
-    .addColumn('data_time', 'bigint')
+    .addColumn('datum_tag', 'text', (col) => col.notNull())
+    .addColumn('datum_status', sql`note_data_status_t`)
+    .addColumn('datum_time_seconds', 'bigint')
     .execute()
 }
 

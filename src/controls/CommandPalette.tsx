@@ -5,6 +5,7 @@ import { KBarModal, KBarSearchInput, KBarResultRenderer } from './KBar'
 import { useLocation, useRouter, type NavigateFn } from '@tanstack/react-router'
 import { formatDate } from '@/lib/utils'
 import { addDays, parse } from 'date-fns'
+import { getDocTitle } from '@/hooks/useDocTitle'
 
 const CommandPaletteContent = () => {
   return (
@@ -30,10 +31,10 @@ const getDayNotePath = (date: Date, delta: number) => {
  * Handles navigating from a daily note (e.g. to the next, or previous note)
  */
 const dailyNoteNavigate = (navigate: NavigateFn, delta: number) => {
-  const path = window.location.pathname
-  if (path.startsWith('/n/')) {
+  const title = getDocTitle()
+  if (title) {
     // Try to parse as YYYY-MM-DD
-    const day = parse(path.slice(3), 'yyyy-MM-dd', new Date())
+    const day = parse(title, 'yyyy-MM-dd', new Date())
     if (isNaN(day.getTime())) {
       return
     }
@@ -50,10 +51,6 @@ export const CommandPalette: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const { navigate } = useRouter()
-
-  // Get the current path
-  const location = useLocation()
-  const path = location.pathname
 
   // Lorem ipsum actions for testing
   const actions = useMemo((): Action[] => {
@@ -81,7 +78,7 @@ export const CommandPalette: React.FC<{ children: React.ReactNode }> = ({
         keywords: 'daily note tomorrow',
       },
     ]
-  }, [path])
+  }, [])
 
   return (
     <KBarProvider

@@ -108,14 +108,14 @@ export const ELine = (lineInfo: ELineProps) => {
           onChange={(e) => {
             // TOOD: This pattern repeats itself and could be turned into a hook
             setDoc((draft) => {
-              draft.children[lineInfo.lineIdx].datumTaskStatus = cycleCheckboxStatus(draft.children[lineInfo.lineIdx].datumTaskStatus)
+              draft.children[lineInfo.lineIdx].datumTaskStatus = cycleCheckboxStatus(draft.children[lineInfo.lineIdx].datumTaskStatus || 'unset')
             })
           }}
         />
       )}
 
-      {line.datumTime !== undefined && (
-        <TimerBadge lineInfo={lineInfo} time={line.datumTime} />
+      {line.datumTimeSeconds !== undefined && (
+        <TimerBadge lineInfo={lineInfo} time={line.datumTimeSeconds} />
       )}
 
       <div

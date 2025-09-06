@@ -14,7 +14,7 @@ const zline = z.object({
   /**
    * Time recorded (in seconds)
    */
-  datumTime: z.number().optional(),
+  datumTimeSeconds: z.number().optional(),
 
   /**
    * Task completion status
@@ -36,7 +36,6 @@ const zdoc = z.object({
 })
 
 type ZDoc = z.infer<typeof zdoc>
-
 
 const lineMake = (
   indent: number,

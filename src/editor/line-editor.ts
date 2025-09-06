@@ -254,11 +254,11 @@ export const useCodeMirror = (lineInfo: LineWithIdx) => {
   // emitter. Could probably be moved one level up.
   useLineEvent('lineTimerAdd', lineInfo.lineIdx, (event) => {
     // If it's already got a time, don't do anything
-    if (lineInfo.line.datumTime) {
+    if (lineInfo.line.datumTimeSeconds) {
       return
     }
     setDoc((draft) => {
-      draft.children[event.lineIdx].datumTime = 0
+      draft.children[event.lineIdx].datumTimeSeconds = 0
     })
   })
 
