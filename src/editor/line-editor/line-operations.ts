@@ -6,7 +6,11 @@ import { keybindings } from '@/lib/keys'
 import type { useStore } from 'jotai'
 import { Transaction } from '@codemirror/state'
 
-export const toggleCollapse = (view: EditorView, store: ReturnType<typeof useStore>, lineIdx: number) => {
+export const toggleCollapse = (
+  view: EditorView,
+  store: ReturnType<typeof useStore>,
+  lineIdx: number
+) => {
   const setDoc = (updater: (draft: ZDoc) => void) => store.set(docAtom, updater)
   const doc = store.get(docAtom)
 
@@ -14,7 +18,7 @@ export const toggleCollapse = (view: EditorView, store: ReturnType<typeof useSto
   if (!nextLine || nextLine.indent <= doc.children[lineIdx].indent) {
     return false
   }
-  
+
   setDoc((draft: ZDoc) => {
     if (draft.children[lineIdx].collapsed) {
       delete draft.children[lineIdx].collapsed
@@ -30,13 +34,17 @@ export const toggleCollapse = (view: EditorView, store: ReturnType<typeof useSto
   return true
 }
 
-export const makeKeymap = (store: ReturnType<typeof useStore>, lineIdx: number) => {
+export const makeKeymap = (
+  store: ReturnType<typeof useStore>,
+  lineIdx: number
+) => {
   let doc = store.get(docAtom)
   const unsubscribe = store.sub(docAtom, () => {
     doc = store.get(docAtom)
   })
-  
-  const setRequestFocusLine = (value: { lineIdx: number; pos: number }) => store.set(requestFocusLineAtom, value)
+
+  const setRequestFocusLine = (value: { lineIdx: number; pos: number }) =>
+    store.set(requestFocusLineAtom, value)
   const setDoc = (updater: (draft: ZDoc) => void) => store.set(docAtom, updater)
 
   const deleteLineIfEmpty = (view: EditorView) => {
@@ -49,7 +57,6 @@ export const makeKeymap = (store: ReturnType<typeof useStore>, lineIdx: number) 
     const r = ranges[0]
 
     if (r.from === 0 && r.to === 0) {
-      
       if (lineIdx === 0) {
         if (doc.children.length === 1) {
           return false
@@ -94,7 +101,10 @@ export const makeKeymap = (store: ReturnType<typeof useStore>, lineIdx: number) 
       run: () => {
         if (lineIdx === 0) return false
 
-        if (lineIdx > 0 && doc.children[lineIdx].indent > doc.children[lineIdx - 1].indent) {
+        if (
+          lineIdx > 0 &&
+          doc.children[lineIdx].indent > doc.children[lineIdx - 1].indent
+        ) {
           return false
         }
 
@@ -115,9 +125,15 @@ export const makeKeymap = (store: ReturnType<typeof useStore>, lineIdx: number) 
         const docEnd = state.doc.length
         const currentLineContent = state.doc.toString()
 
-        if (currentLineContent.trim() === '' && doc.children[lineIdx].indent > 0) {
+        if (
+          currentLineContent.trim() === '' &&
+          doc.children[lineIdx].indent > 0
+        ) {
           setDoc((draft: ZDoc) => {
-            draft.children[lineIdx].indent = Math.max(0, doc.children[lineIdx].indent - 1)
+            draft.children[lineIdx].indent = Math.max(
+              0,
+              doc.children[lineIdx].indent - 1
+            )
           })
           return true
         }
@@ -235,6 +251,6 @@ export const makeKeymap = (store: ReturnType<typeof useStore>, lineIdx: number) 
 
   return {
     keymap: keymapExtension,
-    cleanup: unsubscribe
+    cleanup: unsubscribe,
   }
 }

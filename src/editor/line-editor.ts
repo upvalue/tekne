@@ -2,9 +2,15 @@
 // Wraps Codemirror with lots of custom behavior
 import { useEffect, useRef } from 'react'
 
-import { EditorView, keymap} from '@codemirror/view'
+import { EditorView, keymap } from '@codemirror/view'
 import { emacsStyleKeymap } from '@codemirror/commands'
-import { Annotation, EditorSelection, EditorState, Transaction, type Extension } from '@codemirror/state'
+import {
+  Annotation,
+  EditorSelection,
+  EditorState,
+  Transaction,
+  type Extension,
+} from '@codemirror/state'
 import { type ZLine, type LineColor } from './schema'
 import { useAtom, useSetAtom, useStore } from 'jotai'
 import { docAtom, focusedLineAtom, requestFocusLineAtom } from './state'
@@ -46,7 +52,7 @@ export type LineWithIdx = {
   lineIdx: number
 }
 
-const isActive = Annotation.define<boolean>();
+const isActive = Annotation.define<boolean>()
 
 /**
  * Sets up a Codemirror editor
@@ -77,16 +83,24 @@ export const useCodeMirror = (lineInfo: LineWithIdx) => {
   const setFocusedLine = useSetAtom(focusedLineAtom)
   const store = useStore()
 
-  // 
+  //
   const makeEditor = () => {
-    const { keymap: customKeymap, cleanup: cleanupKeymap } = makeKeymap(store, lineInfo.lineIdx)
+    const { keymap: customKeymap, cleanup: cleanupKeymap } = makeKeymap(
+      store,
+      lineInfo.lineIdx
+    )
 
     const updateListener = EditorView.updateListener.of((update) => {
       if (!update.docChanged) {
         return
       }
 
-      console.log('Line', lineInfo.lineIdx, 'content updated', update.state.doc.toString())
+      console.log(
+        'Line',
+        lineInfo.lineIdx,
+        'content updated',
+        update.state.doc.toString()
+      )
       setDoc((draft) => {
         draft.children[lineInfo.lineIdx].mdContent = update.state.doc.toString()
         draft.children[lineInfo.lineIdx].timeUpdated = new Date().toISOString()
@@ -99,37 +113,42 @@ export const useCodeMirror = (lineInfo: LineWithIdx) => {
         setFocusedLine(lineInfo.lineIdx)
         // state.update({annotations: isActive.of(true) });
       } else {
-        // state.update({annotations: isActive.of(false)}); 
+        // state.update({annotations: isActive.of(false)});
       }
     })
 
     // Placeholder plugin: renders some grayed out text under
     // certain circumstances
-    const placeholderPlugin = placeholder((view) => {
-      const line = store.get(docAtom).children[lineInfo.lineIdx]
-      if(!line) return '';
-      if(store.get(docAtom).children[lineInfo.lineIdx].collapsed) return ' + collasped lines';
-      return 'The world is your canvas';
-    }, (view) => {
-      // If line is collapsed, we show a placeholder indicating collapsed line details
-      const doc = store.get(docAtom)
+    const placeholderPlugin = placeholder(
+      (view) => {
+        const line = store.get(docAtom).children[lineInfo.lineIdx]
+        if (!line) return ''
+        if (store.get(docAtom).children[lineInfo.lineIdx].collapsed)
+          return ' + collasped lines'
+        return 'The world is your canvas'
+      },
+      (view) => {
+        // If line is collapsed, we show a placeholder indicating collapsed line details
+        const doc = store.get(docAtom)
 
-      if(!doc || !doc.children || !doc.children[lineInfo.lineIdx]) return false;
-      if(doc.children[lineInfo.lineIdx].collapsed) return true;
+        if (!doc || !doc.children || !doc.children[lineInfo.lineIdx])
+          return false
+        if (doc.children[lineInfo.lineIdx].collapsed) return true
 
-      // Don't show placeholder if:
-      // There's any content on the line
-      if(view.state.doc.length > 0) return false;
+        // Don't show placeholder if:
+        // There's any content on the line
+        if (view.state.doc.length > 0) return false
 
-      // This isn't the first line of the doc
-      if(lineInfo.lineIdx !== 0) return false;
+        // This isn't the first line of the doc
+        if (lineInfo.lineIdx !== 0) return false
 
-      // There's more than one line in the doc
-      if(doc.children.length > 1) return false;
+        // There's more than one line in the doc
+        if (doc.children.length > 1) return false
 
-      // Otherwise, do show the placeholder
-      return true;
-    });
+        // Otherwise, do show the placeholder
+        return true
+      }
+    )
 
     const extensions: Extension[] = [
       theme,
@@ -145,7 +164,7 @@ export const useCodeMirror = (lineInfo: LineWithIdx) => {
       autocompletion({
         override: [slashCommandsPlugin(lineInfo.lineIdx)],
       }),
-    ];
+    ]
 
     const state = EditorState.create({
       doc: lineInfo.line.mdContent,
@@ -165,14 +184,14 @@ export const useCodeMirror = (lineInfo: LineWithIdx) => {
     }
   }
 
-  // This handles taking external updates, which might happen if e.g. 
+  // This handles taking external updates, which might happen if e.g.
   // a user deletes a line, the remaining text is appending to the previous
   // updates. In this case I've found it best to just destroy and recreate
   // codemirror.
   useEffect(() => {
     if (!cmView.current) return
     const { line } = lineInfo
-    
+
     const v = cmView.current
 
     // When the document itself is updated, we need to synchronize
@@ -257,10 +276,10 @@ export const useCodeMirror = (lineInfo: LineWithIdx) => {
 
   // Line collapse toggle -- note that this only handles
   // the slash command, there is also a separate
-  // key binding 
+  // key binding
   useLineEvent('lineCollapseToggle', lineInfo.lineIdx, () => {
-    const view = cmView.current;
-    if(view) {
+    const view = cmView.current
+    if (view) {
       toggleCollapse(view, store, lineInfo.lineIdx)
     }
   })
@@ -270,7 +289,7 @@ export const useCodeMirror = (lineInfo: LineWithIdx) => {
       if (event.color === null) {
         delete draft.children[event.lineIdx].color
       } else {
-        draft.children[event.lineIdx].color = event.color 
+        draft.children[event.lineIdx].color = event.color
       }
     })
   })

@@ -12,7 +12,7 @@ export function Version() {
   return (
     <div className="p-4">
       <h2 className="text-lg font-semibold mb-4">Version Information</h2>
-      
+
       <div className="space-y-4">
         <div>
           <h3 className="text-sm font-medium text-zinc-400 mb-2">Git Commit</h3>
@@ -27,7 +27,6 @@ export function Version() {
             </div>
           </div>
         </div>
-        
       </div>
     </div>
   )

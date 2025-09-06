@@ -40,12 +40,13 @@ function RouteComponent() {
     >
       <div className="max-w-[50%] text-left prose prose-invert">
         <p>
-          This is a demo for a productivity app that's currently super alpha. The
-          demo saves data in your browser storage, doesn't persist it, and may contain bugs!
+          This is a demo for a productivity app that's currently super alpha.
+          The demo saves data in your browser storage, doesn't persist it, and
+          may contain bugs!
         </p>
         <p>
-          It's also currently targeting a Mac laptop -- key bindings aren't yet OS aware
-          and the design is not responsive for small screens.
+          It's also currently targeting a Mac laptop -- key bindings aren't yet
+          OS aware and the design is not responsive for small screens.
         </p>
       </div>
     </CopyLayout>

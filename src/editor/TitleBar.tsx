@@ -84,20 +84,16 @@ export const TitleBar = ({
 
   const isDev = import.meta.env.DEV
   const isDemo = import.meta.env.TEKNE_DEMO
-  const isDevServer = import.meta.env.TEKNE_TRPC_URL && import.meta.env.TEKNE_TRPC_URL.includes('localhost');
+  const isDevServer =
+    import.meta.env.TEKNE_TRPC_URL &&
+    import.meta.env.TEKNE_TRPC_URL.includes('localhost')
 
   return (
     <div className="flex py-2 px-4 items-center">
       <div style={{ flexBasis: '138px' }} className="flex justify-end pr-4">
-        <div className="text text-yellow-500">
-          {isDev && '[dev]'}
-        </div>
-        <div className="text text-yellow-500">
-          {isDemo && '[demo]'}
-        </div>
-        <div className="text text-yellow-500">
-          {isDevServer && '[server]'}
-        </div>
+        <div className="text text-yellow-500">{isDev && '[dev]'}</div>
+        <div className="text text-yellow-500">{isDemo && '[demo]'}</div>
+        <div className="text text-yellow-500">{isDevServer && '[server]'}</div>
       </div>
 
       <div className="w-full">
@@ -108,7 +104,9 @@ export const TitleBar = ({
               contentEditable={allowTitleEdit}
               suppressContentEditableWarning={true}
               className="text-2xl text-zinc-500 outline-none w-full"
-              onInput={(e) => setProposedTitle(e.currentTarget.textContent || '')}
+              onInput={(e) =>
+                setProposedTitle(e.currentTarget.textContent || '')
+              }
               onBlur={handleSubmit}
               onKeyDown={handleKeyDown}
             />
@@ -118,6 +116,6 @@ export const TitleBar = ({
           </div>
         </div>
       </div>
-    </div >
+    </div>
   )
 }

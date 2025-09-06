@@ -1,5 +1,5 @@
-import { clsx, type ClassValue } from "clsx"
-import { twMerge } from "tailwind-merge"
+import { clsx, type ClassValue } from 'clsx'
+import { twMerge } from 'tailwind-merge'
 
 /**
  * Tailwind friendly classnames merger
@@ -20,7 +20,7 @@ export function formatDate(date: Date) {
 
 export const getDocTitle = () => {
   const path = window.location.pathname
-  if(path.startsWith('/n/')) {
+  if (path.startsWith('/n/')) {
     return path.slice(3)
   }
   return null

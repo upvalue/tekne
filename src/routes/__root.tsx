@@ -9,7 +9,6 @@ export type RouterAppContext = {
 }
 
 const RootComponent = () => {
-
   return (
     <DocumentSearch>
       <CommandPalette>

@@ -39,7 +39,9 @@ export const globalTimerAtom = atom<GlobalTimerState>({
   elapsedTime: 0,
 })
 
-export const notificationPermissionAtom = atom<NotificationPermission | null>(null)
+export const notificationPermissionAtom = atom<NotificationPermission | null>(
+  null
+)
 
 /**
  * Allows reading or modifying a specific line
@@ -61,4 +63,3 @@ export const useDocLine = (
 
   return [doc.children[lineIdx], setLine]
 }
-

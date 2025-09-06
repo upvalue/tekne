@@ -16,7 +16,6 @@ export class TypedEventEmitter<TEvents extends Record<string, any>> {
     const listenersSet = this.listeners.get(event)!
     listenersSet.add(listener as any)
 
-
     // Return unsubscribe function
     return () => {
       listenersSet.delete(listener as any)
@@ -45,7 +44,7 @@ export class TypedEventEmitter<TEvents extends Record<string, any>> {
     event: K,
     ...args: TEvents[K] extends undefined ? [] : [data: TEvents[K]]
   ): void {
-    console.log('event', {event});
+    console.log('event', { event })
     const listenersSet = this.listeners.get(event)
     if (listenersSet) {
       listenersSet.forEach((listener) => {

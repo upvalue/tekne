@@ -6,7 +6,11 @@ import '@/editor/schema'
 import { truncate } from 'lodash-es'
 import { Provider } from 'jotai'
 import { trpc } from '@/trpc'
-import { createFileRoute, useBlocker, useNavigate } from '@tanstack/react-router'
+import {
+  createFileRoute,
+  useBlocker,
+  useNavigate,
+} from '@tanstack/react-router'
 import { useCallback, useEffect, useMemo, useRef } from 'react'
 import { useCodemirrorEvent } from '@/editor/line-editor'
 import { EditorLayout } from '@/layout/EditorLayout'
@@ -33,9 +37,9 @@ function RouteComponent() {
     select: (p) => p.title,
   })
 
-  const docLastSaved = useRef<Date>(new Date());
-  const docDirty = useRef<boolean>(false);
-  const userNavigatingAway = useRef<boolean>(false);
+  const docLastSaved = useRef<Date>(new Date())
+  const docDirty = useRef<boolean>(false)
+  const userNavigatingAway = useRef<boolean>(false)
   // TODO: this whole thing needs a bit of cleanup
 
   useEffect(() => {
@@ -51,7 +55,7 @@ function RouteComponent() {
     },
   })
 
-  // Set up Jotai store 
+  // Set up Jotai store
   const store = useMemo(() => {
     const store = createStore()
     return store
@@ -65,7 +69,7 @@ function RouteComponent() {
   // It tries not to do anything if (1) less than 5 seconds have elapsed since last updateDoc
   // or (2) doc has not changed
 
-  // It also uses beforeunload to try to prevent user from navigating away if 
+  // It also uses beforeunload to try to prevent user from navigating away if
 
   const saveDocument = useCallback(() => {
     if (loadDocQuery.isLoading) {
@@ -76,20 +80,25 @@ function RouteComponent() {
     if (store.get(docAtom) === loadDocQuery.data) {
       return
     }
-    updateDocMutation.mutate({
-      name: title,
-      doc: store.get(docAtom),
-    }, {
-      onSuccess: () => {
-        docDirty.current = false;
-        docLastSaved.current = new Date();
+    updateDocMutation.mutate(
+      {
+        name: title,
+        doc: store.get(docAtom),
+      },
+      {
+        onSuccess: () => {
+          docDirty.current = false
+          docLastSaved.current = new Date()
 
-        if (userNavigatingAway.current) {
-          toast.info('Your changes have been saved, you can navigate away now');
-          userNavigatingAway.current = false;
-        }
+          if (userNavigatingAway.current) {
+            toast.info(
+              'Your changes have been saved, you can navigate away now'
+            )
+            userNavigatingAway.current = false
+          }
+        },
       }
-    })
+    )
   }, [title, store, updateDocMutation, loadDocQuery.isLoading])
 
   // Try to save document if user navigates away while a change is present
@@ -97,34 +106,38 @@ function RouteComponent() {
   // a beforeunload handler, which is a little overzealous in prompting;
   // this could probably be used better
 
-  // Probably 
+  // Probably
   useBlocker({
     shouldBlockFn: () => {
-      console.log('tanstack blocker triggered save');
-      saveDocument();
-      return false;
+      console.log('tanstack blocker triggered save')
+      saveDocument()
+      return false
     },
     enableBeforeUnload: false,
   })
 
   useEventListener('beforeunload', (event: BeforeUnloadEvent) => {
     if (docDirty.current) {
-      userNavigatingAway.current = true;
-      saveDocument();
-      event.preventDefault();
-      event.returnValue = 'You have unsaved changes. Are you sure you want to leave?';
+      userNavigatingAway.current = true
+      saveDocument()
+      event.preventDefault()
+      event.returnValue =
+        'You have unsaved changes. Are you sure you want to leave?'
     }
-    return false;
+    return false
   })
 
   useInterval(() => {
     if (!docDirty.current) {
-      return;
+      return
     }
-    if (new Date().getTime() - docLastSaved.current.getTime() < DOC_SAVE_INTERVAL) {
-      return;
+    if (
+      new Date().getTime() - docLastSaved.current.getTime() <
+      DOC_SAVE_INTERVAL
+    ) {
+      return
     }
-    saveDocument();
+    saveDocument()
   }, 1000)
 
   useEffect(() => {
@@ -134,9 +147,9 @@ function RouteComponent() {
     const unsub = store.sub(docAtom, () => {
       // Document changed, mark dirty
       if (store.get(docAtom) === loadDocQuery.data) {
-        return;
+        return
       }
-      docDirty.current = true;
+      docDirty.current = true
       // Don't try to save if less than five seconds have elapsed
       // saveDocument();
     })
@@ -144,7 +157,13 @@ function RouteComponent() {
     return () => {
       return unsub()
     }
-  }, [title, loadDocQuery.isLoading, store, updateDocMutation, loadDocQuery.data])
+  }, [
+    title,
+    loadDocQuery.isLoading,
+    store,
+    updateDocMutation,
+    loadDocQuery.data,
+  ])
 
   useEffect(() => {
     if (!loadDocQuery.isLoading && loadDocQuery.data) {
@@ -160,7 +179,7 @@ function RouteComponent() {
       params: {
         title: event.link,
       },
-    }).then(() => { })
+    }).then(() => {})
   })
 
   return (

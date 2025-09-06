@@ -24,7 +24,7 @@ export const DYNAMIC_ROUTES: { tanstack: string; express: string }[] = [
  */
 export function registerClientRoutes(app: Express, distPath: string) {
   // Register static routes
-  STATIC_ROUTES.forEach(route => {
+  STATIC_ROUTES.forEach((route) => {
     app.get(route, (_req, res) => {
       res.sendFile(path.join(distPath, 'index.html'))
     })
@@ -46,14 +46,14 @@ export function isValidClientRoute(pathname: string): boolean {
   if (STATIC_ROUTES.includes(pathname)) {
     return true
   }
-  
+
   // Check dynamic routes by pattern matching
   for (const { tanstack } of DYNAMIC_ROUTES) {
     if (matchesDynamicRoute(pathname, tanstack)) {
       return true
     }
   }
-  
+
   return false
 }
 
@@ -63,10 +63,8 @@ export function isValidClientRoute(pathname: string): boolean {
 function matchesDynamicRoute(pathname: string, pattern: string): boolean {
   // Convert TanStack pattern to regex
   // /n/$title -> /n/([^/]+)
-  const regexPattern = pattern
-    .replace(/$\w+/g, '([^/]+)')
-    .replace(/\//g, '/')
-  
+  const regexPattern = pattern.replace(/$\w+/g, '([^/]+)').replace(/\//g, '/')
+
   const regex = new RegExp('^' + regexPattern + '$')
   return regex.test(pathname)
 }
@@ -75,5 +73,5 @@ function matchesDynamicRoute(pathname: string, pattern: string): boolean {
 export const ROUTE_INFO = {
   static: STATIC_ROUTES,
   dynamic: DYNAMIC_ROUTES,
-  total: STATIC_ROUTES.length + DYNAMIC_ROUTES.length
+  total: STATIC_ROUTES.length + DYNAMIC_ROUTES.length,
 }

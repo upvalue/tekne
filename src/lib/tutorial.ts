@@ -17,7 +17,7 @@ export const makeTutorial = () => {
     ),
     lineMake(0, 'In addition to key bindings, there are also slash commands'),
     lineMake(1, "Type /date at the end of this line to insert today's date."),
-    lineMake(0, "Trigger the command palette with Cmd-Shift-K"),
-    lineMake(0, "For more help, see the help section of the side panel"),
+    lineMake(0, 'Trigger the command palette with Cmd-Shift-K'),
+    lineMake(0, 'For more help, see the help section of the side panel'),
   ]
 }

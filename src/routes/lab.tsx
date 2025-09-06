@@ -20,7 +20,10 @@ const ExampleDoc = ({ children }: { children: React.ReactNode }) => {
       docAtom,
       docMake([
         {
-          ...lineMake(0, '**test markdown** [link](https://google.com) [[InternalLink]] #asdf'),
+          ...lineMake(
+            0,
+            '**test markdown** [link](https://google.com) [[InternalLink]] #asdf'
+          ),
         },
       ]),
     ],

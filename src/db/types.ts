@@ -5,7 +5,7 @@ import type { ColumnType } from 'kysely'
 type ZodJsonColumn<T> = ColumnType<T, T, T>
 
 export type DBNote = {
-  title: string,
+  title: string
   body: ZodJsonColumn<ZDoc>
   createdAt: ColumnType<Date, Date | undefined, Date>
   updatedAt: ColumnType<Date, Date | undefined, Date>
@@ -14,5 +14,5 @@ export type DBNote = {
 
 // Define your database schema interface here
 export type Database = {
- notes: DBNote;
+  notes: DBNote
 }

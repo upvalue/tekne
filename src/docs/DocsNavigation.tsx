@@ -7,20 +7,23 @@ interface DocsNavigationProps {
   onSelectDoc: (docName: string) => void
 }
 
-export function DocsNavigation({ selectedDoc, onSelectDoc }: DocsNavigationProps) {
-  const docFiles = manifest.files.map(file => {
+export function DocsNavigation({
+  selectedDoc,
+  onSelectDoc,
+}: DocsNavigationProps) {
+  const docFiles = manifest.files.map((file) => {
     const filename = file.outputFile.split('/').pop()?.replace('.tsx', '') || ''
     return {
       name: filename,
       title: file.metadata.title || filename,
-      metadata: file.metadata
+      metadata: file.metadata,
     }
   })
 
   return (
     <div className="space-y-2">
       <h3 className="text-sm font-medium text-zinc-400 mb-3">Documentation</h3>
-      {docFiles.map(doc => (
+      {docFiles.map((doc) => (
         <Button
           key={doc.name}
           {...(selectedDoc === doc.name ? { color: 'zinc' } : { plain: true })}

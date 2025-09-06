@@ -44,7 +44,7 @@ export const ELine = (lineInfo: ELineProps) => {
         'ELine w-full py-1  flex items-baseline',
         collapseState === 'collapsed' && 'hidden',
         isFocused && 'ELine-focused',
-        getColorClass(line.color),
+        getColorClass(line.color)
       )}
     >
       <div className="ELine-gutter text-zinc-600 text-sm flex-shrink-0 justify-end flex font-mono">

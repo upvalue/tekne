@@ -10,17 +10,17 @@ declare global {
   interface Window {
     dbHandle: PGlite
     db: Kysely<Database>
-    PGlite: typeof PGlite   
+    PGlite: typeof PGlite
   }
 }
 
-export const DEFAULT_DB_PATH = 'tekne-dev';
-export const DB_PATH_KEY = 'tekne/db-path';
+export const DEFAULT_DB_PATH = 'tekne-dev'
+export const DB_PATH_KEY = 'tekne/db-path'
 
 export const dbMemory = async () => {
   if (window.db)
     return {
-      db: window.db ,
+      db: window.db,
       dbHandle: window.dbHandle,
     }
 
@@ -31,7 +31,7 @@ export const dbMemory = async () => {
   }
 
   // Ensure path is in idb:// format for PGlite
-  const formattedPath = `idb://${dbPath}`;
+  const formattedPath = `idb://${dbPath}`
   console.log('Loading PGlite from', formattedPath)
   const handle = new PGlite(formattedPath)
 

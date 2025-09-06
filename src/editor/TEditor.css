@@ -55,24 +55,22 @@
 }
 
 .cm-italic {
-  font-style:italic; 
+  font-style: italic;
 }
 
 .cm-bold {
   font-weight: bold;
 }
 
-.cm-tag, .cm-internal-link, .cm-link {
+.cm-tag,
+.cm-internal-link,
+.cm-link {
   @apply text-emerald-500;
   @apply cursor-pointer;
 }
 
 .editor-line-blue {
-  background-color: color-mix(
-    in srgb,
-    var(--color-blue-500) 10%,
-    transparent
-  );
+  background-color: color-mix(in srgb, var(--color-blue-500) 10%, transparent);
 }
 
 .editor-line-yellow {
@@ -83,7 +81,7 @@
   );
 }
 
-.editor-line-purple {    
+.editor-line-purple {
   background-color: color-mix(
     in srgb,
     var(--color-purple-500) 10%,
@@ -92,17 +90,9 @@
 }
 
 .editor-line-red {
-  background-color: color-mix(  
-    in srgb,
-    var(--color-red-500) 10%,
-    transparent
-  );
+  background-color: color-mix(in srgb, var(--color-red-500) 10%, transparent);
 }
 
 .editor-line-green {
-  background-color: color-mix(
-    in srgb,
-    var(--color-green-500) 10%,
-    transparent
-  );
+  background-color: color-mix(in srgb, var(--color-green-500) 10%, transparent);
 }

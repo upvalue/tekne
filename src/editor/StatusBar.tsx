@@ -8,7 +8,7 @@ import { ExclamationTriangleIcon, StopIcon } from '@heroicons/react/16/solid'
 import { trpc } from '@/trpc/client'
 import { setDetailTitle } from '@/lib/title'
 
-const STATUS_BAR_TRUNCATE_LENGTH = 80;
+const STATUS_BAR_TRUNCATE_LENGTH = 80
 
 const formatTimeDisplay = (seconds: number): string => {
   const hours = Math.floor(seconds / 3600)
@@ -41,7 +41,7 @@ export const StatusBar = () => {
       argument: {
         doc,
         line: globalTimer.lineContent || '',
-      }
+      },
     })
 
     setDetailTitle(null)
@@ -70,7 +70,7 @@ export const StatusBar = () => {
   useEffect(() => {
     if (globalTimer.isActive && !intervalRef.current) {
       intervalRef.current = setInterval(() => {
-        setGlobalTimerAtom(prev => {
+        setGlobalTimerAtom((prev) => {
           if (!prev.isActive) return prev
 
           const now = Date.now()
@@ -120,11 +120,16 @@ export const StatusBar = () => {
             />
             <div className="flex items-center gap-1 text-green-400">
               <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
-              <span className="font-mono">{formatTimeDisplay(globalTimer.elapsedTime)}</span>
+              <span className="font-mono">
+                {formatTimeDisplay(globalTimer.elapsedTime)}
+              </span>
             </div>
             <div className="text-zinc-400">
               {globalTimer.lineContent
-                ? globalTimer.lineContent.substring(0, STATUS_BAR_TRUNCATE_LENGTH) + '...'
+                ? globalTimer.lineContent.substring(
+                    0,
+                    STATUS_BAR_TRUNCATE_LENGTH
+                  ) + '...'
                 : globalTimer.lineContent}
             </div>
           </div>

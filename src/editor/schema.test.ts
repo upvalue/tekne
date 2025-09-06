@@ -154,15 +154,15 @@ describe('analyzeDoc', () => {
 
   test('should preserve original line properties', () => {
     const doc: ZDoc = docMake([
-        {
-          ...lineMake(0, 'Task line'),
-          datumTaskStatus: 'incomplete',
-        },
-        {
-          ...lineMake(1, 'Child task'),
-          datumTaskStatus: 'complete',
-        },
-      ])
+      {
+        ...lineMake(0, 'Task line'),
+        datumTaskStatus: 'incomplete',
+      },
+      {
+        ...lineMake(1, 'Child task'),
+        datumTaskStatus: 'complete',
+      },
+    ])
 
     const result = analyzeDoc(doc)
 
@@ -174,10 +174,10 @@ describe('analyzeDoc', () => {
 
   test('should handle skipped indentation levels', () => {
     const doc: ZDoc = docMake([
-        { ...lineMake(0, 'Level 0') },
-        { ...lineMake(2, 'Level 2 (skipped 1)') },
-        { ...lineMake(1, 'Level 1') },
-      ])
+      { ...lineMake(0, 'Level 0') },
+      { ...lineMake(2, 'Level 2 (skipped 1)') },
+      { ...lineMake(1, 'Level 1') },
+    ])
 
     const result = analyzeDoc(doc)
 
@@ -193,7 +193,10 @@ describe('analyzeDoc', () => {
   })
 
   test('should initialize tags and children arrays for all lines', () => {
-    const doc: ZDoc = docMake([{ ...lineMake(0, 'Line 1') }, { ...lineMake(1, 'Line 2') }])
+    const doc: ZDoc = docMake([
+      { ...lineMake(0, 'Line 1') },
+      { ...lineMake(1, 'Line 2') },
+    ])
 
     const result = analyzeDoc(doc)
 

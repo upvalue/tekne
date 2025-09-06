@@ -65,12 +65,12 @@ const isDailyDocument = (name: string): boolean => {
   return /^\d{4}-\d{2}-\d{2}$/.test(name)
 }
 
-// TODO: Fix any 
+// TODO: Fix any
 const createFromTemplate = (doc: ZDoc, tmpl: any): ZDoc => {
-  console.log({doc, tmpl});
+  console.log({ doc, tmpl })
   return {
     ...doc,
-    children: tmpl.body.children.map(c => ({
+    children: tmpl.body.children.map((c) => ({
       ...c,
       timeCreated: new Date().toISOString(),
       timeUpdated: new Date().toISOString(),
@@ -78,7 +78,10 @@ const createFromTemplate = (doc: ZDoc, tmpl: any): ZDoc => {
   }
 }
 
-const createNewDocument = async (db: Kysely<Database>, name: string): Promise<ZDoc> => {
+const createNewDocument = async (
+  db: Kysely<Database>,
+  name: string
+): Promise<ZDoc> => {
   let newDoc: ZDoc = {
     type: 'doc',
     schemaVersion: 1,
@@ -93,7 +96,7 @@ const createNewDocument = async (db: Kysely<Database>, name: string): Promise<ZD
       .selectAll()
       .where('title', '=', '$Daily')
       .executeTakeFirst()
-    
+
     if (dailyTemplate) {
       const templateDoc = docMigrator(dailyTemplate)
       newDoc = createFromTemplate(newDoc, templateDoc)
@@ -178,15 +181,15 @@ export const appRouter = router({
         .where('title', '=', input.name)
         .executeTakeFirst()
 
-        if(!doc) {
-          throw new Error(`Document "${input.name}" not found`)
-        }
+      if (!doc) {
+        throw new Error(`Document "${input.name}" not found`)
+      }
 
-        return {
-          createdAt: doc.createdAt,
-          updatedAt: doc.updatedAt,
-          revision: doc.revision,
-        }
+      return {
+        createdAt: doc.createdAt,
+        updatedAt: doc.updatedAt,
+        revision: doc.revision,
+      }
     }),
 
   updateDoc: proc
@@ -259,23 +262,25 @@ export const appRouter = router({
       })
     )
     .mutation(async ({ input }) => {
-      console.log('execHook', input);
+      console.log('execHook', input)
       const { hook, argument } = input
 
       // If running on server
-      if(typeof process !== 'undefined') {
-        if(hook === 'timer-start' || hook === 'timer-stop') {
-          const {line, lineIdx, doc} = argument;
+      if (typeof process !== 'undefined') {
+        if (hook === 'timer-start' || hook === 'timer-stop') {
+          const { line, lineIdx, doc } = argument
 
-          if(fs.existsSync(`hooks/${hook}`)) {
-            child_process.execSync(`hooks/${hook}`, { input: JSON.stringify({
-              type: 'timer-event',
-              line,
-              lineIdx,
-              doc,
-            })});
+          if (fs.existsSync(`hooks/${hook}`)) {
+            child_process.execSync(`hooks/${hook}`, {
+              input: JSON.stringify({
+                type: 'timer-event',
+                line,
+                lineIdx,
+                doc,
+              }),
+            })
           }
-        } 
+        }
       } else {
         console.log('[hook] client execHook', hook, argument)
       }

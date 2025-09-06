@@ -12,7 +12,7 @@ describe('generateCollapse', () => {
       lineMake(2, 'Line 3'),
       lineMake(1, 'Line 4'),
     ]
-    
+
     const result = generateCollapse(lines)
     expect(result).toEqual([false, false, false, false])
   })
@@ -23,7 +23,7 @@ describe('generateCollapse', () => {
       { ...lineMake(1, 'Line 2'), collapsed: true },
       lineMake(2, 'Line 3'),
     ]
-    
+
     const result = generateCollapse(lines)
     expect(result[1]).toBe(false) // The collapsed line itself should not be visually collapsed
   })
@@ -36,14 +36,14 @@ describe('generateCollapse', () => {
       lineMake(3, 'Grandchild'),
       lineMake(2, 'Child 2'),
     ]
-    
+
     const result = generateCollapse(lines)
     expect(result).toEqual([
       false, // Root - not collapsed
       false, // Parent - collapsed line itself, not visually collapsed
-      true,  // Child 1 - indented past collapsed parent
-      true,  // Grandchild - indented past collapsed parent
-      true,  // Child 2 - indented past collapsed parent
+      true, // Child 1 - indented past collapsed parent
+      true, // Grandchild - indented past collapsed parent
+      true, // Child 2 - indented past collapsed parent
     ])
   })
 
@@ -55,12 +55,12 @@ describe('generateCollapse', () => {
       lineMake(1, 'Sibling'), // Same level as collapsed parent - should reset
       lineMake(2, 'Sibling child'),
     ]
-    
+
     const result = generateCollapse(lines)
     expect(result).toEqual([
       false, // Root
       false, // Parent - collapsed line itself
-      true,  // Child 1 - collapsed
+      true, // Child 1 - collapsed
       false, // Sibling - resets collapse
       false, // Sibling child - not collapsed (collapse was reset)
     ])
@@ -76,15 +76,15 @@ describe('generateCollapse', () => {
       lineMake(3, 'Grandchild'),
       lineMake(1, 'Parent 3'),
     ]
-    
+
     const result = generateCollapse(lines)
     expect(result).toEqual([
       false, // Root
       false, // Parent 1 - collapsed line itself
-      true,  // Child 1 - collapsed under Parent 1
+      true, // Child 1 - collapsed under Parent 1
       false, // Parent 2 - resets first collapse
       false, // Child 2 - collapsed line itself (starts new collapse)
-      true,  // Grandchild - collapsed under Child 2
+      true, // Grandchild - collapsed under Child 2
       false, // Parent 3 - resets second collapse
     ])
   })
@@ -96,12 +96,12 @@ describe('generateCollapse', () => {
       lineMake(2, 'Grandchild'),
       lineMake(0, 'Another root'),
     ]
-    
+
     const result = generateCollapse(lines)
     expect(result).toEqual([
       false, // Root - collapsed line itself
-      true,  // Child - collapsed
-      true,  // Grandchild - collapsed
+      true, // Child - collapsed
+      true, // Grandchild - collapsed
       false, // Another root - resets collapse (same level as collapsed root)
     ])
   })
@@ -125,12 +125,12 @@ describe('generateCollapse', () => {
       lineMake(1, 'Back to Level 1'), // Lower than collapse level
       lineMake(2, 'Level 2 again'),
     ]
-    
+
     const result = generateCollapse(lines)
     expect(result).toEqual([
       false, // Level 1
-      false, // Level 2 - collapsed line itself  
-      true,  // Level 3 - collapsed
+      false, // Level 2 - collapsed line itself
+      true, // Level 3 - collapsed
       false, // Back to Level 1 - resets collapse (lower indent)
       false, // Level 2 again - not collapsed
     ])

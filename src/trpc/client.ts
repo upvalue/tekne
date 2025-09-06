@@ -1,5 +1,10 @@
 import { createTRPCReact } from '@trpc/react-query'
-import { createTRPCClient, httpLink, unstable_localLink, loggerLink } from '@trpc/client'
+import {
+  createTRPCClient,
+  httpLink,
+  unstable_localLink,
+  loggerLink,
+} from '@trpc/client'
 import type { AppRouter } from './router'
 import { appRouter } from './router'
 import { dbHandle } from '@/db'

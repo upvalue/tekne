@@ -162,6 +162,27 @@ class InternalLinkWidget extends WidgetType {
   }
 }
 
+class LinkWidget extends WidgetType {
+  constructor(
+    readonly url: string,
+    readonly text: string
+  ) {
+    super()
+  }
+
+  toDOM(view: EditorView) {
+    const wrap = document.createElement('span')
+    wrap.className = 'cm-link'
+    wrap.addEventListener('mousedown', (e) => {
+      e.preventDefault()
+      e.stopPropagation()
+      window.open(this.url, '_blank')
+    })
+    wrap.appendChild(document.createTextNode(this.text))
+    return wrap
+  }
+}
+
 class TagWidget extends WidgetType {
   constructor(readonly tagName: string) {
     super()
@@ -190,7 +211,7 @@ class TagWidget extends WidgetType {
  * The syntax plugin handles editor syntax -- implements a subset
  * of Markdown based on the @lezer/markdown parser and some custom
  * extensions to it. Then converts these into decoration marks for
- * rendering and actually servicing functionality (e.g. clickable 
+ * rendering and actually servicing functionality (e.g. clickable
  * internal links)
  */
 class SyntaxPlugin implements PluginValue {
@@ -244,14 +265,26 @@ class SyntaxPlugin implements PluginValue {
         }
 
         if (node.type.name === 'Link') {
-          builder.add(
-            node.from,
-            node.to,
-            Decoration.mark({
-              class: 'cm-link',
-              tagName: 'span',
-            })
-          )
+          const urlNode = node.getChild('URL')
+          const url = src.slice(urlNode.from, urlNode.to)
+          if (hasFocus) {
+            builder.add(
+              node.from,
+              node.to,
+              Decoration.mark({
+                class: 'cm-link',
+                tagName: 'span',
+              })
+            )
+          } else {
+            builder.add(
+              node.from,
+              node.to,
+              Decoration.widget({
+                widget: new LinkWidget(url, url),
+              })
+            )
+          }
         }
 
         if (node.type.name === 'InternalLink') {
@@ -277,22 +310,22 @@ class SyntaxPlugin implements PluginValue {
         }
 
         if (node.type.name === 'Tag') {
-          if(hasFocus) {
+          if (hasFocus) {
             builder.add(
-                node.from,
-                node.to,
-                Decoration.mark({
+              node.from,
+              node.to,
+              Decoration.mark({
                 class: 'cm-tag',
                 tagName: 'span',
-                })
+              })
             )
           } else {
             builder.add(
-                node.from,
-                node.to,
-                Decoration.widget({
-                    widget: new TagWidget(src.slice(node.from+1, node.to)),
-                })
+              node.from,
+              node.to,
+              Decoration.widget({
+                widget: new TagWidget(src.slice(node.from + 1, node.to)),
+              })
             )
           }
         }

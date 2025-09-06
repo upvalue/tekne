@@ -21,8 +21,7 @@ const CommandPaletteContent = () => {
  * Returns the actual nav path for a given date
  */
 const getDayNotePath = (date: Date, delta: number) => {
-  const newDate = addDays(date, delta);
-
+  const newDate = addDays(date, delta)
 
   return `/n/${formatDate(newDate)}`
 }
@@ -47,7 +46,6 @@ const openTodaysNote = (navigate: NavigateFn) => {
   navigate({ to: getDayNotePath(new Date(), 0) })
 }
 
-
 export const CommandPalette: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
@@ -62,8 +60,8 @@ export const CommandPalette: React.FC<{ children: React.ReactNode }> = ({
     return [
       {
         id: 'daily-note-today',
-        name: 'Open today\'s daily note',
-        subtitle: 'Open today\'s daily note',
+        name: "Open today's daily note",
+        subtitle: "Open today's daily note",
         perform: () => openTodaysNote(navigate),
         keywords: 'daily note today',
       },

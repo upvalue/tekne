@@ -1,6 +1,11 @@
 import { useState } from 'react'
 import { useRouter } from '@tanstack/react-router'
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/vendor/Tabs'
+import {
+  Tabs,
+  TabsList,
+  TabsTrigger,
+  TabsContent,
+} from '@/components/vendor/Tabs'
 import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
 import { useAtom } from 'jotai'
 import { analyzeDoc, zdoc } from '@/editor/schema'
@@ -45,7 +50,11 @@ const RawDocument = ({ isActive }: { isActive: boolean }) => {
   }
 
   if (!isActive) {
-    return <div className="p-4 text-gray-500">Document content will load when tab is active</div>
+    return (
+      <div className="p-4 text-gray-500">
+        Document content will load when tab is active
+      </div>
+    )
   }
 
   return (
@@ -72,9 +81,13 @@ const RawDocument = ({ isActive }: { isActive: boolean }) => {
 
 const TreeDocument = ({ isActive }: { isActive: boolean }) => {
   const [doc] = useAtom(docAtom)
-  
+
   if (!isActive) {
-    return <div className="p-4 text-gray-500">Tree document will load when tab is active</div>
+    return (
+      <div className="p-4 text-gray-500">
+        Tree document will load when tab is active
+      </div>
+    )
   }
 
   return (
@@ -84,11 +97,9 @@ const TreeDocument = ({ isActive }: { isActive: boolean }) => {
   )
 }
 
-
-
 export const DevTools = () => {
-  const usingPglite = !!window.dbHandle;
-  const [activeTab, setActiveTab] = useState("raw")
+  const usingPglite = !!window.dbHandle
+  const [activeTab, setActiveTab] = useState('raw')
 
   const router = useRouter()
   return (
@@ -96,22 +107,20 @@ export const DevTools = () => {
       <TabsList>
         <TabsTrigger value="raw">Document Content</TabsTrigger>
         <TabsTrigger value="tree">Tree Document</TabsTrigger>
-        {usingPglite &&
-          <TabsTrigger value="pglite">pglite</TabsTrigger>
-        }
+        {usingPglite && <TabsTrigger value="pglite">pglite</TabsTrigger>}
         <TabsTrigger value="tanstackdev">TanStack Devtools</TabsTrigger>
       </TabsList>
       <TabsContent value="raw">
-        <RawDocument isActive={activeTab === "raw"} />
+        <RawDocument isActive={activeTab === 'raw'} />
       </TabsContent>
       <TabsContent value="tree">
-        <TreeDocument isActive={activeTab === "tree"} />
+        <TreeDocument isActive={activeTab === 'tree'} />
       </TabsContent>
-      {usingPglite &&
+      {usingPglite && (
         <TabsContent value="pglite">
           <PgliteDevtools />
         </TabsContent>
-      }
+      )}
       <TabsContent value="tanstackdev">
         <TanStackRouterDevtoolsPanel router={router} />
       </TabsContent>
