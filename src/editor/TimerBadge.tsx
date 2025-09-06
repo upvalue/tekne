@@ -254,6 +254,7 @@ export const TimerBadge = ({
     const duration = parseTime(timeInput)
     if (duration !== null) {
       setLine((line) => {
+        if (!line) return;
         line.datumTime = duration
       })
     }
