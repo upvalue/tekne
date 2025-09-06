@@ -11,9 +11,9 @@ export const IconBadge = ({
   return (
     <BadgeButton
       {...props}
-      className="dark:bg-zinc-900"
+      className="bg-zinc-editor-main"
       color="zinc"
-      badgeClassName="dark:bg-zinc-900"
+      badgeClassName="bg-zinc-editor-main"
     >
       <div className="w-4 h-4">{icon}</div>
       {children}

@@ -31,9 +31,19 @@ body {
   background-color: var(--color-zinc-700) !important;
 }
 
-.Panel {
+.bg-zinc-editor-main {
   background-color: color-mix(in srgb, var(--color-zinc-900) 98%, white);
 }
+
+.Editor {
+  background-color: color-mix(in srgb, var(--color-zinc-900) 98%, white);
+}
+
+.Panel {
+  background-color: var(--color-zinc-900);
+  border-left: 1px solid var(--color-zinc-800);
+}
+
 
 * {
   scrollbar-width: thin;

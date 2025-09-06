@@ -39,6 +39,9 @@
   @apply mb-2;
 }
 
+.TitleBar {
+  height: 64px;
+}
 
 .StatusBar {
   background-color: color-mix(
