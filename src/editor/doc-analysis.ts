@@ -74,6 +74,9 @@ export const treeifyDoc = (doc: ZDoc): ZDocTree => {
   return root
 }
 
+const zdocDatumType = z.enum(['task', 'timer'])
+
+type ZDocDatumType = z.infer<typeof zdocDatumType>
 /**
  *
  */
@@ -84,47 +87,48 @@ const zdocDatum = z.object({
   datumTag: z.string(),
   datumStatus: z.optional(z.enum(['complete', 'incomplete', 'unset'])),
   datumTimeSeconds: z.optional(z.number()),
+  datumType: zdocDatumType,
 })
 
 type ZDocDatum = z.infer<typeof zdocDatum>
-const makeDatum = (tag: string, tline: ZTreeLine): ZDocDatum => {
+const makeDatum = (
+  tag: string,
+  tline: ZTreeLine,
+  datumType: ZDocDatumType
+): ZDocDatum => {
   return {
     lineIdx: tline.arrayIdx,
     timeCreated: tline.timeCreated,
     timeUpdated: tline.timeUpdated,
     datumTag: tag,
+    datumType: datumType,
   }
 }
 
-const extractDocDataImpl = (
-  ln: ZTreeLine,
-  accum: Array<ZDocDatum>
-): Array<ZDocDatum> => {
+const extractDocDataImpl = (ln: ZTreeLine, accum: Array<ZDocDatum>) => {
   for (const child of ln.children) {
-    // console.log({ child })
     extractDocDataImpl(child, accum)
   }
 
   for (const tag of ln.tags) {
     if (ln.datumTaskStatus) {
-      const datum = makeDatum(tag, ln)
+      const datum = makeDatum(tag, ln, 'task')
       datum.datumStatus = ln.datumTaskStatus
       accum.push(datum)
     }
 
     if (ln.datumTimeSeconds) {
-      const datum = makeDatum(tag, ln)
+      const datum = makeDatum(tag, ln, 'timer')
       datum.datumTimeSeconds = ln.datumTimeSeconds
       accum.push(datum)
     }
   }
-  return []
 }
 
-export const extractDocData = (doc: ZDocTree): Array<ZDocDatum> => {
+export const extractDocData = (lines: Array<ZTreeLine>): Array<ZDocDatum> => {
   const ret: Array<ZDocDatum> = []
-  for (const child of doc.children) {
-    extractDocDataImpl(child, ret)
+  for (const line of lines) {
+    extractDocDataImpl(line, ret)
   }
   return ret
 }

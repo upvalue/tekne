@@ -22,5 +22,9 @@ export function getDocTitle(): string | null {
  */
 export function useDocTitle(): string | null {
   const location = useLocation()
-  return getDocTitle(location.pathname)
+  const pathname = location.pathname
+  if (pathname.startsWith('/n/')) {
+    return pathname.slice(3)
+  }
+  return null
 }

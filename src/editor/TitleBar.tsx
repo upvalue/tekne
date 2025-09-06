@@ -20,7 +20,7 @@ export const TitleBar = ({
   const editableRef = useRef<HTMLDivElement>(null)
   const navigate = useNavigate()
 
-  const renameDocMutation = trpc.renameDoc.useMutation({
+  const renameDocMutation = trpc.doc.renameDoc.useMutation({
     onSuccess: () => {
       setErrorMessage(null)
       navigate({

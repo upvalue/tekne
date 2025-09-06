@@ -22,7 +22,7 @@ const DocumentSearchContent = () => {
     return () => clearTimeout(timer)
   }, [query])
 
-  const searchDocs = trpc.searchDocs.useQuery(
+  const searchDocs = trpc.doc.searchDocs.useQuery(
     { query: debouncedQuery },
     {
       enabled: true,

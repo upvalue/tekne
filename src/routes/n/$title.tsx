@@ -46,7 +46,7 @@ function RouteComponent() {
     setMainTitle(title)
   }, [title])
 
-  const updateDocMutation = trpc.updateDoc.useMutation({
+  const updateDocMutation = trpc.doc.updateDoc.useMutation({
     onError: (e) => {
       console.error(e)
       toast.error(
@@ -61,7 +61,7 @@ function RouteComponent() {
     return store
   }, [])
 
-  const loadDocQuery = trpc.loadDoc.useQuery({ name: title })
+  const loadDocQuery = trpc.doc.loadDoc.useQuery({ name: title })
 
   // Document saving functionality
   // On an interval, if the document has changed this will send an updateDoc mutation

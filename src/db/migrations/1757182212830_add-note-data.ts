@@ -6,6 +6,9 @@ export async function up(db: Kysely<any>): Promise<void> {
     .createType('note_data_status_t')
     .asEnum(['complete', 'incomplete', 'unset'])
     .execute()
+
+  db.schema.createType('note_data_type_t').asEnum(['task', 'timer']).execute()
+
   db.schema
     .createTable('note_data')
     .addColumn('note_title', 'text', (col) =>
@@ -17,6 +20,7 @@ export async function up(db: Kysely<any>): Promise<void> {
     .addColumn('datum_tag', 'text', (col) => col.notNull())
     .addColumn('datum_status', sql`note_data_status_t`)
     .addColumn('datum_time_seconds', 'bigint')
+    .addColumn('datum_type', sql`note_data_type_t`)
     .execute()
 }
 
@@ -27,6 +31,7 @@ export async function down(db: Kysely<any>): Promise<void> {
   // For more info, see: https://kysely.dev/docs/migrations
 
   db.schema.dropType('note_data_status_t')
+  db.schema.dropType('note_data_type_t')
   db.schema.dropTable('note_data')
 }
 

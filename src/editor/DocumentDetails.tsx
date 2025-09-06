@@ -14,7 +14,7 @@ import { trpc } from '@/trpc/client'
 const DocumentDetails = () => {
   const docTitle = getDocTitle()
 
-  const { isLoading, data } = trpc.loadDocDetails.useQuery({
+  const { isLoading, data } = trpc.doc.loadDocDetails.useQuery({
     name: docTitle || '',
   })
 

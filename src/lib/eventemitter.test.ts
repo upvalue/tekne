@@ -4,7 +4,7 @@ import { useState } from 'react'
 import {
   TypedEventEmitter,
   useEventEmitter,
-  useCustomEventListener,
+  useEmitterEventListener,
   useEvent,
 } from './eventemitter'
 
@@ -293,7 +293,7 @@ describe('React Hooks', () => {
       const handler = vi.fn()
 
       const { unmount } = renderHook(() =>
-        useCustomEventListener(emitter, 'userLogin', handler)
+        useEmitterEventListener(emitter, 'userLogin', handler)
       )
 
       expect(emitter.listenerCount('userLogin')).toBe(1)
@@ -311,7 +311,7 @@ describe('React Hooks', () => {
 
       const { rerender } = renderHook(
         ({ currentHandler }) =>
-          useCustomEventListener(emitter, 'userLogin', currentHandler),
+          useEmitterEventListener(emitter, 'userLogin', currentHandler),
         { initialProps: { currentHandler: handler } }
       )
 
@@ -341,7 +341,7 @@ describe('React Hooks', () => {
         }: {
           emitter: TypedEventEmitter<TestEvents>
           event: keyof TestEvents
-        }) => useCustomEventListener(emitter, event as any, handler),
+        }) => useEmitterEventListener(emitter, event as any, handler),
         {
           initialProps: {
             emitter: emitter1,
@@ -442,11 +442,11 @@ describe('React Hooks', () => {
         const emitter = useEventEmitter<TestEvents>()
         const [messages, setMessages] = useState<string[]>([])
 
-        useCustomEventListener(emitter, 'userLogin', (user) => {
+        useEmitterEventListener(emitter, 'userLogin', (user) => {
           setMessages((prev) => [...prev, `Welcome ${user.name}!`])
         })
 
-        useCustomEventListener(emitter, 'userLogout', () => {
+        useEmitterEventListener(emitter, 'userLogout', () => {
           setMessages((prev) => [...prev, 'Goodbye!'])
         })
 

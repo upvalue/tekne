@@ -104,7 +104,7 @@ const DocumentData = ({ isActive }: { isActive: boolean }) => {
   const [doc] = useAtom(docAtom)
 
   const data = useMemo(() => {
-    return extractDocData(treeifyDoc(doc))
+    return extractDocData(treeifyDoc(doc).children)
   }, [doc])
 
   if (!isActive) {
@@ -117,11 +117,11 @@ const DatabaseMigrations = ({ isActive }: { isActive: boolean }) => {
   const [shouldValidate, setShouldValidate] = useState(false)
   const [migrationResults, setMigrationResults] = useState<any>(null)
 
-  const { data: validationResults, isLoading, error } = trpc.validateAllDocs.useQuery(undefined, {
+  const { data: validationResults, isLoading, error } = trpc.doc.validateAllDocs.useQuery(undefined, {
     enabled: shouldValidate,
   })
 
-  const migrateMutation = trpc.migrateAllDocs.useMutation({
+  const migrateMutation = trpc.doc.migrateAllDocs.useMutation({
     onSuccess: (data) => {
       setMigrationResults(data)
       // Trigger revalidation after migration
@@ -306,17 +306,17 @@ const DatabaseMigrations = ({ isActive }: { isActive: boolean }) => {
                 <h3 className="font-semibold mb-3">Problematic Documents</h3>
                 <div className="space-y-3">
                   {validationResults.results.map((result: any, idx: number) => {
-                    const bgColor = result.canBeFxedByMigration 
-                      ? "bg-blue-50 dark:bg-blue-900/20" 
+                    const bgColor = result.canBeFxedByMigration
+                      ? "bg-blue-50 dark:bg-blue-900/20"
                       : "bg-red-50 dark:bg-red-900/20"
-                    const textColor = result.canBeFxedByMigration 
-                      ? "text-blue-800 dark:text-blue-200" 
+                    const textColor = result.canBeFxedByMigration
+                      ? "text-blue-800 dark:text-blue-200"
                       : "text-red-800 dark:text-red-200"
-                    const subTextColor = result.canBeFxedByMigration 
-                      ? "text-blue-700 dark:text-blue-300" 
+                    const subTextColor = result.canBeFxedByMigration
+                      ? "text-blue-700 dark:text-blue-300"
                       : "text-red-700 dark:text-red-300"
-                    const listTextColor = result.canBeFxedByMigration 
-                      ? "text-blue-600 dark:text-blue-400" 
+                    const listTextColor = result.canBeFxedByMigration
+                      ? "text-blue-600 dark:text-blue-400"
                       : "text-red-600 dark:text-red-400"
 
                     return (
@@ -337,7 +337,7 @@ const DatabaseMigrations = ({ isActive }: { isActive: boolean }) => {
                             )}
                           </div>
                         </div>
-                        
+
                         {result.errors.length > 0 && (
                           <div className="mb-2">
                             <h5 className={`text-sm font-medium ${subTextColor} mb-1`}>

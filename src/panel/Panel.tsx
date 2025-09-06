@@ -1,6 +1,6 @@
 import { DevTools } from '@/dev/DevTools'
 import { Help } from './Help'
-import { Search } from './Search'
+import { Aggregate } from './Aggregate'
 import {
   Navbar,
   NavbarSection,
@@ -46,21 +46,12 @@ export function Panel() {
               <WrenchScrewdriverIcon className="w-4 h-4" data-slot="icon" />
               <NavbarLabel>Dev</NavbarLabel>
             </NavbarItem>
-            {/*
-            <NavbarItem
-              current={activeTab === 'search'}
-              onClick={() => setActiveTab('search')}
-            >
-              <MagnifyingGlassIcon className="w-4 h-4" data-slot="icon" />
-              <NavbarLabel>Search</NavbarLabel>
-            </NavbarItem>
-            */}
           </NavbarSection>
         </Navbar>
       </div>
       <div className="flex-1 overflow-auto min-h-0">
         <ErrorBoundary title="Panel crashed">
-          {activeTab === 'search' && <Search />}
+          {activeTab === 'aggregate' && <Aggregate />}
           {activeTab === 'help' && <Help />}
           {activeTab === 'devtools' && (
             <div className="p-4 h-full">
