@@ -2,8 +2,32 @@
 
 // This is a pretty hacky and slop-coded document migrator, intended
 // to make it relatively easy to change the document schema on the fly
-import { CURRENT_SCHEMA_VERSION, zdoc } from './schema'
+import { CURRENT_SCHEMA_VERSION, zdoc, zline } from './schema'
 import { ZodError } from 'zod'
+
+/**
+ * Extract allowed field names from a Zod object schema
+ */
+const getZodObjectKeys = (zodSchema: any): Set<string> => {
+  try {
+    // For ZodObject, we can access the shape property
+    if (zodSchema._def && zodSchema._def.shape) {
+      return new Set(Object.keys(zodSchema._def.shape))
+    }
+    
+    // Fallback: try to parse an empty object to get validation errors
+    // This will tell us what fields are required
+    const shape = zodSchema.shape || zodSchema._def.shape
+    if (shape) {
+      return new Set(Object.keys(shape))
+    }
+    
+    return new Set()
+  } catch (error) {
+    console.warn('Could not extract keys from Zod schema:', error)
+    return new Set()
+  }
+}
 
 export interface MigrationOperation {
   type: 'rename' | 'delete' | 'add' | 'update'
@@ -183,7 +207,7 @@ export const validateDocumentWithMigrationCheck = (
     // Check for extra fields in document body
     const docBody = doc.body
     if (typeof docBody === 'object' && docBody !== null) {
-      const allowedDocFields = new Set(['type', 'schemaVersion', 'children'])
+      const allowedDocFields = getZodObjectKeys(zdoc)
       const actualDocFields = new Set(Object.keys(docBody))
 
       for (const field of actualDocFields) {
@@ -195,17 +219,7 @@ export const validateDocumentWithMigrationCheck = (
 
       // Check children for extra fields
       if (Array.isArray(docBody.children)) {
-        const allowedLineFields = new Set([
-          'type',
-          'mdContent',
-          'indent',
-          'timeCreated',
-          'timeUpdated',
-          'collapsed',
-          'datumTimeSeconds',
-          'datumTaskStatus',
-          'color',
-        ])
+        const allowedLineFields = getZodObjectKeys(zline)
 
         docBody.children.forEach((child: any, idx: number) => {
           if (typeof child === 'object' && child !== null) {
@@ -252,7 +266,7 @@ export const validateDocumentWithMigrationCheck = (
 
       const docBody = migratedDoc.body
       if (typeof docBody === 'object' && docBody !== null) {
-        const allowedDocFields = new Set(['type', 'schemaVersion', 'children'])
+        const allowedDocFields = getZodObjectKeys(zdoc)
         const actualDocFields = new Set(Object.keys(docBody))
 
         for (const field of actualDocFields) {
@@ -264,17 +278,7 @@ export const validateDocumentWithMigrationCheck = (
 
         // Check children for extra fields
         if (Array.isArray(docBody.children)) {
-          const allowedLineFields = new Set([
-            'type',
-            'mdContent',
-            'indent',
-            'timeCreated',
-            'timeUpdated',
-            'collapsed',
-            'datumTimeSeconds',
-            'datumTaskStatus',
-            'color',
-          ])
+          const allowedLineFields = getZodObjectKeys(zline)
 
           docBody.children.forEach((child: any, idx: number) => {
             if (typeof child === 'object' && child !== null) {
