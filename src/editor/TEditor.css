@@ -28,7 +28,7 @@
 .ELine-focused {
   background-color: color-mix(
     in srgb,
-    var(--color-sky-400) 15%,
+    var(--color-sky-400) 12%,
     transparent
   );
 }
@@ -72,11 +72,24 @@
   font-weight: bold;
 }
 
+.cm-strikethrough {
+  text-decoration-line: line-through;
+}
+
 .cm-tag,
 .cm-internal-link,
 .cm-link {
   @apply text-sky-500;
   @apply cursor-pointer;
+}
+
+.cm-inline-code {
+  font-family: var(--font-mono);
+  @apply bg-zinc-800
+}
+
+.cm-editor.cm-focused .cm-inline-code {
+  @apply bg-sky-900
 }
 
 .editor-line-blue {

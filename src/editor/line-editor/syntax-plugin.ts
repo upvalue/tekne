@@ -7,7 +7,11 @@ import {
   type PluginValue,
 } from '@codemirror/view'
 import { RangeSetBuilder } from '@codemirror/state'
-import { parser as baseParser, type MarkdownConfig } from '@lezer/markdown'
+import {
+  parser as baseParser,
+  type MarkdownConfig,
+  Strikethrough,
+} from '@lezer/markdown'
 import { tags as t } from '@lezer/highlight'
 import { emitCodemirrorEvent } from './cm-events'
 
@@ -95,6 +99,7 @@ const TagConfig: MarkdownConfig = {
 const parser = baseParser.configure([
   InternalLinkConfig,
   TagConfig,
+  Strikethrough,
   {
     // For now, we don't support most Markdown stuff.
 
@@ -207,6 +212,16 @@ class TagWidget extends WidgetType {
   }
 }
 
+// Table to make the code a bit easier to follow
+// Simple string => create a span with that classname
+const syntaxTable: {
+  [key: string]: string
+} = {
+  Emphasis: 'cm-italic',
+  StrongEmphasis: 'cm-bold',
+  Strikethrough: 'cm-strikethrough',
+}
+
 /**
  * The syntax plugin handles editor syntax -- implements a subset
  * of Markdown based on the @lezer/markdown parser and some custom
@@ -235,30 +250,24 @@ class SyntaxPlugin implements PluginValue {
     const tree = parser.parse(src)
 
     // Log parsed tree
-    visitTree(tree.topNode, src, 0, logTree)
+    // visitTree(tree.topNode, src, 0, logTree)
+
+    // TODO: Quite a bit of redundant code here that could
+    // be simplified
 
     visitTree(
       tree.topNode,
       src,
       0,
       (node: any, source: string, level: number) => {
-        if (node.type.name === 'Emphasis') {
-          builder.add(
-            node.from,
-            node.to,
-            Decoration.mark({
-              class: 'cm-italic',
-              tagName: 'span',
-            })
-          )
-        }
+        const tableEntry = syntaxTable[node.type.name]
 
-        if (node.type.name === 'StrongEmphasis') {
+        if (tableEntry) {
           builder.add(
             node.from,
             node.to,
             Decoration.mark({
-              class: 'cm-bold',
+              class: tableEntry,
               tagName: 'span',
             })
           )
@@ -278,11 +287,16 @@ class SyntaxPlugin implements PluginValue {
             const urlNode = node.getChild('URL')
             if (urlNode) {
               const url = src.slice(urlNode.from, urlNode.to)
+              const linkMarks = node.getChildren('LinkMark')
+              let text = url
+              try {
+                text = src.slice(linkMarks[0].to, linkMarks[1].from)
+              } catch (e) {}
               builder.add(
                 node.from,
                 node.to,
                 Decoration.widget({
-                  widget: new LinkWidget(url, url),
+                  widget: new LinkWidget(url, text),
                 })
               )
             }
@@ -330,6 +344,17 @@ class SyntaxPlugin implements PluginValue {
               })
             )
           }
+        }
+
+        if (node.type.name === 'InlineCode') {
+          builder.add(
+            node.from,
+            node.to,
+            Decoration.mark({
+              class: 'cm-inline-code',
+              tagName: 'span',
+            })
+          )
         }
       }
     )

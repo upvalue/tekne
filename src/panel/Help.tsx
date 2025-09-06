@@ -44,10 +44,11 @@ const SyntaxHelp = () => {
   return (
     <div>
       <h2 className="text-lg font-semibold mb-4">Editor Syntax</h2>
+      <p>Editor syntax is a mix of customizations and a subset of Markdown.</p>
       <DescriptionList>
         <DescriptionTerm>Internal links</DescriptionTerm>
         <DescriptionDetails>
-          <Badge>{`[[WikiLinks]]`}</Badge>
+          <Badge>{`[[InternalLinks]]`}</Badge>
         </DescriptionDetails>
       </DescriptionList>
 
@@ -55,6 +56,41 @@ const SyntaxHelp = () => {
         <DescriptionTerm>Tags</DescriptionTerm>
         <DescriptionDetails>
           <Badge>{`#tag`}</Badge>
+        </DescriptionDetails>
+      </DescriptionList>
+
+      <DescriptionList>
+        <DescriptionTerm>External links</DescriptionTerm>
+        <DescriptionDetails>
+          <Badge>{`[link text](https://example.com)`}</Badge>
+        </DescriptionDetails>
+      </DescriptionList>
+
+      <DescriptionList>
+        <DescriptionTerm>Bold</DescriptionTerm>
+        <DescriptionDetails>
+          <Badge>{`**bold**`}</Badge>
+        </DescriptionDetails>
+      </DescriptionList>
+
+      <DescriptionList>
+        <DescriptionTerm>Italic</DescriptionTerm>
+        <DescriptionDetails>
+          <Badge>{`_italic_`}</Badge>
+        </DescriptionDetails>
+      </DescriptionList>
+
+
+      <DescriptionList>
+        <DescriptionTerm>Strikethrough</DescriptionTerm>
+        <DescriptionDetails>
+          <Badge>{`~~strikethrough~~`}</Badge>
+        </DescriptionDetails>
+      </DescriptionList>
+      <DescriptionList>
+        <DescriptionTerm>Inline code</DescriptionTerm>
+        <DescriptionDetails>
+          <Badge>{`\`Inline code\``}</Badge>
         </DescriptionDetails>
       </DescriptionList>
     </div>

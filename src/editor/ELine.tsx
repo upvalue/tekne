@@ -71,9 +71,7 @@ export const ELine = (lineInfo: ELineProps) => {
           </div>
         </>
       }
-      {line.datumTime !== undefined && (
-        <TimerBadge lineInfo={lineInfo} time={line.datumTime} />
-      )}
+
       {line.datumTaskStatus && (
         <Checkbox
           className="ml-2"
@@ -88,6 +86,10 @@ export const ELine = (lineInfo: ELineProps) => {
             })
           }}
         />
+      )}
+
+      {line.datumTime !== undefined && (
+        <TimerBadge lineInfo={lineInfo} time={line.datumTime} />
       )}
 
       <div

@@ -22,7 +22,7 @@ const ExampleDoc = ({ children }: { children: React.ReactNode }) => {
         {
           ...lineMake(
             0,
-            '**test markdown** [link](https://google.com) [[InternalLink]] #asdf'
+            '_italic_ **bold** ~~strikethrough~~ '
           ),
         },
       ]),

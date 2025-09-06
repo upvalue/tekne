@@ -91,9 +91,9 @@ export const TitleBar = ({
   return (
     <div className="flex py-2 px-4 items-center TitleBar">
       <div style={{ flexBasis: '138px' }} className="flex justify-end pr-4">
-        <div className="text text-yellow-500">{isDev && '[dev]'}</div>
-        <div className="text text-yellow-500">{isDemo && '[demo]'}</div>
-        <div className="text text-yellow-500">{isDevServer && '[server]'}</div>
+        <div className="text text-sky-500">{isDev && '[dev]'}</div>
+        <div className="text text-sky-500">{isDemo && '[demo]'}</div>
+        <div className="text text-sky-500">{isDevServer && '[server]'}</div>
       </div>
 
       <div className="w-full">
