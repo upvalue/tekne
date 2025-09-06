@@ -5,12 +5,6 @@
   caret-color: white;
 }
 
-.cm-tag,
-.cm-wiki-link {
-  @apply text-emerald-500;
-  @apply cursor-pointer;
-}
-
 .cm-editor .cm-scroller {
   font-family: var(--font-editor);
 }
@@ -23,11 +17,6 @@
 }
 
 .cm-completionLabel {
-  font-family: var(--font-editor);
-}
-
-.cm-line {
-  font-weight: 400;
   font-family: var(--font-editor);
 }
 
@@ -52,6 +41,11 @@
   );
 }
 
+.cm-line {
+  font-weight: 400;
+  font-family: var(--font-editor);
+}
+
 .cm-content.cm-lineWrapping {
   padding: 0;
 }
@@ -60,13 +54,18 @@
   outline: none;
 }
 
-  .cm-hidden {
-    display: none;
-  }
-.cm-hidden:after {
-  content:"wut";
+.cm-italic {
+  font-style:italic; 
 }
 
+.cm-bold {
+  font-weight: bold;
+}
+
+.cm-tag, .cm-internal-link, .cm-link {
+  @apply text-emerald-500;
+  @apply cursor-pointer;
+}
 
 .editor-line-blue {
   background-color: color-mix(

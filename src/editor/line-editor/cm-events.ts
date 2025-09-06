@@ -1,11 +1,11 @@
-import { TypedEventEmitter, useCustomEventListener } from '@/lib/events'
+import { TypedEventEmitter, useEmitterEventListener } from '@/lib/eventemitter'
 import type { LineColor } from '../schema'
 
 export type TagClickEventDetail = {
   name: string
 }
 
-export type WikiLinkClickEventDetail = {
+export type InternalLinkClickEventDetail = {
   link: string
 }
 
@@ -28,7 +28,7 @@ export type LineColorChangeEvent = {
 
 type CodemirrorEvents = {
   tagClick: TagClickEventDetail
-  wikiLinkClick: WikiLinkClickEventDetail
+  internalLinkClick: InternalLinkClickEventDetail
   lineTimerAdd: LineTimerEvent
   lineTagToggle: LineStatusEvent
   lineCollapseToggle: LineCollapseToggleEvent
@@ -50,7 +50,7 @@ export const useCodemirrorEvent = <K extends keyof CodemirrorEvents>(
     ? () => void
     : (data: CodemirrorEvents[K]) => void
 ) => {
-  useCustomEventListener(codemirrorEmitter, event, handler)
+  useEmitterEventListener(codemirrorEmitter, event, handler)
 }
 
 export const emitCodemirrorEvent = <K extends keyof CodemirrorEvents>(

@@ -15,6 +15,7 @@ import { tagPlugin } from './line-editor/tag-plugin'
 import { slashCommandsPlugin } from './line-editor/slash-commands-plugin'
 import { placeholder } from './line-editor/placeholder-plugin'
 import { makeKeymap, toggleCollapse } from './line-editor/line-operations'
+import { syntaxPlugin } from './line-editor/syntax-plugin'
 
 const theme = EditorView.theme(
   // Preferring to do these in TEditor.css
@@ -137,9 +138,10 @@ export const useCodeMirror = (lineInfo: LineWithIdx) => {
       customKeymap,
       keymap.of(emacsStyleKeymap),
       EditorView.lineWrapping,
-      tagPlugin,
-      wikiLinkPlugin,
-       placeholderPlugin,
+      // tagPlugin,
+      // wikiLinkPlugin,
+      syntaxPlugin,
+      placeholderPlugin,
       autocompletion({
         override: [slashCommandsPlugin(lineInfo.lineIdx)],
       }),

@@ -108,8 +108,8 @@ function RouteComponent() {
   })
 
   useEventListener('beforeunload', (event: BeforeUnloadEvent) => {
-    userNavigatingAway.current = true;
     if (docDirty.current) {
+      userNavigatingAway.current = true;
       saveDocument();
       event.preventDefault();
       event.returnValue = 'You have unsaved changes. Are you sure you want to leave?';
@@ -133,6 +133,9 @@ function RouteComponent() {
     }
     const unsub = store.sub(docAtom, () => {
       // Document changed, mark dirty
+      if (store.get(docAtom) === loadDocQuery.data) {
+        return;
+      }
       docDirty.current = true;
       // Don't try to save if less than five seconds have elapsed
       // saveDocument();
@@ -151,7 +154,7 @@ function RouteComponent() {
 
   const navigate = useNavigate()
 
-  useCodemirrorEvent('wikiLinkClick', (event) => {
+  useCodemirrorEvent('internalLinkClick', (event) => {
     navigate({
       to: '/n/$title',
       params: {

@@ -1,60 +1,5 @@
 import { useEffect, useRef, useMemo } from 'react'
 
-
-// Example usage:
-/*
-import { useEventEmitter, useEventListener, useEvent } from './@/lib/events'
-
-type Events = {
-  userLogin: { id: string; name: string }
-  userLogout: undefined
-  dataUpdate: { timestamp: number; payload: any }
-}
-
-function MyComponent() {
-  const emitter = useEventEmitter<Events>()
-  
-  // Listen to events
-  useEventListener(emitter, 'userLogin', (user) => {
-    console.log(`Welcome ${user.name}!`) // user is fully typed
-  })
-  
-  useEventListener(emitter, 'userLogout', () => {
-    console.log('Goodbye!') // No parameters for undefined events
-  })
-  
-  // Get typed emit functions
-  const emitLogin = useEvent(emitter, 'userLogin')
-  const emitLogout = useEvent(emitter, 'userLogout')
-  
-  return (
-    <div>
-      <button onClick={() => emitLogin({ id: '123', name: 'John' })}>
-        Login
-      </button>
-      <button onClick={() => emitLogout()}>
-        Logout
-      </button>
-    </div>
-  )
-}
-
-// Direct usage outside of components
-const globalEmitter = new TypedEventEmitter<Events>()
-
-globalEmitter.on('userLogin', (user) => {
-  console.log(user.name) // Fully typed!
-})
-
-globalEmitter.emit('userLogin', { id: '456', name: 'Jane' })
-globalEmitter.emit('userLogout') // No arguments needed
-
-// TypeScript will error on these:
-// globalEmitter.emit('userLogin') // Error: Expected 1 argument
-// globalEmitter.emit('userLogout', {}) // Error: Expected 0 arguments
-// globalEmitter.emit('unknownEvent', {}) // Error: 'unknownEvent' not in Events
-*/
-
 export class TypedEventEmitter<TEvents extends Record<string, any>> {
   private listeners = new Map<keyof TEvents, Set<(data: any) => void>>()
 
@@ -70,6 +15,7 @@ export class TypedEventEmitter<TEvents extends Record<string, any>> {
 
     const listenersSet = this.listeners.get(event)!
     listenersSet.add(listener as any)
+
 
     // Return unsubscribe function
     return () => {
@@ -99,6 +45,7 @@ export class TypedEventEmitter<TEvents extends Record<string, any>> {
     event: K,
     ...args: TEvents[K] extends undefined ? [] : [data: TEvents[K]]
   ): void {
+    console.log('event', {event});
     const listenersSet = this.listeners.get(event)
     if (listenersSet) {
       listenersSet.forEach((listener) => {
@@ -148,8 +95,8 @@ export function useEventEmitter<
   return emitterRef.current
 }
 
-// Hook: useCustomEventListener
-export function useCustomEventListener<
+// Hook: useEventListener
+export function useEmitterEventListener<
   TEvents extends Record<string, any>,
   K extends keyof TEvents,
 >(
@@ -178,7 +125,7 @@ export function useCustomEventListener<
   }, [emitter, event])
 }
 
-// Hook: useEvent (emit helper)
+// Hook: useEventCustom (emit helper)
 export function useEvent<
   TEvents extends Record<string, any>,
   K extends keyof TEvents,

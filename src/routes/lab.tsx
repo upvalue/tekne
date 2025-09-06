@@ -7,14 +7,12 @@ import { useHydrateAtoms } from 'jotai/utils'
 import { EditorLayout } from '@/layout/EditorLayout'
 import { Panel } from '@/panel/Panel'
 import { TitleBar } from '@/editor/TitleBar'
+import { useCodemirrorEvent } from '@/editor/line-editor'
+import { toast } from 'sonner'
 
 export const Route = createFileRoute('/lab')({
   component: RouteComponent,
 })
-
-
-
-
 
 const ExampleDoc = ({ children }: { children: React.ReactNode }) => {
   useHydrateAtoms([
@@ -22,13 +20,7 @@ const ExampleDoc = ({ children }: { children: React.ReactNode }) => {
       docAtom,
       docMake([
         {
-          ...lineMake(0, 'The world is #test'),
-        },
-        {
-          ...lineMake(0, 'Number 2 #test'),
-        },
-        {
-          ...lineMake(1, '[[WikiLink]]'),
+          ...lineMake(0, '**test markdown** [link](https://google.com) [[InternalLink]] #asdf'),
         },
       ]),
     ],
@@ -38,6 +30,14 @@ const ExampleDoc = ({ children }: { children: React.ReactNode }) => {
 }
 
 function RouteComponent() {
+  useCodemirrorEvent('internalLinkClick', (data) => {
+    toast.info(`Clicked internal link ${data.link}`)
+  })
+
+  useCodemirrorEvent('tagClick', (data) => {
+    toast.info(`Clicked tag ${data.name}`)
+  })
+
   return (
     <Provider>
       <ExampleDoc>

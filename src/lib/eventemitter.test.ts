@@ -6,7 +6,7 @@ import {
   useEventEmitter,
   useCustomEventListener,
   useEvent,
-} from './events'
+} from './eventemitter'
 
 // Test event types
 type TestEvents = {
