@@ -4,6 +4,7 @@ import { trpc } from '@/trpc'
 import type { AggregateDataOutput } from '@/trpc/types'
 
 import { CheckCircleIcon, XCircleIcon, EllipsisHorizontalIcon, ClockIcon } from '@heroicons/react/24/outline'
+import { CircleStackIcon } from '@heroicons/react/24/outline'
 
 interface TaskStatusItemProps {
     icon: React.ComponentType<{ className?: string }>
@@ -121,6 +122,12 @@ export const Aggregate = () => {
     return (
         <div className="p-4">
             {data && <AggregateData data={data} />}
+            {!data &&
+                <div className="flex flex-col items-center justify-center h-full text-zinc-500 text-lg space-y-2 pt-4">
+                    <CircleStackIcon className="size-8 text-zinc-500" />
+                    <span>No tags found</span>
+                </div>
+            }
         </div>
     )
 }
