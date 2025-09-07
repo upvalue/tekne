@@ -11,6 +11,7 @@ import {
   validateDocumentWithMigrationCheck,
 } from '@/editor/doc-migrator'
 import { extractDocData, treeifyDoc } from '@/editor/doc-analysis'
+import { processDocumentForData, recomputeAllDocumentData } from '@/server/lib/docs'
 
 const linesToZodDoc = (title: string, children: Array<ZLine>): ZDoc => {
   return {
@@ -33,28 +34,18 @@ const upsertNote = async (db: Kysely<Database>, name: string, body: ZDoc) => {
       .onConflict((oc) => oc.column('title').doUpdateSet({ body }))
       .execute()
 
-    // Analyze doc to get data
-    const tree = treeifyDoc(linesToZodDoc(name, body.children))
-    const data = extractDocData(tree.children)
+    // Process document for data using shared function
+    const processedData = processDocumentForData(name, body)
 
     // Drop all data by note title
     await tx.deleteFrom('note_data').where('note_title', '=', name).execute()
 
-    await tx
-      .insertInto('note_data')
-      .values(
-        data.map((d) => ({
-          note_title: name,
-          line_idx: d.lineIdx,
-          time_created: new Date(d.timeCreated),
-          time_updated: new Date(d.timeUpdated),
-          datum_tag: d.datumTag,
-          datum_status: d.datumStatus,
-          datum_time_seconds: d.datumTimeSeconds,
-          datum_type: d.datumType,
-        }))
-      )
-      .execute()
+    if (processedData.length > 0) {
+      await tx
+        .insertInto('note_data')
+        .values(processedData)
+        .execute()
+    }
 
     console.log('upsertNote', r)
   })
@@ -330,5 +321,10 @@ export const docRouter = t.router({
       summary,
       reports: migrationReports.filter((r) => r.migrated), // Only return docs that were actually migrated
     }
+  }),
+
+  recomputeAllData: t.procedure.mutation(async ({ ctx: { db } }) => {
+    const result = await recomputeAllDocumentData(db)
+    return result
   }),
 })

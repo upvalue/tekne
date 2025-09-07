@@ -16,7 +16,7 @@ export const analysisRouter = t.router({
         .where('note_title', '=', input.title)
         .execute()
 
-      const data = await db
+      const taskData = await db
         .selectFrom('note_data')
         .select([
           'datum_tag as tag',
@@ -40,6 +40,49 @@ export const analysisRouter = t.router({
         .groupBy('datum_tag')
         .execute()
 
-      return data
+      const timerData = await db
+        .selectFrom('note_data')
+        .select([
+          'datum_tag as tag',
+          sql<number>`SUM(datum_time_seconds)`.as('total_time_seconds'),
+        ])
+        .where('datum_type', '=', 'timer')
+        .where(
+          'datum_tag',
+          'in',
+          tagsInDoc.map((t) => t.tag)
+        )
+        .groupBy('datum_tag')
+        .execute()
+
+      const tasks: {
+        [tag: string]: {
+          tag: string
+          complete_tasks?: number
+          incomplete_tasks?: number
+          unset_tasks?: number
+          total_time_seconds?: number
+        }
+      } = {}
+
+      for (const task of taskData) {
+        if (!tasks[task.tag]) {
+          tasks[task.tag] = { tag: task.tag }
+        }
+        tasks[task.tag] = {
+          tag: task.tag,
+          complete_tasks: task.complete_tasks,
+          incomplete_tasks: task.incomplete_tasks,
+          unset_tasks: task.unset_tasks,
+        }
+      }
+      for (const timer of timerData) {
+        if (!tasks[timer.tag]) {
+          tasks[timer.tag] = { tag: timer.tag }
+        }
+        tasks[timer.tag].total_time_seconds = timer.total_time_seconds
+      }
+
+      return Object.values(tasks)
     }),
 })

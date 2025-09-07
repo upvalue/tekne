@@ -19,42 +19,13 @@ import {
 import { Input } from '@/components/vendor/Input'
 import parseDuration from 'parse-duration'
 import { Button } from '@/components/vendor/Button'
-import { DialogClose } from '@radix-ui/react-dialog'
 import { ClockIcon, PlayIcon, StopIcon } from '@heroicons/react/16/solid'
 import { useCallback, useRef } from 'react'
-import { useAtom, useAtomValue, useSetAtom } from 'jotai'
+import { useAtom, useAtomValue } from 'jotai'
 import { setDetailTitle } from '@/lib/title'
+import { formatTimeDisplay, renderTime } from '@/lib/time'
 import { trpc } from '@/trpc/client'
 import { useEventListener } from '@/hooks/useEventListener'
-
-const renderTime = (seconds: number) => {
-  if (seconds === 0) return '0s'
-
-  const days = Math.floor(seconds / (24 * 60 * 60))
-  const hours = Math.floor((seconds % (24 * 60 * 60)) / (60 * 60))
-  const minutes = Math.floor((seconds % (60 * 60)) / 60)
-  const remainingSeconds = seconds % 60
-
-  const parts = []
-  if (days > 0) parts.push(`${days}d`)
-  if (hours > 0) parts.push(`${hours}h`)
-  if (minutes > 0) parts.push(`${minutes}m`)
-  if (remainingSeconds > 0 && parts.length === 0)
-    parts.push(`${remainingSeconds}s`)
-
-  return parts.join(' ')
-}
-
-const formatTimeDisplay = (seconds: number): string => {
-  const hours = Math.floor(seconds / 3600)
-  const minutes = Math.floor((seconds % 3600) / 60)
-  const secs = seconds % 60
-
-  if (hours > 0) {
-    return `${hours}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
-  }
-  return `${minutes}:${secs.toString().padStart(2, '0')}`
-}
 
 const parseTime = (time: string) => parseDuration(time, 's')
 

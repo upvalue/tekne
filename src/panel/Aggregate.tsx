@@ -1,23 +1,126 @@
 import { useDocTitle } from '@/hooks/useDocTitle'
+import { formatTimeDisplay, renderTime } from '@/lib/time'
 import { trpc } from '@/trpc'
+import type { AggregateDataOutput } from '@/trpc/types'
+
+import { CheckCircleIcon, XCircleIcon, EllipsisHorizontalIcon, ClockIcon } from '@heroicons/react/24/outline'
+
+interface TaskStatusItemProps {
+    icon: React.ComponentType<{ className?: string }>
+    count: number
+    className?: string
+}
+
+const TaskStatusItem = ({
+    icon: Icon,
+    count,
+    className = '',
+}: TaskStatusItemProps) => {
+    if (count <= 0) return null;
+
+    return (
+        <div className={`flex items-center space-x-1 ${className}`}>
+            <Icon className={"size-4"} />
+            <span className={"text-lg font-medium"}>
+                {count}
+            </span>
+        </div>
+    );
+};
+
+interface TaskStatusDisplayProps {
+    complete?: number
+    incomplete?: number
+    unset?: number
+    className?: string
+}
+
+const TaskStatusDisplay = ({ complete, incomplete, unset, className }: TaskStatusDisplayProps) => {
+    const hasTasks = (unset && unset > 0) || (complete && complete > 0) || (incomplete && incomplete > 0);
+
+    if (!hasTasks) {
+        return null;
+    }
+
+    return (
+        <div className={`flex space-x-4 items-center ${className || ''}`}>
+            {complete && (
+                <TaskStatusItem
+                    icon={CheckCircleIcon}
+                    count={complete}
+                    className="text-green-400"
+                />
+            )}
+            {incomplete && (
+                <TaskStatusItem
+                    icon={XCircleIcon}
+                    count={incomplete}
+                    className="text-zinc-400"
+                />
+            )}
+            {unset && (
+                <TaskStatusItem
+                    icon={EllipsisHorizontalIcon}
+                    count={unset || 0}
+                    className="text-zinc-400"
+                />
+            )}
+        </div>
+    );
+};
+
+const TimerDisplay = ({ time }: { time: number }) => {
+    return (
+        <div className="flex items-center text-zinc-200 space-x-1">
+            <ClockIcon className="size-4" />
+            <span className="text-lg font-medium">{renderTime(time)}</span>
+        </div>
+    )
+}
+
+const ResultCard = ({ tagData }: { tagData: AggregateDataOutput[number] }) => {
+    return (
+        <div className="relative">
+            <div className="bg-zinc-800 border border-zinc-700 rounded-lg shadow-sm p-4 flex flex-col space-y-2">
+                <span className="text-sm">
+                    {tagData.tag}
+                </span>
+                <TaskStatusDisplay
+                    complete={tagData.complete_tasks}
+                    incomplete={tagData.incomplete_tasks}
+                    unset={tagData.unset_tasks}
+                />
+                {tagData.total_time_seconds && (
+                    <TimerDisplay time={tagData.total_time_seconds} />
+                )}
+            </div>
+        </div>
+    )
+}
+
+const AggregateData = ({ data }: { data: AggregateDataOutput }) => {
+    return (
+        <div className="space-y-6">
+            <div className="grid grid-cols-2 gap-4">
+                {data.map((d) => (
+                    <ResultCard key={`card-${d.tag}`} tagData={d} />
+                ))}
+            </div>
+        </div>
+    )
+}
 
 export const Aggregate = () => {
     const title = useDocTitle()
-    
+
     const { data } = trpc.analysis.aggregateData.useQuery(
         { title: title! },
         { enabled: !!title }
     )
-    
+
     return (
-        <div>
-            <h2>Aggregate Data</h2>
-            {data && data.length > 0 && (
-                <pre>{JSON.stringify(data, null, 2)}</pre>
-            )}
-            {data && data.length === 0 && (
-                <p>No aggregate data found</p>
-            )}
+        <div className="p-4">
+            {data && <AggregateData data={data} />}
         </div>
     )
 }
