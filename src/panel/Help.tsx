@@ -100,7 +100,7 @@ const SyntaxHelp = () => {
 export const Help = React.memo(() => {
   const [selectedPage, setSelectedPage] = useState<
     'syntax' | 'keybindings' | string
-  >('syntax')
+  >('getting-started')
 
   // Build navigation items
   const allItems = useMemo(() => {

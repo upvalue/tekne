@@ -20,7 +20,6 @@ export const makeTutorial = () => {
     ),
     lineMake(0, 'In addition to key bindings, there are also slash commands'),
     lineMake(1, "Type `/date` at the end of this line to insert today's date."),
-    lineMake(0, 'Trigger the command palette with `Cmd-Shift-K`'),
     lineMake(0, 'A subset of Markdown syntax is supported'),
     lineMake(
       1,
@@ -46,6 +45,25 @@ export const makeTutorial = () => {
       datumTimeSeconds: 0,
     }),
     lineMake(1, 'Try clicking on them to see what they do'),
+    lineMake(1, 'Use slash commands like `/timer` and `/task` to add data'),
+    lineMake(0, 'You can #tag sections of your documents'),
+    lineMake(
+      1,
+      'When you add data (like tasks or timers) to tagged sections, you can see what the data looks like over time'
+    ),
+    lineMake(
+      1,
+      'Try updating this timer and waiting a little bit to see the data appear in the aggregate view',
+      {
+        datumTimeSeconds: 0,
+      }
+    ),
+    lineMake(0, 'You can open or create documents with `Cmd-K'),
+    lineMake(0, 'And trigger a command palette with `Cmd-Shift-K`'),
     lineMake(0, 'For more help, see the help section of the side panel'),
+    lineMake(
+      0,
+      'A good place to start is by opening the command palette and typing daily to create a daily note'
+    ),
   ]
 }

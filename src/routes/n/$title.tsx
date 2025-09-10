@@ -40,6 +40,7 @@ function RouteComponent() {
   const docLastSaved = useRef<Date>(new Date())
   const docDirty = useRef<boolean>(false)
   const userNavigatingAway = useRef<boolean>(false)
+  const utils = trpc.useUtils();
   // TODO: this whole thing needs a bit of cleanup
 
   useEffect(() => {
@@ -47,6 +48,9 @@ function RouteComponent() {
   }, [title])
 
   const updateDocMutation = trpc.doc.updateDoc.useMutation({
+    onSuccess: () => {
+      utils.analysis.aggregateData.invalidate();
+    },
     onError: (e) => {
       console.error(e)
       toast.error(
@@ -179,7 +183,7 @@ function RouteComponent() {
       params: {
         title: event.link,
       },
-    }).then(() => {})
+    }).then(() => { })
   })
 
   return (

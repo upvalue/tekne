@@ -6,6 +6,8 @@ import { useLocation, useRouter, type NavigateFn } from '@tanstack/react-router'
 import { formatDate } from '@/lib/utils'
 import { addDays, parse } from 'date-fns'
 import { getDocTitle } from '@/hooks/useDocTitle'
+import { trpc } from '@/trpc'
+import { toast } from 'sonner'
 
 const CommandPaletteContent = () => {
   return (
@@ -51,6 +53,7 @@ export const CommandPalette: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const { navigate } = useRouter()
+  const deleteDocMutation = trpc.doc.deleteDoc.useMutation()
 
   // Lorem ipsum actions for testing
   const actions = useMemo((): Action[] => {
@@ -77,8 +80,58 @@ export const CommandPalette: React.FC<{ children: React.ReactNode }> = ({
         perform: () => dailyNoteNavigate(navigate, 1),
         keywords: 'daily note tomorrow',
       },
+
+      {
+        id: 'delete-document',
+        name: 'Delete current document',
+        subtitle: 'Delete the currently open document and navigate to today\'s note',
+        perform: async () => {
+          const currentTitle = getDocTitle()
+          if (!currentTitle) {
+            console.error('No document currently open to delete')
+            return
+          }
+
+          try {
+            await deleteDocMutation.mutateAsync({ name: currentTitle })
+            openTodaysNote(navigate)
+          } catch (error) {
+            console.error('Failed to delete document:', error)
+          }
+        },
+        keywords: 'delete document remove',
+      },
+
+      {
+        id: 'restart-tutorial',
+        name: 'Restart tutorial',
+        subtitle: 'Restart the tutorial from the beginning',
+        perform: async () => {
+          try {
+            try {
+              await deleteDocMutation.mutateAsync({ name: 'Tutorial' })
+            } catch (e: any) {
+              // Ignore a not found error; it's OK if the tutorial doesn't
+              // exist
+              if (!e.toString().includes('not found')) {
+                throw e;
+
+              }
+
+            }
+            if (window.location.pathname === '/n/Tutorial') {
+              window.location.reload()
+            } else {
+              navigate({ to: '/n/$title', params: { title: 'Tutorial' } })
+            }
+          } catch (error) {
+            toast.error(`Failed to restart tutorial: ${error}`)
+          }
+        },
+        keywords: 'restart tutorial reset help',
+      },
     ]
-  }, [])
+  }, [deleteDocMutation])
 
   return (
     <KBarProvider

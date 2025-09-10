@@ -327,4 +327,30 @@ export const docRouter = t.router({
     const result = await recomputeAllDocumentData(db)
     return result
   }),
+
+  deleteDoc: t.procedure
+    .input(
+      z.object({
+        name: documentNameSchema,
+      })
+    )
+    .mutation(async ({ input, ctx: { db } }) => {
+      const { name } = input
+
+      // Check if document exists
+      const existingDoc = await db
+        .selectFrom('notes')
+        .select(['title'])
+        .where('title', '=', name)
+        .executeTakeFirst()
+
+      if (!existingDoc) {
+        throw new Error(`Document "${name}" not found`)
+      }
+
+      // Delete document (note_data will cascade delete automatically)
+      await db.deleteFrom('notes').where('title', '=', name).execute()
+
+      return { success: true, name }
+    }),
 })

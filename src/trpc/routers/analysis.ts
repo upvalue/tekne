@@ -1,6 +1,15 @@
+// analysis.ts - currently aggregate data related stuff
 import z from 'zod'
 import { t } from '../init'
 import { sql } from 'kysely'
+
+type TagAggregateData = {
+  tag: string
+  complete_tasks?: number
+  incomplete_tasks?: number
+  unset_tasks?: number
+  total_time_seconds?: number
+}
 
 export const analysisRouter = t.router({
   aggregateData: t.procedure
@@ -9,12 +18,16 @@ export const analysisRouter = t.router({
         title: z.string(),
       })
     )
-    .query(async ({ input, ctx: { db } }) => {
+    .query(async ({ input, ctx: { db } }): Promise<TagAggregateData[]> => {
       const tagsInDoc = await db
         .selectFrom('note_data')
         .select([sql<string>`DISTINCT datum_tag`.as('tag')])
         .where('note_title', '=', input.title)
         .execute()
+
+      if (tagsInDoc.length === 0) {
+        return []
+      }
 
       const taskData = await db
         .selectFrom('note_data')
@@ -56,13 +69,7 @@ export const analysisRouter = t.router({
         .execute()
 
       const tasks: {
-        [tag: string]: {
-          tag: string
-          complete_tasks?: number
-          incomplete_tasks?: number
-          unset_tasks?: number
-          total_time_seconds?: number
-        }
+        [tag: string]: TagAggregateData
       } = {}
 
       for (const task of taskData) {

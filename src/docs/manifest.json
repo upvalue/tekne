@@ -1,29 +1,29 @@
 {
-  "buildTimestamp": 1757115213704,
+  "buildTimestamp": 1757532523221,
   "files": [
-    {
-      "sourceFile": "../docs/design.mdx",
-      "outputFile": "generated/design.tsx",
-      "metadata": {
-        "title": "Design"
-      },
-      "sourceHash": "be0c1971c59524066ba58bd8119caeb3c5019bfc0fb7b482631e38609e821dee",
-      "buildTimestamp": 1757115213705,
-      "lastModified": 1757115183102,
-      "size": 2251
-    },
     {
       "sourceFile": "../docs/development.mdx",
       "outputFile": "generated/development.tsx",
       "metadata": {
         "title": "Development"
       },
-      "sourceHash": "7281f2db1347acc338c89531cc56e0a84ebca0da30a290d5a9b457414d99c4a2",
-      "buildTimestamp": 1757115213718,
-      "lastModified": 1756421757075,
-      "size": 1375
+      "sourceHash": "6adc566b6b72171e154b1a07538a84588730f1514de0940176769ca85a6b6d55",
+      "buildTimestamp": 1757532523221,
+      "lastModified": 1757532521284,
+      "size": 1387
+    },
+    {
+      "sourceFile": "../docs/getting-started.mdx",
+      "outputFile": "generated/getting-started.tsx",
+      "metadata": {
+        "title": "Getting Started"
+      },
+      "sourceHash": "da58a27df32ccc9ad37daacf1c5edd29c511d915510f2f79e699b1293974d601",
+      "buildTimestamp": 1757532523233,
+      "lastModified": 1757532509009,
+      "size": 894
     }
   ],
   "totalFiles": 2,
-  "buildDuration": 17
+  "buildDuration": 14
 }
