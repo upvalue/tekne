@@ -10,7 +10,6 @@ document schema.
 - [tekne.app](https://tekne.app) - website
 - [Demo](https://demo.tekne.app) - live demo; the built-in application help on the right
   has some help with syntax and keyboard shortcuts 
-- [Design](./docs/design.mdx) - a little bit more about the design
 
 ## Credits
 
