@@ -17,8 +17,6 @@ const TaskStatusItem = ({
     count,
     className = '',
 }: TaskStatusItemProps) => {
-    if (count <= 0) return null;
-
     return (
         <div className={`flex items-center space-x-1 ${className}`}>
             <Icon className={"size-4"} />
@@ -45,27 +43,29 @@ const TaskStatusDisplay = ({ complete, incomplete, unset, className }: TaskStatu
 
     return (
         <div className={`flex space-x-4 items-center ${className || ''}`}>
-            {complete && (
+            {(complete && complete > 0) ? (
                 <TaskStatusItem
                     icon={CheckCircleIcon}
                     count={complete}
                     className="text-green-400"
                 />
-            )}
-            {incomplete && (
-                <TaskStatusItem
-                    icon={XCircleIcon}
-                    count={incomplete}
-                    className="text-zinc-400"
-                />
-            )}
-            {unset && (
+            ) : null}
+            {(incomplete && incomplete > 0) ? (
+                <>
+                    <TaskStatusItem
+                        icon={XCircleIcon}
+                        count={incomplete}
+                        className="text-zinc-400"
+                    />
+                </>
+            ) : null}
+            {(unset && unset > 0) ? (
                 <TaskStatusItem
                     icon={EllipsisHorizontalIcon}
                     count={unset || 0}
                     className="text-zinc-400"
                 />
-            )}
+            ) : null}
         </div>
     );
 };
