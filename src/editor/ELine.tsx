@@ -119,7 +119,7 @@ export const ELine = (lineInfo: ELineProps) => {
       )}
 
       <div
-        className={cn("cm-editor-container w-full ml-2", lineIsHeader && "ELine-header")}
+        className={cn("cm-editor-container w-full ml-2 pr-[138px]", lineIsHeader && "ELine-header")}
         ref={cmRef}
         data-line-idx={lineInfo.lineIdx}
       />

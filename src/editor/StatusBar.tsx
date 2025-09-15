@@ -1,10 +1,10 @@
 import { useAtomValue, useSetAtom } from 'jotai'
-import { useEffect, useCallback, useRef } from 'react'
+import { useEffect, useCallback, useRef, useMemo } from 'react'
 import { docAtom, focusedLineAtom } from './state'
 import { errorMessageAtom, globalTimerAtom } from './state'
 import { Button } from '@headlessui/react'
 import { X } from 'lucide-react'
-import { ExclamationTriangleIcon, StopIcon, ListBulletIcon } from '@heroicons/react/16/solid'
+import { ExclamationTriangleIcon, StopIcon, ListBulletIcon, ClockIcon } from '@heroicons/react/16/solid'
 import { trpc } from '@/trpc/client'
 import { setDetailTitle } from '@/lib/title'
 
@@ -30,6 +30,10 @@ export const StatusBar = ({ isLoading }: { isLoading: boolean }) => {
   const execHook = trpc.execHook.useMutation()
   const intervalRef = useRef<NodeJS.Timeout | null>(null)
   const focusedLine = useAtomValue(focusedLineAtom);
+
+  const totalDocTime = useMemo(() => {
+    return doc.children.reduce((acc, line) => acc + (line.datumTimeSeconds || 0), 0)
+  }, [doc.children])
 
   const stopTimer = useCallback(() => {
     if (intervalRef.current) {
@@ -136,13 +140,22 @@ export const StatusBar = ({ isLoading }: { isLoading: boolean }) => {
           </div>
         )}
       </div>
-      {!isLoading && doc.children.length > 1 &&
-        <div className="text-sm text-zinc-400 flex items-center">
-          {focusedLine ? `${focusedLine} / ` : <span>&nbsp;&nbsp;&nbsp;&nbsp;</span>}{doc.children.length}
-          &nbsp;
-          <ListBulletIcon className="w-4 h-4" />
-        </div>
-      }
+      <div className="flex items-center gap-4">
+
+        {!isLoading && doc.children.length > 1 &&
+          <div className="text-sm text-zinc-400 flex items-center">
+            {focusedLine ? `${focusedLine}/` : <span>&nbsp;&nbsp;</span>}{doc.children.length}
+            &nbsp;
+            <ListBulletIcon className="w-4 h-4" />
+          </div>
+        }
+        {totalDocTime > 0 && (
+          <div className="text-sm text-zinc-400 flex items-center gap-2">
+            {formatTimeDisplay(totalDocTime)}
+            <ClockIcon className="w-4 h-4" />
+          </div>
+        )}
+      </div>
     </div >
   )
 }
