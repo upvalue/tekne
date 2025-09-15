@@ -65,7 +65,9 @@ function RouteComponent() {
     return store
   }, [])
 
-  const loadDocQuery = trpc.doc.loadDoc.useQuery({ name: title })
+  const loadDocQuery = trpc.doc.loadDoc.useQuery({ name: title }, {
+    enabled: () => !docDirty.current,
+  })
 
   // Document saving functionality
   // On an interval, if the document has changed this will send an updateDoc mutation
