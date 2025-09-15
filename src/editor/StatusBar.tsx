@@ -8,7 +8,7 @@ import { ExclamationTriangleIcon, StopIcon, ListBulletIcon, ClockIcon } from '@h
 import { trpc } from '@/trpc/client'
 import { setDetailTitle } from '@/lib/title'
 
-const STATUS_BAR_TRUNCATE_LENGTH = 80
+const STATUS_BAR_TRUNCATE_LENGTH = 50
 
 const formatTimeDisplay = (seconds: number): string => {
   const hours = Math.floor(seconds / 3600)

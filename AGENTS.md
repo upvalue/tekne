@@ -13,6 +13,7 @@ Tekne is a freestyle productivity application structured as an outline editor
 - pnpm as the package manager (do not use normal npm)
 - Postgres/kysely for databases
 - TRPC for communication between frontend and backend
+- shadcn & tailwind catalyst for components
 
 # File structure
 
@@ -30,7 +31,6 @@ Tekne is a freestyle productivity application structured as an outline editor
 
 # Editor
 
-Its primary interface is a document editor written on top of CodeMirror, and the code for
 this editor lives in `src/editor`.
 
 The editor edits a document, which is a collection of lines stored as a flat array. Lines
@@ -70,16 +70,24 @@ editor in isolation from other features from the application.
 
 # Running the application
 
-You can run the application with `pnpm run client:dev`. Although the application does have
-a server, it is also capable of running completely in the client, including fully
-functional TRPC endpoints and SQL queries. Prefer to do this unless the changes make it
-seem necessary to run the server.
+You can run the application with `pnpm run dev:client-only`. Although the application does have a
+server, it is also capable of running completely in the client, including fully functional TRPC
+endpoints and SQL queries. Prefer to do this unless the changes make it seem necessary to run the
+server.
+
+In that case, the whole dev setup can be run with `pnpm run dev:all`
 
 # Database structure
 
 The database is managed with Kysely, which can be run with `pnpm kysely` in server mode.
 Note that when the application is run in client-only mode, migrations are automatically
 applied when the page is loaded.
+
+Migrations can be greated with
+
+> pnpm kysely migrate:make
+
+The resultant file should be filled out, and `src/db/migrations.ts` will need to be updated to account for the new migration.
 
 # Testing changes
 
