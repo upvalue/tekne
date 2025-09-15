@@ -102,9 +102,11 @@ const ResultCard = ({ tagData }: { tagData: AggregateDataOutput[number] }) => {
 const AggregateData = ({ data }: { data: AggregateDataOutput }) => {
     return (
         <div className="space-y-6">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="columns-2 gap-4 space-y-4">
                 {data.map((d) => (
-                    <ResultCard key={`card-${d.tag}`} tagData={d} />
+                    <div key={`card-${d.tag}`} className="break-inside-avoid mb-4">
+                        <ResultCard tagData={d} />
+                    </div>
                 ))}
             </div>
         </div>
