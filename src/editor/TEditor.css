@@ -44,11 +44,12 @@
 }
 
 .StatusBar {
+  /*
   background-color: color-mix(
     in srgb,
     var(--color-sky-300) 10%,
     transparent
-  );
+  );*/
 }
 
 .cm-line {

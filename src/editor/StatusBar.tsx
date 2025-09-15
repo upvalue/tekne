@@ -1,10 +1,10 @@
 import { useAtomValue, useSetAtom } from 'jotai'
 import { useEffect, useCallback, useRef } from 'react'
-import { docAtom } from './state'
+import { docAtom, focusedLineAtom } from './state'
 import { errorMessageAtom, globalTimerAtom } from './state'
 import { Button } from '@headlessui/react'
 import { X } from 'lucide-react'
-import { ExclamationTriangleIcon, StopIcon } from '@heroicons/react/16/solid'
+import { ExclamationTriangleIcon, StopIcon, ListBulletIcon } from '@heroicons/react/16/solid'
 import { trpc } from '@/trpc/client'
 import { setDetailTitle } from '@/lib/title'
 
@@ -21,7 +21,7 @@ const formatTimeDisplay = (seconds: number): string => {
   return `${minutes}:${secs.toString().padStart(2, '0')}`
 }
 
-export const StatusBar = () => {
+export const StatusBar = ({ isLoading }: { isLoading: boolean }) => {
   const doc = useAtomValue(docAtom)
   const errorMessage = useAtomValue(errorMessageAtom)
   const setErrorMessage = useSetAtom(errorMessageAtom)
@@ -29,6 +29,7 @@ export const StatusBar = () => {
   const setGlobalTimerAtom = useSetAtom(globalTimerAtom)
   const execHook = trpc.execHook.useMutation()
   const intervalRef = useRef<NodeJS.Timeout | null>(null)
+  const focusedLine = useAtomValue(focusedLineAtom);
 
   const stopTimer = useCallback(() => {
     if (intervalRef.current) {
@@ -98,7 +99,7 @@ export const StatusBar = () => {
   }, [globalTimer.isActive, setGlobalTimerAtom])
 
   return (
-    <div className="StatusBar w-full h-10 bg-zinc-900 px-[138px] flex items-center justify-between">
+    <div className="StatusBar font-mono w-full h-10 bg-zinc-800 px-[138px] flex items-center justify-between">
       <div className="flex items-center gap-4">
         {errorMessage && (
           <div className="flex items-center gap-2">
@@ -127,15 +128,21 @@ export const StatusBar = () => {
             <div className="text-zinc-400">
               {globalTimer.lineContent
                 ? globalTimer.lineContent.substring(
-                    0,
-                    STATUS_BAR_TRUNCATE_LENGTH
-                  ) + '...'
+                  0,
+                  STATUS_BAR_TRUNCATE_LENGTH
+                ) + '...'
                 : globalTimer.lineContent}
             </div>
           </div>
         )}
       </div>
-      <div className="text-sm text-zinc-400">lines: {doc.children.length}</div>
-    </div>
+      {!isLoading && doc.children.length > 1 &&
+        <div className="text-sm text-zinc-400 flex items-center">
+          {focusedLine ? `${focusedLine} / ` : <span>&nbsp;&nbsp;&nbsp;&nbsp;</span>}{doc.children.length}
+          &nbsp;
+          <ListBulletIcon className="w-4 h-4" />
+        </div>
+      }
+    </div >
   )
 }

@@ -8,16 +8,13 @@ import {
   Annotation,
   EditorSelection,
   EditorState,
-  Transaction,
   type Extension,
 } from '@codemirror/state'
-import { type ZLine, type LineColor } from './schema'
+import { type ZLine } from './schema'
 import { useAtom, useSetAtom, useStore } from 'jotai'
 import { docAtom, focusedLineAtom, requestFocusLineAtom } from './state'
 import { autocompletion } from '@codemirror/autocomplete'
 import { useLineEvent } from './line-editor/cm-events'
-import { wikiLinkPlugin } from './line-editor/wiki-link-plugin'
-import { tagPlugin } from './line-editor/tag-plugin'
 import { slashCommandsPlugin } from './line-editor/slash-commands-plugin'
 import { placeholder } from './line-editor/placeholder-plugin'
 import { makeKeymap, toggleCollapse } from './line-editor/line-operations'

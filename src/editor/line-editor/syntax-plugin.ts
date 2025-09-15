@@ -1,3 +1,5 @@
+// syntax-plugin.ts - handles subset of markdown behavior
+// and custom syntax like [[InternalLinks]]
 import {
   Decoration,
   EditorView,
@@ -17,7 +19,6 @@ import { emitCodemirrorEvent } from './cm-events'
 import { InternalLinkRegex, TagRegex } from '../regex'
 
 const LBRACKET_CHAR_CODE = 91
-
 
 const InternalLinkConfig: MarkdownConfig = {
   defineNodes: [
@@ -66,7 +67,6 @@ const InternalLinkConfig: MarkdownConfig = {
 }
 
 const POUND_CHAR_CODE = 35
-
 
 const TagConfig: MarkdownConfig = {
   defineNodes: [
