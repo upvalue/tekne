@@ -41,12 +41,18 @@
 
 .ELine-header-1 {
   @apply text-2xl;
+  @apply mt-2;
+  @apply mb-2;
 }
 .ELine-header-2 {
   @apply text-xl;
+  @apply mt-1;
+  @apply mb-1;
 }
 .ELine-header-3 {
   @apply text-lg;
+  @apply mt-1;
+  @apply mb-1;
 }
 
 .TitleBar {

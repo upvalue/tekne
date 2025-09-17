@@ -60,6 +60,21 @@ const SyntaxHelp = () => {
       </DescriptionList>
 
       <DescriptionList>
+        <DescriptionTerm>Headers</DescriptionTerm>
+        <DescriptionDetails className="flex flex-col gap-2">
+          <div>
+
+            <Badge>{`# Header`}</Badge>
+          </div>
+          <div>
+            <Badge>{`## Header2`}</Badge>
+          </div>
+          <div>
+            <Badge>{`### Header3`}</Badge>
+          </div>
+        </DescriptionDetails>
+      </DescriptionList>
+      <DescriptionList>
         <DescriptionTerm>External links</DescriptionTerm>
         <DescriptionDetails>
           <Badge>{`[link text](https://example.com)`}</Badge>

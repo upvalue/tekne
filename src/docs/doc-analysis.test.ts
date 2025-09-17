@@ -233,16 +233,19 @@ describe('treeifyDoc', () => {
 
     // Parent node should have its own tag
     expect(result.children[0].tags).toEqual(['#tag1'])
-    
+
     // Direct child should inherit parent's tags
     expect(result.children[0].children[0].tags).toEqual(['#tag1'])
-    
+
     // Grandchild should inherit parent's tags plus its own
-    expect(result.children[0].children[0].children[0].tags).toEqual(['#tag2', '#tag1'])
-    
+    expect(result.children[0].children[0].children[0].tags).toEqual([
+      '#tag2',
+      '#tag1',
+    ])
+
     // Second parent should have its own tag
     expect(result.children[1].tags).toEqual(['#tag3'])
-    
+
     // Child of second parent should inherit second parent's tags
     expect(result.children[1].children[0].tags).toEqual(['#tag3'])
   })
@@ -270,7 +273,11 @@ describe('treeifyDoc', () => {
     const result = treeifyDoc(doc)
 
     expect(result.children[0].tags).toEqual(['#tag1', '#tag2'])
-    expect(result.children[0].children[0].tags).toEqual(['#tag3', '#tag1', '#tag2'])
+    expect(result.children[0].children[0].tags).toEqual([
+      '#tag3',
+      '#tag1',
+      '#tag2',
+    ])
   })
 
   test('should handle nodes with no tags in propagation', () => {
