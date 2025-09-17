@@ -1,7 +1,7 @@
 // line-operations.ts - line operations and key bindings
 import { keymap, EditorView } from '@codemirror/view'
 import { docAtom, requestFocusLineAtom } from '../state'
-import { lineMake, type ZDoc } from '../schema'
+import { lineMake, type ZDoc } from '@/docs/schema'
 import { keybindings } from '@/lib/keys'
 import type { useStore } from 'jotai'
 import { Transaction } from '@codemirror/state'

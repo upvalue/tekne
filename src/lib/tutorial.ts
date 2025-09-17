@@ -1,4 +1,4 @@
-import { lineMake } from '@/editor/schema'
+import { lineMake } from '@/docs/schema'
 
 export const makeTutorial = () => {
   return [

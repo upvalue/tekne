@@ -127,7 +127,8 @@ export const Aggregate = () => {
             {!data || data.length === 0 &&
                 <div className="flex flex-col items-center justify-center h-full text-zinc-500 text-lg space-y-2 pt-4">
                     <CircleStackIcon className="size-8 text-zinc-500" />
-                    <span>No tags in current document</span>
+                    <span>No tags with data in current document</span>
+                    <span>See help for more information</span>
                 </div>
             }
         </div>

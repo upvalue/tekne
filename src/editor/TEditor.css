@@ -39,6 +39,16 @@
   @apply mb-2;
 }
 
+.ELine-header-1 {
+  @apply text-2xl;
+}
+.ELine-header-2 {
+  @apply text-xl;
+}
+.ELine-header-3 {
+  @apply text-lg;
+}
+
 .TitleBar {
   height: 64px;
 }

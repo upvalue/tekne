@@ -1,6 +1,6 @@
 import { atom, useAtom } from 'jotai'
 import { withImmer } from 'jotai-immer'
-import { lineMake, type ZDoc, type ZLine } from './schema'
+import { lineMake, type ZDoc, type ZLine } from '@/docs/schema'
 import { useCallback } from 'react'
 
 export const docAtom = withImmer(

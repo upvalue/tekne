@@ -3,6 +3,8 @@ import type { ZLine } from './schema'
 // Time difference threshold in minutes for showing timestamps
 export const TIME_DIFF_THRESHOLD_MINUTES = 20
 
+// NOTE-REDUCER: This is a document reducer that could be centralized
+
 /**
  * Generates an array of gutter timestamp strings for display.
  * Returns null for lines that don't meet display criteria, or a formatted timestamp string.

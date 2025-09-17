@@ -1,7 +1,7 @@
 import type { Database } from '@/db'
 import type { Kysely } from 'kysely'
-import type { ZDoc } from '@/editor/schema'
-import { extractDocData, treeifyDoc } from '@/editor/doc-analysis'
+import type { ZDoc } from '@/docs/schema'
+import { extractDocData, treeifyDoc } from '@/docs/doc-analysis'
 
 const linesToZodDoc = (title: string, children: Array<any>): ZDoc => {
   return {

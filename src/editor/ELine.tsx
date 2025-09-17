@@ -5,7 +5,7 @@ import { Circle, CircleDot } from 'lucide-react'
 import { useCodeMirror, type LineWithIdx } from './line-editor'
 import { TimerBadge } from './TimerBadge'
 import { cn } from '@/lib/utils'
-import type { CollapseState } from './collapse'
+import type { CollapseState } from '@/docs/collapse'
 
 type ELineProps = LineWithIdx & {
   timestamp: string | null
@@ -67,7 +67,8 @@ export const ELine = (lineInfo: ELineProps) => {
   }
 
   // Disabled for now, experiment
-  const lineIsHeader = false; // line.indent === 0 && line.mdContent.startsWith('# ');
+  const lineIsHeader = line.mdContent.startsWith('###') || line.mdContent.startsWith('##') || line.mdContent.startsWith('#');
+  const headerLevel = line.mdContent.startsWith('###') ? 3 : line.mdContent.startsWith('##') ? 2 : line.mdContent.startsWith('#') ? 1 : 0;
 
   return (
     <div
@@ -81,14 +82,14 @@ export const ELine = (lineInfo: ELineProps) => {
       <div className="ELine-gutter text-zinc-600 text-sm flex-shrink-0 justify-end flex font-mono">
         {timestamp || ''}
       </div>
+      <div
+        style={{
+          flex: 'none',
+          width: `${line.indent * INDENT_WIDTH_PIXELS}px`,
+        }}
+      />
       {!lineIsHeader &&
         <>
-          <div
-            style={{
-              flex: 'none',
-              width: `${line.indent * INDENT_WIDTH_PIXELS}px`,
-            }}
-          />
           <div className="flex items-center">
             &nbsp;
             {collapseState === 'collapse-start' ? (
@@ -99,7 +100,6 @@ export const ELine = (lineInfo: ELineProps) => {
           </div>
         </>
       }
-
       {line.datumTaskStatus && (
         <Checkbox
           className="ml-2"
@@ -119,7 +119,7 @@ export const ELine = (lineInfo: ELineProps) => {
       )}
 
       <div
-        className={cn("cm-editor-container w-full ml-2 pr-[138px]", lineIsHeader && "ELine-header")}
+        className={cn("cm-editor-container w-full ml-2 pr-[138px]", lineIsHeader && `ELine-header-${headerLevel}`)}
         ref={cmRef}
         data-line-idx={lineInfo.lineIdx}
       />

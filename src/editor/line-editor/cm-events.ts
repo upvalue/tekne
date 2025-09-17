@@ -1,5 +1,5 @@
 import { TypedEventEmitter, useEmitterEventListener } from '@/lib/eventemitter'
-import type { LineColor } from '../schema'
+import type { LineColor } from '@/docs/schema'
 
 export type TagClickEventDetail = {
   name: string

@@ -1,7 +1,7 @@
 import { EditorView } from '@codemirror/view'
 import { type Completion, CompletionContext } from '@codemirror/autocomplete'
 import { emitCodemirrorEvent } from './cm-events'
-import type { LineColor } from '../schema'
+import type { LineColor } from '@/docs/schema'
 
 const colorCommand = (lineIdx: number, color: LineColor) => ({
   label: `/${color}: Set line background to ${color}`,

@@ -1,8 +1,8 @@
 // collapse.test.ts - Unit tests for collapse logic
 
 import { describe, it, expect } from 'vitest'
-import { generateCollapse } from './collapse'
-import { lineMake } from './schema'
+import { generateCollapse } from '@/docs/collapse'
+import { lineMake } from '@/docs/schema'
 
 describe('generateCollapse', () => {
   it('should return all false for lines without collapsed property', () => {
@@ -14,7 +14,7 @@ describe('generateCollapse', () => {
     ]
 
     const result = generateCollapse(lines)
-    expect(result).toEqual([false, false, false, false])
+    expect(result).toEqual(['uncollapsed', 'uncollapsed', 'uncollapsed', 'uncollapsed'])
   })
 
   it('should not collapse the line with collapsed=true itself', () => {
@@ -25,7 +25,7 @@ describe('generateCollapse', () => {
     ]
 
     const result = generateCollapse(lines)
-    expect(result[1]).toBe(false) // The collapsed line itself should not be visually collapsed
+    expect(result[1]).toBe('collapse-start') // The collapsed line itself should be marked as collapse-start
   })
 
   it('should collapse lines indented past a collapsed line', () => {
@@ -39,11 +39,11 @@ describe('generateCollapse', () => {
 
     const result = generateCollapse(lines)
     expect(result).toEqual([
-      false, // Root - not collapsed
-      false, // Parent - collapsed line itself, not visually collapsed
-      true, // Child 1 - indented past collapsed parent
-      true, // Grandchild - indented past collapsed parent
-      true, // Child 2 - indented past collapsed parent
+      'uncollapsed', // Root - not collapsed
+      'collapse-start', // Parent - collapsed line itself, marked as collapse-start
+      'collapsed', // Child 1 - indented past collapsed parent
+      'collapsed', // Grandchild - indented past collapsed parent
+      'collapsed', // Child 2 - indented past collapsed parent
     ])
   })
 
@@ -58,11 +58,11 @@ describe('generateCollapse', () => {
 
     const result = generateCollapse(lines)
     expect(result).toEqual([
-      false, // Root
-      false, // Parent - collapsed line itself
-      true, // Child 1 - collapsed
-      false, // Sibling - resets collapse
-      false, // Sibling child - not collapsed (collapse was reset)
+      'uncollapsed', // Root
+      'collapse-start', // Parent - collapsed line itself
+      'collapsed', // Child 1 - collapsed
+      'uncollapsed', // Sibling - resets collapse
+      'uncollapsed', // Sibling child - not collapsed (collapse was reset)
     ])
   })
 
@@ -79,13 +79,13 @@ describe('generateCollapse', () => {
 
     const result = generateCollapse(lines)
     expect(result).toEqual([
-      false, // Root
-      false, // Parent 1 - collapsed line itself
-      true, // Child 1 - collapsed under Parent 1
-      false, // Parent 2 - resets first collapse
-      false, // Child 2 - collapsed line itself (starts new collapse)
-      true, // Grandchild - collapsed under Child 2
-      false, // Parent 3 - resets second collapse
+      'uncollapsed', // Root
+      'collapse-start', // Parent 1 - collapsed line itself
+      'collapsed', // Child 1 - collapsed under Parent 1
+      'uncollapsed', // Parent 2 - resets first collapse
+      'collapse-start', // Child 2 - collapsed line itself (starts new collapse)
+      'collapsed', // Grandchild - collapsed under Child 2
+      'uncollapsed', // Parent 3 - resets second collapse
     ])
   })
 
@@ -99,10 +99,10 @@ describe('generateCollapse', () => {
 
     const result = generateCollapse(lines)
     expect(result).toEqual([
-      false, // Root - collapsed line itself
-      true, // Child - collapsed
-      true, // Grandchild - collapsed
-      false, // Another root - resets collapse (same level as collapsed root)
+      'collapse-start', // Root - collapsed line itself
+      'collapsed', // Child - collapsed
+      'collapsed', // Grandchild - collapsed
+      'uncollapsed', // Another root - resets collapse (same level as collapsed root)
     ])
   })
 
@@ -114,7 +114,7 @@ describe('generateCollapse', () => {
   it('should handle single line', () => {
     const lines = [{ ...lineMake(0, 'Only line'), collapsed: true }]
     const result = generateCollapse(lines)
-    expect(result).toEqual([false])
+    expect(result).toEqual(['collapse-start'])
   })
 
   it('should reset collapse when encountering a line with lower indent', () => {
@@ -128,11 +128,11 @@ describe('generateCollapse', () => {
 
     const result = generateCollapse(lines)
     expect(result).toEqual([
-      false, // Level 1
-      false, // Level 2 - collapsed line itself
-      true, // Level 3 - collapsed
-      false, // Back to Level 1 - resets collapse (lower indent)
-      false, // Level 2 again - not collapsed
+      'uncollapsed', // Level 1
+      'collapse-start', // Level 2 - collapsed line itself
+      'collapsed', // Level 3 - collapsed
+      'uncollapsed', // Back to Level 1 - resets collapse (lower indent)
+      'uncollapsed', // Level 2 again - not collapsed
     ])
   })
 })

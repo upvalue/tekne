@@ -14,6 +14,7 @@ import {
 } from '@heroicons/react/24/solid'
 import { useState } from 'react'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
+import { DocumentOverview } from './DocumentOverview'
 
 export function Panel() {
   const [activeTab, setActiveTab] = useState('aggregate')
@@ -23,6 +24,14 @@ export function Panel() {
       <div className="flex items-center border-b border-zinc-800 px-2 py-1 flex-shrink-0">
         <Navbar className="bg-transparent p-0 h-auto gap-1">
           <NavbarSection>
+            <NavbarItem
+              current={activeTab === 'document'}
+              onClick={() => setActiveTab('document')}
+            >
+              <CircleStackIcon className="w-4 h-4" data-slot="icon" />
+              <NavbarLabel>Document</NavbarLabel>
+            </NavbarItem>
+
             <NavbarItem
               current={activeTab === 'aggregate'}
               onClick={() => setActiveTab('aggregate')}
@@ -51,6 +60,7 @@ export function Panel() {
       </div>
       <div className="flex-1 overflow-auto min-h-0">
         <ErrorBoundary title="Panel crashed">
+          {activeTab === 'document' && <DocumentOverview />}
           {activeTab === 'aggregate' && <Aggregate />}
           {activeTab === 'help' && <Help />}
           {activeTab === 'devtools' && (

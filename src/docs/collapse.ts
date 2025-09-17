@@ -4,6 +4,8 @@ import type { ZLine } from './schema'
 
 export type CollapseState = 'collapsed' | 'uncollapsed' | 'collapse-start'
 
+// NOTE-REDUCER: This is a document reducer that could be centralized
+
 /**
  * Generates an array of booleans indicating which lines should be visually collapsed.
  *

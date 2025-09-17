@@ -1,6 +1,6 @@
 import { describe, test, expect } from 'vitest'
-import { treeifyDoc } from './doc-analysis'
-import { lineMake, docMake, type ZDoc } from './schema'
+import { treeifyDoc } from '@/docs/doc-analysis'
+import { lineMake, docMake, type ZDoc } from '@/docs/schema'
 
 describe('treeifyDoc', () => {
   test('should handle empty document', () => {

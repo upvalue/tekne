@@ -1,5 +1,5 @@
 import z from 'zod'
-import { lineMake, zdoc, type ZDoc, type ZLine, CURRENT_SCHEMA_VERSION } from '@/editor/schema'
+import { lineMake, zdoc, type ZDoc, type ZLine, CURRENT_SCHEMA_VERSION } from '@/docs/schema'
 import { t } from '../init'
 import type { Database } from '@/db'
 import { sql, type Kysely } from 'kysely'
@@ -9,8 +9,8 @@ import {
   docMigrator,
   migrateDocWithReport,
   validateDocumentWithMigrationCheck,
-} from '@/editor/doc-migrator'
-import { extractDocData, treeifyDoc } from '@/editor/doc-analysis'
+} from '@/docs/doc-migrator'
+import { extractDocData, treeifyDoc } from '@/docs/doc-analysis'
 import { processDocumentForData, recomputeAllDocumentData } from '@/server/lib/docs'
 
 const linesToZodDoc = (title: string, children: Array<ZLine>): ZDoc => {

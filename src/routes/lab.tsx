@@ -1,7 +1,7 @@
 import { TEditor } from '@/editor/TEditor'
 import { createFileRoute } from '@tanstack/react-router'
 import { docAtom } from '@/editor/state'
-import { docMake, lineMake } from '@/editor/schema'
+import { docMake, lineMake } from '@/docs/schema'
 import { Provider } from 'jotai'
 import { useHydrateAtoms } from 'jotai/utils'
 import { EditorLayout } from '@/layout/EditorLayout'

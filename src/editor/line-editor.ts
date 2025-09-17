@@ -10,7 +10,7 @@ import {
   EditorState,
   type Extension,
 } from '@codemirror/state'
-import { type ZLine } from './schema'
+import { type ZLine } from '@/docs/schema'
 import { useAtom, useSetAtom, useStore } from 'jotai'
 import { docAtom, focusedLineAtom, requestFocusLineAtom } from './state'
 import { autocompletion } from '@codemirror/autocomplete'

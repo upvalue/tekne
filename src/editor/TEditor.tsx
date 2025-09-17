@@ -6,8 +6,8 @@ import { useAtom } from 'jotai'
 
 import { useCodemirrorEvent } from './line-editor'
 import { docAtom } from './state'
-import { generateGutterTimestamps } from './gutters'
-import { generateCollapse } from './collapse'
+import { generateGutterTimestamps } from '@/docs/gutters'
+import { generateCollapse } from '@/docs/collapse'
 import { ELine } from './ELine'
 
 /**

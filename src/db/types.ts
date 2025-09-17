@@ -1,4 +1,4 @@
-import type { ZDoc } from '@/editor/schema'
+import type { ZDoc } from '@/docs/schema'
 import type { ColumnType } from 'kysely'
 
 // Custom column type that handles Zod validation

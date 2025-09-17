@@ -6,12 +6,12 @@ import {
   DescriptionTerm,
 } from '@/components/vendor/DescriptionList'
 import { getAllKeybindings } from '@/lib/keys'
-import { LinkIcon } from '@heroicons/react/16/solid'
-import { DocsWrapper } from '@/docs/DocsWrapper'
+import { DocsWrapper } from '@/documentation/DocsWrapper'
 import { Button } from '@/components/vendor/Button'
-import { Version } from '@/docs/Version'
-import manifest from '@/docs/manifest.json'
+import { Version } from '@/documentation/Version'
+import manifest from '@/documentation/manifest.json'
 import { ExternalLink } from '@/components/ExternalLink'
+
 const Keybindings = () => {
   const allKeybindings = getAllKeybindings()
 
@@ -149,7 +149,7 @@ export const Help = React.memo(() => {
     // Render doc component
     try {
       const DocComponent = React.lazy(
-        () => import(`@/docs/${selectedPage}.tsx`)
+        () => import(`@/documentation/${selectedPage}.tsx`)
       )
       return (
         <React.Suspense fallback={<div className="p-4">Loading...</div>}>
