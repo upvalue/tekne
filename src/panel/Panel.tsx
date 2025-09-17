@@ -17,7 +17,7 @@ import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { DocumentOverview } from './DocumentOverview'
 
 export function Panel() {
-  const [activeTab, setActiveTab] = useState('aggregate')
+  const [activeTab, setActiveTab] = useState('document')
 
   return (
     <div className="flex flex-col h-[100vh]">
@@ -32,13 +32,6 @@ export function Panel() {
               <NavbarLabel>Document</NavbarLabel>
             </NavbarItem>
 
-            <NavbarItem
-              current={activeTab === 'aggregate'}
-              onClick={() => setActiveTab('aggregate')}
-            >
-              <CircleStackIcon className="w-4 h-4" data-slot="icon" />
-              <NavbarLabel>Aggregate</NavbarLabel>
-            </NavbarItem>
 
             <NavbarItem
               current={activeTab === 'help'}
@@ -61,7 +54,6 @@ export function Panel() {
       <div className="flex-1 overflow-auto min-h-0">
         <ErrorBoundary title="Panel crashed">
           {activeTab === 'document' && <DocumentOverview />}
-          {activeTab === 'aggregate' && <Aggregate />}
           {activeTab === 'help' && <Help />}
           {activeTab === 'devtools' && (
             <div className="p-4 h-full">
