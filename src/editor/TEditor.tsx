@@ -35,7 +35,7 @@ export const TEditor = () => {
   })
 
   return (
-    <div ref={containerRef} className="max-h-[90vh] overflow-y-auto pb-32">
+    <div ref={containerRef} className="max-h-[88vh] overflow-y-auto pb-32">
       {doc.children.map((l, i) => (
         <ELine
           key={i}
