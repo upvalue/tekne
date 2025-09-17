@@ -67,8 +67,8 @@ export const ELine = (lineInfo: ELineProps) => {
   }
 
   // Disabled for now, experiment
-  const lineIsHeader = line.mdContent.startsWith('###') || line.mdContent.startsWith('##') || line.mdContent.startsWith('#');
-  const headerLevel = line.mdContent.startsWith('###') ? 3 : line.mdContent.startsWith('##') ? 2 : line.mdContent.startsWith('#') ? 1 : 0;
+  const lineIsHeader = line.mdContent.startsWith('### ') || line.mdContent.startsWith('## ') || line.mdContent.startsWith('# ');
+  const headerLevel = line.mdContent.startsWith('### ') ? 3 : line.mdContent.startsWith('##') ? 2 : line.mdContent.startsWith('# ') ? 1 : 0;
 
   return (
     <div
