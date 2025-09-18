@@ -6,7 +6,7 @@ import tseslint from 'typescript-eslint'
 import react from 'eslint-plugin-react'
 
 export default tseslint.config(
-  { ignores: ['dist'] },
+  { ignores: ['dist', 'docs-build/**'] },
   {
     extends: [js.configs.recommended, ...tseslint.configs.recommended],
     files: ['**/*.{ts,tsx}'],
@@ -33,6 +33,10 @@ export default tseslint.config(
       'react/react-in-jsx-scope': 'off',
       'react/jsx-uses-react': 'off',
       '@typescript-eslint/no-explicit-any': 'off',
+      '@typescript-eslint/no-unused-vars': 'warn',
+      'no-empty': 'warn',
+      'prefer-const': 'warn',
+      'react-hooks/exhaustive-deps': 'warn',
     },
     settings: {
       react: {

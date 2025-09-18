@@ -1,6 +1,6 @@
 import { useDocTitle } from '@/hooks/useDocTitle'
 import { formatTimeDisplay, renderTime } from '@/lib/time'
-import { trpc } from '@/trpc'
+import { trpc } from '@/trpc/client'
 import type { AggregateDataOutput } from '@/trpc/types'
 
 import { CheckCircleIcon, XCircleIcon, EllipsisHorizontalIcon, ClockIcon } from '@heroicons/react/24/outline'

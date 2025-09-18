@@ -5,6 +5,8 @@ import {
   unstable_localLink,
   loggerLink,
 } from '@trpc/client'
+import { createTRPCJotai } from 'jotai-trpc'
+
 import type { AppRouter } from './router'
 import { appRouter } from './router'
 import { dbHandle } from '@/db'
@@ -25,7 +27,23 @@ export const trpcClient = createTRPCClient<AppRouter>({
     ? [httpLink({ url: trpcUrl })]
     : [
         loggerLink({
-          enabled: (opts) => {
+          enabled: (_opts) => {
+            return true
+          },
+        }),
+        unstable_localLink({
+          router: appRouter,
+          createContext: async () => ({ db: await dbHandle() }),
+        }),
+      ],
+})
+
+export const trpcJotai = createTRPCJotai<AppRouter>({
+  links: trpcUrl
+    ? [httpLink({ url: trpcUrl })]
+    : [
+        loggerLink({
+          enabled: (_opts) => {
             return true
           },
         }),

@@ -74,7 +74,7 @@ export const treeifyDoc = (doc: ZDoc): ZDocTree => {
   return root
 }
 
-const zdocDatumType = z.enum(['task', 'timer'])
+const zdocDatumType = z.enum(['task', 'timer', 'tag'])
 
 type ZDocDatumType = z.infer<typeof zdocDatumType>
 /**
@@ -105,9 +105,13 @@ const makeDatum = (
   }
 }
 
-const extractDocDataImpl = (ln: ZTreeLine, accum: Array<ZDocDatum>) => {
+const extractDocDataImpl = (
+  ln: ZTreeLine,
+  accum: Array<ZDocDatum>,
+  allTagsSeen: Set<string>
+) => {
   for (const child of ln.children) {
-    extractDocDataImpl(child, accum)
+    extractDocDataImpl(child, accum, allTagsSeen)
   }
 
   for (const tag of ln.tags) {
@@ -122,13 +126,21 @@ const extractDocDataImpl = (ln: ZTreeLine, accum: Array<ZDocDatum>) => {
       datum.datumTimeSeconds = ln.datumTimeSeconds
       accum.push(datum)
     }
+
+    const datum = makeDatum(tag, ln, 'tag')
+    accum.push(datum)
   }
 }
 
+/**
+ * Analyzes a document to discover any data, how it relates to tags,
+ * and all tags present in a document
+ */
 export const extractDocData = (lines: Array<ZTreeLine>): Array<ZDocDatum> => {
   const ret: Array<ZDocDatum> = []
+  const tags = new Set<string>()
   for (const line of lines) {
-    extractDocDataImpl(line, ret)
+    extractDocDataImpl(line, ret, tags)
   }
   return ret
 }

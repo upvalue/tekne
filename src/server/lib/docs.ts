@@ -39,35 +39,32 @@ export const recomputeAllDocumentData = async (db: Kysely<Database>) => {
   const results = await db.transaction().execute(async (tx) => {
     // Get all documents
     const allDocs = await tx.selectFrom('notes').selectAll().execute()
-    
+
     // Clear all existing note_data
     await tx.deleteFrom('note_data').execute()
-    
+
     let processedCount = 0
     let totalDataRows = 0
-    
+
     // Process each document
     for (const doc of allDocs) {
       const processedData = processDocumentForData(doc.title, doc.body)
-      
+
       if (processedData.length > 0) {
-        await tx
-          .insertInto('note_data')
-          .values(processedData)
-          .execute()
-        
+        await tx.insertInto('note_data').values(processedData).execute()
+
         totalDataRows += processedData.length
       }
-      
+
       processedCount++
     }
-    
+
     return {
       totalDocs: allDocs.length,
       processedDocs: processedCount,
       totalDataRows,
     }
   })
-  
+
   return results
 }

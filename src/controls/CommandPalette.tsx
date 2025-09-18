@@ -6,7 +6,7 @@ import { useLocation, useRouter, type NavigateFn } from '@tanstack/react-router'
 import { formatDate } from '@/lib/utils'
 import { addDays, parse } from 'date-fns'
 import { getDocTitle } from '@/hooks/useDocTitle'
-import { trpc } from '@/trpc'
+import { trpc } from '@/trpc/client'
 import { toast } from 'sonner'
 
 const CommandPaletteContent = () => {

@@ -1,5 +1,11 @@
 import z from 'zod'
-import { lineMake, zdoc, type ZDoc, type ZLine, CURRENT_SCHEMA_VERSION } from '@/docs/schema'
+import {
+  lineMake,
+  zdoc,
+  type ZDoc,
+  type ZLine,
+  CURRENT_SCHEMA_VERSION,
+} from '@/docs/schema'
 import { t } from '../init'
 import type { Database } from '@/db'
 import { sql, type Kysely } from 'kysely'
@@ -10,16 +16,10 @@ import {
   migrateDocWithReport,
   validateDocumentWithMigrationCheck,
 } from '@/docs/doc-migrator'
-import { extractDocData, treeifyDoc } from '@/docs/doc-analysis'
-import { processDocumentForData, recomputeAllDocumentData } from '@/server/lib/docs'
-
-const linesToZodDoc = (title: string, children: Array<ZLine>): ZDoc => {
-  return {
-    type: 'doc',
-    children,
-    schemaVersion: CURRENT_SCHEMA_VERSION,
-  }
-}
+import {
+  processDocumentForData,
+  recomputeAllDocumentData,
+} from '@/server/lib/docs'
 
 const upsertNote = async (db: Kysely<Database>, name: string, body: ZDoc) => {
   await db.transaction().execute(async (tx) => {
@@ -41,10 +41,7 @@ const upsertNote = async (db: Kysely<Database>, name: string, body: ZDoc) => {
     await tx.deleteFrom('note_data').where('note_title', '=', name).execute()
 
     if (processedData.length > 0) {
-      await tx
-        .insertInto('note_data')
-        .values(processedData)
-        .execute()
+      await tx.insertInto('note_data').values(processedData).execute()
     }
 
     console.log('upsertNote', r)
@@ -128,7 +125,7 @@ export const docRouter = t.router({
       })
     )
     .query(async ({ input, ctx: { db } }): Promise<ZDoc> => {
-      let doc = await db
+      const doc = await db
         .selectFrom('notes')
         .selectAll()
         .where('title', '=', input.name)
@@ -353,4 +350,17 @@ export const docRouter = t.router({
 
       return { success: true, name }
     }),
+
+  /**
+   * Returns all tags that occur in the whole database
+   */
+  allTags: t.procedure.query(async ({ ctx: { db } }) => {
+    const tags = await db
+      .selectFrom('note_data')
+      .select(['datum_tag'])
+      .where('datum_type', '=', 'tag')
+      .distinct()
+      .execute()
+    return tags.map((t) => t.datum_tag.slice(1))
+  }),
 })

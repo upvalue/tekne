@@ -10,6 +10,7 @@ import { formatDate, getDocTitle } from '@/lib/utils'
 import { DocumentTextIcon } from '@heroicons/react/16/solid'
 import { useEffect, useState } from 'react'
 import { trpc } from '@/trpc/client'
+import { DialogDescription } from '@radix-ui/react-dialog'
 
 const DocumentDetails = () => {
   const docTitle = getDocTitle()
@@ -38,12 +39,13 @@ export const DocumentDetailsButton = () => {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger>
-        <IconBadge icon={<DocumentTextIcon />} />
+        <DocumentTextIcon className="w-4 h-4 cursor-pointer text-zinc-500" />
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent >
         <DialogHeader>
           <DialogTitle>Document Details</DialogTitle>
         </DialogHeader>
+        <DialogDescription>Document details</DialogDescription>
         <DialogContent>{open && <DocumentDetails />}</DialogContent>
       </DialogContent>
     </Dialog>

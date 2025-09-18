@@ -63,6 +63,8 @@
     "immer": "^10.1.1",
     "jotai": "^2.12.5",
     "jotai-immer": "^0.4.1",
+    "jotai-tanstack-query": "^0.11.0",
+    "jotai-trpc": "^0.7.1",
     "kbar": "0.1.0-beta.48",
     "kysely": "^0.28.5",
     "kysely-codegen": "^0.18.5",

@@ -9,7 +9,7 @@ import NotFound from './pages/NotFound'
 
 import './styles/styles.css'
 import reportWebVitals from './reportWebVitals.ts'
-import { trpc, trpcClient } from './trpc'
+import { trpc, trpcClient } from './trpc/client'
 
 // Create a new router instance
 const router = createRouter({

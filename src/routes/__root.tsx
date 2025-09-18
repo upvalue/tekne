@@ -1,5 +1,5 @@
 import { Outlet, createRootRouteWithContext } from '@tanstack/react-router'
-import { trpc } from '@/trpc'
+import { trpc } from '@/trpc/client'
 import { Toaster } from '@/components/vendor/Sonner'
 import { DocumentSearch } from '@/controls/DocumentSearch'
 import { CommandPalette } from '@/controls/CommandPalette'

@@ -1,11 +1,11 @@
 import { TEditor } from '@/editor/TEditor'
 import { toast } from 'sonner'
-import { docAtom } from '@/editor/state'
-import { createStore } from 'jotai'
+import { allTagsAtom, docAtom } from '@/editor/state'
+import { createStore, useAtom, useAtomValue } from 'jotai'
 import '@/docs/schema'
 import { truncate } from 'lodash-es'
 import { Provider } from 'jotai'
-import { trpc } from '@/trpc'
+import { trpc } from '@/trpc/client'
 import {
   createFileRoute,
   useBlocker,
@@ -111,6 +111,9 @@ function RouteComponent() {
   // We don't use "enableBeforeUnload" right now because it always registers
   // a beforeunload handler, which is a little overzealous in prompting;
   // this could probably be used better
+
+  // Side effect to cause query to fire
+  useAtom(allTagsAtom);
 
   // Probably
   useBlocker({

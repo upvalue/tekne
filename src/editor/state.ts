@@ -2,6 +2,8 @@ import { atom, useAtom } from 'jotai'
 import { withImmer } from 'jotai-immer'
 import { lineMake, type ZDoc, type ZLine } from '@/docs/schema'
 import { useCallback } from 'react'
+import { atomWithQuery } from 'jotai-tanstack-query'
+import { trpc, trpcClient } from '@/trpc/client'
 
 export const docAtom = withImmer(
   atom<ZDoc>({
@@ -42,6 +44,15 @@ export const globalTimerAtom = atom<GlobalTimerState>({
 export const notificationPermissionAtom = atom<NotificationPermission | null>(
   null
 )
+
+export const allTagsAtom = atomWithQuery(() => ({
+  queryKey: ['allTags'],
+  queryFn: () => {
+    return trpcClient.doc.allTags.query()
+  },
+  // every 5 minutes
+  refetchInterval: 60 * 5 * 1000,
+}))
 
 /**
  * Allows reading or modifying a specific line

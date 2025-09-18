@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { trpc } from '@/trpc'
+import { trpc } from '@/trpc/client'
 
 export const Route = createFileRoute('/trpc-test')({
   component: TrpcTestPage,

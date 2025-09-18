@@ -12,13 +12,28 @@ import {
 } from '@codemirror/state'
 import { type ZLine } from '@/docs/schema'
 import { useAtom, useSetAtom, useStore } from 'jotai'
-import { docAtom, focusedLineAtom, requestFocusLineAtom } from './state'
-import { autocompletion } from '@codemirror/autocomplete'
+import {
+  allTagsAtom,
+  docAtom,
+  focusedLineAtom,
+  requestFocusLineAtom,
+} from './state'
+import {
+  autocompletion,
+  CompletionContext,
+  type Completion,
+} from '@codemirror/autocomplete'
 import { useLineEvent } from './line-editor/cm-events'
 import { slashCommandsPlugin } from './line-editor/slash-commands-plugin'
 import { placeholder } from './line-editor/placeholder-plugin'
 import { makeKeymap, toggleCollapse } from './line-editor/line-operations'
 import { syntaxPlugin } from './line-editor/syntax-plugin'
+import {
+  FULL_TAG_REGEX_STR,
+  FullTagRegex,
+  TAG_REGEX_MATCH_BEFORE_STR,
+  TagRegexMatchBefore,
+} from './regex'
 
 const theme = EditorView.theme(
   // Preferring to do these in TEditor.css
@@ -49,7 +64,45 @@ export type LineWithIdx = {
   lineIdx: number
 }
 
-const isActive = Annotation.define<boolean>()
+let allTags: string[] = []
+
+const tagCompletionPlugin =
+  (store: ReturnType<typeof useStore>) => (context: CompletionContext) => {
+    const word = context.matchBefore(TagRegexMatchBefore)
+
+    const { data } = store.get(allTagsAtom)
+
+    if (!data || !Array.isArray(data)) return null
+
+    if (!word) return null
+    if (word.from === word.to && !context.explicit) return null
+
+    const options = data.map((tag) => ({
+      label: `#${tag}`,
+      type: 'text',
+      apply: (
+        view: EditorView,
+        _completion: Completion,
+        from: number,
+        to: number
+      ) => {
+        view.dispatch({
+          changes: {
+            from,
+            to,
+            insert: `#${tag}`,
+          },
+        })
+      },
+    }))
+
+    console.log({ options })
+
+    return {
+      from: word.from,
+      options,
+    }
+  }
 
 /**
  * Sets up a Codemirror editor
@@ -159,7 +212,10 @@ export const useCodeMirror = (lineInfo: LineWithIdx) => {
       syntaxPlugin,
       placeholderPlugin,
       autocompletion({
-        override: [slashCommandsPlugin(lineInfo.lineIdx)],
+        override: [
+          slashCommandsPlugin(lineInfo.lineIdx),
+          tagCompletionPlugin(store),
+        ],
       }),
     ]
 

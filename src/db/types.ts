@@ -12,7 +12,7 @@ export type DBNote = {
   revision: number
 }
 export type NoteDataStatus = 'complete' | 'incomplete' | 'unset'
-export type NoteDataType = 'task' | 'timer'
+export type NoteDataType = 'task' | 'timer' | 'tag'
 
 export type DBNoteData = {
   note_title: string

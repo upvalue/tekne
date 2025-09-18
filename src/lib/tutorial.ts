@@ -54,7 +54,7 @@ export const makeTutorial = () => {
     ),
     lineMake((i = 0), '# Data in documents'),
     lineMake(++i, 'You can attach data like timers and tasks to lines'),
-    lineMake(i, 'This line is a task', {
+    lineMake(++i, 'This line is a task', {
       datumTaskStatus: 'incomplete',
     }),
     lineMake(i, 'This line is a timer', {

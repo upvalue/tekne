@@ -125,6 +125,12 @@ importers:
       jotai-immer:
         specifier: ^0.4.1
         version: 0.4.1(immer@10.1.1)(jotai@2.12.5(@types/react@19.1.8)(react@19.1.0))
+      jotai-tanstack-query:
+        specifier: ^0.11.0
+        version: 0.11.0(@tanstack/query-core@5.83.0)(@tanstack/react-query@5.83.0(react@19.1.0))(jotai@2.12.5(@types/react@19.1.8)(react@19.1.0))(react@19.1.0)
+      jotai-trpc:
+        specifier: ^0.7.1
+        version: 0.7.1(@trpc/client@11.4.3(@trpc/server@11.4.3(typescript@5.8.3))(typescript@5.8.3))(@trpc/server@11.4.3(typescript@5.8.3))(jotai@2.12.5(@types/react@19.1.8)(react@19.1.0))
       kbar:
         specifier: 0.1.0-beta.48
         version: 0.1.0-beta.48(@types/react-dom@19.1.6(@types/react@19.1.8))(@types/react@19.1.8)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
@@ -2605,6 +2611,26 @@ packages:
     resolution: {integrity: sha512-nQTt1HBKie/5OJDck1qLpV1PeBA6bjJLAczEYAx70PD8R4Mbu7gtexfBUCzJh6W6ecsOfwHksAYAesVth6SN9A==}
     peerDependencies:
       immer: '>=9.0.0'
+      jotai: '>=2.0.0'
+
+  jotai-tanstack-query@0.11.0:
+    resolution: {integrity: sha512-Ys0u0IuuS6/okUJOulFTdCVfVaeKbm1+lKVSN9zHhIxtrAXl9FM4yu7fNvxM6fSz/NCE9tZOKR0MQ3hvplaH8A==}
+    peerDependencies:
+      '@tanstack/query-core': '*'
+      '@tanstack/react-query': '*'
+      jotai: '>=2.0.0'
+      react: ^18.0.0 || ^19.0.0
+    peerDependenciesMeta:
+      '@tanstack/react-query':
+        optional: true
+      react:
+        optional: true
+
+  jotai-trpc@0.7.1:
+    resolution: {integrity: sha512-uc0u4MJTWf/1lUxkpzI1xH7x5ELDuTmfY2uZsDPZulfBcBLVHuJFVPKLEX+582nQOxY7ekwLRD7R092rEl58YA==}
+    peerDependencies:
+      '@trpc/client': '>=10.0.0'
+      '@trpc/server': '>=10.0.0'
       jotai: '>=2.0.0'
 
   jotai@2.12.5:
@@ -6507,6 +6533,20 @@ snapshots:
   jotai-immer@0.4.1(immer@10.1.1)(jotai@2.12.5(@types/react@19.1.8)(react@19.1.0)):
     dependencies:
       immer: 10.1.1
+      jotai: 2.12.5(@types/react@19.1.8)(react@19.1.0)
+
+  jotai-tanstack-query@0.11.0(@tanstack/query-core@5.83.0)(@tanstack/react-query@5.83.0(react@19.1.0))(jotai@2.12.5(@types/react@19.1.8)(react@19.1.0))(react@19.1.0):
+    dependencies:
+      '@tanstack/query-core': 5.83.0
+      jotai: 2.12.5(@types/react@19.1.8)(react@19.1.0)
+    optionalDependencies:
+      '@tanstack/react-query': 5.83.0(react@19.1.0)
+      react: 19.1.0
+
+  jotai-trpc@0.7.1(@trpc/client@11.4.3(@trpc/server@11.4.3(typescript@5.8.3))(typescript@5.8.3))(@trpc/server@11.4.3(typescript@5.8.3))(jotai@2.12.5(@types/react@19.1.8)(react@19.1.0)):
+    dependencies:
+      '@trpc/client': 11.4.3(@trpc/server@11.4.3(typescript@5.8.3))(typescript@5.8.3)
+      '@trpc/server': 11.4.3(typescript@5.8.3)
       jotai: 2.12.5(@types/react@19.1.8)(react@19.1.0)
 
   jotai@2.12.5(@types/react@19.1.8)(react@19.1.0):

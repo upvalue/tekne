@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { useAtom } from 'jotai'
-import { trpc } from '@/trpc'
+import { trpc } from '@/trpc/client'
 import { useNavigate } from '@tanstack/react-router'
 import { errorMessageAtom } from './state'
 import { DocumentDetailsButton } from './DocumentDetails'

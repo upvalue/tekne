@@ -5,6 +5,7 @@ import { tmigration as initMigration } from './migrations/1752986809444_init'
 import { tmigration as addDocDatesMigration } from './migrations/1756085936353_add-doc-dates.ts'
 import { tmigration as addDocRevisionMigration } from './migrations/1756431034379_add-doc-revision.ts'
 import { tmigration as addNoteDataMigration } from './migrations/1757182212830_add-note-data.ts'
+import { tmigration as alterNoteDataTypeEnumMigration } from './migrations/1758154595036_alter-note-data-type-enum.ts'
 import type { Database } from './types'
 
 /**
@@ -22,6 +23,7 @@ class TekneMigrationProvider implements MigrationProvider {
     migrations['1756085936353_add-doc-dates'] = addDocDatesMigration
     migrations['1756431034379_add-doc-revision'] = addDocRevisionMigration
     migrations['1757182212830_add-note-data'] = addNoteDataMigration
+    migrations['1758154595036_alter-note-data-type-enum'] = alterNoteDataTypeEnumMigration
     return migrations
   }
 }
