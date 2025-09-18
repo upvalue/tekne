@@ -44,6 +44,8 @@ export const analysisRouter = t.router({
           ),
           sql<number>`COUNT(*)`.as('total_tasks'),
         ])
+        // Exclude templates from aggregate view
+        .where('note_title', 'not ilike', '$%')
         .where('datum_type', '=', 'task')
         .where(
           'datum_tag',

@@ -33,7 +33,7 @@ export const TOCItem = ({ item }: { item: TableOfContentsItem }) => {
 
 
 export const TableOfContents = ({ toc }: { toc: TableOfContentsItem[] }) => {
-    return <div>
+    return <div className="px-4">
         {toc.map((item) => <TOCItem key={item.lineIdx} item={item} />)}
     </div>
 }
