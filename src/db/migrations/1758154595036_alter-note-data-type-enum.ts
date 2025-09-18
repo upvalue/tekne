@@ -6,7 +6,7 @@ export async function up(db: Kysely<any>): Promise<void> {
 }
 
 // `any` is required here since migrations should be frozen in time. alternatively, keep a "snapshot" db interface.
-export async function down(db: Kysely<any>): Promise<void> {
+export async function down(): Promise<void> {
   // Note: PostgreSQL doesn't support removing enum values directly
   // This would require recreating the type and updating all dependent objects
   throw new Error('Cannot remove enum value - this migration is not reversible')

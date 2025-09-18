@@ -3,7 +3,6 @@ import {
   lineMake,
   zdoc,
   type ZDoc,
-  type ZLine,
   CURRENT_SCHEMA_VERSION,
 } from '@/docs/schema'
 import { t } from '../init'

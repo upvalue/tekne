@@ -1,6 +1,5 @@
 import { DevTools } from '@/dev/DevTools'
 import { Help } from './Help'
-import { Aggregate } from './Aggregate'
 import {
   Navbar,
   NavbarSection,

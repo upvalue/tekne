@@ -1,5 +1,4 @@
 import React from 'react';
-import { Fragment as _Fragment, jsx as _jsx, jsxs as _jsxs } from 'react/jsx-runtime';
 import { ExternalLink } from '@/components/ExternalLink';
 
 export const metadata = {

@@ -3,7 +3,7 @@ import { withImmer } from 'jotai-immer'
 import { lineMake, type ZDoc, type ZLine } from '@/docs/schema'
 import { useCallback } from 'react'
 import { atomWithQuery } from 'jotai-tanstack-query'
-import { trpc, trpcClient } from '@/trpc/client'
+import { trpcClient } from '@/trpc/client'
 
 export const docAtom = withImmer(
   atom<ZDoc>({

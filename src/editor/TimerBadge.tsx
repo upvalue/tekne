@@ -139,6 +139,7 @@ export const TimerBadge = ({
       },
     })
   }, [
+    doc,
     lineContent,
     execHook,
     lineInfo.line.mdContent,
@@ -196,9 +197,11 @@ export const TimerBadge = ({
       elapsedTime: 0,
     })
   }, [
+    doc,
     setLine,
     execHook,
     lineInfo.line.mdContent,
+    lineInfo.lineIdx,
     isThisTimerActive,
     globalTimer,
     setGlobalTimer,

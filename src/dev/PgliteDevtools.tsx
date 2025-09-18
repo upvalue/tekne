@@ -15,10 +15,6 @@ import {
 } from '@/components/vendor/Dialog'
 import { Input } from '@/components/vendor/Input'
 
-interface DatabaseInfo {
-  name: string
-  version: number
-}
 
 interface PgliteDatabase {
   name: string
@@ -266,9 +262,6 @@ export const PgliteDevtools = () => {
     window.location.reload()
   }
 
-  const displayName = (name: string) => {
-    return name.replace(/^idb:\/\//, '')
-  }
 
   return (
     <div>

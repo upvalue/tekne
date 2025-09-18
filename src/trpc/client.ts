@@ -27,7 +27,7 @@ export const trpcClient = createTRPCClient<AppRouter>({
     ? [httpLink({ url: trpcUrl })]
     : [
         loggerLink({
-          enabled: (_opts) => {
+          enabled: () => {
             return true
           },
         }),
@@ -43,7 +43,7 @@ export const trpcJotai = createTRPCJotai<AppRouter>({
     ? [httpLink({ url: trpcUrl })]
     : [
         loggerLink({
-          enabled: (_opts) => {
+          enabled: () => {
             return true
           },
         }),

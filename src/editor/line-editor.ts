@@ -5,7 +5,6 @@ import { useEffect, useRef } from 'react'
 import { EditorView, keymap } from '@codemirror/view'
 import { emacsStyleKeymap } from '@codemirror/commands'
 import {
-  Annotation,
   EditorSelection,
   EditorState,
   type Extension,
@@ -29,9 +28,6 @@ import { placeholder } from './line-editor/placeholder-plugin'
 import { makeKeymap, toggleCollapse } from './line-editor/line-operations'
 import { syntaxPlugin } from './line-editor/syntax-plugin'
 import {
-  FULL_TAG_REGEX_STR,
-  FullTagRegex,
-  TAG_REGEX_MATCH_BEFORE_STR,
   TagRegexMatchBefore,
 } from './regex'
 
@@ -64,7 +60,6 @@ export type LineWithIdx = {
   lineIdx: number
 }
 
-let allTags: string[] = []
 
 const tagCompletionPlugin =
   (store: ReturnType<typeof useStore>) => (context: CompletionContext) => {
@@ -95,8 +90,6 @@ const tagCompletionPlugin =
         })
       },
     }))
-
-    console.log({ options })
 
     return {
       from: word.from,
@@ -170,7 +163,7 @@ export const useCodeMirror = (lineInfo: LineWithIdx) => {
     // Placeholder plugin: renders some grayed out text under
     // certain circumstances
     const placeholderPlugin = placeholder(
-      (view) => {
+      () => {
         const line = store.get(docAtom).children[lineInfo.lineIdx]
         if (!line) return ''
         if (store.get(docAtom).children[lineInfo.lineIdx].collapsed)

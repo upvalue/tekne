@@ -173,7 +173,7 @@ export const Help = React.memo(() => {
           </DocsWrapper>
         </React.Suspense>
       )
-    } catch (error) {
+    } catch {
       return <div className="p-4 text-red-400">Error loading documentation</div>
     }
   }, [selectedPage])

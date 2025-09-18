@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Button } from '@/components/vendor/Button'
 import { trpc } from '@/trpc/client'
-import type { ValidateAllDocsOutput, MigrateAllDocsOutput, RecomputeAllDataOutput } from '@/trpc/types'
+import type { MigrateAllDocsOutput, RecomputeAllDataOutput } from '@/trpc/types'
 
 export const DatabaseMigrations = ({ isActive }: { isActive: boolean }) => {
   const [shouldValidate, setShouldValidate] = useState(false)

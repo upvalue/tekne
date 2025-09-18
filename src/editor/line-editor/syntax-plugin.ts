@@ -35,7 +35,6 @@ const InternalLinkConfig: MarkdownConfig = {
     {
       name: 'InternalLink',
       parse(cx, next, pos) {
-        let match: RegExpExecArray | null
         if (next !== LBRACKET_CHAR_CODE) {
           return -1
         }
@@ -45,7 +44,9 @@ const InternalLinkConfig: MarkdownConfig = {
           return -1
         }
 
-        match = InternalLinkRegex.exec(cx.slice(pos + 1, cx.end))
+        const match: RegExpExecArray | null = InternalLinkRegex.exec(
+          cx.slice(pos + 1, cx.end)
+        )
 
         if (match === null) {
           return -1
@@ -119,13 +120,6 @@ const parser = baseParser.configure([
   },
 ])
 
-const logTree = (node: any, source: string, level: number) => {
-  const spaces = '  '.repeat(level)
-  console.log(
-    `${spaces}${node.type.name}: "${source.slice(node.from, node.to)}"`
-  )
-}
-
 function visitTree(
   node: any,
   source: string,
@@ -147,7 +141,7 @@ class InternalLinkWidget extends WidgetType {
     super()
   }
 
-  toDOM(view: EditorView) {
+  toDOM() {
     const wrap = document.createElement('span')
     wrap.className = 'cm-internal-link'
     wrap.addEventListener('mousedown', (e) => {
@@ -174,7 +168,7 @@ class LinkWidget extends WidgetType {
     super()
   }
 
-  toDOM(view: EditorView) {
+  toDOM() {
     const wrap = document.createElement('span')
     wrap.className = 'cm-link'
     wrap.addEventListener('mousedown', (e) => {
@@ -192,7 +186,7 @@ class TagWidget extends WidgetType {
     super()
   }
 
-  toDOM(view: EditorView) {
+  toDOM() {
     const wrap = document.createElement('span')
     wrap.className = 'cm-tag'
     wrap.addEventListener('mousedown', (e) => {
@@ -254,109 +248,106 @@ class SyntaxPlugin implements PluginValue {
     // TODO: Quite a bit of redundant code here that could
     // be simplified
 
-    visitTree(
-      tree.topNode,
-      src,
-      0,
-      (node: any, source: string, level: number) => {
-        const tableEntry = syntaxTable[node.type.name]
+    visitTree(tree.topNode, src, 0, (node: any) => {
+      const tableEntry = syntaxTable[node.type.name]
 
-        if (tableEntry) {
+      if (tableEntry) {
+        builder.add(
+          node.from,
+          node.to,
+          Decoration.mark({
+            class: tableEntry,
+            tagName: 'span',
+          })
+        )
+      }
+
+      if (node.type.name === 'Link') {
+        if (hasFocus) {
           builder.add(
             node.from,
             node.to,
             Decoration.mark({
-              class: tableEntry,
+              class: 'cm-link',
               tagName: 'span',
             })
           )
-        }
-
-        if (node.type.name === 'Link') {
-          if (hasFocus) {
-            builder.add(
-              node.from,
-              node.to,
-              Decoration.mark({
-                class: 'cm-link',
-                tagName: 'span',
-              })
-            )
-          } else {
-            const urlNode = node.getChild('URL')
-            if (urlNode) {
-              const url = src.slice(urlNode.from, urlNode.to)
-              const linkMarks = node.getChildren('LinkMark')
-              let text = url
-              try {
-                text = src.slice(linkMarks[0].to, linkMarks[1].from)
-              } catch (e) {}
-              builder.add(
-                node.from,
-                node.to,
-                Decoration.widget({
-                  widget: new LinkWidget(url, text),
-                })
-              )
+        } else {
+          const urlNode = node.getChild('URL')
+          if (urlNode) {
+            const url = src.slice(urlNode.from, urlNode.to)
+            const linkMarks = node.getChildren('LinkMark')
+            let text = url
+            try {
+              text = src.slice(linkMarks[0].to, linkMarks[1].from)
+            } catch {
+              // ignore
             }
-          }
-        }
-
-        if (node.type.name === 'InternalLink') {
-          const linkText = src.slice(node.firstChild.from, node.firstChild.to)
-          if (hasFocus) {
-            builder.add(
-              node.from,
-              node.to,
-              Decoration.mark({
-                class: 'cm-link',
-                tagName: 'span',
-              })
-            )
-          } else {
             builder.add(
               node.from,
               node.to,
               Decoration.widget({
-                widget: new InternalLinkWidget(linkText),
+                widget: new LinkWidget(url, text),
               })
             )
           }
         }
+      }
 
-        if (node.type.name === 'Tag') {
-          if (hasFocus) {
-            builder.add(
-              node.from,
-              node.to,
-              Decoration.mark({
-                class: 'cm-tag',
-                tagName: 'span',
-              })
-            )
-          } else {
-            builder.add(
-              node.from,
-              node.to,
-              Decoration.widget({
-                widget: new TagWidget(src.slice(node.from + 1, node.to)),
-              })
-            )
-          }
-        }
-
-        if (node.type.name === 'InlineCode') {
+      if (node.type.name === 'InternalLink') {
+        const linkText = src.slice(node.firstChild.from, node.firstChild.to)
+        if (hasFocus) {
           builder.add(
             node.from,
             node.to,
             Decoration.mark({
-              class: 'cm-inline-code',
+              class: 'cm-link',
               tagName: 'span',
+            })
+          )
+        } else {
+          builder.add(
+            node.from,
+            node.to,
+            Decoration.widget({
+              widget: new InternalLinkWidget(linkText),
             })
           )
         }
       }
-    )
+
+      if (node.type.name === 'Tag') {
+        if (hasFocus) {
+          builder.add(
+            node.from,
+            node.to,
+            Decoration.mark({
+              class: 'cm-tag',
+              tagName: 'span',
+            })
+          )
+        } else {
+          builder.add(
+            node.from,
+            node.to,
+            Decoration.widget({
+              widget: new TagWidget(src.slice(node.from + 1, node.to)),
+            })
+          )
+        }
+      }
+
+      if (node.type.name === 'InlineCode') {
+        builder.add(
+          node.from,
+          node.to,
+          Decoration.mark({
+            class: 'cm-inline-code',
+            tagName: 'span',
+          })
+        )
+      }
+    })
 
     return builder.finish()
   }

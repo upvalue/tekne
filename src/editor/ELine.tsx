@@ -105,7 +105,7 @@ export const ELine = (lineInfo: ELineProps) => {
           className="ml-2"
           tabIndex={-1}
           {...checkboxStatus(line.datumTaskStatus)}
-          onChange={(e) => {
+          onChange={() => {
             // TOOD: This pattern repeats itself and could be turned into a hook
             setDoc((draft) => {
               draft.children[lineInfo.lineIdx].datumTaskStatus = cycleCheckboxStatus(draft.children[lineInfo.lineIdx].datumTaskStatus || 'unset')

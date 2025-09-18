@@ -60,7 +60,7 @@ export const StatusBar = ({ isLoading }: { isLoading: boolean }) => {
       targetDuration: 25 * 60,
       elapsedTime: 0,
     })
-  }, [globalTimer.lineContent, setGlobalTimerAtom, execHook])
+  }, [doc, globalTimer.lineContent, setGlobalTimerAtom, execHook])
 
   useEffect(() => {
     if (errorMessage) {

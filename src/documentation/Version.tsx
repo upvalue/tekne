@@ -1,12 +1,10 @@
 declare const TEKNE_GIT_INFO: { hash: string; message: string }
 
 import React from 'react'
-import { truncate } from 'lodash-es'
 
 export function Version() {
   const gitInfo = TEKNE_GIT_INFO
   const fullHash = gitInfo.hash
-  const shortHash = gitInfo.hash.slice(0, 10)
   const message = gitInfo.message
 
   return (

@@ -299,11 +299,11 @@ export const validateDocumentWithMigrationCheck = (
       if (migratedIsValid) {
         validationResult.canBeFxedByMigration = true
       }
-    } catch (migrationValidationError) {
+    } catch {
       // Migration couldn't fix the validation errors
       validationResult.canBeFxedByMigration = false
     }
-  } catch (migrationError) {
+  } catch {
     // Migration itself failed
     validationResult.canBeFxedByMigration = false
   }

@@ -1,4 +1,3 @@
-import { IconBadge } from '@/components/IconBadge'
 import {
   Dialog,
   DialogContent,
@@ -6,9 +5,9 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/vendor/Dialog'
-import { formatDate, getDocTitle } from '@/lib/utils'
+import { getDocTitle } from '@/lib/utils'
 import { DocumentTextIcon } from '@heroicons/react/16/solid'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { trpc } from '@/trpc/client'
 import { DialogDescription } from '@radix-ui/react-dialog'
 

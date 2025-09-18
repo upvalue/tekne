@@ -1,7 +1,7 @@
 import { TEditor } from '@/editor/TEditor'
 import { toast } from 'sonner'
 import { allTagsAtom, docAtom } from '@/editor/state'
-import { createStore, useAtom, useAtomValue } from 'jotai'
+import { createStore, useAtom } from 'jotai'
 import '@/docs/schema'
 import { truncate } from 'lodash-es'
 import { Provider } from 'jotai'
@@ -105,7 +105,7 @@ function RouteComponent() {
         },
       }
     )
-  }, [title, store, updateDocMutation, loadDocQuery.isLoading])
+  }, [title, store, updateDocMutation, loadDocQuery.isLoading, loadDocQuery.data])
 
   // Try to save document if user navigates away while a change is present
   // We don't use "enableBeforeUnload" right now because it always registers

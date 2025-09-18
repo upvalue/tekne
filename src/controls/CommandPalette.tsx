@@ -2,7 +2,7 @@ import React from 'react'
 import { KBarProvider, type Action } from 'kbar'
 import { useMemo } from 'react'
 import { KBarModal, KBarSearchInput, KBarResultRenderer } from './KBar'
-import { useLocation, useRouter, type NavigateFn } from '@tanstack/react-router'
+import { useRouter, type NavigateFn } from '@tanstack/react-router'
 import { formatDate } from '@/lib/utils'
 import { addDays, parse } from 'date-fns'
 import { getDocTitle } from '@/hooks/useDocTitle'
@@ -131,7 +131,7 @@ export const CommandPalette: React.FC<{ children: React.ReactNode }> = ({
         keywords: 'restart tutorial reset help',
       },
     ]
-  }, [deleteDocMutation])
+  }, [deleteDocMutation, navigate])
 
   return (
     <KBarProvider
