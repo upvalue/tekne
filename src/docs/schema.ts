@@ -22,6 +22,11 @@ const zline = z.object({
   datumTaskStatus: z.optional(z.enum(['complete', 'incomplete', 'unset'])),
 
   /**
+   * If a line was pinned, when
+   */
+  datumPinnedAt: z.optional(z.iso.datetime()),
+
+  /**
    * Line background color
    */
   color: z.optional(colorEnum),

@@ -1,4 +1,5 @@
 import { useDocTitle } from '@/hooks/useDocTitle'
+import { renderTime } from '@/lib/time'
 import { trpc } from '@/trpc/client'
 import type { AggregateDataOutput } from '@/trpc/types'
 
@@ -78,6 +79,15 @@ const TimerDisplay = ({ time }: { time: number }) => {
     )
 }
 
+const PinnedDisplay = ({ pinnedAt, pinnedDesc }: { pinnedAt: string, pinnedDesc: string }) => {
+    // TODO: Consider adding date relative here
+    return (
+        <div className="flex items-center text-zinc-500 space-x-1 text-sm">
+            <span>{pinnedDesc}</span>
+        </div>
+    )
+}
+
 const ResultCard = ({ tagData }: { tagData: AggregateDataOutput[number] }) => {
     return (
         <div className="relative">
@@ -90,6 +100,9 @@ const ResultCard = ({ tagData }: { tagData: AggregateDataOutput[number] }) => {
                     incomplete={tagData.incomplete_tasks}
                     unset={tagData.unset_tasks}
                 />
+                {tagData.pinned_at && (
+                    <PinnedDisplay pinnedAt={tagData.pinned_at} pinnedDesc={tagData.pinned_desc!} />
+                )}
                 {tagData.total_time_seconds && (
                     <TimerDisplay time={tagData.total_time_seconds} />
                 )}

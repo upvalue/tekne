@@ -30,7 +30,8 @@ type CodemirrorEvents = {
   tagClick: TagClickEventDetail
   internalLinkClick: InternalLinkClickEventDetail
   lineTimerAdd: LineTimerEvent
-  lineTagToggle: LineStatusEvent
+  linePinToggle: LineStatusEvent
+  lineTaskToggle: LineStatusEvent
   lineCollapseToggle: LineCollapseToggleEvent
   lineColorChange: LineColorChangeEvent
 }

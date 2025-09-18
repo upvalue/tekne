@@ -27,6 +27,8 @@ export const processDocumentForData = (title: string, doc: ZDoc) => {
     datum_tag: d.datumTag,
     datum_status: d.datumStatus,
     datum_time_seconds: d.datumTimeSeconds,
+    datum_pinned_at: d.datumPinnedAt,
+    datum_pinned_content: d.datumPinnedContent,
     datum_type: d.datumType,
   }))
 }

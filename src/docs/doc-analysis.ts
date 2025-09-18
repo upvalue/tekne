@@ -19,7 +19,7 @@ const ztreeLine: z.ZodType<ZTreeLine> = zline.extend({
   arrayIdx: z.number(),
 })
 
-export const zdocTree = zdoc.extend({
+const zdocTree = zdoc.extend({
   children: z.array(ztreeLine),
 })
 
@@ -74,19 +74,19 @@ export const treeifyDoc = (doc: ZDoc): ZDocTree => {
   return root
 }
 
-const zdocDatumType = z.enum(['task', 'timer', 'tag'])
+const zdocDatumType = z.enum(['task', 'timer', 'tag', 'pin'])
 
 type ZDocDatumType = z.infer<typeof zdocDatumType>
-/**
- *
- */
-export const zdocDatum = z.object({
+
+const zdocDatum = z.object({
   lineIdx: z.number(),
   timeCreated: z.string().datetime(),
   timeUpdated: z.string().datetime(),
   datumTag: z.string(),
   datumStatus: z.optional(z.enum(['complete', 'incomplete', 'unset'])),
   datumTimeSeconds: z.optional(z.number()),
+  datumPinnedAt: z.optional(z.string().datetime()),
+  datumPinnedContent: z.optional(z.string()),
   datumType: zdocDatumType,
 })
 
@@ -127,6 +127,13 @@ const extractDocDataImpl = (
       accum.push(datum)
     }
 
+    if (ln.datumPinnedAt) {
+      const datum = makeDatum(tag, ln, 'pin')
+      datum.datumPinnedAt = ln.datumPinnedAt
+      datum.datumPinnedContent = ln.mdContent
+      accum.push(datum)
+    }
+
     const datum = makeDatum(tag, ln, 'tag')
     accum.push(datum)
   }
@@ -142,5 +149,6 @@ export const extractDocData = (lines: Array<ZTreeLine>): Array<ZDocDatum> => {
   for (const line of lines) {
     extractDocDataImpl(line, ret, tags)
   }
+  console.log({ ret })
   return ret
 }

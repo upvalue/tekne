@@ -254,7 +254,17 @@ export const useCodeMirror = (lineInfo: LineWithIdx) => {
     })
   })
 
-  useLineEvent('lineTagToggle', lineInfo.lineIdx, (event) => {
+  useLineEvent('linePinToggle', lineInfo.lineIdx, (event) => {
+    setDoc((draft) => {
+      if (draft.children[event.lineIdx].datumPinnedAt) {
+        delete draft.children[event.lineIdx].datumPinnedAt
+      } else {
+        draft.children[event.lineIdx].datumPinnedAt = new Date().toISOString()
+      }
+    })
+  })
+
+  useLineEvent('lineTaskToggle', lineInfo.lineIdx, (event) => {
     setDoc((draft) => {
       if (draft.children[event.lineIdx].datumTaskStatus) {
         delete draft.children[event.lineIdx].datumTaskStatus

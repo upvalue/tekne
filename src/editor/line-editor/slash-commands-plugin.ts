@@ -81,6 +81,28 @@ export const slashCommandsPlugin = (lineIdx: number) => {
           },
         },
         {
+          label: '/pin: Toggle whether line is pinned',
+          type: 'text',
+          apply: (
+            view: EditorView,
+            _completion: Completion,
+            from: number,
+            to: number
+          ) => {
+            emitCodemirrorEvent('linePinToggle', {
+              lineIdx,
+            })
+
+            view.dispatch({
+              changes: {
+                from,
+                to,
+                insert: '',
+              },
+            })
+          },
+        },
+        {
           label: '/timer: Add a timer to the line',
           type: 'text',
           apply: (
@@ -111,7 +133,7 @@ export const slashCommandsPlugin = (lineIdx: number) => {
             from: number,
             to: number
           ) => {
-            emitCodemirrorEvent('lineTagToggle', {
+            emitCodemirrorEvent('lineTaskToggle', {
               lineIdx,
             })
 
@@ -146,12 +168,13 @@ export const slashCommandsPlugin = (lineIdx: number) => {
             })
           },
         },
+        /*
         colorCommand(lineIdx, 'red'),
         colorCommand(lineIdx, 'yellow'),
         colorCommand(lineIdx, 'blue'),
         colorCommand(lineIdx, 'purple'),
         colorCommand(lineIdx, 'green'),
-        noColorCommand(lineIdx),
+        noColorCommand(lineIdx),*/
       ],
     }
   }

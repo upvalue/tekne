@@ -12,7 +12,7 @@ export type DBNote = {
   revision: number
 }
 export type NoteDataStatus = 'complete' | 'incomplete' | 'unset'
-export type NoteDataType = 'task' | 'timer' | 'tag'
+export type NoteDataType = 'task' | 'timer' | 'tag' | 'pin'
 
 export type DBNoteData = {
   note_title: string
@@ -23,6 +23,7 @@ export type DBNoteData = {
   datum_tag: string
   datum_status: NoteDataStatus | null
   datum_time_seconds: number | null
+  datum_pinned_at: ColumnType<Date, Date | undefined, Date> | null
 }
 
 // Define your database schema interface here

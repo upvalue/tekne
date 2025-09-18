@@ -9,9 +9,15 @@ type TagAggregateData = {
   incomplete_tasks?: number
   unset_tasks?: number
   total_time_seconds?: number
+  pinned_at?: Date
+  pinned_desc?: string
 }
 
 export const analysisRouter = t.router({
+  /**
+   * This function does a few different queries to
+   * create the aggregate summary of a tag over time
+   */
   aggregateData: t.procedure
     .input(
       z.object({
@@ -28,6 +34,19 @@ export const analysisRouter = t.router({
       if (tagsInDoc.length === 0) {
         return []
       }
+
+      const taskPins = await db
+        .selectFrom('note_data')
+        .select(['datum_tag as tag', 'datum_pinned_at', 'datum_pinned_content'])
+        .where('note_title', '=', input.title)
+        .where('datum_type', '=', 'pin')
+        .where(
+          'datum_tag',
+          'in',
+          tagsInDoc.map((t) => t.tag)
+        )
+        .orderBy('datum_pinned_at', 'desc')
+        .execute()
 
       const taskData = await db
         .selectFrom('note_data')
@@ -61,6 +80,8 @@ export const analysisRouter = t.router({
           'datum_tag as tag',
           sql<number>`SUM(datum_time_seconds)`.as('total_time_seconds'),
         ])
+        // Exclude templates from aggregate view
+        .where('note_title', 'not ilike', '$%')
         .where('datum_type', '=', 'timer')
         .where(
           'datum_tag',
@@ -85,11 +106,29 @@ export const analysisRouter = t.router({
           unset_tasks: task.unset_tasks,
         }
       }
+
       for (const timer of timerData) {
         if (!tasks[timer.tag]) {
           tasks[timer.tag] = { tag: timer.tag }
         }
         tasks[timer.tag].total_time_seconds = timer.total_time_seconds
+      }
+
+      // Find most recent pin
+      // Should be done in SQL
+      for (const pin of taskPins) {
+        if (!tasks[pin.tag]) {
+          tasks[pin.tag] = { tag: pin.tag }
+        }
+
+        if (
+          (tasks[pin.tag].pinned_at &&
+            tasks[pin.tag].pinned_at! < pin.datum_pinned_at!) ||
+          !tasks[pin.tag].pinned_at
+        ) {
+          tasks[pin.tag].pinned_at = pin.datum_pinned_at!
+          tasks[pin.tag].pinned_desc = pin.datum_pinned_content
+        }
       }
 
       return Object.values(tasks)

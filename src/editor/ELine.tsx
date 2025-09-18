@@ -1,11 +1,12 @@
 import { useAtomValue, useSetAtom } from 'jotai'
 import { docAtom, focusedLineAtom } from './state'
 import { Checkbox } from '@/components/vendor/Checkbox'
-import { Circle, CircleDot } from 'lucide-react'
+import { Circle, CircleDot, Pin } from 'lucide-react'
 import { useCodeMirror, type LineWithIdx } from './line-editor'
 import { TimerBadge } from './TimerBadge'
 import { cn } from '@/lib/utils'
 import type { CollapseState } from '@/docs/collapse'
+import type { ZLine } from '@/docs/schema';
 
 type ELineProps = LineWithIdx & {
   timestamp: string | null
@@ -42,6 +43,16 @@ const checkboxStatus = (status: 'complete' | 'incomplete' | 'unset') => {
   }
 }
 
+const LineIcon = ({ line, collapseState }: { line: ZLine, collapseState: CollapseState }) => {
+  if (line.datumPinnedAt) {
+    return <Pin width={8} height={8} />
+  }
+  if (collapseState === 'collapse-start') {
+    return <CircleDot width={8} height={8} />
+  }
+  return <Circle width={8} height={8} />
+}
+
 /**
  * The individual line editor React component. Note that the bulk of
  * the logic is contained in the line-editor.ts file which handles
@@ -70,6 +81,7 @@ export const ELine = (lineInfo: ELineProps) => {
   const lineIsHeader = line.mdContent.startsWith('### ') || line.mdContent.startsWith('## ') || line.mdContent.startsWith('# ');
   const headerLevel = line.mdContent.startsWith('### ') ? 3 : line.mdContent.startsWith('##') ? 2 : line.mdContent.startsWith('# ') ? 1 : 0;
 
+
   return (
     <div
       className={cn(
@@ -89,16 +101,7 @@ export const ELine = (lineInfo: ELineProps) => {
         }}
       />
       {!lineIsHeader &&
-        <>
-          <div className="flex items-center">
-            &nbsp;
-            {collapseState === 'collapse-start' ? (
-              <CircleDot width={8} height={8} />
-            ) : (
-              <Circle width={8} height={8} />
-            )}
-          </div>
-        </>
+        <LineIcon line={line} collapseState={collapseState} />
       }
       {line.datumTaskStatus && (
         <Checkbox
