@@ -26,7 +26,8 @@ const DocumentSearchContent = () => {
     { query: debouncedQuery },
     {
       enabled: true,
-      staleTime: 1000,
+      staleTime: 10000,
+      queryHash: 'search-docs',
     }
   )
 
@@ -34,6 +35,7 @@ const DocumentSearchContent = () => {
     let actions: Action[] = []
     let exactMatch = false
     if (searchDocs.data) {
+      console.log('update searchDocs with data ', searchDocs.data);
       actions = searchDocs.data.map((doc) => {
         if (doc.title.toLowerCase() === query.toLowerCase()) {
           exactMatch = true
@@ -64,7 +66,7 @@ const DocumentSearchContent = () => {
     return actions
   }, [searchDocs.data, navigate, query])
 
-  useRegisterActions(actions, [actions, debouncedQuery])
+  useRegisterActions(actions, [actions])
 
   return (
     <KBarModal>
