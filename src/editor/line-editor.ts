@@ -4,32 +4,17 @@ import { useEffect, useRef } from 'react'
 
 import { EditorView, keymap } from '@codemirror/view'
 import { emacsStyleKeymap } from '@codemirror/commands'
-import {
-  EditorSelection,
-  EditorState,
-  type Extension,
-} from '@codemirror/state'
+import { EditorSelection, EditorState, type Extension } from '@codemirror/state'
 import { type ZLine } from '@/docs/schema'
 import { useAtom, useSetAtom, useStore } from 'jotai'
-import {
-  allTagsAtom,
-  docAtom,
-  focusedLineAtom,
-  requestFocusLineAtom,
-} from './state'
-import {
-  autocompletion,
-  CompletionContext,
-  type Completion,
-} from '@codemirror/autocomplete'
+import { docAtom, focusedLineAtom, requestFocusLineAtom } from './state'
+import { autocompletion } from '@codemirror/autocomplete'
 import { useLineEvent } from './line-editor/cm-events'
 import { slashCommandsPlugin } from './line-editor/slash-commands-plugin'
 import { placeholder } from './line-editor/placeholder-plugin'
 import { makeKeymap, toggleCollapse } from './line-editor/line-operations'
 import { syntaxPlugin } from './line-editor/syntax-plugin'
-import {
-  TagRegexMatchBefore,
-} from './regex'
+import { tagCompletionPlugin } from './line-editor/tag-completion-plugin'
 
 const theme = EditorView.theme(
   // Preferring to do these in TEditor.css
@@ -59,43 +44,6 @@ export type LineWithIdx = {
   line: ZLine
   lineIdx: number
 }
-
-
-const tagCompletionPlugin =
-  (store: ReturnType<typeof useStore>) => (context: CompletionContext) => {
-    const word = context.matchBefore(TagRegexMatchBefore)
-
-    const { data } = store.get(allTagsAtom)
-
-    if (!data || !Array.isArray(data)) return null
-
-    if (!word) return null
-    if (word.from === word.to && !context.explicit) return null
-
-    const options = data.map((tag) => ({
-      label: `#${tag}`,
-      type: 'text',
-      apply: (
-        view: EditorView,
-        _completion: Completion,
-        from: number,
-        to: number
-      ) => {
-        view.dispatch({
-          changes: {
-            from,
-            to,
-            insert: `#${tag}`,
-          },
-        })
-      },
-    }))
-
-    return {
-      from: word.from,
-      options,
-    }
-  }
 
 /**
  * Sets up a Codemirror editor
@@ -200,8 +148,6 @@ export const useCodeMirror = (lineInfo: LineWithIdx) => {
       customKeymap,
       keymap.of(emacsStyleKeymap),
       EditorView.lineWrapping,
-      // tagPlugin,
-      // wikiLinkPlugin,
       syntaxPlugin,
       placeholderPlugin,
       autocompletion({
