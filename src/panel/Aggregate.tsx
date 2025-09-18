@@ -95,14 +95,14 @@ const ResultCard = ({ tagData }: { tagData: AggregateDataOutput[number] }) => {
                 <span className="text-sm">
                     {tagData.tag}
                 </span>
+                {tagData.pinned_at && (
+                    <PinnedDisplay pinnedAt={tagData.pinned_at} pinnedDesc={tagData.pinned_desc!} />
+                )}
                 <TaskStatusDisplay
                     complete={tagData.complete_tasks}
                     incomplete={tagData.incomplete_tasks}
                     unset={tagData.unset_tasks}
                 />
-                {tagData.pinned_at && (
-                    <PinnedDisplay pinnedAt={tagData.pinned_at} pinnedDesc={tagData.pinned_desc!} />
-                )}
                 {tagData.total_time_seconds && (
                     <TimerDisplay time={tagData.total_time_seconds} />
                 )}

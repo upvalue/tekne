@@ -4,6 +4,16 @@ import { trpc } from '@/trpc/client'
 import { useNavigate } from '@tanstack/react-router'
 import { errorMessageAtom } from './state'
 import { DocumentDetailsButton } from './DocumentDetails'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/vendor/Dialog'
+import { Button } from '@/components/vendor/Button'
+import { EditorDialogContent } from '@/components/EditorDialogContent'
 
 /*
  * Title bar; allows user to change the title of a document
@@ -17,17 +27,45 @@ export const TitleBar = ({
 }) => {
   const [proposedTitle, setProposedTitle] = useState(title)
   const [, setErrorMessage] = useAtom(errorMessageAtom)
+  const [showConfirmDialog, setShowConfirmDialog] = useState<{
+    show: boolean
+    linksToUpdate: Array<{ title: string }>
+  }>({ show: false, linksToUpdate: [] })
   const editableRef = useRef<HTMLDivElement>(null)
   const navigate = useNavigate()
 
-  const renameDocMutation = trpc.doc.renameDoc.useMutation({
-    onSuccess: () => {
+  const setDisplayedTitle = (title: string) => {
+    setProposedTitle(title)
+    if (editableRef.current) {
+      editableRef.current.textContent = title
+    }
+  }
+
+  const renameDocExecuteMutation = trpc.doc.renameDocExecute.useMutation({
+    onSuccess: (r) => {
+      if (r.success) {
+        navigate({
+          to: '/n/$title',
+          params: { title: proposedTitle.trim() },
+        })
+      }
+    },
+  })
+
+  const renameDocProposeMutation = trpc.doc.renameDocPropose.useMutation({
+    onSuccess: (res) => {
       setErrorMessage(null)
-      navigate({
-        to: '/n/$title',
-        params: {
-          title: proposedTitle.trim(),
-        },
+
+      if (res.docAlreadyExists) {
+        setErrorMessage(`Document with name "${proposedTitle.trim()}" already exists`)
+        setDisplayedTitle(title)
+        return;
+      }
+
+      // Show confirmation dialog when renaming is possible
+      setShowConfirmDialog({
+        show: true,
+        linksToUpdate: res.linksToUpdate,
       })
     },
     onError: (error) => {
@@ -44,10 +82,7 @@ export const TitleBar = ({
       setErrorMessage(message)
 
       // Revert the title to the original
-      setProposedTitle(title)
-      if (editableRef.current) {
-        editableRef.current.textContent = title
-      }
+      setDisplayedTitle(title)
     },
   })
 
@@ -60,10 +95,11 @@ export const TitleBar = ({
 
   const handleSubmit = () => {
     if (proposedTitle.trim() !== title && allowTitleEdit) {
-      renameDocMutation.mutate({
+      renameDocProposeMutation.mutate({
         oldName: title,
         newName: proposedTitle.trim(),
-      })
+      });
+
     } else {
       setErrorMessage(null)
     }
@@ -116,6 +152,52 @@ export const TitleBar = ({
           </div>
         </div>
       </div>
+
+      <Dialog open={showConfirmDialog.show} onOpenChange={(open) => setShowConfirmDialog(sc => ({ ...sc, show: open }))}>
+        <EditorDialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirm Rename</DialogTitle>
+            <DialogDescription>Confirm the rename of the document</DialogDescription>
+          </DialogHeader>
+          <div>
+
+            Are you sure you want to rename "{title}" to "{proposedTitle.trim()}"?
+          </div>
+
+          {showConfirmDialog.linksToUpdate.length > 0 && (
+            <>
+              <div>This will update {showConfirmDialog.linksToUpdate.length} other document{showConfirmDialog.linksToUpdate.length > 1 ? 's' : ''}.</div>
+              <div>
+                {showConfirmDialog.linksToUpdate.map((link) => (
+                  <div key={link.title}>{link.title}</div>
+                ))}
+              </div>
+            </>
+          )}
+          <DialogFooter>
+            <Button
+              outline
+              onClick={() => {
+                setShowConfirmDialog(sc => ({ ...sc, show: false }))
+                setDisplayedTitle(title)
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={() => {
+                setShowConfirmDialog(sc => ({ ...sc, show: false }))
+                renameDocExecuteMutation.mutate({
+                  oldName: title,
+                  newName: proposedTitle.trim(),
+                })
+              }}
+            >
+              Rename
+            </Button>
+          </DialogFooter>
+        </EditorDialogContent>
+      </Dialog>
     </div>
   )
 }

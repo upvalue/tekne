@@ -43,7 +43,10 @@ declare global {
     __codemirrorEmitter: TypedEventEmitter<CodemirrorEvents>
   }
 }
-window.__codemirrorEmitter = codemirrorEmitter
+
+if (typeof window !== 'undefined') {
+  window.__codemirrorEmitter = codemirrorEmitter
+}
 
 export const useCodemirrorEvent = <K extends keyof CodemirrorEvents>(
   event: K,

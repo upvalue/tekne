@@ -17,6 +17,7 @@ import {
 import { tags as t } from '@lezer/highlight'
 import { emitCodemirrorEvent } from './cm-events'
 import { InternalLinkRegex, TagRegex } from '../regex'
+import type { SyntaxNode } from '@lezer/common'
 
 const LBRACKET_CHAR_CODE = 91
 
@@ -45,7 +46,7 @@ const InternalLinkConfig: MarkdownConfig = {
         }
 
         const match: RegExpExecArray | null = InternalLinkRegex.exec(
-          cx.slice(pos + 1, cx.end)
+          cx.slice(pos + 2, cx.end)
         )
 
         if (match === null) {
@@ -96,7 +97,7 @@ const TagConfig: MarkdownConfig = {
   ],
 }
 
-const parser = baseParser.configure([
+export const TEKNE_MD_PARSER = baseParser.configure([
   InternalLinkConfig,
   TagConfig,
   Strikethrough,
@@ -120,8 +121,15 @@ const parser = baseParser.configure([
   },
 ])
 
-function visitTree(
-  node: any,
+/**
+ * Touch every node in a parsed markdown tree
+ * @param node
+ * @param source
+ * @param level
+ * @param visitFn
+ */
+export function visitMdTree(
+  node: SyntaxNode,
   source: string,
   level = 0,
   visitFn: (node: any, source: string, level: number) => void
@@ -131,9 +139,37 @@ function visitTree(
   // Recursively walk children
   let child = node.firstChild
   while (child) {
-    visitTree(child, source, level + 1, visitFn)
+    visitMdTree(child, source, level + 1, visitFn)
     child = child.nextSibling
   }
+}
+
+/**
+ * Converts syntax parser output into non-recursive JSON
+ * for database querying
+ */
+export const jsonifyMdTree = (
+  node: SyntaxNode,
+  source: string,
+  level = 0
+): string => {
+  const indent = '  '.repeat(level)
+  const nodeText = source.slice(node.from, node.to)
+  let result: any = {
+    type: node.type.name,
+    from: node.from,
+    to: node.to,
+    text: nodeText,
+    children: [],
+  }
+
+  let child = node.firstChild
+  while (child) {
+    result.children.push(jsonifyMdTree(child, source, level + 1))
+    child = child.nextSibling
+  }
+
+  return result
 }
 
 class InternalLinkWidget extends WidgetType {
@@ -240,15 +276,12 @@ class SyntaxPlugin implements PluginValue {
 
     const { hasFocus, state } = view
     const src = state.sliceDoc(0, view.state.doc.length)
-    const tree = parser.parse(src)
-
-    // Log parsed tree
-    // visitTree(tree.topNode, src, 0, logTree)
+    const tree = TEKNE_MD_PARSER.parse(src)
 
     // TODO: Quite a bit of redundant code here that could
     // be simplified
 
-    visitTree(tree.topNode, src, 0, (node: any) => {
+    visitMdTree(tree.topNode, src, 0, (node: any) => {
       const tableEntry = syntaxTable[node.type.name]
 
       if (tableEntry) {

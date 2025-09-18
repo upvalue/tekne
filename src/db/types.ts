@@ -10,6 +10,7 @@ export type DBNote = {
   createdAt: ColumnType<Date, Date | undefined, Date>
   updatedAt: ColumnType<Date, Date | undefined, Date>
   revision: number
+  parsed_body: ZodJsonColumn<any>
 }
 export type NoteDataStatus = 'complete' | 'incomplete' | 'unset'
 export type NoteDataType = 'task' | 'timer' | 'tag' | 'pin'
@@ -24,6 +25,7 @@ export type DBNoteData = {
   datum_status: NoteDataStatus | null
   datum_time_seconds: number | null
   datum_pinned_at: ColumnType<Date, Date | undefined, Date> | null
+  datum_pinned_content: string | null
 }
 
 // Define your database schema interface here

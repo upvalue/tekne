@@ -2,6 +2,10 @@ import type { Database } from '@/db'
 import type { Kysely } from 'kysely'
 import type { ZDoc } from '@/docs/schema'
 import { extractDocData, treeifyDoc } from '@/docs/doc-analysis'
+import {
+  jsonifyMdTree,
+  TEKNE_MD_PARSER,
+} from '@/editor/line-editor/syntax-plugin'
 
 const linesToZodDoc = (title: string, children: Array<any>): ZDoc => {
   return {
@@ -51,6 +55,20 @@ export const recomputeAllDocumentData = async (db: Kysely<Database>) => {
     // Process each document
     for (const doc of allDocs) {
       const processedData = processDocumentForData(doc.title, doc.body)
+
+      const parsedBody = doc.body.children.map((line, lineIdx) => {
+        const tree = TEKNE_MD_PARSER.parse(line.mdContent)
+        return {
+          line_idx: lineIdx,
+          parsed_body: jsonifyMdTree(tree.topNode, line.mdContent),
+        }
+      })
+
+      await tx
+        .updateTable('notes')
+        .set({ parsed_body: parsedBody })
+        .where('title', '=', doc.title)
+        .execute()
 
       if (processedData.length > 0) {
         await tx.insertInto('note_data').values(processedData).execute()

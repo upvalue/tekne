@@ -35,7 +35,6 @@ const DocumentSearchContent = () => {
     let actions: Action[] = []
     let exactMatch = false
     if (searchDocs.data) {
-      console.log('update searchDocs with data ', searchDocs.data);
       actions = searchDocs.data.map((doc) => {
         if (doc.title.toLowerCase() === query.toLowerCase()) {
           exactMatch = true

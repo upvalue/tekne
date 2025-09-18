@@ -77,15 +77,17 @@ function RouteComponent() {
 
   // It also uses beforeunload to try to prevent user from navigating away if
 
-  const saveDocument = useCallback(() => {
+  const saveDocument = useCallback((chainOnSuccess?: () => void) => {
     if (loadDocQuery.isLoading) {
       return
     }
 
     // Doc hasn't changed, don't do anything
     if (store.get(docAtom) === loadDocQuery.data) {
+      if (chainOnSuccess) chainOnSuccess();
       return
     }
+
     updateDocMutation.mutate(
       {
         name: title,
@@ -101,6 +103,10 @@ function RouteComponent() {
               'Your changes have been saved, you can navigate away now'
             )
             userNavigatingAway.current = false
+          }
+
+          if (chainOnSuccess) {
+            chainOnSuccess()
           }
         },
       }
@@ -183,12 +189,14 @@ function RouteComponent() {
   const navigate = useNavigate()
 
   useCodemirrorEvent('internalLinkClick', (event) => {
-    navigate({
-      to: '/n/$title',
-      params: {
-        title: event.link,
-      },
-    }).then(() => { })
+    saveDocument(() => {
+      navigate({
+        to: '/open/$title',
+        params: {
+          title: event.link,
+        },
+      })
+    })
   })
 
   return (

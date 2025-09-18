@@ -15,6 +15,7 @@ import { Route as LabRouteImport } from './routes/lab'
 import { Route as DemoRouteImport } from './routes/demo'
 import { Route as R404RouteImport } from './routes/404'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as OpenTitleRouteImport } from './routes/open/$title'
 import { Route as NTitleRouteImport } from './routes/n/$title'
 
 const TrpcTestRoute = TrpcTestRouteImport.update({
@@ -47,6 +48,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const OpenTitleRoute = OpenTitleRouteImport.update({
+  id: '/open/$title',
+  path: '/open/$title',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const NTitleRoute = NTitleRouteImport.update({
   id: '/n/$title',
   path: '/n/$title',
@@ -61,6 +67,7 @@ export interface FileRoutesByFullPath {
   '/scratch': typeof ScratchRoute
   '/trpc-test': typeof TrpcTestRoute
   '/n/$title': typeof NTitleRoute
+  '/open/$title': typeof OpenTitleRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -70,6 +77,7 @@ export interface FileRoutesByTo {
   '/scratch': typeof ScratchRoute
   '/trpc-test': typeof TrpcTestRoute
   '/n/$title': typeof NTitleRoute
+  '/open/$title': typeof OpenTitleRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -80,6 +88,7 @@ export interface FileRoutesById {
   '/scratch': typeof ScratchRoute
   '/trpc-test': typeof TrpcTestRoute
   '/n/$title': typeof NTitleRoute
+  '/open/$title': typeof OpenTitleRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -91,8 +100,17 @@ export interface FileRouteTypes {
     | '/scratch'
     | '/trpc-test'
     | '/n/$title'
+    | '/open/$title'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/404' | '/demo' | '/lab' | '/scratch' | '/trpc-test' | '/n/$title'
+  to:
+    | '/'
+    | '/404'
+    | '/demo'
+    | '/lab'
+    | '/scratch'
+    | '/trpc-test'
+    | '/n/$title'
+    | '/open/$title'
   id:
     | '__root__'
     | '/'
@@ -102,6 +120,7 @@ export interface FileRouteTypes {
     | '/scratch'
     | '/trpc-test'
     | '/n/$title'
+    | '/open/$title'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -112,6 +131,7 @@ export interface RootRouteChildren {
   ScratchRoute: typeof ScratchRoute
   TrpcTestRoute: typeof TrpcTestRoute
   NTitleRoute: typeof NTitleRoute
+  OpenTitleRoute: typeof OpenTitleRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -158,6 +178,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/open/$title': {
+      id: '/open/$title'
+      path: '/open/$title'
+      fullPath: '/open/$title'
+      preLoaderRoute: typeof OpenTitleRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/n/$title': {
       id: '/n/$title'
       path: '/n/$title'
@@ -176,6 +203,7 @@ const rootRouteChildren: RootRouteChildren = {
   ScratchRoute: ScratchRoute,
   TrpcTestRoute: TrpcTestRoute,
   NTitleRoute: NTitleRoute,
+  OpenTitleRoute: OpenTitleRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

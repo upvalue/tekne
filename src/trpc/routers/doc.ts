@@ -19,15 +19,31 @@ import {
   processDocumentForData,
   recomputeAllDocumentData,
 } from '@/server/lib/docs'
+import { produce } from 'immer'
+import {
+  jsonifyMdTree,
+  TEKNE_MD_PARSER,
+  visitMdTree,
+} from '@/editor/line-editor/syntax-plugin'
+import type { SyntaxNode } from '@lezer/common'
+import MagicString from 'magic-string'
 
 const upsertNote = async (db: Kysely<Database>, name: string, body: ZDoc) => {
   await db.transaction().execute(async (tx) => {
+    const parsedBody = body.children.map((ln, line_idx) => {
+      const parsedLine = TEKNE_MD_PARSER.parse(ln.mdContent)
+      return {
+        line_idx,
+        parsed_body: jsonifyMdTree(parsedLine.topNode, ln.mdContent),
+      }
+    })
     const r = await tx
       .insertInto('notes')
       .values({
         title: name,
         body,
         revision: 0,
+        parsed_body: JSON.stringify(parsedBody),
         updatedAt: sql`now()`,
       })
       .onConflict((oc) => oc.column('title').doUpdateSet({ body }))
@@ -49,6 +65,43 @@ const upsertNote = async (db: Kysely<Database>, name: string, body: ZDoc) => {
 
 const isDailyDocument = (name: string): boolean => {
   return /^\d{4}-\d{2}-\d{2}$/.test(name)
+}
+
+const proposeRename = async (
+  db: Kysely<Database>,
+  oldName: string,
+  newName: string
+): Promise<{
+  docAlreadyExists: boolean
+  linksToUpdate: Array<{ title: string }>
+}> => {
+  let docAlreadyExists = false
+
+  const existingDoc = await db
+    .selectFrom('notes')
+    .select(['title'])
+    .where('title', '=', newName)
+    .executeTakeFirst()
+
+  docAlreadyExists = existingDoc !== undefined
+
+  console.log({ oldName })
+  const referencesToDoc = await db
+    .selectFrom('notes')
+    .select(['title'])
+    .where((eb) =>
+      eb(
+        sql`jsonb_path_exists(parsed_body, '$.** ? (@.type == "InternalLinkBody" && @.text == $v)', jsonb_build_object('v', to_jsonb(cast(${oldName} as text))))`,
+        '=',
+        true
+      )
+    )
+    .execute()
+
+  return {
+    docAlreadyExists,
+    linksToUpdate: referencesToDoc,
+  }
 }
 
 // TODO: Fix any
@@ -136,8 +189,6 @@ export const docRouter = t.router({
         return mydoc
       }
 
-      // doc = docMigrator(doc)
-
       return doc!.body
     }),
 
@@ -178,7 +229,19 @@ export const docRouter = t.router({
       return true
     }),
 
-  renameDoc: t.procedure
+  renameDocPropose: t.procedure
+    .input(
+      z.object({
+        oldName: z.string(),
+        newName: documentNameSchema,
+      })
+    )
+    .mutation(async ({ input, ctx: { db } }) => {
+      const { oldName, newName } = input
+      return await proposeRename(db, oldName, newName)
+    }),
+
+  renameDocExecute: t.procedure
     .input(
       z.object({
         oldName: z.string(),
@@ -188,41 +251,76 @@ export const docRouter = t.router({
     .mutation(async ({ input, ctx: { db } }) => {
       const { oldName, newName } = input
 
-      // Check if new name already exists
-      const existingDoc = await db
-        .selectFrom('notes')
-        .select(['title'])
-        .where('title', '=', newName)
-        .executeTakeFirst()
+      const { docAlreadyExists, linksToUpdate } = await proposeRename(
+        db,
+        oldName,
+        newName
+      )
 
-      if (existingDoc) {
-        throw new Error(`Document with name "${newName}" already exists`)
+      if (docAlreadyExists) {
+        return {
+          success: false,
+          newName: oldName,
+          error: `Document with name "${newName}" already exists`,
+        }
       }
 
-      // Get the old document
-      const oldDoc = await db
-        .selectFrom('notes')
-        .selectAll()
-        .where('title', '=', oldName)
-        .executeTakeFirst()
+      // In order to be reliable about how we update InternalLinks,
+      // it gets a little complicated -- we do a real parse of the body,
+      // then use the indices we gain from that along with a library MagicString
+      // to update the body (since there could be multiple InternalLinks
+      // on the same line and a naive update might change the length of the
+      // string or miss updates)
+      for (const link of linksToUpdate) {
+        const noteToUpd = await db
+          .selectFrom('notes')
+          .select(['body', 'title'])
+          .where('title', '=', link.title)
+          .where('parsed_body', 'is not', null)
+          .executeTakeFirst()
 
-      if (!oldDoc) {
-        throw new Error(`Document "${oldName}" not found`)
-      }
+        if (!noteToUpd) {
+          throw new Error(`Document ${link.title} not found`)
+        }
 
-      // Create new document and delete old one
-      await db.transaction().execute(async (trx) => {
-        await trx
-          .insertInto('notes')
-          .values({
-            ...oldDoc,
-            updatedAt: sql`now()`,
-            title: newName,
+        let contentChanged = false
+
+        const newNoteBody = produce(noteToUpd.body, (draft) => {
+          draft.children.forEach((ln, idx) => {
+            const parsedContent = TEKNE_MD_PARSER.parse(ln.mdContent)
+            const newMdContent = new MagicString(ln.mdContent)
+
+            visitMdTree(parsedContent.topNode, '', 0, (node: SyntaxNode) => {
+              const txt = ln.mdContent.slice(node.from, node.to)
+              if (node.type.name === 'InternalLinkBody' && txt === oldName) {
+                newMdContent.update(node.from, node.to, newName)
+                console.log(
+                  `Updating link to doc ${oldName} in doc ${noteToUpd.title} on line ${idx} from ${node.from} to ${node.to}`
+                )
+                console.log(
+                  'New body for line ',
+                  idx,
+                  ':',
+                  newMdContent.toString()
+                )
+              }
+            })
+
+            if (newMdContent.toString() !== ln.mdContent) {
+              draft.children[idx].mdContent = newMdContent.toString()
+              contentChanged = true
+            }
           })
-          .execute()
+        })
 
-        await trx.deleteFrom('notes').where('title', '=', oldName).execute()
-      })
+        await upsertNote(db, noteToUpd.title, newNoteBody)
+      }
+
+      await db
+        .updateTable('notes')
+        .set({ title: newName })
+        .where('title', '=', oldName)
+        .execute()
 
       return { success: true, newName }
     }),

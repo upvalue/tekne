@@ -113,7 +113,7 @@ export const StatusBar = ({ isLoading }: { isLoading: boolean }) => {
               onClick={() => setErrorMessage(null)}
               className="cursor-pointer"
             >
-              <X className="w-4 h-4" />
+              <X className="w-4 h-4 text-zinc-400" />
             </Button>
           </div>
         )}

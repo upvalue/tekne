@@ -2,36 +2,68 @@ import { describe, test, expect } from 'vitest'
 import { InternalLinkRegex, TagRegex } from './regex'
 
 describe('InternalLinkRegex', () => {
-  test('matches simple internal link', () => {
-    const text = 'SomeText]]'
+  test('matches internal link starting with $', () => {
+    const text = '$SomeText]]'
     const match = InternalLinkRegex.exec(text)
     expect(match).toBeTruthy()
-    expect(match![0]).toBe('SomeText]]')
+    expect(match![0]).toBe('$SomeText]]')
   })
 
-  test('matches alphanumeric internal link', () => {
-    const text = 'Text123]]'
+  test('should not match only one closing bracket', () => {
+    const text = '$SomeText]'
+    const match = InternalLinkRegex.exec(text)
+    expect(match).toBeNull()
+  })
+
+  test('matches internal link starting with #', () => {
+    const text = '#MyPage]]'
     const match = InternalLinkRegex.exec(text)
     expect(match).toBeTruthy()
-    expect(match![0]).toBe('Text123]]')
+    expect(match![0]).toBe('#MyPage]]')
   })
 
-  test('matches mixed case internal link', () => {
-    const text = 'MyPage]]'
+  test('matches link with spaces', () => {
+    const text = '$My Page Name]]'
     const match = InternalLinkRegex.exec(text)
     expect(match).toBeTruthy()
-    expect(match![0]).toBe('MyPage]]')
+    expect(match![0]).toBe('$My Page Name]]')
   })
 
-  test('matches single character internal link', () => {
-    const text = 'A]]'
+  test('matches link with forward slashes', () => {
+    const text = '#folder/subfolder/page]]'
     const match = InternalLinkRegex.exec(text)
     expect(match).toBeTruthy()
-    expect(match![0]).toBe('A]]')
+    expect(match![0]).toBe('#folder/subfolder/page]]')
   })
 
-  test('does not match when no closing brackets', () => {
+  test('matches link with alphanumeric characters', () => {
+    const text = '$Text123ABC]]'
+    const match = InternalLinkRegex.exec(text)
+    expect(match).toBeTruthy()
+    expect(match![0]).toBe('$Text123ABC]]')
+  })
+
+  test('matches complex link with spaces and slashes', () => {
+    const text = '#project/2024 Q1/meeting notes]]'
+    const match = InternalLinkRegex.exec(text)
+    expect(match).toBeTruthy()
+    expect(match![0]).toBe('#project/2024 Q1/meeting notes]]')
+  })
+
+  test('does not match text without $ or # prefix', () => {
     const text = 'SomeText'
+    const match = InternalLinkRegex.exec(text)
+    expect(match).toBeNull()
+  })
+
+  test('does not match without closing brackets', () => {
+    const text = '$SomeText'
+    const match = InternalLinkRegex.exec(text)
+    expect(match).toBeNull()
+  })
+
+  test('does not match empty after prefix', () => {
+    const text = '$]]'
     const match = InternalLinkRegex.exec(text)
     expect(match).toBeNull()
   })

@@ -7,6 +7,7 @@ import { tmigration as addDocRevisionMigration } from './migrations/175643103437
 import { tmigration as addNoteDataMigration } from './migrations/1757182212830_add-note-data.ts'
 import { tmigration as alterNoteDataTypeEnumMigration } from './migrations/1758154595036_alter-note-data-type-enum.ts'
 import { tmigration as addNoteDataPinMigration } from './migrations/1758210899686_add-note-data-pin.ts'
+import { tmigration as addNoteParsedBodyMigration } from './migrations/1758235135865_add-note-parsed-body.ts'
 import type { Database } from './types'
 
 /**
@@ -27,6 +28,9 @@ class TekneMigrationProvider implements MigrationProvider {
     migrations['1758154595036_alter-note-data-type-enum'] =
       alterNoteDataTypeEnumMigration
     migrations['1758210899686_add-note-data-pin'] = addNoteDataPinMigration
+    migrations['1758235135865_add-note-parsed-body'] =
+      addNoteParsedBodyMigration
+
     return migrations
   }
 }
