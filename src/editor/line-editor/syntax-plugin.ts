@@ -153,9 +153,8 @@ export const jsonifyMdTree = (
   source: string,
   level = 0
 ): string => {
-  const indent = '  '.repeat(level)
   const nodeText = source.slice(node.from, node.to)
-  let result: any = {
+  const result: any = {
     type: node.type.name,
     from: node.from,
     to: node.to,

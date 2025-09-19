@@ -79,7 +79,7 @@ const TimerDisplay = ({ time }: { time: number }) => {
     )
 }
 
-const PinnedDisplay = ({ pinnedAt, pinnedDesc }: { pinnedAt: string, pinnedDesc: string }) => {
+const PinnedDisplay = ({ pinnedDesc }: { pinnedDesc: string }) => {
     // TODO: Consider adding date relative here
     return (
         <div className="flex items-center text-zinc-500 space-x-1 text-sm">
@@ -96,7 +96,7 @@ const ResultCard = ({ tagData }: { tagData: AggregateDataOutput[number] }) => {
                     {tagData.tag}
                 </span>
                 {tagData.pinned_at && (
-                    <PinnedDisplay pinnedAt={tagData.pinned_at} pinnedDesc={tagData.pinned_desc!} />
+                    <PinnedDisplay pinnedDesc={tagData.pinned_desc!} />
                 )}
                 <TaskStatusDisplay
                     complete={tagData.complete_tasks}

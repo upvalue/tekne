@@ -67,7 +67,22 @@ function RouteComponent() {
 
   const loadDocQuery = trpc.doc.loadDoc.useQuery({ name: title }, {
     enabled: () => !docDirty.current,
+    retry: (_fc, error) => {
+      if (error?.data?.code === 'NOT_FOUND') {
+        return false
+      }
+      return true
+    }
   })
+
+  useEffect(() => {
+    if (loadDocQuery.error && loadDocQuery.error.data?.code === 'NOT_FOUND') {
+      navigate({
+        to: '/doc-not-found/$title',
+        params: { title: title },
+      })
+    }
+  }, [loadDocQuery.error])
 
   // Document saving functionality
   // On an interval, if the document has changed this will send an updateDoc mutation

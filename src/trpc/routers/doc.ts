@@ -27,6 +27,7 @@ import {
 } from '@/editor/line-editor/syntax-plugin'
 import type { SyntaxNode } from '@lezer/common'
 import MagicString from 'magic-string'
+import { TRPCError } from '@trpc/server'
 
 const upsertNote = async (db: Kysely<Database>, name: string, body: ZDoc) => {
   await db.transaction().execute(async (tx) => {
@@ -184,9 +185,10 @@ export const docRouter = t.router({
         .executeTakeFirst()
 
       if (!doc) {
-        const mydoc = await createNewDocument(db, input.name)
-        await upsertNote(db, input.name, mydoc)
-        return mydoc
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: `Document "${input.name}" not found`,
+        })
       }
 
       return doc!.body
@@ -313,7 +315,9 @@ export const docRouter = t.router({
           })
         })
 
-        await upsertNote(db, noteToUpd.title, newNoteBody)
+        if (contentChanged) {
+          await upsertNote(db, noteToUpd.title, newNoteBody)
+        }
       }
 
       await db

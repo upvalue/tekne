@@ -19,7 +19,7 @@ const ztreeLine: z.ZodType<ZTreeLine> = zline.extend({
   arrayIdx: z.number(),
 })
 
-const zdocTree = zdoc.extend({
+export const zdocTree = zdoc.extend({
   children: z.array(ztreeLine),
 })
 
@@ -78,7 +78,7 @@ const zdocDatumType = z.enum(['task', 'timer', 'tag', 'pin'])
 
 type ZDocDatumType = z.infer<typeof zdocDatumType>
 
-const zdocDatum = z.object({
+export const zdocDatum = z.object({
   lineIdx: z.number(),
   timeCreated: z.string().datetime(),
   timeUpdated: z.string().datetime(),

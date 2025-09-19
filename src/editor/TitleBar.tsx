@@ -6,7 +6,6 @@ import { errorMessageAtom } from './state'
 import { DocumentDetailsButton } from './DocumentDetails'
 import {
   Dialog,
-  DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
