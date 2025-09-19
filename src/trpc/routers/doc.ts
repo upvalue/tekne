@@ -267,6 +267,7 @@ export const docRouter = t.router({
         }
       }
 
+      let linksUpdated = 0
       // In order to be reliable about how we update InternalLinks,
       // it gets a little complicated -- we do a real parse of the body,
       // then use the indices we gain from that along with a library MagicString
@@ -296,6 +297,7 @@ export const docRouter = t.router({
               const txt = ln.mdContent.slice(node.from, node.to)
               if (node.type.name === 'InternalLinkBody' && txt === oldName) {
                 newMdContent.update(node.from, node.to, newName)
+                linksUpdated++
                 console.log(
                   `Updating link to doc ${oldName} in doc ${noteToUpd.title} on line ${idx} from ${node.from} to ${node.to}`
                 )
@@ -326,7 +328,7 @@ export const docRouter = t.router({
         .where('title', '=', oldName)
         .execute()
 
-      return { success: true, newName }
+      return { success: true, newName, linksUpdated }
     }),
 
   createDoc: t.procedure

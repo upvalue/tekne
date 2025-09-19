@@ -2,14 +2,17 @@ import { sql, type Kysely } from 'kysely'
 
 // `any` is required here since migrations should be frozen in time. alternatively, keep a "snapshot" db interface.
 export async function up(db: Kysely<any>): Promise<void> {
-  db.schema
+  await db.schema
     .createType('note_data_status_t')
     .asEnum(['complete', 'incomplete', 'unset'])
     .execute()
 
-  db.schema.createType('note_data_type_t').asEnum(['task', 'timer']).execute()
+  await db.schema
+    .createType('note_data_type_t')
+    .asEnum(['task', 'timer'])
+    .execute()
 
-  db.schema
+  await db.schema
     .createTable('note_data')
     .addColumn('note_title', 'text', (col) =>
       col.references('notes.title').onDelete('cascade').notNull()
@@ -30,9 +33,9 @@ export async function down(db: Kysely<any>): Promise<void> {
   // note: down migrations are optional. you can safely delete this function.
   // For more info, see: https://kysely.dev/docs/migrations
 
-  db.schema.dropType('note_data_status_t')
-  db.schema.dropType('note_data_type_t')
-  db.schema.dropTable('note_data')
+  await db.schema.dropType('note_data_status_t').execute()
+  await db.schema.dropType('note_data_type_t').execute()
+  await db.schema.dropTable('note_data').execute()
 }
 
 export const tmigration = { up, down }

@@ -13,6 +13,7 @@ import {
 } from '@/components/vendor/Dialog'
 import { Button } from '@/components/vendor/Button'
 import { EditorDialogContent } from '@/components/EditorDialogContent'
+import { toast } from 'sonner'
 
 /*
  * Title bar; allows user to change the title of a document
@@ -43,6 +44,8 @@ export const TitleBar = ({
   const renameDocExecuteMutation = trpc.doc.renameDocExecute.useMutation({
     onSuccess: (r) => {
       if (r.success) {
+        console.log('woodle doodle doo');
+        toast.success(`Document renamed to "${proposedTitle.trim()}"`)
         navigate({
           to: '/n/$title',
           params: { title: proposedTitle.trim() },
