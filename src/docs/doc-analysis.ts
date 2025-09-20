@@ -1,6 +1,11 @@
 // doc-analysis.ts - tree structure conversion and data analysis functions
 import { z } from 'zod'
 import { zline, zdoc, type ZDoc, type ZLine } from './schema'
+import { FULL_TAG_REGEX_STR } from '@/editor/regex'
+import {
+  TEKNE_MD_PARSER,
+  visitMdTree,
+} from '@/editor/line-editor/syntax-plugin'
 
 export type ZTreeLine = ZLine & {
   children: ZTreeLine[]
@@ -25,9 +30,6 @@ export const zdocTree = zdoc.extend({
 
 export type ZDocTree = z.infer<typeof zdocTree>
 
-// TODO: Centralize this regex
-export const tagPattern = /#[a-zA-Z0-9_-]+/g
-
 /**
  * Converts document into a real tree structure
  */
@@ -47,10 +49,13 @@ export const treeifyDoc = (doc: ZDoc): ZDocTree => {
     }
 
     // Handle multiple matches
-    const matches = node.mdContent.match(tagPattern)
-    if (matches) {
-      node.tags.push(...matches)
-    }
+
+    const mdTree = TEKNE_MD_PARSER.parse(node.mdContent)
+    visitMdTree(mdTree.topNode, node.mdContent, 0, (mdNode) => {
+      if (mdNode.type.name === 'Tag') {
+        node.tags.push(node.mdContent.slice(mdNode.from, mdNode.to))
+      }
+    })
 
     while (stack.length > node.indent) {
       stack.pop()

@@ -3,6 +3,8 @@ import { type Completion, CompletionContext } from '@codemirror/autocomplete'
 import { emitCodemirrorEvent } from './cm-events'
 import type { LineColor } from '@/docs/schema'
 
+const SLASH_COMMAND_REGEX = /\/\w*/
+
 const colorCommand = (lineIdx: number, color: LineColor) => ({
   label: `/${color}: Set line background to ${color}`,
   type: 'text' as const,
@@ -53,9 +55,18 @@ const noColorCommand = (lineIdx: number) => ({
 
 export const slashCommandsPlugin = (lineIdx: number) => {
   return (context: CompletionContext) => {
-    const word = context.matchBefore(/\/\w*/)
+    const word = context.matchBefore(SLASH_COMMAND_REGEX)
     if (!word) return null
     if (word.from == word.to && !context.explicit) return null
+    
+    // Don't trigger inside tags (words starting with #)
+    const lineStart = context.state.doc.lineAt(word.from).from
+    const beforeSlash = context.state.doc.sliceString(lineStart, word.from)
+    if (/#\S*$/.test(beforeSlash)) return null
+    
+    // Require at least one character after the slash
+    const slashText = context.state.doc.sliceString(word.from, word.to)
+    if (slashText.length <= 1) return null
 
     return {
       from: word.from,
