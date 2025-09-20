@@ -24,7 +24,7 @@ export type DBNoteData = {
   datum_tag: string
   datum_status: NoteDataStatus | null
   datum_time_seconds: number | null
-  datum_pinned_at: ColumnType<Date, Date | undefined, Date> | null
+  datum_pinned_at: ColumnType<Date, Date | string | undefined, Date> | null
   datum_pinned_content: string | null
 }
 

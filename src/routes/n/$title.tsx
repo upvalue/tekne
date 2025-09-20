@@ -36,6 +36,8 @@ function RouteComponent() {
   const title = Route.useParams({
     select: (p) => p.title,
   })
+  const navigate = useNavigate()
+
 
   const docLastSaved = useRef<Date>(new Date())
   const docDirty = useRef<boolean>(false)
@@ -82,7 +84,7 @@ function RouteComponent() {
         params: { title: title },
       })
     }
-  }, [loadDocQuery.error])
+  }, [loadDocQuery.error, navigate, title])
 
   // Document saving functionality
   // On an interval, if the document has changed this will send an updateDoc mutation
@@ -200,8 +202,6 @@ function RouteComponent() {
       store.set(docAtom, loadDocQuery.data)
     }
   }, [loadDocQuery.data, store, loadDocQuery.isLoading])
-
-  const navigate = useNavigate()
 
   useCodemirrorEvent('internalLinkClick', (event) => {
     saveDocument(() => {

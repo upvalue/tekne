@@ -1,69 +1,20 @@
 import { EditorView } from '@codemirror/view'
 import { type Completion, CompletionContext } from '@codemirror/autocomplete'
 import { emitCodemirrorEvent } from './cm-events'
-import type { LineColor } from '@/docs/schema'
 
 const SLASH_COMMAND_REGEX = /\/\w*/
-
-const colorCommand = (lineIdx: number, color: LineColor) => ({
-  label: `/${color}: Set line background to ${color}`,
-  type: 'text' as const,
-  apply: (
-    view: EditorView,
-    _completion: Completion,
-    from: number,
-    to: number
-  ) => {
-    emitCodemirrorEvent('lineColorChange', {
-      lineIdx,
-      color,
-    })
-
-    view.dispatch({
-      changes: {
-        from,
-        to,
-        insert: '',
-      },
-    })
-  },
-})
-
-const noColorCommand = (lineIdx: number) => ({
-  label: '/nocolor: Remove line background color',
-  type: 'text' as const,
-  apply: (
-    view: EditorView,
-    _completion: Completion,
-    from: number,
-    to: number
-  ) => {
-    emitCodemirrorEvent('lineColorChange', {
-      lineIdx,
-      color: null,
-    })
-
-    view.dispatch({
-      changes: {
-        from,
-        to,
-        insert: '',
-      },
-    })
-  },
-})
 
 export const slashCommandsPlugin = (lineIdx: number) => {
   return (context: CompletionContext) => {
     const word = context.matchBefore(SLASH_COMMAND_REGEX)
     if (!word) return null
     if (word.from == word.to && !context.explicit) return null
-    
+
     // Don't trigger inside tags (words starting with #)
     const lineStart = context.state.doc.lineAt(word.from).from
     const beforeSlash = context.state.doc.sliceString(lineStart, word.from)
     if (/#\S*$/.test(beforeSlash)) return null
-    
+
     // Require at least one character after the slash
     const slashText = context.state.doc.sliceString(word.from, word.to)
     if (slashText.length <= 1) return null

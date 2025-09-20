@@ -24,7 +24,7 @@ import {
   jsonifyMdTree,
   TEKNE_MD_PARSER,
   visitMdTree,
-} from '@/editor/line-editor/syntax-plugin'
+} from '@/editor/parser'
 import type { SyntaxNode } from '@lezer/common'
 import MagicString from 'magic-string'
 import { TRPCError } from '@trpc/server'

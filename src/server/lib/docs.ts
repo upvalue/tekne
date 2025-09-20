@@ -5,7 +5,7 @@ import { extractDocData, treeifyDoc } from '@/docs/doc-analysis'
 import {
   jsonifyMdTree,
   TEKNE_MD_PARSER,
-} from '@/editor/line-editor/syntax-plugin'
+} from '@/editor/parser'
 
 const linesToZodDoc = (title: string, children: Array<any>): ZDoc => {
   return {

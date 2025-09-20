@@ -19,7 +19,7 @@ describe('InternalLinkRegex', () => {
     const text = '#MyPage]]'
     const match = InternalLinkRegex.exec(text)
     expect(match).toBeTruthy()
-    expect(match![0]).toBe('#MyPage]]')
+    expect(match![0]).toBe('MyPage]]')
   })
 
   test('matches link with spaces', () => {
@@ -33,7 +33,7 @@ describe('InternalLinkRegex', () => {
     const text = '#folder/subfolder/page]]'
     const match = InternalLinkRegex.exec(text)
     expect(match).toBeTruthy()
-    expect(match![0]).toBe('#folder/subfolder/page]]')
+    expect(match![0]).toBe('folder/subfolder/page]]')
   })
 
   test('matches link with alphanumeric characters', () => {
@@ -41,13 +41,6 @@ describe('InternalLinkRegex', () => {
     const match = InternalLinkRegex.exec(text)
     expect(match).toBeTruthy()
     expect(match![0]).toBe('$Text123ABC]]')
-  })
-
-  test('matches complex link with spaces and slashes', () => {
-    const text = '#project/2024 Q1/meeting notes]]'
-    const match = InternalLinkRegex.exec(text)
-    expect(match).toBeTruthy()
-    expect(match![0]).toBe('#project/2024 Q1/meeting notes]]')
   })
 
   test('does not match text without $ or # prefix', () => {

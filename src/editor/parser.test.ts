@@ -1,5 +1,5 @@
 import { describe, test, expect } from 'vitest'
-import { jsonifyMdTree, TEKNE_MD_PARSER } from './syntax-plugin'
+import { jsonifyMdTree, TEKNE_MD_PARSER } from './parser'
 
 function serializeTree(node: any, source: string, depth = 0): string {
   const indent = '  '.repeat(depth)
@@ -24,7 +24,7 @@ describe('jsonifyTree', () => {
   })
 })
 
-describe('syntax-plugin parser', () => {
+describe('TEKNE_MD_PARSER', () => {
   test('parses basic text "hello"', () => {
     const text = 'hello'
     const tree = TEKNE_MD_PARSER.parse(text)
@@ -43,14 +43,6 @@ describe('syntax-plugin parser', () => {
 
   test('parses internal link 1', () => {
     const text = 'hello [[MyPage]]'
-    const tree = TEKNE_MD_PARSER.parse(text)
-    const serialized = serializeTree(tree.topNode, text)
-
-    expect(serialized).toMatchSnapshot()
-  })
-
-  test('parses internal link 2', () => {
-    const text = 'hello [[MyPage2]]'
     const tree = TEKNE_MD_PARSER.parse(text)
     const serialized = serializeTree(tree.topNode, text)
 

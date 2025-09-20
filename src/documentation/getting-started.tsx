@@ -1,4 +1,7 @@
+/* eslint-disable react-refresh/only-export-components */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import React from 'react';
+import { Fragment as _Fragment, jsx as _jsx, jsxs as _jsxs } from 'react/jsx-runtime';
 import { ExternalLink } from '@/components/ExternalLink';
 
 export const metadata = {

@@ -1,4 +1,5 @@
 // analysis.ts - currently aggregate data related stuff
+import { uniqBy } from 'lodash-es'
 import z from 'zod'
 import { t } from '../init'
 import { sql } from 'kysely'
@@ -10,7 +11,7 @@ type TagAggregateData = {
   unset_tasks?: number
   total_time_seconds?: number
   pinned_at?: Date
-  pinned_desc?: string
+  pinned_desc?: string | null
 }
 
 export const analysisRouter = t.router({
@@ -25,11 +26,16 @@ export const analysisRouter = t.router({
       })
     )
     .query(async ({ input, ctx: { db } }): Promise<TagAggregateData[]> => {
-      const tagsInDoc = await db
+      const allTagsInDoc = await db
         .selectFrom('note_data')
-        .select([sql<string>`DISTINCT datum_tag`.as('tag')])
+        .select(['datum_tag as tag'])
+        // .select([sql<string>`DISTINCT datum_tag`.as('tag')])
+        .where('datum_type', '=', 'tag')
         .where('note_title', '=', input.title)
+        .orderBy('time_created', 'asc')
         .execute()
+
+      const tagsInDoc = uniqBy(allTagsInDoc, 'tag')
 
       if (tagsInDoc.length === 0) {
         return []
@@ -131,6 +137,9 @@ export const analysisRouter = t.router({
         }
       }
 
-      return Object.values(tasks)
+      // Return tasks ordered by their appearance in tagsInDoc
+      return tagsInDoc
+        .map((tagInDoc) => tasks[tagInDoc.tag])
+        .filter((task): task is TagAggregateData => task !== undefined)
     }),
 })

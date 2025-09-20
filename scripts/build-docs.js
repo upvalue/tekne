@@ -17,13 +17,13 @@ async function buildDocs() {
     execSync('pnpm build', { stdio: 'inherit' });
     
     // Step 2: Create src/docs directory
-    const srcDocsDir = path.join(projectRoot, 'src', 'docs');
-    console.log('\n📁 Creating src/docs directory...');
+    const srcDocsDir = path.join(projectRoot, 'src', 'documentation');
+    console.log('\n📁 Creating src/documentation directory...');
     await fs.mkdir(srcDocsDir, { recursive: true });
     
     // Step 3: Copy generated files to src/docs
     const generatedDir = path.join(projectRoot, 'docs-build', 'generated');
-    console.log('📋 Copying generated files to src/docs...');
+    console.log('📋 Copying generated files to src/documentation...');
     
     const files = await fs.readdir(generatedDir);
     for (const file of files) {
@@ -34,7 +34,7 @@ async function buildDocs() {
     }
     
     console.log('\n✅ Documentation build complete!');
-    console.log(`📁 Generated files are now available in src/docs/`);
+    console.log(`📁 Generated files are now available in src/documentation/`);
     
   } catch (error) {
     console.error('❌ Documentation build failed:', error);
