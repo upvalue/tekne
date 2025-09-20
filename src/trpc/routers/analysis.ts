@@ -44,7 +44,6 @@ export const analysisRouter = t.router({
       const taskPins = await db
         .selectFrom('note_data')
         .select(['datum_tag as tag', 'datum_pinned_at', 'datum_pinned_content'])
-        .where('note_title', '=', input.title)
         .where('datum_type', '=', 'pin')
         .where(
           'datum_tag',
