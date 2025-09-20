@@ -14,6 +14,7 @@ import {
 import { Button } from '@/components/vendor/Button'
 import { EditorDialogContent } from '@/components/EditorDialogContent'
 import { toast } from 'sonner'
+import { GUTTER_WIDTH_PIXELS } from './constants'
 
 /*
  * Title bar; allows user to change the title of a document
@@ -128,7 +129,7 @@ export const TitleBar = ({
 
   return (
     <div className="flex py-2 px-4 items-center TitleBar">
-      <div style={{ flexBasis: '138px' }} className="flex justify-end pr-4">
+      <div style={{ flexBasis: `${GUTTER_WIDTH_PIXELS}px` }} className="flex justify-end pr-4">
         <div className="text text-sky-500">{isDev && '[dev]'}</div>
         <div className="text text-sky-500">{isDemo && '[demo]'}</div>
         <div className="text text-sky-500">{isDevServer && '[server]'}</div>

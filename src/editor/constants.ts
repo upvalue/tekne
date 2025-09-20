@@ -1,0 +1,1 @@
+export const GUTTER_WIDTH_PIXELS = 162

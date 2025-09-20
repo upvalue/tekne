@@ -5,6 +5,11 @@ export const TIME_DIFF_THRESHOLD_MINUTES = 20
 
 // NOTE-REDUCER: This is a document reducer that could be centralized
 
+export type GutterTimestamp = {
+  defaultString: string | null
+  fullString: string
+}
+
 /**
  * Generates an array of gutter timestamp strings for display.
  * Returns null for lines that don't meet display criteria, or a formatted timestamp string.
@@ -14,8 +19,8 @@ export const TIME_DIFF_THRESHOLD_MINUTES = 20
  * - Show time only when time differs by more than threshold from most recently seen line
  * - Return null when no timestamp should be shown
  */
-export function generateGutterTimestamps(lines: ZLine[]): (string | null)[] {
-  const result: (string | null)[] = []
+export function generateGutterTimestamps(lines: ZLine[]): GutterTimestamp[] {
+  const result: GutterTimestamp[] = []
   let lastShownDate: Date | null = null
 
   for (let i = 0; i < lines.length; i++) {
@@ -59,19 +64,37 @@ export function generateGutterTimestamps(lines: ZLine[]): (string | null)[] {
       }
     }
 
+    // Generate full date and time str
+
+    const fullDateStr = lineDate.toLocaleDateString('en-US', {
+      month: 'numeric',
+      day: 'numeric',
+      year: 'numeric',
+    })
+    const fullTimeStr = lineDate.toLocaleTimeString('en-US', {
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+    })
+
+    const fullDateAndTimeStr = `${fullDateStr} ${fullTimeStr}`
+
     if (shouldShow) {
       if (showFullDate) {
-        // Format as "M/d h:mm AM/PM"
         const dateStr = lineDate.toLocaleDateString('en-US', {
           month: 'numeric',
           day: 'numeric',
         })
+        // Format as "M/d h:mm AM/PM"
         const timeStr = lineDate.toLocaleTimeString('en-US', {
           hour: 'numeric',
           minute: '2-digit',
           hour12: true,
         })
-        result.push(`${dateStr} ${timeStr}`)
+        result.push({
+          defaultString: `${dateStr} ${timeStr}`,
+          fullString: fullDateAndTimeStr,
+        })
       } else {
         // Format as "h:mm AM/PM"
         const timeStr = lineDate.toLocaleTimeString('en-US', {
@@ -79,11 +102,17 @@ export function generateGutterTimestamps(lines: ZLine[]): (string | null)[] {
           minute: '2-digit',
           hour12: true,
         })
-        result.push(timeStr)
+        result.push({
+          defaultString: timeStr,
+          fullString: fullDateAndTimeStr,
+        })
       }
       lastShownDate = lineDate
     } else {
-      result.push(null)
+      result.push({
+        defaultString: null,
+        fullString: fullDateAndTimeStr,
+      })
     }
   }
 

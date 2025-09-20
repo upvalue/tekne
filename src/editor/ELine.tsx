@@ -7,9 +7,11 @@ import { TimerBadge } from './TimerBadge'
 import { cn } from '@/lib/utils'
 import type { CollapseState } from '@/docs/collapse'
 import type { ZLine } from '@/docs/schema';
+import type { GutterTimestamp } from '@/docs/gutters'
+import { useState } from 'react'
 
 type ELineProps = LineWithIdx & {
-  timestamp: string | null
+  timestamp: GutterTimestamp | null
   collapseState: CollapseState
 }
 
@@ -53,6 +55,17 @@ const LineIcon = ({ line, collapseState }: { line: ZLine, collapseState: Collaps
   return <Circle width={8} height={8} />
 }
 
+export const Gutter = ({ timestamp }: { timestamp: GutterTimestamp | null }) => {
+  const [isHovered, setIsHovered] = useState(false)
+  return <div className="ELine-gutter text-zinc-600 text-sm flex-shrink-0 justify-end flex font-mono"
+    onMouseEnter={() => setIsHovered(true)}
+    onMouseLeave={() => setIsHovered(false)}
+  >
+    &nbsp;
+    {timestamp && (isHovered ? timestamp.fullString : timestamp.defaultString)}
+  </div>
+}
+
 /**
  * The individual line editor React component. Note that the bulk of
  * the logic is contained in the line-editor.ts file which handles
@@ -81,7 +94,6 @@ export const ELine = (lineInfo: ELineProps) => {
   const lineIsHeader = line.mdContent.startsWith('### ') || line.mdContent.startsWith('## ') || line.mdContent.startsWith('# ');
   const headerLevel = line.mdContent.startsWith('### ') ? 3 : line.mdContent.startsWith('##') ? 2 : line.mdContent.startsWith('# ') ? 1 : 0;
 
-
   return (
     <div
       className={cn(
@@ -91,9 +103,7 @@ export const ELine = (lineInfo: ELineProps) => {
         getColorClass(line.color)
       )}
     >
-      <div className="ELine-gutter text-zinc-600 text-sm flex-shrink-0 justify-end flex font-mono">
-        {timestamp || ''}
-      </div>
+      <Gutter timestamp={timestamp} />
       <div
         style={{
           flex: 'none',
