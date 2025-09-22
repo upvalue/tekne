@@ -1,6 +1,6 @@
 import { TEditor } from '@/editor/TEditor'
 import { toast } from 'sonner'
-import { allTagsAtom, docAtom } from '@/editor/state'
+import { allTagsAtom, docAtom, globalTimerAtom } from '@/editor/state'
 import { createStore, useAtom } from 'jotai'
 import '@/docs/schema'
 import { truncate } from 'lodash-es'
@@ -38,6 +38,7 @@ function RouteComponent() {
   })
   const navigate = useNavigate()
 
+  const [globalTimer] = useAtom(globalTimerAtom)
 
   const docLastSaved = useRef<Date>(new Date())
   const docDirty = useRef<boolean>(false)
@@ -82,6 +83,7 @@ function RouteComponent() {
       navigate({
         to: '/doc-not-found/$title',
         params: { title: title },
+        replace: true,
       })
     }
   }, [loadDocQuery.error, navigate, title])
@@ -138,18 +140,21 @@ function RouteComponent() {
   // Side effect to cause query to fire
   useAtom(allTagsAtom);
 
-  // Probably
   useBlocker({
     shouldBlockFn: () => {
-      console.log('tanstack blocker triggered save')
+
       saveDocument()
+      if (store.get(globalTimerAtom).isActive) {
+        toast.info('There is a timer active -- end the timer before navigating away');
+        return true;
+      }
       return false
     },
     enableBeforeUnload: false,
   })
 
   useEventListener('beforeunload', (event: BeforeUnloadEvent) => {
-    if (docDirty.current) {
+    if (docDirty.current || store.get(globalTimerAtom).isActive) {
       userNavigatingAway.current = true
       saveDocument()
       event.preventDefault()

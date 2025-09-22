@@ -7,6 +7,7 @@ import { X } from 'lucide-react'
 import { ExclamationTriangleIcon, StopIcon, ListBulletIcon, ClockIcon } from '@heroicons/react/16/solid'
 import { trpc } from '@/trpc/client'
 import { setDetailTitle } from '@/lib/title'
+import { noop } from 'lodash-es'
 
 const STATUS_BAR_TRUNCATE_LENGTH = 50
 
@@ -26,41 +27,13 @@ export const StatusBar = ({ isLoading }: { isLoading: boolean }) => {
   const errorMessage = useAtomValue(errorMessageAtom)
   const setErrorMessage = useSetAtom(errorMessageAtom)
   const globalTimer = useAtomValue(globalTimerAtom)
-  const setGlobalTimerAtom = useSetAtom(globalTimerAtom)
+  const { stopTimer } = globalTimer
   const execHook = trpc.execHook.useMutation()
-  const intervalRef = useRef<NodeJS.Timeout | null>(null)
   const focusedLine = useAtomValue(focusedLineAtom);
 
   const totalDocTime = useMemo(() => {
     return doc.children.reduce((acc, line) => acc + (line.datumTimeSeconds || 0), 0)
   }, [doc.children])
-
-  const stopTimer = useCallback(() => {
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current)
-      intervalRef.current = null
-    }
-
-    execHook.mutate({
-      hook: 'timer-stop',
-      argument: {
-        doc,
-        line: globalTimer.lineContent || '',
-      },
-    })
-
-    setDetailTitle(null)
-
-    setGlobalTimerAtom({
-      isActive: false,
-      lineIdx: null,
-      lineContent: null,
-      mode: 'stopwatch',
-      startTime: null,
-      targetDuration: 25 * 60,
-      elapsedTime: 0,
-    })
-  }, [doc, globalTimer.lineContent, setGlobalTimerAtom, execHook])
 
   useEffect(() => {
     if (errorMessage) {
@@ -71,36 +44,6 @@ export const StatusBar = ({ isLoading }: { isLoading: boolean }) => {
       return () => clearTimeout(timer)
     }
   }, [errorMessage, setErrorMessage])
-
-  useEffect(() => {
-    if (globalTimer.isActive && !intervalRef.current) {
-      intervalRef.current = setInterval(() => {
-        setGlobalTimerAtom((prev) => {
-          if (!prev.isActive) return prev
-
-          const now = Date.now()
-          const elapsed = Math.floor((now - (prev.startTime || now)) / 1000)
-
-          if (prev.mode === 'stopwatch') {
-            return { ...prev, elapsedTime: elapsed }
-          } else if (prev.mode === 'countdown') {
-            const remaining = Math.max(0, prev.targetDuration - elapsed)
-            return { ...prev, elapsedTime: remaining }
-          }
-          return prev
-        })
-      }, 1000)
-    } else if (!globalTimer.isActive && intervalRef.current) {
-      clearInterval(intervalRef.current)
-      intervalRef.current = null
-    }
-
-    return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current)
-      }
-    }
-  }, [globalTimer.isActive, setGlobalTimerAtom])
 
   return (
     <div className="StatusBar font-mono w-full h-10 bg-zinc-800 px-[138px] flex items-center justify-between">
@@ -121,7 +64,11 @@ export const StatusBar = ({ isLoading }: { isLoading: boolean }) => {
           <div className="flex items-center gap-2 text-sm">
             <StopIcon
               className="w-4 h-4 text-red-400 cursor-pointer hover:text-red-300"
-              onClick={stopTimer}
+              onClick={() => {
+                console.log('Stopping ye timer');
+                console.log({ stopTimer });
+                stopTimer()
+              }}
             />
             <div className="flex items-center gap-1 text-green-400">
               <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />

@@ -16,6 +16,7 @@ import { makeKeymap, toggleCollapse } from './line-editor/line-operations'
 import { syntaxPlugin } from './line-editor/syntax-plugin'
 import { tagCompletionPlugin } from './line-editor/tag-completion-plugin'
 
+
 const theme = EditorView.theme(
   // Preferring to do these in TEditor.css
   // but due to the css-in-js approach in some cases

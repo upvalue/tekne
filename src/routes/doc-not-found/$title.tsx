@@ -28,6 +28,7 @@ function RouteComponent() {
       navigate({
         to: '/n/$title',
         params: { title },
+        replace: true,
       })
     },
     onError: (error) => {

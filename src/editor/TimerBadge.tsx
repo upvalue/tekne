@@ -1,3 +1,5 @@
+// TimerBadge.tsx - in addition to the badge, contains a lot of
+// the timer management code.
 import * as React from 'react'
 import { BadgeButton } from '@/components/vendor/Badge'
 
@@ -6,7 +8,6 @@ import {
   DialogHeader,
   DialogTrigger,
   DialogOverlay,
-  DialogContent,
   DialogTitle,
 } from '@/components/vendor/Dialog'
 import type { LineWithIdx } from './line-editor'
@@ -15,23 +16,78 @@ import {
   globalTimerAtom,
   notificationPermissionAtom,
   docAtom,
+  setDocLineDirect,
 } from './state'
 import { Input } from '@/components/vendor/Input'
 import parseDuration from 'parse-duration'
 import { Button } from '@/components/vendor/Button'
 import { ClockIcon, PlayIcon, StopIcon } from '@heroicons/react/16/solid'
 import { useCallback, useRef } from 'react'
-import { useAtom, useAtomValue } from 'jotai'
+import { useAtom, useAtomValue, useStore } from 'jotai'
 import { setDetailTitle } from '@/lib/title'
 import { formatTimeDisplay, renderTime } from '@/lib/time'
 import { trpc } from '@/trpc/client'
 import { useEventListener } from '@/hooks/useEventListener'
+import { EditorDialogContent } from '@/components/EditorDialogContent'
+import { noop } from 'lodash-es'
 
 const parseTime = (time: string) => parseDuration(time, 's')
 
+const stopTimer = (store: ReturnType<typeof useStore>, execHook: ReturnType<typeof trpc.execHook.useMutation>, lineIdx: number) => {
+  return () => {
+    console.log('the transformation is complete');
+    const globalTimer = store.get(globalTimerAtom)
+    const doc = store.get(docAtom);
+    const line = doc.children[lineIdx];
+
+    if (globalTimer.interval) {
+      clearInterval(globalTimer.interval)
+    }
+
+    execHook.mutate({
+      hook: 'timer-stop',
+      argument: {
+        doc,
+        line: line.mdContent,
+        lineIdx,
+      },
+    })
+
+    setDetailTitle(null)
+
+    if (globalTimer.mode === 'stopwatch') {
+      const finalElapsed = globalTimer.startTime
+        ? Math.floor((Date.now() - globalTimer.startTime) / 1000)
+        : globalTimer.elapsedTime
+      setDocLineDirect(store, lineIdx, (line) => {
+        line.datumTimeSeconds = finalElapsed
+      })
+    } else if (globalTimer.mode === 'countdown') {
+      const timeWorked = globalTimer.startTime
+        ? Math.floor((Date.now() - globalTimer.startTime) / 1000)
+        : 0
+      setDocLineDirect(store, lineIdx, (line) => {
+        line.datumTimeSeconds = Math.min(timeWorked, globalTimer.targetDuration)
+      })
+    }
+
+    store.set(globalTimerAtom, {
+      isActive: false,
+      lineIdx: null,
+      lineContent: null,
+      mode: 'stopwatch',
+      startTime: null,
+      targetDuration: 25 * 60,
+      elapsedTime: 0,
+      stopTimer: noop,
+      interval: null,
+    })
+  }
+}
+
 /**
- * Timer badge; shows time spent and allows user to interact
- * with the timer
+ * Timer badge; shows time spent and allows user to control
+ * the global timer state
  */
 export const TimerBadge = ({
   lineInfo,
@@ -42,6 +98,7 @@ export const TimerBadge = ({
 }) => {
   const execHook = trpc.execHook.useMutation()
   const doc = useAtomValue(docAtom)
+  const store = useStore();
   const [, setLine] = useDocLine(lineInfo.lineIdx)
   const [globalTimer, setGlobalTimer] = useAtom(globalTimerAtom)
   const [notificationPermission, setNotificationPermission] = useAtom(
@@ -85,19 +142,9 @@ export const TimerBadge = ({
     const mode = globalTimer.mode
     const targetDuration = globalTimer.targetDuration
 
-    setGlobalTimer({
-      isActive: true,
-      lineIdx: lineInfo.lineIdx,
-      lineContent: lineContent,
-      mode,
-      startTime: Date.now(),
-      targetDuration,
-      elapsedTime: mode === 'countdown' ? targetDuration : 0,
-    })
-
     setDetailTitle(lineContent)
 
-    intervalRef.current = setInterval(() => {
+    const interval = setInterval(() => {
       setGlobalTimer((prev) => {
         if (!prev.isActive) return prev
 
@@ -130,6 +177,18 @@ export const TimerBadge = ({
       })
     }, 1000)
 
+    setGlobalTimer({
+      isActive: true,
+      lineIdx: lineInfo.lineIdx,
+      lineContent: lineContent,
+      mode,
+      startTime: Date.now(),
+      targetDuration,
+      elapsedTime: mode === 'countdown' ? targetDuration : 0,
+      stopTimer: stopTimer(store, execHook, lineInfo.lineIdx),
+      interval,
+    })
+
     execHook.mutate({
       hook: 'timer-start',
       argument: {
@@ -143,69 +202,18 @@ export const TimerBadge = ({
     lineContent,
     execHook,
     lineInfo.line.mdContent,
-    setLine,
     globalTimer,
     setGlobalTimer,
+    store,
     isAnyTimerActive,
     isThisTimerActive,
     lineInfo.lineIdx,
     sendNotification,
   ])
 
-  const stopTimer = useCallback(() => {
-    if (!isThisTimerActive) return
-
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current)
-      intervalRef.current = null
-    }
-
-    execHook.mutate({
-      hook: 'timer-stop',
-      argument: {
-        doc,
-        line: lineInfo.line.mdContent,
-        lineIdx: lineInfo.lineIdx,
-      },
-    })
-
-    setDetailTitle(null)
-
-    if (globalTimer.mode === 'stopwatch') {
-      const finalElapsed = globalTimer.startTime
-        ? Math.floor((Date.now() - globalTimer.startTime) / 1000)
-        : globalTimer.elapsedTime
-      setLine((line) => {
-        line.datumTimeSeconds = finalElapsed
-      })
-    } else if (globalTimer.mode === 'countdown') {
-      const timeWorked = globalTimer.startTime
-        ? Math.floor((Date.now() - globalTimer.startTime) / 1000)
-        : 0
-      setLine((line) => {
-        line.datumTimeSeconds = Math.min(timeWorked, globalTimer.targetDuration)
-      })
-    }
-
-    setGlobalTimer({
-      isActive: false,
-      lineIdx: null,
-      lineContent: null,
-      mode: 'stopwatch',
-      startTime: null,
-      targetDuration: 25 * 60,
-      elapsedTime: 0,
-    })
-  }, [
-    doc,
-    setLine,
-    execHook,
-    lineInfo.line.mdContent,
-    lineInfo.lineIdx,
-    isThisTimerActive,
-    globalTimer,
-    setGlobalTimer,
-  ])
+  const callStopTimer = useCallback(() => {
+    globalTimer.stopTimer();
+  }, [globalTimer.stopTimer])
 
   const resetTimer = useCallback(() => {
     if (intervalRef.current) {
@@ -253,10 +261,11 @@ export const TimerBadge = ({
   }, [])
 
   useEventListener('beforeunload', (event: BeforeUnloadEvent) => {
+    console.log('unload gotten');
     if (globalTimer.isActive) {
       event.preventDefault()
-      event.returnValue =
-        'You have an active timer running. Are you sure you want to leave?'
+      event.returnValue = true;
+      'You have an active timer running. Are you sure you want to leave?'
     }
   })
 
@@ -293,8 +302,8 @@ export const TimerBadge = ({
         </div>
       </DialogTrigger>
       <DialogOverlay>
-        <DialogContent className="text-white w-96 h-[500px]">
-          <DialogHeader className="flex flex-col gap-2">
+        <EditorDialogContent className="text-white w-96 h-[500px]">
+          <DialogHeader className="flex flex-col gap-4">
             <DialogTitle>Timer</DialogTitle>
 
             {/* Mode Selection */}
@@ -304,7 +313,7 @@ export const TimerBadge = ({
                   <Button
                     key={mode}
                     {...(globalTimer.mode === mode
-                      ? { color: 'indigo' }
+                      ? { color: 'sky' }
                       : { outline: true })}
                     onClick={() => {
                       resetTimer()
@@ -348,7 +357,7 @@ export const TimerBadge = ({
                       </Button>
                     ) : (
                       <Button
-                        onClick={stopTimer}
+                        onClick={callStopTimer}
                         className="flex items-center gap-2"
                       >
                         <StopIcon className="w-4 h-4" />
@@ -411,11 +420,11 @@ export const TimerBadge = ({
                         <PlayIcon className="w-4 h-4" />
                         {isAnyTimerActive
                           ? 'Timer Active Elsewhere'
-                          : 'Start Countdown'}
+                          : 'Start'}
                       </Button>
                     ) : (
                       <Button
-                        onClick={stopTimer}
+                        onClick={callStopTimer}
                         className="flex items-center gap-2"
                       >
                         <StopIcon className="w-4 h-4" />
@@ -467,7 +476,7 @@ export const TimerBadge = ({
               )}
             </div>
           </div>
-        </DialogContent>
+        </EditorDialogContent>
       </DialogOverlay>
     </Dialog>
   )
