@@ -38,8 +38,6 @@ function RouteComponent() {
   })
   const navigate = useNavigate()
 
-  const [globalTimer] = useAtom(globalTimerAtom)
-
   const docLastSaved = useRef<Date>(new Date())
   const docDirty = useRef<boolean>(false)
   const userNavigatingAway = useRef<boolean>(false)
@@ -142,7 +140,6 @@ function RouteComponent() {
 
   useBlocker({
     shouldBlockFn: () => {
-
       saveDocument()
       if (store.get(globalTimerAtom).isActive) {
         toast.info('There is a timer active -- end the timer before navigating away');

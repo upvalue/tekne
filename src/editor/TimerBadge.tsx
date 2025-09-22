@@ -21,6 +21,7 @@ import {
 import { Input } from '@/components/vendor/Input'
 import parseDuration from 'parse-duration'
 import { Button } from '@/components/vendor/Button'
+import { Switch, SwitchField } from '@/components/vendor/Switch'
 import { ClockIcon, PlayIcon, StopIcon } from '@heroicons/react/16/solid'
 import { useCallback, useRef } from 'react'
 import { useAtom, useAtomValue, useStore } from 'jotai'
@@ -60,14 +61,22 @@ const stopTimer = (store: ReturnType<typeof useStore>, execHook: ReturnType<type
         ? Math.floor((Date.now() - globalTimer.startTime) / 1000)
         : globalTimer.elapsedTime
       setDocLineDirect(store, lineIdx, (line) => {
-        line.datumTimeSeconds = finalElapsed
+        if (globalTimer.timeMode === 'additive') {
+          line.datumTimeSeconds = (line.datumTimeSeconds || 0) + finalElapsed
+        } else {
+          line.datumTimeSeconds = finalElapsed
+        }
       })
     } else if (globalTimer.mode === 'countdown') {
       const timeWorked = globalTimer.startTime
         ? Math.floor((Date.now() - globalTimer.startTime) / 1000)
         : 0
       setDocLineDirect(store, lineIdx, (line) => {
-        line.datumTimeSeconds = Math.min(timeWorked, globalTimer.targetDuration)
+        if (globalTimer.timeMode === 'additive') {
+          line.datumTimeSeconds = (line.datumTimeSeconds || 0) + Math.min(timeWorked, globalTimer.targetDuration)
+        } else {
+          line.datumTimeSeconds = Math.min(timeWorked, globalTimer.targetDuration)
+        }
       })
     }
 
@@ -76,6 +85,7 @@ const stopTimer = (store: ReturnType<typeof useStore>, execHook: ReturnType<type
       lineIdx: null,
       lineContent: null,
       mode: 'stopwatch',
+      timeMode: 'replacement',
       startTime: null,
       targetDuration: 25 * 60,
       elapsedTime: 0,
@@ -111,7 +121,6 @@ export const TimerBadge = ({
 
   const [timeInput, setTimeInput] = React.useState(renderTime(time))
   const [countdownInput, setCountdownInput] = React.useState('25m')
-  const intervalRef = useRef<NodeJS.Timeout | null>(null)
 
   const requestNotificationPermission = useCallback(async () => {
     if (notificationPermission === null && 'Notification' in window) {
@@ -156,7 +165,6 @@ export const TimerBadge = ({
         } else if (prev.mode === 'countdown') {
           const remaining = Math.max(0, prev.targetDuration - elapsed)
           if (remaining === 0) {
-            clearInterval(intervalRef.current!)
             setLine((line) => {
               line.datumTimeSeconds = (line.datumTimeSeconds || 0) + prev.targetDuration
             })
@@ -182,6 +190,7 @@ export const TimerBadge = ({
       lineIdx: lineInfo.lineIdx,
       lineContent: lineContent,
       mode,
+      timeMode: globalTimer.timeMode,
       startTime: Date.now(),
       targetDuration,
       elapsedTime: mode === 'countdown' ? targetDuration : 0,
@@ -216,11 +225,10 @@ export const TimerBadge = ({
   }, [globalTimer.stopTimer])
 
   const resetTimer = useCallback(() => {
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current)
-      intervalRef.current = null
-    }
     if (isThisTimerActive) {
+      if (globalTimer.interval) {
+        clearInterval(globalTimer.interval);
+      }
       setGlobalTimer((prev) => ({
         ...prev,
         isActive: false,
@@ -228,37 +236,10 @@ export const TimerBadge = ({
         startTime: null,
         lineIdx: null,
         lineContent: null,
+        interval: null,
       }))
     }
   }, [isThisTimerActive, setGlobalTimer])
-
-  React.useEffect(() => {
-    const duration = parseTime(timeInput)
-    if (duration !== null) {
-      setLine((line) => {
-        if (!line) return;
-        line.datumTimeSeconds = duration
-      })
-    }
-  }, [timeInput, setLine])
-
-  React.useEffect(() => {
-    const duration = parseTime(countdownInput)
-    if (duration !== null) {
-      setGlobalTimer((prev) => ({
-        ...prev,
-        targetDuration: duration,
-      }))
-    }
-  }, [countdownInput, setGlobalTimer])
-
-  React.useEffect(() => {
-    return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current)
-      }
-    }
-  }, [])
 
   useEventListener('beforeunload', (event: BeforeUnloadEvent) => {
     console.log('unload gotten');
@@ -327,6 +308,38 @@ export const TimerBadge = ({
                 ))}
               </div>
             </div>
+
+            {/* Time Mode Selection */}
+            <div className="border-b border-gray-600 pb-2">
+              <SwitchField>
+                <div className="flex items-center justify-between">
+                  <div className="flex flex-col">
+                    <span className="text-sm font-medium text-white">Time Entry Mode</span>
+                    <span className="text-xs text-gray-400">
+                      {globalTimer.timeMode === 'additive' ? 'Add to existing time' : 'Replace existing time'}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className={`text-xs ${globalTimer.timeMode === 'replacement' ? 'text-white' : 'text-gray-400'}`}>
+                      Replace
+                    </span>
+                    <Switch
+                      checked={globalTimer.timeMode === 'additive'}
+                      onChange={(checked) => {
+                        setGlobalTimer((prev) => ({
+                          ...prev,
+                          timeMode: checked ? 'additive' : 'replacement'
+                        }))
+                      }}
+                      color="sky"
+                    />
+                    <span className={`text-xs ${globalTimer.timeMode === 'additive' ? 'text-white' : 'text-gray-400'}`}>
+                      Add
+                    </span>
+                  </div>
+                </div>
+              </SwitchField>
+            </div>
             <div className="text-lg text-gray-400">{lineContent}</div>
           </DialogHeader>
           <div className="text-primary flex flex-col gap-4 h-full overflow-hidden">
@@ -342,7 +355,7 @@ export const TimerBadge = ({
                       )}
                     </div>
                     <div className="text-sm text-gray-400">
-                      Stopwatch Mode - Counts up from zero.
+                      Stopwatch Mode - counts up.
                     </div>
                   </div>
                   <div className="flex gap-2 justify-center">
@@ -451,7 +464,7 @@ export const TimerBadge = ({
                     </div>
                     <div className="text-sm text-gray-400">
                       Enter time directly without running a timer. <br />
-                      Replaces existing time.
+                      {globalTimer.timeMode === 'additive' ? 'Adds to existing time.' : 'Replaces existing time.'}
                     </div>
                   </div>
                   <div className="space-y-4">
@@ -470,6 +483,28 @@ export const TimerBadge = ({
                           Unable to parse duration. Try: 2h 30m, 45m, etc.
                         </div>
                       )}
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        onClick={() => {
+                          const duration = parseTime(timeInput)
+                          if (duration !== null) {
+                            setLine((line) => {
+                              if (!line) return;
+                              if (globalTimer.timeMode === 'additive') {
+                                line.datumTimeSeconds = (line.datumTimeSeconds || 0) + duration
+                              } else {
+                                line.datumTimeSeconds = duration
+                              }
+                            })
+                          }
+                        }}
+                        disabled={parseTime(timeInput) === null}
+                        color="sky"
+                        className="flex-1"
+                      >
+                        {globalTimer.timeMode === 'additive' ? 'Add Time' : 'Set Time'}
+                      </Button>
                     </div>
                   </div>
                 </div>

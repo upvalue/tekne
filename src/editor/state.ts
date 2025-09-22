@@ -28,6 +28,7 @@ type GlobalTimerState = {
   lineIdx: number | null
   lineContent: string | null
   mode: 'stopwatch' | 'countdown' | 'manual'
+  timeMode: 'additive' | 'replacement'
   startTime: number | null
   targetDuration: number
   elapsedTime: number
@@ -45,6 +46,7 @@ export const globalTimerAtom = atom<GlobalTimerState>({
   lineIdx: null,
   lineContent: null,
   mode: 'stopwatch',
+  timeMode: 'replacement',
   startTime: null,
   targetDuration: 25 * 60,
   elapsedTime: 0,
