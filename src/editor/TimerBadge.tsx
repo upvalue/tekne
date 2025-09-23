@@ -31,6 +31,7 @@ import { trpc } from '@/trpc/client'
 import { useEventListener } from '@/hooks/useEventListener'
 import { EditorDialogContent } from '@/components/EditorDialogContent'
 import { noop } from 'lodash-es'
+import { TimerInfo } from './TimerInfo'
 
 const parseTime = (time: string) => parseDuration(time, 's')
 
@@ -175,30 +176,9 @@ export const TimerBadge = ({
         } else if (prev.mode === 'countdown') {
           const remaining = Math.max(0, prev.targetDuration - elapsed)
           if (remaining === 0) {
-            setLine((line) => {
-              line.datumTimeSeconds = (line.datumTimeSeconds || 0) + prev.targetDuration
-            })
             sendNotification(`Timer completed for: ${prev.lineContent}`)
-            setDetailTitle(null)
-            
-            // Execute timer-stop hook when countdown completes
-            execHook.mutate({
-              hook: 'timer-stop',
-              argument: {
-                doc,
-                line: prev.lineContent || '',
-                lineIdx: prev.lineIdx || 0,
-              },
-            })
-            
-            return {
-              ...prev,
-              isActive: false,
-              elapsedTime: 0,
-              startTime: null,
-              lineIdx: null,
-              lineContent: null,
-            }
+            globalTimer.stopTimer()
+            return prev // stopTimer handles all state updates
           }
           return { ...prev, elapsedTime: remaining }
         }
@@ -249,20 +229,9 @@ export const TimerBadge = ({
 
   const resetTimer = useCallback(() => {
     if (isThisTimerActive) {
-      if (globalTimer.interval) {
-        clearInterval(globalTimer.interval);
-      }
-      setGlobalTimer((prev) => ({
-        ...prev,
-        isActive: false,
-        elapsedTime: 0,
-        startTime: null,
-        lineIdx: null,
-        lineContent: null,
-        interval: null,
-      }))
+      globalTimer.stopTimer()
     }
-  }, [isThisTimerActive, setGlobalTimer])
+  }, [isThisTimerActive, globalTimer])
 
   useEventListener('beforeunload', (event: BeforeUnloadEvent) => {
     console.log('unload gotten');
@@ -292,11 +261,12 @@ export const TimerBadge = ({
             <div className="flex items-center gap-1">
               <ClockIcon style={{ width: '16px', height: '16px' }} />
               {(time > 0 || isThisTimerActive) && (
-                <div className={isThisTimerActive ? 'text-green-400' : ''}>
-                  {isThisTimerActive
-                    ? formatTimeDisplay(displayTime)
-                    : renderTime(time)}
-                </div>
+                <TimerInfo
+                  baseTime={time}
+                  globalTimer={globalTimer}
+                  isThisTimer={isThisTimerActive}
+                  className={isThisTimerActive ? 'text-green-400' : ''}
+                />
               )}
               {isThisTimerActive && (
                 <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />

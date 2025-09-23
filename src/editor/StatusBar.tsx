@@ -8,6 +8,7 @@ import { ExclamationTriangleIcon, StopIcon, ListBulletIcon, ClockIcon } from '@h
 import { trpc } from '@/trpc/client'
 import { setDetailTitle } from '@/lib/title'
 import { noop } from 'lodash-es'
+import { TimerInfo } from './TimerInfo'
 
 const STATUS_BAR_TRUNCATE_LENGTH = 50
 
@@ -34,6 +35,13 @@ export const StatusBar = ({ isLoading }: { isLoading: boolean }) => {
   const totalDocTime = useMemo(() => {
     return doc.children.reduce((acc, line) => acc + (line.datumTimeSeconds || 0), 0)
   }, [doc.children])
+
+  const currentLineBaseTime = useMemo(() => {
+    if (globalTimer.isActive && globalTimer.lineIdx !== null) {
+      return doc.children[globalTimer.lineIdx]?.datumTimeSeconds || 0
+    }
+    return 0
+  }, [globalTimer.isActive, globalTimer.lineIdx, doc.children])
 
   useEffect(() => {
     if (errorMessage) {
@@ -72,9 +80,12 @@ export const StatusBar = ({ isLoading }: { isLoading: boolean }) => {
             />
             <div className="flex items-center gap-1 text-green-400">
               <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
-              <span className="font-mono">
-                {formatTimeDisplay(globalTimer.elapsedTime)}
-              </span>
+              <TimerInfo
+                baseTime={currentLineBaseTime}
+                globalTimer={globalTimer}
+                isThisTimer={true}
+                className="font-mono"
+              />
             </div>
             <div className="text-zinc-400">
               {globalTimer.lineContent
