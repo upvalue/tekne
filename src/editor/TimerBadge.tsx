@@ -43,6 +43,7 @@ const stopTimer = (store: ReturnType<typeof useStore>, execHook: ReturnType<type
     const line = doc.children[lineIdx];
 
     if (globalTimer.interval) {
+      console.log('clearing interval');
       clearInterval(globalTimer.interval)
     }
 
@@ -165,25 +166,22 @@ export const TimerBadge = ({
     setDetailTitle(lineContent)
 
     const interval = setInterval(() => {
-      setGlobalTimer((prev) => {
-        if (!prev.isActive) return prev
+      const globalTimer = store.get(globalTimerAtom)
 
-        const now = Date.now()
-        const elapsed = Math.floor((now - (prev.startTime || now)) / 1000)
-
-        if (prev.mode === 'stopwatch') {
-          return { ...prev, elapsedTime: elapsed }
-        } else if (prev.mode === 'countdown') {
-          const remaining = Math.max(0, prev.targetDuration - elapsed)
-          if (remaining === 0) {
-            sendNotification(`Timer completed for: ${prev.lineContent}`)
-            globalTimer.stopTimer()
-            return prev // stopTimer handles all state updates
+      if (globalTimer.mode === 'stopwatch') {
+        setGlobalTimer(prev => ({ ...prev, elapsedTime: prev.elapsedTime + 1 }))
+      } else if (globalTimer.mode === 'countdown') {
+        const remaining = Math.max(0, globalTimer.targetDuration - globalTimer.elapsedTime)
+        if (remaining === 0) {
+          sendNotification(`Timer completed for: ${globalTimer.lineContent}`)
+          const { stopTimer } = globalTimer;
+          if (stopTimer) {
+            stopTimer()
           }
-          return { ...prev, elapsedTime: remaining }
+        } else {
+          setGlobalTimer(prev => ({ ...prev, elapsedTime: remaining }))
         }
-        return prev
-      })
+      }
     }, 1000)
 
     setGlobalTimer({
