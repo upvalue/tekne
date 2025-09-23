@@ -149,7 +149,17 @@ export const TimerBadge = ({
     }
 
     const mode = globalTimer.mode
-    const targetDuration = globalTimer.targetDuration
+    let targetDuration = globalTimer.targetDuration
+
+    // For countdown mode, parse the user input and use it as the target duration
+    if (mode === 'countdown') {
+      const parsedDuration = parseTime(countdownInput)
+      if (parsedDuration === null) {
+        // Don't start timer with invalid duration
+        return
+      }
+      targetDuration = parsedDuration
+    }
 
     setDetailTitle(lineContent)
 
@@ -170,6 +180,17 @@ export const TimerBadge = ({
             })
             sendNotification(`Timer completed for: ${prev.lineContent}`)
             setDetailTitle(null)
+            
+            // Execute timer-stop hook when countdown completes
+            execHook.mutate({
+              hook: 'timer-stop',
+              argument: {
+                doc,
+                line: prev.lineContent || '',
+                lineIdx: prev.lineIdx || 0,
+              },
+            })
+            
             return {
               ...prev,
               isActive: false,
@@ -218,6 +239,8 @@ export const TimerBadge = ({
     isThisTimerActive,
     lineInfo.lineIdx,
     sendNotification,
+    countdownInput,
+    setLine,
   ])
 
   const callStopTimer = useCallback(() => {
@@ -299,6 +322,10 @@ export const TimerBadge = ({
                     onClick={() => {
                       resetTimer()
                       setGlobalTimer((prev) => ({ ...prev, mode }))
+                      // Reset countdown input when switching to countdown mode
+                      if (mode === 'countdown') {
+                        setCountdownInput('25m')
+                      }
                     }}
                     className="capitalize text-xs px-3 py-1"
                     disabled={isAnyTimerActive && !isThisTimerActive}
@@ -396,7 +423,7 @@ export const TimerBadge = ({
                       {formatTimeDisplay(
                         isThisTimerActive
                           ? globalTimer.elapsedTime
-                          : globalTimer.targetDuration
+                          : parseTime(countdownInput) || globalTimer.targetDuration
                       )}
                     </div>
                     <div className="text-sm text-gray-400">
@@ -428,7 +455,7 @@ export const TimerBadge = ({
                       <Button
                         onClick={startTimer}
                         className="flex items-center gap-2"
-                        disabled={isAnyTimerActive}
+                        disabled={isAnyTimerActive || parseTime(countdownInput) === null}
                       >
                         <PlayIcon className="w-4 h-4" />
                         {isAnyTimerActive

@@ -46,8 +46,13 @@ Major components of the editor are:
   line editor edits individual lines in a document, currently handles all key bindings. It
   can also change overall editor state by changing Jotai: for example, if the user enters a
   new line by pressing enter, this appends a new line to the document's `children` array.
+- `src/editor/line-editor/*` Some additional plugins for the line editor handle things like
+  rendering Markdown syntax and slash commands.
 - `src/editor/TEditor.tsx` overall document editor
 - `src/editor/ELine.tsx` React wrapper of the Codemirror editor
+- `src/editor/parser.ts` Derived from @lezer/markdown, this parses raw text into a tree for
+  rich rendering of some Markdown features and analysis. Note that only a subset of Markdown
+  is supported. 
 
 The synchronization between Codemirror (which has its own DOM rendering and management
 system) and React is custom:
@@ -64,9 +69,26 @@ Additional features of the editor:
 - Slash commands allow the user to autocomplete useful commands while directly in the
   editor interface. For example, typing `/date` and then selecting the autocomplete for this
   command will insert today's date in `YYYY-MM-DD` format.
+- A status bar at `src/editor/StatusBar.tsx` shows some global information about the editor, like 
+  the current and total lines.
 
 The editor has a standalone route at `/lab` -- this can be useful for testing the document
 editor in isolation from other features from the application.
+
+# Datums and aggregate view
+
+Lines can have "datums" attached to them, like tasks (checkboxes) or timers, which renders rich
+widgets next to the line that allow the user to update data about those lines.
+
+The bulk of the timer code lives in `src/editor/TimerBadge.tsx`, though the user can stop timers
+from the StatusBar component.
+
+# Hooks
+
+Tekne has very primitive support for "hooks", which like git hooks, allow an arbitrary script to be
+executed with some information about an event when it happens. Currently the only hooks are
+`timer-start` and `timer-stop`, called when timers are started and stopped.
+
 
 # Running the application
 
