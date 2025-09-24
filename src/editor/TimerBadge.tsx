@@ -171,7 +171,10 @@ export const TimerBadge = ({
       if (globalTimer.mode === 'stopwatch') {
         setGlobalTimer(prev => ({ ...prev, elapsedTime: prev.elapsedTime + 1 }))
       } else if (globalTimer.mode === 'countdown') {
-        const remaining = Math.max(0, globalTimer.targetDuration - globalTimer.elapsedTime)
+        const elapsed = globalTimer.startTime
+          ? Math.floor((Date.now() - globalTimer.startTime) / 1000)
+          : globalTimer.elapsedTime
+        const remaining = Math.max(0, globalTimer.targetDuration - elapsed)
         if (remaining === 0) {
           sendNotification(`Timer completed for: ${globalTimer.lineContent}`)
           const { stopTimer } = globalTimer;
