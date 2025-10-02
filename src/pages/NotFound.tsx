@@ -7,12 +7,8 @@ export default function NotFound() {
       title="Page not found"
       subtitle="Sorry, we couldn't find the page you're looking for."
       primaryAction={{
-        text: 'Go back home',
+        text: 'Go to the app',
         href: '/',
-      }}
-      secondaryAction={{
-        text: 'Contact support',
-        href: '#',
       }}
     />
   )
