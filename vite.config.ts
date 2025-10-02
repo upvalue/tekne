@@ -17,6 +17,7 @@ function getGitInfo() {
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  base: process.env.GITHUB_ACTIONS ? '/tekne/' : '/',
   plugins: [
     TanStackRouterVite({ autoCodeSplitting: true }),
     viteReact(),
