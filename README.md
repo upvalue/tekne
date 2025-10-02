@@ -3,7 +3,7 @@
 Tekne (formerly [meditations](https://github.com/upvalue/tekne/tree/meditations-stable)) is a
 freestyle productivity app in the shape of an outline editor.
 
-It's currently extremely alpha software! I'm using it every day now (as of 9/7/25) but it's missing
+It's currently extremely alpha software! I'm using it every day now (as of 10/1/25) but it's missing
 lots of features, is sometimes broken in odd ways and does not yet have a stable database or
 document schema.
 
