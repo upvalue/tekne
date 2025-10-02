@@ -5,7 +5,6 @@ export default function NotFound() {
     <CopyLayout
       statusCode="404"
       title="Page not found"
-      subtitle="Sorry, we couldn't find the page you're looking for."
       primaryAction={{
         text: 'Go to the app',
         href: '/',
