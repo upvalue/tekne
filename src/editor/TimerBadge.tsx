@@ -23,7 +23,7 @@ import parseDuration from 'parse-duration'
 import { Button } from '@/components/vendor/Button'
 import { Switch, SwitchField } from '@/components/vendor/Switch'
 import { ClockIcon, PlayIcon, StopIcon } from '@heroicons/react/16/solid'
-import { useCallback, useRef } from 'react'
+import { useCallback } from 'react'
 import { useAtom, useAtomValue, useStore } from 'jotai'
 import { setDetailTitle } from '@/lib/title'
 import { formatTimeDisplay, renderTime } from '@/lib/time'
@@ -37,13 +37,11 @@ const parseTime = (time: string) => parseDuration(time, 's')
 
 const stopTimer = (store: ReturnType<typeof useStore>, execHook: ReturnType<typeof trpc.execHook.useMutation>, lineIdx: number) => {
   return () => {
-    console.log('the transformation is complete');
     const globalTimer = store.get(globalTimerAtom)
     const doc = store.get(docAtom);
     const line = doc.children[lineIdx];
 
     if (globalTimer.interval) {
-      console.log('clearing interval');
       clearInterval(globalTimer.interval)
     }
 
@@ -109,6 +107,7 @@ export const TimerBadge = ({
   time: number
 }) => {
   const execHook = trpc.execHook.useMutation()
+  const [open, setOpen] = React.useState(false)
   const doc = useAtomValue(docAtom)
   const store = useStore();
   const [, setLine] = useDocLine(lineInfo.lineIdx)
@@ -208,6 +207,8 @@ export const TimerBadge = ({
         lineIdx: lineInfo.lineIdx,
       },
     })
+
+    setOpen(false)
   }, [
     doc,
     lineContent,
@@ -222,6 +223,7 @@ export const TimerBadge = ({
     sendNotification,
     countdownInput,
     setLine,
+    setOpen,
   ])
 
   const callStopTimer = useCallback(() => {
@@ -243,10 +245,9 @@ export const TimerBadge = ({
     }
   })
 
-  const displayTime = isThisTimerActive ? globalTimer.elapsedTime : time
-
   return (
     <Dialog
+      open={open}
       onOpenChange={(open) => {
         if (open) {
           requestNotificationPermission()
@@ -258,6 +259,7 @@ export const TimerBadge = ({
           <BadgeButton
             className="cursor-pointer whitespace-nowrap"
             badgeClassName="px-[4px] py-[1px]"
+            onClick={() => setOpen(true)}
           >
             <div className="flex items-center gap-1">
               <ClockIcon style={{ width: '16px', height: '16px' }} />
@@ -496,6 +498,7 @@ export const TimerBadge = ({
                               }
                             })
                           }
+                          setOpen(false);
                         }}
                         disabled={parseTime(timeInput) === null}
                         color="sky"
