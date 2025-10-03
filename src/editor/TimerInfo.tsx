@@ -3,8 +3,11 @@ import { formatTimeDisplay, renderTime } from '@/lib/time'
 interface TimerInfoProps {
   baseTime: number
   globalTimer: {
-    elapsedTime: number
+    startTime: number | null
+    targetDuration: number
+    mode: 'stopwatch' | 'countdown' | 'manual'
     timeMode: 'additive' | 'replacement'
+    isActive: boolean
   }
   isThisTimer: boolean
   format?: 'compact' | 'full'
@@ -15,10 +18,10 @@ interface TimerInfoProps {
  * Shared component for displaying timer information with additive mode support.
  * Shows "baseTime + currentTime" for additive mode, or just current/base time for replacement mode.
  */
-export const TimerInfo = ({ 
-  baseTime, 
-  globalTimer, 
-  isThisTimer, 
+export const TimerInfo = ({
+  baseTime,
+  globalTimer,
+  isThisTimer,
   format = 'compact',
   className = ''
 }: TimerInfoProps) => {
@@ -31,9 +34,19 @@ export const TimerInfo = ({
     ) : null
   }
 
-  // Timer is active - show current elapsed time
-  const currentTime = formatTimeDisplay(globalTimer.elapsedTime)
-  
+  // Timer is active - calculate current time from startTime
+  let currentSeconds = 0
+  if (globalTimer.startTime) {
+    const elapsed = Math.floor((Date.now() - globalTimer.startTime) / 1000)
+    if (globalTimer.mode === 'stopwatch') {
+      currentSeconds = elapsed
+    } else if (globalTimer.mode === 'countdown') {
+      currentSeconds = Math.max(0, globalTimer.targetDuration - elapsed)
+    }
+  }
+
+  const currentTime = formatTimeDisplay(currentSeconds)
+
   // For replacement mode, just show current timer
   if (globalTimer.timeMode === 'replacement') {
     return (

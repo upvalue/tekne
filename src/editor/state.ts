@@ -31,7 +31,7 @@ type GlobalTimerState = {
   timeMode: 'additive' | 'replacement'
   startTime: number | null
   targetDuration: number
-  elapsedTime: number
+  tick: number
   stopTimer: () => void
   interval: NodeJS.Timeout | null
 }
@@ -49,7 +49,7 @@ export const globalTimerAtom = atom<GlobalTimerState>({
   timeMode: 'replacement',
   startTime: null,
   targetDuration: 25 * 60,
-  elapsedTime: 0,
+  tick: 0,
   stopTimer: noop,
   interval: null,
 })

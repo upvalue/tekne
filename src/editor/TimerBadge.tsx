@@ -59,7 +59,7 @@ const stopTimer = (store: ReturnType<typeof useStore>, execHook: ReturnType<type
     if (globalTimer.mode === 'stopwatch') {
       const finalElapsed = globalTimer.startTime
         ? Math.floor((Date.now() - globalTimer.startTime) / 1000)
-        : globalTimer.elapsedTime
+        : 0
       setDocLineDirect(store, lineIdx, (line) => {
         if (globalTimer.timeMode === 'additive') {
           line.datumTimeSeconds = (line.datumTimeSeconds || 0) + finalElapsed
@@ -88,7 +88,7 @@ const stopTimer = (store: ReturnType<typeof useStore>, execHook: ReturnType<type
       timeMode: 'replacement',
       startTime: null,
       targetDuration: 25 * 60,
-      elapsedTime: 0,
+      tick: 0,
       stopTimer: noop,
       interval: null,
     })
@@ -168,11 +168,11 @@ export const TimerBadge = ({
       const globalTimer = store.get(globalTimerAtom)
 
       if (globalTimer.mode === 'stopwatch') {
-        setGlobalTimer(prev => ({ ...prev, elapsedTime: prev.elapsedTime + 1 }))
+        setGlobalTimer(prev => ({ ...prev, tick: prev.tick + 1 }))
       } else if (globalTimer.mode === 'countdown') {
         const elapsed = globalTimer.startTime
           ? Math.floor((Date.now() - globalTimer.startTime) / 1000)
-          : globalTimer.elapsedTime
+          : 0
         const remaining = Math.max(0, globalTimer.targetDuration - elapsed)
         if (remaining === 0) {
           sendNotification(`Timer completed for: ${globalTimer.lineContent}`)
@@ -181,7 +181,7 @@ export const TimerBadge = ({
             stopTimer()
           }
         } else {
-          setGlobalTimer(prev => ({ ...prev, elapsedTime: remaining }))
+          setGlobalTimer(prev => ({ ...prev, tick: prev.tick + 1 }))
         }
       }
     }, 1000)
@@ -194,7 +194,7 @@ export const TimerBadge = ({
       timeMode: globalTimer.timeMode,
       startTime: Date.now(),
       targetDuration,
-      elapsedTime: mode === 'countdown' ? targetDuration : 0,
+      tick: 0,
       stopTimer: stopTimer(store, execHook, lineInfo.lineIdx),
       interval,
     })
@@ -351,7 +351,9 @@ export const TimerBadge = ({
                   <div className="text-center">
                     <div className="text-4xl font-mono mb-2">
                       {formatTimeDisplay(
-                        isThisTimerActive ? globalTimer.elapsedTime : 0
+                        isThisTimerActive && globalTimer.startTime
+                          ? Math.floor((Date.now() - globalTimer.startTime) / 1000)
+                          : 0
                       )}
                     </div>
                     <div className="text-sm text-gray-400">
@@ -394,8 +396,8 @@ export const TimerBadge = ({
                   <div className="text-center">
                     <div className="text-4xl font-mono mb-2">
                       {formatTimeDisplay(
-                        isThisTimerActive
-                          ? globalTimer.elapsedTime
+                        isThisTimerActive && globalTimer.startTime
+                          ? Math.max(0, globalTimer.targetDuration - Math.floor((Date.now() - globalTimer.startTime) / 1000))
                           : parseTime(countdownInput) || globalTimer.targetDuration
                       )}
                     </div>
