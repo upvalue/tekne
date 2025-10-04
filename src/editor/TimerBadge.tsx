@@ -252,6 +252,7 @@ export const TimerBadge = ({
         if (open) {
           requestNotificationPermission()
         }
+        setOpen(open)
       }}
     >
       <DialogTrigger asChild>
