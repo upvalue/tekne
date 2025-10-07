@@ -25,7 +25,7 @@ import { Switch, SwitchField } from '@/components/vendor/Switch'
 import { ClockIcon, PlayIcon, StopIcon } from '@heroicons/react/16/solid'
 import { useCallback } from 'react'
 import { useAtom, useAtomValue, useStore } from 'jotai'
-import { setDetailTitle } from '@/lib/title'
+import { setDetailTitle, setTimerActive } from '@/lib/title'
 import { formatTimeDisplay, renderTime } from '@/lib/time'
 import { trpc } from '@/trpc/client'
 import { useEventListener } from '@/hooks/useEventListener'
@@ -55,6 +55,7 @@ const stopTimer = (store: ReturnType<typeof useStore>, execHook: ReturnType<type
     })
 
     setDetailTitle(null)
+    setTimerActive(false)
 
     if (globalTimer.mode === 'stopwatch') {
       const finalElapsed = globalTimer.startTime
@@ -163,6 +164,7 @@ export const TimerBadge = ({
     }
 
     setDetailTitle(lineContent)
+    setTimerActive(true)
 
     const interval = setInterval(() => {
       const globalTimer = store.get(globalTimerAtom)
