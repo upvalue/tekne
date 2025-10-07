@@ -1,12 +1,11 @@
-import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import { createFileRoute } from '@tanstack/react-router'
 import { EditorLayout } from '@/layout/EditorLayout'
 import { TitleBar } from '@/editor/TitleBar'
 import { Panel } from '@/panel/Panel'
-import { trpc } from '@/trpc/client'
 import { Button } from '@/components/vendor/Button'
-import { toast } from 'sonner'
 import { setMainTitle } from '@/lib/title'
 import { useEffect } from 'react'
+import { useCreateDoc } from '@/hooks/useCreateDoc'
 
 export const Route = createFileRoute('/doc-not-found/$title')({
   component: RouteComponent,
@@ -17,24 +16,11 @@ function RouteComponent() {
     select: (p) => p.title,
   })
 
-  const navigate = useNavigate()
-
   useEffect(() => {
     setMainTitle(title)
   }, [title])
 
-  const createDocMutation = trpc.doc.createDoc.useMutation({
-    onSuccess: () => {
-      navigate({
-        to: '/n/$title',
-        params: { title },
-        replace: true,
-      })
-    },
-    onError: (error) => {
-      toast.error(`Failed to create document: ${error.message}`)
-    },
-  })
+  const createDocMutation = useCreateDoc({ navigateOnSuccess: true })
 
   const handleCreateDocument = () => {
     createDocMutation.mutate({ name: title })

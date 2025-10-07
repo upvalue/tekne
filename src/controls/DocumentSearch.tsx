@@ -5,12 +5,18 @@ import { trpc } from '@/trpc/client'
 import { useMemo, useEffect, useState } from 'react'
 import { KBarModal, KBarSearchInput, KBarResultRenderer } from './KBar'
 import { docRoute } from '@/lib/utils'
+import { useCreateDoc } from '@/hooks/useCreateDoc'
 
 const DocumentSearchContent = () => {
   const navigate = useNavigate()
   const kbarState = useKBar((state) => state)
   const query = kbarState.searchQuery || ''
   const [debouncedQuery, setDebouncedQuery] = useState('')
+  const createDocMutation = useCreateDoc({
+    onSuccess: (name) => {
+      navigate({ to: docRoute(name) })
+    },
+  })
 
   // TODO: This fires on page load and shouldn't.
 
@@ -56,7 +62,7 @@ const DocumentSearchContent = () => {
         name: `Create document titled ${query}`,
         subtitle: 'Create a new document',
         perform: () => {
-          navigate({ to: docRoute(query) })
+          createDocMutation.mutate({ name: query })
         },
         keywords: `create ${query}`,
       })
