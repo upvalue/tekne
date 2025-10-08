@@ -1,5 +1,5 @@
 import { useAtomValue, useSetAtom } from 'jotai'
-import { useEffect, useCallback, useRef, useMemo } from 'react'
+import { useEffect, useCallback, useRef, useMemo, useState } from 'react'
 import { docAtom, focusedLineAtom } from './state'
 import { errorMessageAtom, globalTimerAtom } from './state'
 import { Button } from '@headlessui/react'
@@ -11,6 +11,23 @@ import { noop } from 'lodash-es'
 import { TimerInfo } from './TimerInfo'
 
 const STATUS_BAR_TRUNCATE_LENGTH = 50
+
+const LoadingDots = () => {
+  const [dots, setDots] = useState(0)
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setDots((prev) => (prev + 1) % 4)
+    }, 500)
+    return () => clearInterval(interval)
+  }, [])
+
+  return (
+    <div className="text-sm text-zinc-400">
+      Loading{'.'.repeat(dots)}
+    </div>
+  )
+}
 
 const formatTimeDisplay = (seconds: number): string => {
   const hours = Math.floor(seconds / 3600)
@@ -56,6 +73,7 @@ export const StatusBar = ({ isLoading }: { isLoading: boolean }) => {
   return (
     <div className="StatusBar font-mono w-full h-10 bg-zinc-800 px-[138px] flex items-center justify-between">
       <div className="flex items-center gap-4">
+        {isLoading && <LoadingDots />}
         {errorMessage && (
           <div className="flex items-center gap-2">
             <ExclamationTriangleIcon className="w-4 h-4 text-red-400" />

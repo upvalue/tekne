@@ -6,6 +6,8 @@ import { Button } from '@/components/vendor/Button'
 import { setMainTitle } from '@/lib/title'
 import { useEffect } from 'react'
 import { useCreateDoc } from '@/hooks/useCreateDoc'
+import { StatusBar } from '@/editor/StatusBar'
+import NonEditorLayout from '@/layout/NonEditorLayout'
 
 export const Route = createFileRoute('/doc-not-found/$title')({
   component: RouteComponent,
@@ -31,7 +33,9 @@ function RouteComponent() {
       editor={
         <>
           <TitleBar title={title} allowTitleEdit={false} />
-          <div className="flex flex-col h-full space-y-4 p-8">
+          <StatusBar isLoading={false} />
+          <NonEditorLayout>
+
 
             <div className="space-y-2">
               <h2 className="text-xl font-semibold">Document does not exist</h2>
@@ -48,7 +52,7 @@ function RouteComponent() {
                 {createDocMutation.isPending ? 'Creating...' : 'Create Document'}
               </Button>
             </div>
-          </div>
+          </NonEditorLayout>
         </>
       }
       sidepanel={<Panel />}

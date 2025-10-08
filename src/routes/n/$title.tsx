@@ -223,7 +223,7 @@ function RouteComponent() {
           <>
             <TitleBar title={title} allowTitleEdit={true} />
             <StatusBar isLoading={loadDocQuery.isLoading} />
-            {loadDocQuery.isLoading ? "Loading..." : <TEditor />}
+            {!loadDocQuery.isLoading && <TEditor />}
           </>
         }
         sidepanel={<Panel />}
