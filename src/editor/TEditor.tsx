@@ -1,7 +1,5 @@
 import { useRef, useMemo } from 'react'
 
-import './TEditor.css'
-
 import { useAtom } from 'jotai'
 
 import { useCodemirrorEvent } from './line-editor'

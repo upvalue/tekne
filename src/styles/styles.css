@@ -17,8 +17,10 @@
 
 @import 'tailwindcss';
 @plugin '@tailwindcss/typography';
+@source inline("px-[162px]");
 
 @import './system.css';
+@import '../editor/TEditor.css';
 
 body {
   margin: 0;
