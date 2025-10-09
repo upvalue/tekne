@@ -3,7 +3,7 @@ import { KBarProvider, type Action } from 'kbar'
 import { useMemo } from 'react'
 import { KBarModal, KBarSearchInput, KBarResultRenderer } from './KBar'
 import { useRouter, type NavigateFn } from '@tanstack/react-router'
-import { formatDate } from '@/lib/utils'
+import { docRoute, formatDate } from '@/lib/utils'
 import { addDays, parse } from 'date-fns'
 import { getDocTitle } from '@/hooks/useDocTitle'
 import { trpc } from '@/trpc/client'
@@ -26,7 +26,7 @@ const CommandPaletteContent = () => {
 const getDayNotePath = (date: Date, delta: number) => {
   const newDate = addDays(date, delta)
 
-  return `/n/${formatDate(newDate)}`
+  return docRoute(formatDate(newDate));
 }
 
 /**
@@ -122,7 +122,7 @@ export const CommandPalette: React.FC<{ children: React.ReactNode }> = ({
             if (window.location.pathname === '/n/Tutorial') {
               window.location.reload()
             } else {
-              navigate({ to: '/n/$title', params: { title: 'Tutorial' } })
+              navigate({ to: docRoute('Tutorial') })
             }
           } catch (error) {
             toast.error(`Failed to restart tutorial: ${error}`)

@@ -27,5 +27,5 @@ export const getDocTitle = () => {
 }
 
 export const docRoute = (name: string) => {
-  return `/n/${encodeURIComponent(name)}`
+  return `/open/${encodeURIComponent(name)}`
 }
