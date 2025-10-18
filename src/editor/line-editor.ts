@@ -6,8 +6,13 @@ import { EditorView, keymap } from '@codemirror/view'
 import { emacsStyleKeymap } from '@codemirror/commands'
 import { EditorSelection, EditorState, type Extension } from '@codemirror/state'
 import { type ZLine } from '@/docs/schema'
-import { useAtom, useSetAtom, useStore } from 'jotai'
-import { docAtom, focusedLineAtom, requestFocusLineAtom } from './state'
+import { useAtom, useAtomValue, useSetAtom, useStore } from 'jotai'
+import {
+  docAtom,
+  focusedLineAtom,
+  globalTimerAtom,
+  requestFocusLineAtom,
+} from './state'
 import { autocompletion } from '@codemirror/autocomplete'
 import { useLineEvent } from './line-editor/cm-events'
 import { slashCommandsPlugin } from './line-editor/slash-commands-plugin'
@@ -15,7 +20,6 @@ import { placeholder } from './line-editor/placeholder-plugin'
 import { makeKeymap, toggleCollapse } from './line-editor/line-operations'
 import { syntaxPlugin } from './line-editor/syntax-plugin'
 import { tagCompletionPlugin } from './line-editor/tag-completion-plugin'
-
 
 const theme = EditorView.theme(
   // Preferring to do these in TEditor.css
@@ -245,13 +249,22 @@ export const useCodeMirror = (lineInfo: LineWithIdx) => {
 
   // Line specific events, emitted by the event
   // emitter. Could probably be moved one level up.
-  useLineEvent('lineTimerAdd', lineInfo.lineIdx, (event) => {
-    // If it's already got a time, don't do anything
-    if (lineInfo.line.datumTimeSeconds) {
-      return
-    }
+  useLineEvent('lineTimerToggle', lineInfo.lineIdx, (event) => {
+    const globalTimer = store.get(globalTimerAtom)
     setDoc((draft) => {
-      draft.children[event.lineIdx].datumTimeSeconds = 0
+      const datumTimeSeconds = draft.children[event.lineIdx].datumTimeSeconds
+      if (datumTimeSeconds !== undefined) {
+        if (datumTimeSeconds > 0) {
+          if (confirm('Timer has data, do you want to remove it?')) {
+            if (globalTimer.lineIdx === event.lineIdx) {
+              globalTimer.stopTimer()
+            }
+            delete draft.children[event.lineIdx].datumTimeSeconds
+          }
+        }
+      } else {
+        draft.children[event.lineIdx].datumTimeSeconds = 0
+      }
     })
   })
 

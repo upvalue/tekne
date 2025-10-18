@@ -136,9 +136,10 @@ export const analysisRouter = t.router({
         }
       }
 
-      // Return tasks ordered by their appearance in tagsInDoc
+      // Return tasks ordered by name
       return tagsInDoc
         .map((tagInDoc) => tasks[tagInDoc.tag])
         .filter((task): task is TagAggregateData => task !== undefined)
+        .sort((a, b) => a.tag.localeCompare(b.tag))
     }),
 })

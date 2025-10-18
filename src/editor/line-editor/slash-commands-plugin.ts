@@ -65,7 +65,7 @@ export const slashCommandsPlugin = (lineIdx: number) => {
           },
         },
         {
-          label: '/timer: Add a timer to the line',
+          label: '/timer: Toggle whether line is a timer',
           type: 'text',
           apply: (
             view: EditorView,
@@ -73,7 +73,7 @@ export const slashCommandsPlugin = (lineIdx: number) => {
             from: number,
             to: number
           ) => {
-            emitCodemirrorEvent('lineTimerAdd', {
+            emitCodemirrorEvent('lineTimerToggle', {
               lineIdx,
             })
 
