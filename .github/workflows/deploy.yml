@@ -46,6 +46,7 @@ jobs:
         env:
           GIT_HASH: ${{ github.sha }}
           GIT_MESSAGE: ${{ github.event.head_commit.message }}
+          TEKNE_DEMO: true
 
       - name: Copy index.html to 404.html for SPA routing
         run: cp dist/index.html dist/404.html
