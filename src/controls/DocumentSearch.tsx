@@ -93,7 +93,7 @@ export const DocumentSearch: React.FC<DocumentSearchProps> = ({ children }) => {
       actions={[]}
       options={{
         // TODO: This is broken with / 
-        toggleShortcut: '$mod+Shift+P',
+        toggleShortcut: '$mod+Slash',
       }}
     >
       <DocumentSearchContent />

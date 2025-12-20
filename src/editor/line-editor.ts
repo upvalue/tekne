@@ -12,6 +12,7 @@ import {
   focusedLineAtom,
   globalTimerAtom,
   requestFocusLineAtom,
+  timerDialogRequestAtom,
 } from './state'
 import { autocompletion } from '@codemirror/autocomplete'
 import { useLineEvent } from './line-editor/cm-events'
@@ -266,6 +267,17 @@ export const useCodeMirror = (lineInfo: LineWithIdx) => {
         draft.children[event.lineIdx].datumTimeSeconds = 0
       }
     })
+  })
+
+  useLineEvent('lineTimerOpen', lineInfo.lineIdx, (event) => {
+    // Ensure timer exists on the line
+    setDoc((draft) => {
+      if (draft.children[event.lineIdx].datumTimeSeconds === undefined) {
+        draft.children[event.lineIdx].datumTimeSeconds = 0
+      }
+    })
+    // Request opening the timer dialog with the specified mode
+    store.set(timerDialogRequestAtom, { lineIdx: event.lineIdx, mode: event.mode })
   })
 
   useLineEvent('linePinToggle', lineInfo.lineIdx, (event) => {

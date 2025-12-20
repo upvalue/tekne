@@ -2,6 +2,22 @@
 
 import type { Command } from './types'
 import { emitCodemirrorEvent } from '@/editor/line-editor/cm-events'
+import { formatDate, getDocTitle } from '@/lib/utils'
+
+/** Check if a string is a valid YYYY-MM-DD date */
+const isDateString = (str: string): boolean => /^\d{4}-\d{2}-\d{2}$/.test(str)
+
+/** Parse YYYY-MM-DD to Date */
+const parseDate = (str: string): Date | null => {
+  if (!isDateString(str)) return null
+  const [year, month, day] = str.split('-').map(Number)
+  return new Date(year, month - 1, day)
+}
+
+/** Navigate to a document */
+const navigateTo = (title: string) => {
+  window.location.href = `/n/${encodeURIComponent(title)}`
+}
 
 // ============================================================================
 // Editor Commands
@@ -41,6 +57,36 @@ const editorCommands: Command[] = [
         execute: ({ lineIdx }) => {
           if (lineIdx === null) return
           emitCodemirrorEvent('lineTimerToggle', { lineIdx })
+        },
+      },
+      {
+        key: '1',
+        displayKey: '1',
+        name: 'Stopwatch',
+        description: 'Open timer in stopwatch mode (counts up)',
+        execute: ({ lineIdx }) => {
+          if (lineIdx === null) return
+          emitCodemirrorEvent('lineTimerOpen', { lineIdx, mode: 'stopwatch' })
+        },
+      },
+      {
+        key: '2',
+        displayKey: '2',
+        name: 'Countdown',
+        description: 'Open timer in countdown mode',
+        execute: ({ lineIdx }) => {
+          if (lineIdx === null) return
+          emitCodemirrorEvent('lineTimerOpen', { lineIdx, mode: 'countdown' })
+        },
+      },
+      {
+        key: '3',
+        displayKey: '3',
+        name: 'Manual',
+        description: 'Open timer in manual entry mode',
+        execute: ({ lineIdx }) => {
+          if (lineIdx === null) return
+          emitCodemirrorEvent('lineTimerOpen', { lineIdx, mode: 'manual' })
         },
       },
     ],
@@ -105,15 +151,54 @@ const editorCommands: Command[] = [
 
 const navigationCommands: Command[] = [
   {
-    id: 'open-today',
-    name: "Open today's daily note",
-    description: "Navigate to today's daily note",
-    shortcut: undefined,
-    keywords: ['daily', 'note', 'today', 'journal'],
+    id: 'go',
+    name: 'Go to',
+    description: 'Navigation commands',
+    shortcut: 'g',
+    displayShortcut: 'G',
+    keywords: ['go', 'navigate', 'open'],
     requiresEditor: false,
+    subcommands: [
+      {
+        key: 'h',
+        displayKey: 'H',
+        name: 'Previous day',
+        description: 'Navigate to the previous daily note',
+        execute: () => {
+          const title = getDocTitle()
+          if (!title) return
+          const date = parseDate(title)
+          if (!date) return
+          date.setDate(date.getDate() - 1)
+          navigateTo(formatDate(date))
+        },
+      },
+      {
+        key: 't',
+        displayKey: 'T',
+        name: "Today's note",
+        description: "Navigate to today's daily note",
+        execute: () => {
+          navigateTo(formatDate(new Date()))
+        },
+      },
+      {
+        key: 'l',
+        displayKey: 'L',
+        name: 'Next day',
+        description: 'Navigate to the next daily note',
+        execute: () => {
+          const title = getDocTitle()
+          if (!title) return
+          const date = parseDate(title)
+          if (!date) return
+          date.setDate(date.getDate() + 1)
+          navigateTo(formatDate(date))
+        },
+      },
+    ],
     execute: () => {
-      // TODO: Implement navigation to today's note
-      console.log('Navigate to today')
+      // Parent command doesn't execute directly when subcommands exist
     },
   },
 ]

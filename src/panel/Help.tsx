@@ -48,10 +48,38 @@ const Keybindings = () => {
       <DescriptionList>
         {commandShortcuts.map((command) => (
           <React.Fragment key={command.id}>
-            <DescriptionTerm>{command.name}</DescriptionTerm>
-            <DescriptionDetails>
-              <Badge>{command.displayShortcut || command.shortcut}</Badge>
-            </DescriptionDetails>
+            {command.subcommands?.length ? (
+              // Command with subcommands - show parent and children
+              <>
+                <DescriptionTerm className="text-gray-400">
+                  {command.name}
+                </DescriptionTerm>
+                <DescriptionDetails>
+                  <Badge>{command.displayShortcut || command.shortcut}</Badge>
+                  <span className="text-gray-500 ml-1">+ ...</span>
+                </DescriptionDetails>
+                {command.subcommands.map((sub) => (
+                  <React.Fragment key={sub.key}>
+                    <DescriptionTerm className="pl-4">
+                      {sub.name}
+                    </DescriptionTerm>
+                    <DescriptionDetails>
+                      <Badge>{command.displayShortcut || command.shortcut}</Badge>
+                      <span className="text-gray-500 mx-1">then</span>
+                      <Badge>{sub.displayKey || sub.key.toUpperCase()}</Badge>
+                    </DescriptionDetails>
+                  </React.Fragment>
+                ))}
+              </>
+            ) : (
+              // Simple command without subcommands
+              <>
+                <DescriptionTerm>{command.name}</DescriptionTerm>
+                <DescriptionDetails>
+                  <Badge>{command.displayShortcut || command.shortcut}</Badge>
+                </DescriptionDetails>
+              </>
+            )}
           </React.Fragment>
         ))}
       </DescriptionList>

@@ -7,6 +7,48 @@ import { cn } from '@/lib/utils'
 import { allCommands, searchCommands, getCommandByShortcut } from './registry'
 import type { Command, CommandContext } from './types'
 
+/** Shared component for rendering a command/subcommand item */
+export const CommandItem: React.FC<{
+  name: string
+  description: string
+  shortcut?: string
+  hasSubcommands?: boolean
+  isActive?: boolean
+  showShortcut?: boolean
+  onClick?: () => void
+  onMouseEnter?: () => void
+}> = ({
+  name,
+  description,
+  shortcut,
+  hasSubcommands,
+  isActive,
+  showShortcut = true,
+  onClick,
+  onMouseEnter,
+}) => (
+  <div
+    className={cn('p-2 cursor-pointer', isActive && 'bg-zinc-800')}
+    onClick={onClick}
+    onMouseEnter={onMouseEnter}
+  >
+    <div className="p-2 rounded-md flex items-center justify-between">
+      <div>
+        <div className="font-medium">{name}</div>
+        <div className="text-sm text-gray-500">{description}</div>
+      </div>
+      {showShortcut && shortcut && (
+        <div className="flex items-center gap-1">
+          <div className="text-xs text-gray-400 font-mono bg-zinc-800 px-2 py-1 rounded border border-gray-700">
+            {shortcut}
+          </div>
+          {hasSubcommands && <span className="text-xs text-gray-500">...</span>}
+        </div>
+      )}
+    </div>
+  </div>
+)
+
 interface CommandPaletteProps {
   isOpen: boolean
   onClose: () => void
@@ -73,11 +115,15 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
       e.stopPropagation()
 
       // Arrow key navigation (works in all modes)
+      // In main mode: index 0 = Search, index 1+ = commands
       if (e.key === 'ArrowDown') {
         if (pendingCommand?.subcommands) {
           setActiveIndex((i) => Math.min(i + 1, pendingCommand.subcommands!.length - 1))
-        } else {
+        } else if (searchMode) {
           setActiveIndex((i) => Math.min(i + 1, filteredCommands.length - 1))
+        } else {
+          // +1 for the "Search commands" item at index 0
+          setActiveIndex((i) => Math.min(i + 1, filteredCommands.length))
         }
         return
       }
@@ -95,16 +141,27 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
             subcommand.execute(context)
             onClose()
           }
-        } else {
+        } else if (searchMode) {
           const command = filteredCommands[activeIndex]
           if (command) {
-            if (command.subcommands?.length) {
-              // Enter subcommand mode
-              setPendingCommand(command)
-              setActiveIndex(0)
-            } else {
-              command.execute(context)
-              onClose()
+            command.execute(context)
+            onClose()
+          }
+        } else {
+          // Index 0 = Search commands
+          if (activeIndex === 0) {
+            setSearchMode(true)
+            setTimeout(() => inputRef.current?.focus(), 0)
+          } else {
+            const command = filteredCommands[activeIndex - 1]
+            if (command) {
+              if (command.subcommands?.length) {
+                setPendingCommand(command)
+                setActiveIndex(0)
+              } else {
+                command.execute(context)
+                onClose()
+              }
             }
           }
         }
@@ -224,93 +281,61 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
             }}
           />
         )}
-        <div className="border-t border-gray-700 max-h-[50vh] overflow-y-auto">
+        <div className="max-h-[50vh] overflow-y-auto">
           {/* Subcommand list */}
           {pendingCommand?.subcommands?.map((sub, idx) => (
-            <div
+            <CommandItem
               key={sub.key}
-              className={cn(
-                'p-2 cursor-pointer',
-                idx === activeIndex && 'bg-zinc-800'
-              )}
+              name={sub.name}
+              description={sub.description}
+              shortcut={sub.displayKey || sub.key.toUpperCase()}
+              isActive={idx === activeIndex}
               onClick={() => {
                 sub.execute(context)
                 onClose()
               }}
               onMouseEnter={() => setActiveIndex(idx)}
-            >
-              <div className="p-2 rounded-md flex items-center justify-between">
-                <div>
-                  <div className="font-medium">{sub.name}</div>
-                  <div className="text-sm text-gray-500">{sub.description}</div>
-                </div>
-                <div className="text-xs text-gray-400 font-mono bg-zinc-800 px-2 py-1 rounded border border-gray-700">
-                  {sub.displayKey || sub.key.toUpperCase()}
-                </div>
-              </div>
-            </div>
+            />
           ))}
-          {/* Main command list (when not in subcommand mode) */}
+          {/* Search commands option (index 0 in main mode) */}
           {!pendingCommand && !searchMode && (
-            <div
-              className={cn(
-                'p-2 cursor-pointer',
-                activeIndex === -1 && 'bg-zinc-800'
-              )}
+            <CommandItem
+              name="Search commands"
+              description="Search for commands by name and description"
+              shortcut="S"
+              isActive={activeIndex === 0}
               onClick={() => {
                 setSearchMode(true)
                 setTimeout(() => inputRef.current?.focus(), 0)
               }}
-            >
-              <div className="p-2 rounded-md flex items-center justify-between">
-                <div>
-                  <div className="font-medium">Search commands</div>
-                  <div className="text-sm text-gray-500">
-                    Search for commands by name and description
-                  </div>
-                </div>
-                <div className="text-xs text-gray-400 font-mono bg-zinc-800 px-2 py-1 rounded border border-gray-700">
-                  S
-                </div>
-              </div>
-            </div>
+              onMouseEnter={() => setActiveIndex(0)}
+            />
           )}
-          {!pendingCommand && filteredCommands.map((cmd, idx) => (
-            <div
-              key={cmd.id}
-              className={cn(
-                'p-2 cursor-pointer',
-                idx === activeIndex && 'bg-zinc-800'
-              )}
-              onClick={() => {
-                if (cmd.subcommands?.length) {
-                  setPendingCommand(cmd)
-                  setActiveIndex(0)
-                } else {
-                  cmd.execute(context)
-                  onClose()
-                }
-              }}
-              onMouseEnter={() => setActiveIndex(idx)}
-            >
-              <div className="p-2 rounded-md flex items-center justify-between">
-                <div>
-                  <div className="font-medium">{cmd.name}</div>
-                  <div className="text-sm text-gray-500">{cmd.description}</div>
-                </div>
-                {!searchMode && cmd.displayShortcut && (
-                  <div className="flex items-center gap-1">
-                    <div className="text-xs text-gray-400 font-mono bg-zinc-800 px-2 py-1 rounded border border-gray-700">
-                      {cmd.displayShortcut}
-                    </div>
-                    {cmd.subcommands?.length && (
-                      <span className="text-xs text-gray-500">...</span>
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
-          ))}
+          {/* Command list (index 1+ in main mode, index 0+ in search mode) */}
+          {!pendingCommand && filteredCommands.map((cmd, idx) => {
+            const itemIndex = searchMode ? idx : idx + 1
+            return (
+              <CommandItem
+                key={cmd.id}
+                name={cmd.name}
+                description={cmd.description}
+                shortcut={cmd.displayShortcut}
+                hasSubcommands={!!cmd.subcommands?.length}
+                isActive={itemIndex === activeIndex}
+                showShortcut={!searchMode}
+                onClick={() => {
+                  if (cmd.subcommands?.length) {
+                    setPendingCommand(cmd)
+                    setActiveIndex(0)
+                  } else {
+                    cmd.execute(context)
+                    onClose()
+                  }
+                }}
+                onMouseEnter={() => setActiveIndex(itemIndex)}
+              />
+            )
+          })}
         </div>
       </div>
     </div>,

@@ -17,6 +17,11 @@ export type LineTimerEvent = {
   lineIdx: number
 }
 
+export type LineTimerOpenEvent = {
+  lineIdx: number
+  mode: 'stopwatch' | 'countdown' | 'manual'
+}
+
 export type LineCollapseToggleEvent = {
   lineIdx: number
 }
@@ -30,6 +35,7 @@ type CodemirrorEvents = {
   tagClick: TagClickEventDetail
   internalLinkClick: InternalLinkClickEventDetail
   lineTimerToggle: LineTimerEvent
+  lineTimerOpen: LineTimerOpenEvent
   linePinToggle: LineStatusEvent
   lineTaskToggle: LineStatusEvent
   lineCollapseToggle: LineCollapseToggleEvent

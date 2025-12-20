@@ -17,6 +17,7 @@ import {
   notificationPermissionAtom,
   docAtom,
   setDocLineDirect,
+  timerDialogRequestAtom,
 } from './state'
 import { Input } from '@/components/vendor/Input'
 import parseDuration from 'parse-duration'
@@ -123,6 +124,18 @@ export const TimerBadge = ({
 
   const [timeInput, setTimeInput] = React.useState(renderTime(time))
   const [countdownInput, setCountdownInput] = React.useState('25m')
+  const [timerDialogRequest, setTimerDialogRequest] = useAtom(timerDialogRequestAtom)
+
+  // Handle programmatic dialog open requests (from command palette)
+  React.useEffect(() => {
+    if (timerDialogRequest && timerDialogRequest.lineIdx === lineInfo.lineIdx) {
+      // Set the mode and open the dialog
+      setGlobalTimer((prev) => ({ ...prev, mode: timerDialogRequest.mode }))
+      setOpen(true)
+      // Clear the request
+      setTimerDialogRequest(null)
+    }
+  }, [timerDialogRequest, lineInfo.lineIdx, setGlobalTimer, setTimerDialogRequest])
 
   const requestNotificationPermission = useCallback(async () => {
     if (notificationPermission === null && 'Notification' in window) {

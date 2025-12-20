@@ -27,13 +27,24 @@ export const requestFocusLineAtom = atom({
  */
 export const commandPaletteOpenAtom = atom<boolean>(false)
 
+export type TimerMode = 'stopwatch' | 'countdown' | 'manual'
+
+/**
+ * Request to open the timer dialog for a specific line with a specific mode.
+ * TimerBadge watches this and opens when its lineIdx matches.
+ */
+export const timerDialogRequestAtom = atom<{
+  lineIdx: number
+  mode: TimerMode
+} | null>(null)
+
 export const errorMessageAtom = atom<string | null>(null)
 
 type GlobalTimerState = {
   isActive: boolean
   lineIdx: number | null
   lineContent: string | null
-  mode: 'stopwatch' | 'countdown' | 'manual'
+  mode: TimerMode
   timeMode: 'additive' | 'replacement'
   startTime: number | null
   targetDuration: number
