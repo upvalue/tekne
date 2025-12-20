@@ -89,7 +89,12 @@ interface DocumentSearchProps {
 
 export const DocumentSearch: React.FC<DocumentSearchProps> = ({ children }) => {
   return (
-    <KBarProvider actions={[]}>
+    <KBarProvider
+      actions={[]}
+      options={{
+        toggleShortcut: '$mod+/',
+      }}
+    >
       <DocumentSearchContent />
       {children}
     </KBarProvider>

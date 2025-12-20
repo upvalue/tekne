@@ -75,8 +75,8 @@ export const makeTutorial = () => {
       }
     ),
     lineMake((i = 0), '# Navigation'),
-    lineMake(++i, 'You can open or create documents with `Cmd-K`'),
-    lineMake(i, 'And trigger a command palette with `Cmd-Shift-K`'),
+    lineMake(++i, 'You can open or create documents with `Cmd-/`'),
+    lineMake(i, 'And trigger a command palette with `Cmd-K`'),
     lineMake(i, 'For more help, see the help section of the side panel'),
     lineMake(
       i,

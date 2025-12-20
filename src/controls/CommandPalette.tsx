@@ -137,7 +137,7 @@ export const CommandPalette: React.FC<{ children: React.ReactNode }> = ({
     <KBarProvider
       actions={actions}
       options={{
-        toggleShortcut: '$mod+Shift+k',
+        toggleShortcut: '$mod+k',
       }}
     >
       <CommandPaletteContent />

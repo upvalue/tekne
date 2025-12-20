@@ -84,6 +84,11 @@ function RouteComponent() {
       // Special case tutorial
       if (title === 'Tutorial') {
         createDocMutation.mutate({ name: title })
+        navigate({
+          to: '/open/$title',
+          params: { title: 'Tutorial' },
+          replace: true,
+        });
         return
       }
       // For tutorial

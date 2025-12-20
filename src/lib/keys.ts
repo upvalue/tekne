@@ -19,17 +19,17 @@ export interface Keybinding {
 
 export const keybindings = {
   documentSearch: {
-    key: 'meta+k',
+    key: 'meta+/',
     name: 'document-search',
     description: 'Open a document',
-    displayKey: '⌘ K',
+    displayKey: '⌘ /',
     type: 'react' as const,
   },
   commandPalette: {
-    key: 'meta+shift+k',
+    key: 'meta+k',
     name: 'command-palette',
     description: 'Open command palette',
-    displayKey: '⌘ Shift K',
+    displayKey: '⌘ K',
     type: 'react' as const,
   },
   toggleCollapse: {
