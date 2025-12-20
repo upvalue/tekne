@@ -1,6 +1,6 @@
 import { EditorView } from '@codemirror/view'
 import { type Completion, CompletionContext } from '@codemirror/autocomplete'
-import { emitCodemirrorEvent } from './cm-events'
+import { allCommands } from '@/commands/registry'
 
 const SLASH_COMMAND_REGEX = /\/\w*/
 
@@ -19,125 +19,35 @@ export const slashCommandsPlugin = (lineIdx: number) => {
     const slashText = context.state.doc.sliceString(word.from, word.to)
     if (slashText.length <= 1) return null
 
+    // Generate completions from command registry
+    const editorCommands = allCommands.filter((cmd) => cmd.requiresEditor)
+
+    const options: Completion[] = editorCommands.map((cmd) => ({
+      label: `/${cmd.id.replace(/-/g, '')}: ${cmd.name}`,
+      type: 'text',
+      info: cmd.description,
+      apply: (
+        view: EditorView,
+        _completion: Completion,
+        from: number,
+        to: number
+      ) => {
+        // Execute command with editor context
+        cmd.execute({
+          lineIdx,
+          view,
+        })
+
+        // Clear the slash command text
+        view.dispatch({
+          changes: { from, to, insert: '' },
+        })
+      },
+    }))
+
     return {
       from: word.from,
-      options: [
-        {
-          label: '/date: Insert current date',
-          type: 'text',
-          apply: (
-            view: EditorView,
-            _completion: Completion,
-            from: number,
-            to: number
-          ) => {
-            const date = new Date().toISOString().split('T')[0]
-
-            view.dispatch({
-              changes: {
-                from,
-                to,
-                insert: date,
-              },
-            })
-          },
-        },
-        {
-          label: '/pin: Toggle whether line is pinned',
-          type: 'text',
-          apply: (
-            view: EditorView,
-            _completion: Completion,
-            from: number,
-            to: number
-          ) => {
-            emitCodemirrorEvent('linePinToggle', {
-              lineIdx,
-            })
-
-            view.dispatch({
-              changes: {
-                from,
-                to,
-                insert: '',
-              },
-            })
-          },
-        },
-        {
-          label: '/timer: Toggle whether line is a timer',
-          type: 'text',
-          apply: (
-            view: EditorView,
-            _completion: Completion,
-            from: number,
-            to: number
-          ) => {
-            emitCodemirrorEvent('lineTimerToggle', {
-              lineIdx,
-            })
-
-            view.dispatch({
-              changes: {
-                from,
-                to,
-                insert: '',
-              },
-            })
-          },
-        },
-        {
-          label: '/task: Toggle whether line is a task',
-          type: 'text',
-          apply: (
-            view: EditorView,
-            _completion: Completion,
-            from: number,
-            to: number
-          ) => {
-            emitCodemirrorEvent('lineTaskToggle', {
-              lineIdx,
-            })
-
-            view.dispatch({
-              changes: {
-                from,
-                to,
-                insert: '',
-              },
-            })
-          },
-        },
-        {
-          label: '/collapse: Toggle whether line is collapsed',
-          type: 'text',
-          apply: (
-            view: EditorView,
-            _completion: Completion,
-            from: number,
-            to: number
-          ) => {
-            emitCodemirrorEvent('lineCollapseToggle', {
-              lineIdx,
-            })
-
-            view.dispatch({
-              changes: {
-                from,
-                to,
-                insert: '',
-              },
-            })
-          },
-        },
-        /*
-        colorCommand(lineIdx, 'red'),
-        colorCommand(lineIdx, 'yellow'),
-        colorCommand(lineIdx, 'blue'),
-        colorCommand(lineIdx, 'purple'),
-        colorCommand(lineIdx, 'green'),
-        noColorCommand(lineIdx),*/
-      ],
+      options,
     }
   }
 }

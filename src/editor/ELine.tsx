@@ -1,5 +1,5 @@
 import { useAtomValue, useSetAtom } from 'jotai'
-import { docAtom, focusedLineAtom } from './state'
+import { docAtom, focusedLineAtom, commandPaletteOpenAtom } from './state'
 import { Checkbox } from '@/components/vendor/Checkbox'
 import { Circle, CircleDot, Pin } from 'lucide-react'
 import { useCodeMirror, type LineWithIdx } from './line-editor'
@@ -9,6 +9,7 @@ import type { CollapseState } from '@/docs/collapse'
 import type { ZLine } from '@/docs/schema';
 import type { GutterTimestamp } from '@/docs/gutters'
 import { useState } from 'react'
+import { CommandPalette } from '@/commands/CommandPalette'
 
 type ELineProps = LineWithIdx & {
   timestamp: GutterTimestamp | null
@@ -74,7 +75,7 @@ export const Gutter = ({ timestamp }: { timestamp: GutterTimestamp | null }) => 
  * the codemirror layer
  */
 export const ELine = (lineInfo: ELineProps) => {
-  const { cmRef } = useCodeMirror(lineInfo)
+  const { cmRef, cmView } = useCodeMirror(lineInfo)
 
   // Codemirror of course doesn't receive recreated
   // callbacks with new component state; this table
@@ -83,8 +84,13 @@ export const ELine = (lineInfo: ELineProps) => {
   const { line, timestamp, collapseState } = lineInfo
 
   const setDoc = useSetAtom(docAtom)
+  const setPaletteOpen = useSetAtom(commandPaletteOpenAtom)
 
   const isFocused = useAtomValue(focusedLineAtom) === lineInfo.lineIdx
+  const paletteOpen = useAtomValue(commandPaletteOpenAtom)
+
+  // This line renders the palette if it's focused and palette is open
+  const shouldRenderPalette = isFocused && paletteOpen
 
   const getColorClass = (color?: string) => {
     return `editor-line-${color}`
@@ -136,6 +142,15 @@ export const ELine = (lineInfo: ELineProps) => {
         ref={cmRef}
         data-line-idx={lineInfo.lineIdx}
       />
+
+      {shouldRenderPalette && cmView.current && (
+        <CommandPalette
+          isOpen={true}
+          onClose={() => setPaletteOpen(false)}
+          lineIdx={lineInfo.lineIdx}
+          view={cmView.current}
+        />
+      )}
     </div>
   )
 }

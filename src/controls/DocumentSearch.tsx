@@ -92,7 +92,7 @@ export const DocumentSearch: React.FC<DocumentSearchProps> = ({ children }) => {
     <KBarProvider
       actions={[]}
       options={{
-        toggleShortcut: '$mod+/',
+        // toggleShortcut: '$mod+/',
       }}
     >
       <DocumentSearchContent />

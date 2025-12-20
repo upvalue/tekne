@@ -21,6 +21,12 @@ export const requestFocusLineAtom = atom({
   pos: 0,
 })
 
+/**
+ * Tracks whether the command palette is open
+ * The focused line (if any) will render it
+ */
+export const commandPaletteOpenAtom = atom<boolean>(false)
+
 export const errorMessageAtom = atom<string | null>(null)
 
 type GlobalTimerState = {

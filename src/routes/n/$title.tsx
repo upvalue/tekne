@@ -21,6 +21,7 @@ import { setMainTitle } from '@/lib/title'
 import { useEventListener } from '@/hooks/useEventListener'
 import { useInterval } from 'usehooks-ts'
 import { useCreateDoc } from '@/hooks/useCreateDoc'
+import { CommandPaletteProvider } from '@/commands/CommandPaletteProvider'
 
 const DOC_SAVE_INTERVAL = 5000
 
@@ -232,16 +233,18 @@ function RouteComponent() {
 
   return (
     <Provider store={store}>
-      <EditorLayout
-        editor={
-          <>
-            <TitleBar title={title} allowTitleEdit={true} />
-            <StatusBar isLoading={loadDocQuery.isLoading} />
-            {!loadDocQuery.isLoading && <TEditor />}
-          </>
-        }
-        sidepanel={<Panel />}
-      />
+      <CommandPaletteProvider>
+        <EditorLayout
+          editor={
+            <>
+              <TitleBar title={title} allowTitleEdit={true} />
+              <StatusBar isLoading={loadDocQuery.isLoading} />
+              {!loadDocQuery.isLoading && <TEditor />}
+            </>
+          }
+          sidepanel={<Panel />}
+        />
+      </CommandPaletteProvider>
     </Provider>
   )
 }

@@ -39,6 +39,13 @@ export const keybindings = {
     displayKey: '⌘ .',
     type: 'codemirror' as const,
   },
+  togglePin: {
+    key: 'p',
+    name: 'toggle-pin',
+    description: 'Toggle pin (in command palette)',
+    displayKey: 'P',
+    type: 'react' as const,
+  },
 } as const satisfies Record<string, Keybinding>
 
 /** Get all keybindings as an array */
