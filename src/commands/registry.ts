@@ -26,15 +26,26 @@ const editorCommands: Command[] = [
   },
   {
     id: 'timer',
-    name: 'Toggle timer',
-    description: 'Add or remove a timer on the current line',
+    name: 'Timer',
+    description: 'Timer commands',
     shortcut: 't',
     displayShortcut: 'T',
     keywords: ['timer', 'time', 'track', 'clock'],
     requiresEditor: true,
-    execute: ({ lineIdx }) => {
-      if (lineIdx === null) return
-      emitCodemirrorEvent('lineTimerToggle', { lineIdx })
+    subcommands: [
+      {
+        key: 't',
+        displayKey: 'T',
+        name: 'Toggle timer',
+        description: 'Add or remove a timer on the current line',
+        execute: ({ lineIdx }) => {
+          if (lineIdx === null) return
+          emitCodemirrorEvent('lineTimerToggle', { lineIdx })
+        },
+      },
+    ],
+    execute: () => {
+      // Parent command doesn't execute directly when subcommands exist
     },
   },
   {

@@ -23,6 +23,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
   const [searchMode, setSearchMode] = useState(false)
   const [query, setQuery] = useState('')
   const [activeIndex, setActiveIndex] = useState(0)
+  const [pendingCommand, setPendingCommand] = useState<Command | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
   // Build command context
@@ -53,6 +54,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
       setSearchMode(false)
       setQuery('')
       setActiveIndex(0)
+      setPendingCommand(null)
     }
   }, [isOpen])
 
@@ -70,9 +72,13 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
       e.preventDefault()
       e.stopPropagation()
 
-      // Arrow key navigation (works in both modes)
+      // Arrow key navigation (works in all modes)
       if (e.key === 'ArrowDown') {
-        setActiveIndex((i) => Math.min(i + 1, filteredCommands.length - 1))
+        if (pendingCommand?.subcommands) {
+          setActiveIndex((i) => Math.min(i + 1, pendingCommand.subcommands!.length - 1))
+        } else {
+          setActiveIndex((i) => Math.min(i + 1, filteredCommands.length - 1))
+        }
         return
       }
 
@@ -81,19 +87,37 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
         return
       }
 
-      // Enter to execute selected command (works in both modes)
+      // Enter to execute selected command/subcommand
       if (e.key === 'Enter') {
-        const command = filteredCommands[activeIndex]
-        if (command) {
-          command.execute(context)
-          onClose()
+        if (pendingCommand?.subcommands) {
+          const subcommand = pendingCommand.subcommands[activeIndex]
+          if (subcommand) {
+            subcommand.execute(context)
+            onClose()
+          }
+        } else {
+          const command = filteredCommands[activeIndex]
+          if (command) {
+            if (command.subcommands?.length) {
+              // Enter subcommand mode
+              setPendingCommand(command)
+              setActiveIndex(0)
+            } else {
+              command.execute(context)
+              onClose()
+            }
+          }
         }
         return
       }
 
       // Escape behavior depends on mode
       if (e.key === 'Escape') {
-        if (searchMode) {
+        if (pendingCommand) {
+          // Exit subcommand mode back to main
+          setPendingCommand(null)
+          setActiveIndex(0)
+        } else if (searchMode) {
           // Exit search mode back to shortcut mode
           setSearchMode(false)
           setQuery('')
@@ -109,8 +133,20 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
       if (!e.altKey && e.key.length === 1) {
         const key = e.key.toLowerCase()
 
+        if (pendingCommand?.subcommands) {
+          // In subcommand mode: find and execute matching subcommand
+          const subcommand = pendingCommand.subcommands.find(
+            (sub) => sub.key.toLowerCase() === key
+          )
+          if (subcommand) {
+            subcommand.execute(context)
+            onClose()
+          }
+          return
+        }
+
         if (!searchMode) {
-          // Shortcut mode: execute commands or enter search
+          // Shortcut mode: execute commands or enter search/subcommand mode
           if (key === 's') {
             setSearchMode(true)
             setTimeout(() => inputRef.current?.focus(), 0)
@@ -119,8 +155,14 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
 
           const command = getCommandByShortcut(e.key)
           if (command && availableCommands.includes(command)) {
-            command.execute(context)
-            onClose()
+            if (command.subcommands?.length) {
+              // Enter subcommand mode
+              setPendingCommand(command)
+              setActiveIndex(0)
+            } else {
+              command.execute(context)
+              onClose()
+            }
           }
         }
         // In search mode, typing is handled by the input field
@@ -135,6 +177,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
     activeIndex,
     filteredCommands,
     availableCommands,
+    pendingCommand,
     context,
     onClose,
   ])
@@ -157,6 +200,17 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
           border: '1px solid hsla(0, 0%, 100%, 0.08)',
         }}
       >
+        {/* Subcommand mode header */}
+        {pendingCommand && (
+          <div className="px-4 py-3 border-b border-gray-700 flex items-center gap-2">
+            <div className="text-xs text-gray-400 font-mono bg-zinc-800 px-2 py-1 rounded border border-gray-700">
+              {pendingCommand.displayShortcut || pendingCommand.shortcut}
+            </div>
+            <span className="text-gray-400">+</span>
+            <span className="text-gray-400 text-sm">...</span>
+            <span className="ml-auto text-xs text-gray-500">ESC to go back</span>
+          </div>
+        )}
         {searchMode && (
           <input
             ref={inputRef}
@@ -171,7 +225,33 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
           />
         )}
         <div className="border-t border-gray-700 max-h-[50vh] overflow-y-auto">
-          {!searchMode && (
+          {/* Subcommand list */}
+          {pendingCommand?.subcommands?.map((sub, idx) => (
+            <div
+              key={sub.key}
+              className={cn(
+                'p-2 cursor-pointer',
+                idx === activeIndex && 'bg-zinc-800'
+              )}
+              onClick={() => {
+                sub.execute(context)
+                onClose()
+              }}
+              onMouseEnter={() => setActiveIndex(idx)}
+            >
+              <div className="p-2 rounded-md flex items-center justify-between">
+                <div>
+                  <div className="font-medium">{sub.name}</div>
+                  <div className="text-sm text-gray-500">{sub.description}</div>
+                </div>
+                <div className="text-xs text-gray-400 font-mono bg-zinc-800 px-2 py-1 rounded border border-gray-700">
+                  {sub.displayKey || sub.key.toUpperCase()}
+                </div>
+              </div>
+            </div>
+          ))}
+          {/* Main command list (when not in subcommand mode) */}
+          {!pendingCommand && !searchMode && (
             <div
               className={cn(
                 'p-2 cursor-pointer',
@@ -195,7 +275,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
               </div>
             </div>
           )}
-          {filteredCommands.map((cmd, idx) => (
+          {!pendingCommand && filteredCommands.map((cmd, idx) => (
             <div
               key={cmd.id}
               className={cn(
@@ -203,8 +283,13 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                 idx === activeIndex && 'bg-zinc-800'
               )}
               onClick={() => {
-                cmd.execute(context)
-                onClose()
+                if (cmd.subcommands?.length) {
+                  setPendingCommand(cmd)
+                  setActiveIndex(0)
+                } else {
+                  cmd.execute(context)
+                  onClose()
+                }
               }}
               onMouseEnter={() => setActiveIndex(idx)}
             >
@@ -214,8 +299,13 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                   <div className="text-sm text-gray-500">{cmd.description}</div>
                 </div>
                 {!searchMode && cmd.displayShortcut && (
-                  <div className="text-xs text-gray-400 font-mono bg-zinc-800 px-2 py-1 rounded border border-gray-700">
-                    {cmd.displayShortcut}
+                  <div className="flex items-center gap-1">
+                    <div className="text-xs text-gray-400 font-mono bg-zinc-800 px-2 py-1 rounded border border-gray-700">
+                      {cmd.displayShortcut}
+                    </div>
+                    {cmd.subcommands?.length && (
+                      <span className="text-xs text-gray-500">...</span>
+                    )}
                   </div>
                 )}
               </div>

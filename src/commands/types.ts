@@ -10,6 +10,23 @@ export interface CommandContext {
   view: EditorView | null
 }
 
+export interface SubCommand {
+  /** Second keystroke (e.g., 't', '1', '2', '3') */
+  key: string
+
+  /** Display version of key */
+  displayKey?: string
+
+  /** Display name for UI */
+  name: string
+
+  /** Description shown in command palette */
+  description: string
+
+  /** Execute the subcommand */
+  execute: (context: CommandContext) => void | Promise<void>
+}
+
 export interface Command {
   /** Unique identifier (e.g., 'toggle-pin') */
   id: string
@@ -32,6 +49,9 @@ export interface Command {
   /** Whether this command requires editor context (EditorView) */
   requiresEditor: boolean
 
-  /** Execute the command */
+  /** Subcommands for multi-key sequences (e.g., 't t' for toggle timer) */
+  subcommands?: SubCommand[]
+
+  /** Execute the command (not called if subcommands exist) */
   execute: (context: CommandContext) => void | Promise<void>
 }
