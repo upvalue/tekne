@@ -61,22 +61,28 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
     if (!isOpen) return
 
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Allow system shortcuts (copy/paste/etc) to pass through
+      if (e.metaKey || e.ctrlKey) {
+        return
+      }
+
+      // Prevent all other keyboard events from reaching the editor
+      e.preventDefault()
+      e.stopPropagation()
+
       // Arrow key navigation (works in both modes)
       if (e.key === 'ArrowDown') {
-        e.preventDefault()
         setActiveIndex((i) => Math.min(i + 1, filteredCommands.length - 1))
         return
       }
 
       if (e.key === 'ArrowUp') {
-        e.preventDefault()
         setActiveIndex((i) => Math.max(i - 1, 0))
         return
       }
 
       // Enter to execute selected command (works in both modes)
       if (e.key === 'Enter') {
-        e.preventDefault()
         const command = filteredCommands[activeIndex]
         if (command) {
           command.execute(context)
@@ -87,7 +93,6 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
 
       // Escape behavior depends on mode
       if (e.key === 'Escape') {
-        e.preventDefault()
         if (searchMode) {
           // Exit search mode back to shortcut mode
           setSearchMode(false)
@@ -101,27 +106,19 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
       }
 
       // Single-key behavior depends on mode
-      if (
-        !e.metaKey &&
-        !e.ctrlKey &&
-        !e.altKey &&
-        e.key.length === 1 &&
-        e.key.match(/[a-z]/i)
-      ) {
+      if (!e.altKey && e.key.length === 1) {
         const key = e.key.toLowerCase()
 
         if (!searchMode) {
           // Shortcut mode: execute commands or enter search
           if (key === 's') {
-            e.preventDefault()
             setSearchMode(true)
             setTimeout(() => inputRef.current?.focus(), 0)
             return
           }
 
-          const command = getCommandByShortcut(key)
+          const command = getCommandByShortcut(e.key)
           if (command && availableCommands.includes(command)) {
-            e.preventDefault()
             command.execute(context)
             onClose()
           }
@@ -130,8 +127,8 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
       }
     }
 
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
+    window.addEventListener('keydown', handleKeyDown, { capture: true })
+    return () => window.removeEventListener('keydown', handleKeyDown, { capture: true })
   }, [
     isOpen,
     searchMode,

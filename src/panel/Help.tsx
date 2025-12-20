@@ -11,9 +11,11 @@ import { Button } from '@/components/vendor/Button'
 import { Version } from '@/documentation/Version'
 import manifest from '@/documentation/manifest.json'
 import { ExternalLink } from '@/components/ExternalLink'
+import { allCommands } from '@/commands/registry'
 
 const Keybindings = () => {
   const allKeybindings = getAllKeybindings()
+  const commandShortcuts = allCommands.filter((cmd) => cmd.shortcut)
 
   return (
     <div>
@@ -26,12 +28,29 @@ const Keybindings = () => {
           Emacs-style keybindings are available for line editing
         </ExternalLink>
       </p>
+
+      <h3 className="text-base font-semibold mb-2 mt-6">Global Shortcuts</h3>
       <DescriptionList>
         {allKeybindings.map((keybinding) => (
           <React.Fragment key={keybinding.name}>
             <DescriptionTerm>{keybinding.description}</DescriptionTerm>
             <DescriptionDetails>
               <Badge>{keybinding.displayKey}</Badge>
+            </DescriptionDetails>
+          </React.Fragment>
+        ))}
+      </DescriptionList>
+
+      <h3 className="text-base font-semibold mb-2 mt-6">Command Palette Shortcuts</h3>
+      <p className="text-sm text-gray-400 mb-2">
+        Press <Badge className="inline">⌘K</Badge> to open the command palette, then press any of these keys:
+      </p>
+      <DescriptionList>
+        {commandShortcuts.map((command) => (
+          <React.Fragment key={command.id}>
+            <DescriptionTerm>{command.name}</DescriptionTerm>
+            <DescriptionDetails>
+              <Badge>{command.displayShortcut || command.shortcut}</Badge>
             </DescriptionDetails>
           </React.Fragment>
         ))}
