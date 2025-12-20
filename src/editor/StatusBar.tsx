@@ -120,7 +120,7 @@ export const StatusBar = ({ isLoading }: { isLoading: boolean }) => {
 
         {!isLoading && doc.children.length > 1 &&
           <div className="text-sm text-zinc-400 flex items-center">
-            {focusedLine ? `${focusedLine}/` : <span>&nbsp;&nbsp;</span>}{doc.children.length}
+            {focusedLine !== null ? `${focusedLine + 1}/` : <span>&nbsp;&nbsp;</span>}{doc.children.length}
             &nbsp;
             <ListBulletIcon className="w-4 h-4" />
           </div>
