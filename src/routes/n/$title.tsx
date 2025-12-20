@@ -20,6 +20,7 @@ import { StatusBar } from '@/editor/StatusBar'
 import { setMainTitle } from '@/lib/title'
 import { useEventListener } from '@/hooks/useEventListener'
 import { useInterval } from 'usehooks-ts'
+import { useCreateDoc } from '@/hooks/useCreateDoc'
 
 const DOC_SAVE_INTERVAL = 5000
 
@@ -76,15 +77,23 @@ function RouteComponent() {
     }
   })
 
+  const createDocMutation = useCreateDoc({ navigateOnSuccess: true });
+
   useEffect(() => {
     if (loadDocQuery.error && loadDocQuery.error.data?.code === 'NOT_FOUND') {
+      // Special case tutorial
+      if (title === 'Tutorial') {
+        createDocMutation.mutate({ name: title })
+        return
+      }
+      // For tutorial
       navigate({
         to: '/doc-not-found/$title',
         params: { title: title },
         replace: true,
       })
     }
-  }, [loadDocQuery.error, navigate, title])
+  }, [loadDocQuery.error, navigate, title, createDocMutation])
 
   // Document saving functionality
   // On an interval, if the document has changed this will send an updateDoc mutation
