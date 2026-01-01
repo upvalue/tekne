@@ -1,5 +1,5 @@
 {
-  "buildTimestamp": 1758405369063,
+  "buildTimestamp": 1766271558207,
   "files": [
     {
       "sourceFile": "../docs/development.mdx",
@@ -8,7 +8,7 @@
         "title": "Development"
       },
       "sourceHash": "6adc566b6b72171e154b1a07538a84588730f1514de0940176769ca85a6b6d55",
-      "buildTimestamp": 1758405369063,
+      "buildTimestamp": 1766271558207,
       "lastModified": 1757532521284,
       "size": 1387
     },
@@ -18,12 +18,12 @@
       "metadata": {
         "title": "Getting Started"
       },
-      "sourceHash": "648fbbc8f62e3e39de9749e0544d7b748c503eb880bb27f27246d59ccbfef242",
-      "buildTimestamp": 1758405369074,
-      "lastModified": 1757533384797,
-      "size": 895
+      "sourceHash": "947f888605aaa3baf04a5afd620183dfaf4ee5d659f5de3fb41ec58350814cc8",
+      "buildTimestamp": 1766271558219,
+      "lastModified": 1766271535036,
+      "size": 889
     }
   ],
   "totalFiles": 2,
-  "buildDuration": 14
+  "buildDuration": 15
 }

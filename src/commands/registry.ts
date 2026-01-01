@@ -3,6 +3,7 @@
 import type { Command } from './types'
 import { emitCodemirrorEvent } from '@/editor/line-editor/cm-events'
 import { formatDate, getDocTitle } from '@/lib/utils'
+import { trpcClient } from '@/trpc/client'
 
 /** Check if a string is a valid YYYY-MM-DD date */
 const isDateString = (str: string): boolean => /^\d{4}-\d{2}-\d{2}$/.test(str)
@@ -194,6 +195,31 @@ const navigationCommands: Command[] = [
           if (!date) return
           date.setDate(date.getDate() + 1)
           navigateTo(formatDate(date))
+        },
+      },
+      {
+        key: 'r',
+        displayKey: 'R',
+        name: 'Restart tutorial',
+        description: 'Restart the tutorial from the beginning',
+        execute: async () => {
+          try {
+            try {
+              await trpcClient.doc.deleteDoc.mutate({ name: 'Tutorial' })
+            } catch (e: unknown) {
+              // Ignore not found error - OK if tutorial doesn't exist
+              if (!(e instanceof Error) || !e.message.includes('not found')) {
+                throw e
+              }
+            }
+            if (window.location.pathname === '/n/Tutorial') {
+              window.location.reload()
+            } else {
+              navigateTo('Tutorial')
+            }
+          } catch (error) {
+            console.error('Failed to restart tutorial:', error)
+          }
         },
       },
     ],
