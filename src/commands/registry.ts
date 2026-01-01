@@ -98,8 +98,8 @@ const editorCommands: Command[] = [
     id: 'task',
     name: 'Toggle task',
     description: 'Add or remove a checkbox on the current line',
-    shortcut: 'x',
-    displayShortcut: 'X',
+    shortcut: 'c',
+    displayShortcut: 'C',
     keywords: ['task', 'todo', 'checkbox', 'check'],
     requiresEditor: true,
     execute: ({ lineIdx }) => {
