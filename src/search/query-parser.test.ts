@@ -5,17 +5,24 @@ import { parseQuery, serializeQuery } from './query-parser'
 
 describe('parseQuery', () => {
   describe('tag operator', () => {
-    it('should parse simple tag', () => {
-      const result = parseQuery('tag:exercise')
+    it('should parse #tag syntax', () => {
+      const result = parseQuery('#exercise')
       expect(result.operators).toHaveLength(1)
-      expect(result.operators[0]).toEqual({ type: 'tag', value: 'exercise' })
+      expect(result.operators[0]).toEqual({ type: 'tag', value: '#exercise' })
       expect(result.errors).toHaveLength(0)
     })
 
-    it('should parse tag with slash', () => {
-      const result = parseQuery('tag:proj/tekne')
+    it('should parse #tag with slash', () => {
+      const result = parseQuery('#proj/tekne')
       expect(result.operators).toHaveLength(1)
-      expect(result.operators[0]).toEqual({ type: 'tag', value: 'proj/tekne' })
+      expect(result.operators[0]).toEqual({ type: 'tag', value: '#proj/tekne' })
+    })
+
+    it('should parse multiple #tags', () => {
+      const result = parseQuery('#exercise #fitness')
+      expect(result.operators).toHaveLength(2)
+      expect(result.operators[0]).toEqual({ type: 'tag', value: '#exercise' })
+      expect(result.operators[1]).toEqual({ type: 'tag', value: '#fitness' })
     })
   })
 
@@ -158,10 +165,10 @@ describe('parseQuery', () => {
 
   describe('combined operators', () => {
     it('should parse multiple operators', () => {
-      const result = parseQuery('age:90d tag:exercise status:complete')
+      const result = parseQuery('age:90d #exercise status:complete')
       expect(result.operators).toHaveLength(3)
       expect(result.operators[0]).toEqual({ type: 'age', value: 90 })
-      expect(result.operators[1]).toEqual({ type: 'tag', value: 'exercise' })
+      expect(result.operators[1]).toEqual({ type: 'tag', value: '#exercise' })
       expect(result.operators[2]).toEqual({
         type: 'status',
         value: 'complete',
@@ -169,9 +176,9 @@ describe('parseQuery', () => {
     })
 
     it('should parse mixed operators and text', () => {
-      const result = parseQuery('tag:proj/tekne refactor')
+      const result = parseQuery('#proj/tekne refactor')
       expect(result.operators).toHaveLength(2)
-      expect(result.operators[0]).toEqual({ type: 'tag', value: 'proj/tekne' })
+      expect(result.operators[0]).toEqual({ type: 'tag', value: '#proj/tekne' })
       expect(result.operators[1]).toEqual({ type: 'text', value: 'refactor' })
     })
   })
@@ -185,9 +192,9 @@ describe('parseQuery', () => {
     })
 
     it('should continue parsing after error', () => {
-      const result = parseQuery('unknown:value tag:exercise')
+      const result = parseQuery('unknown:value #exercise')
       expect(result.operators).toHaveLength(1)
-      expect(result.operators[0]).toEqual({ type: 'tag', value: 'exercise' })
+      expect(result.operators[0]).toEqual({ type: 'tag', value: '#exercise' })
       expect(result.errors).toHaveLength(1)
     })
   })
@@ -206,9 +213,9 @@ describe('parseQuery', () => {
     })
 
     it('should be case-insensitive for operators', () => {
-      const result = parseQuery('TAG:exercise STATUS:Complete')
+      const result = parseQuery('AGE:90d STATUS:Complete')
       expect(result.operators).toHaveLength(2)
-      expect(result.operators[0]).toEqual({ type: 'tag', value: 'exercise' })
+      expect(result.operators[0]).toEqual({ type: 'age', value: 90 })
       expect(result.operators[1]).toEqual({
         type: 'status',
         value: 'complete',
@@ -218,9 +225,14 @@ describe('parseQuery', () => {
 })
 
 describe('serializeQuery', () => {
-  it('should serialize tag operator', () => {
+  it('should serialize tag operator with # prefix', () => {
+    const result = serializeQuery([{ type: 'tag', value: '#exercise' }])
+    expect(result).toBe('#exercise')
+  })
+
+  it('should add # prefix if missing when serializing tag', () => {
     const result = serializeQuery([{ type: 'tag', value: 'exercise' }])
-    expect(result).toBe('tag:exercise')
+    expect(result).toBe('#exercise')
   })
 
   it('should serialize age operator', () => {
@@ -246,9 +258,9 @@ describe('serializeQuery', () => {
 
   it('should serialize multiple operators', () => {
     const result = serializeQuery([
-      { type: 'tag', value: 'exercise' },
+      { type: 'tag', value: '#exercise' },
       { type: 'status', value: 'complete' },
     ])
-    expect(result).toBe('tag:exercise status:complete')
+    expect(result).toBe('#exercise status:complete')
   })
 })

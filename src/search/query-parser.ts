@@ -5,6 +5,7 @@ import type { ParsedQuery, ParseError, SearchOperator } from './types'
 import type { NoteDataStatus, NoteDataType } from '@/db/types'
 
 const OPERATOR_PATTERN = /^(\w+):(\S+)/
+const TAG_PATTERN = /^#([a-zA-Z][a-zA-Z0-9-/]*)$/
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/
 const AGE_PATTERN = /^(\d+)([dwm])$/
 
@@ -83,6 +84,15 @@ export function parseQuery(query: string): ParsedQuery {
   let position = 0
 
   for (const token of tokens) {
+    // Check for #tag syntax first (e.g., #exercise, #proj/tekne)
+    const tagMatch = token.match(TAG_PATTERN)
+    if (tagMatch) {
+      // Store with # prefix since that's how tags are stored in DB
+      operators.push({ type: 'tag', value: `#${tagMatch[1]}` })
+      position += token.length + 1
+      continue
+    }
+
     const opMatch = token.match(OPERATOR_PATTERN)
 
     if (opMatch) {
@@ -199,7 +209,8 @@ export function serializeQuery(operators: SearchOperator[]): string {
     .map((op) => {
       switch (op.type) {
         case 'tag':
-          return `tag:${op.value}`
+          // Tags are stored with # prefix, output as #tagname
+          return op.value.startsWith('#') ? op.value : `#${op.value}`
         case 'from':
           return `from:${formatDate(op.value)}`
         case 'to':

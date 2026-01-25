@@ -115,7 +115,7 @@ export const searchRouter = t.router({
       for (const op of operators as SearchOperator[]) {
         switch (op.type) {
           case 'tag':
-            // Prefix match for tags
+            // Prefix match for tags (value already includes # prefix)
             query = query.where('note_data.datum_tag', 'ilike', `${op.value}%`)
             break
 
@@ -177,9 +177,6 @@ export const searchRouter = t.router({
           line_idx: number
           time_created: Date
           tags: string[]
-          has_timer: boolean
-          has_task: boolean
-          task_status: string | null
         }
       >()
 
@@ -193,9 +190,6 @@ export const searchRouter = t.router({
             line_idx: row.line_idx,
             time_created: row.time_created,
             tags: row.datum_type === 'tag' ? [row.datum_tag] : [],
-            has_timer: row.datum_type === 'timer',
-            has_task: row.datum_type === 'task',
-            task_status: row.datum_type === 'task' ? row.datum_status : null,
           })
         } else {
           if (
@@ -204,36 +198,59 @@ export const searchRouter = t.router({
           ) {
             existing.tags.push(row.datum_tag)
           }
-          if (row.datum_type === 'timer') existing.has_timer = true
-          if (row.datum_type === 'task') {
-            existing.has_task = true
-            existing.task_status = row.datum_status
-          }
         }
       }
 
-      // Get line content from parsed_body for each unique line
+      // Get full line data from notes.body for each unique line
+      // Group by note_title to batch fetches
+      const notesByTitle = new Map<string, typeof uniqueLines>()
+      for (const [key, line] of uniqueLines) {
+        if (!notesByTitle.has(line.note_title)) {
+          notesByTitle.set(line.note_title, new Map())
+        }
+        notesByTitle.get(line.note_title)!.set(key, line)
+      }
+
       const lineResults = []
-      for (const line of uniqueLines.values()) {
-        // Fetch the line content from parsed_body
+      for (const [noteTitle, lines] of notesByTitle) {
         const note = await db
           .selectFrom('notes')
-          .select(['parsed_body'])
-          .where('title', '=', line.note_title)
+          .select(['body'])
+          .where('title', '=', noteTitle)
           .executeTakeFirst()
 
-        let content = ''
-        if (note?.parsed_body && Array.isArray(note.parsed_body)) {
-          const lineData = note.parsed_body[line.line_idx]
-          if (lineData && typeof lineData === 'object' && 'raw' in lineData) {
-            content = lineData.raw as string
-          }
-        }
+        if (!note?.body?.children) continue
 
-        lineResults.push({
-          ...line,
-          content,
-        })
+        for (const line of lines.values()) {
+          const lineData = note.body.children[line.line_idx]
+          if (!lineData) continue
+
+          // Count child lines (lines with greater indent that follow)
+          let childCount = 0
+          const baseIndent = lineData.indent
+          for (let i = line.line_idx + 1; i < note.body.children.length; i++) {
+            const child = note.body.children[i]
+            if (child.indent > baseIndent) {
+              childCount++
+            } else {
+              break // Hit a line at same or lower indent, stop counting
+            }
+          }
+
+          lineResults.push({
+            note_title: line.note_title,
+            line_idx: line.line_idx,
+            time_created: line.time_created,
+            tags: line.tags,
+            // Full line data from body
+            content: lineData.mdContent,
+            indent: lineData.indent,
+            datum_task_status: lineData.datumTaskStatus || null,
+            datum_time_seconds: lineData.datumTimeSeconds ?? null,
+            datum_pinned_at: lineData.datumPinnedAt || null,
+            child_count: childCount,
+          })
+        }
       }
 
       return {
@@ -264,7 +281,7 @@ export const searchRouter = t.router({
         .where('note_title', 'not ilike', '$%')
         .distinct()
 
-      // Apply tag prefix filter
+      // Apply tag prefix filter (value already includes # prefix)
       if (filters.tagPrefix) {
         tagQuery = tagQuery.where(
           'datum_tag',

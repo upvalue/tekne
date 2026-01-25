@@ -1,12 +1,13 @@
 // Search panel - sidebar-friendly search interface
 
 import { useState, useCallback, useMemo, useRef, useEffect } from 'react'
-import { Link } from '@tanstack/react-router'
+import { useNavigate } from '@tanstack/react-router'
 import { useDebouncedValue } from '@/hooks/useDebouncedValue'
 import { trpc } from '@/trpc/client'
 import { parseQuery } from '@/search/query-parser'
 import type { SearchOperator, SearchViewMode } from '@/search/types'
 import { ResultCardGrid } from './AggregateComponents'
+import { ReadOnlyLine } from '@/editor/ReadOnlyLine'
 import {
   MagnifyingGlassIcon,
   Bars3BottomLeftIcon,
@@ -14,48 +15,62 @@ import {
   BookmarkIcon,
   TrashIcon,
   PlusIcon,
-  XMarkIcon,
-  ClockIcon,
-  CheckCircleIcon,
-  XCircleIcon,
   ChevronDownIcon,
 } from '@heroicons/react/24/outline'
 import { cn } from '@/lib/utils'
 
-// Compact text result row for sidebar
-interface TextResultItem {
+// Search result item from backend
+interface SearchResultItem {
   note_title: string
   line_idx: number
   content: string
   time_created: Date | string
   tags: string[]
-  has_timer: boolean
-  has_task: boolean
-  task_status: string | null
+  indent: number
+  datum_task_status: 'complete' | 'incomplete' | 'unset' | null
+  datum_time_seconds: number | null
+  datum_pinned_at: string | null
+  child_count: number
 }
 
-const TextResultRow = ({ item }: { item: TextResultItem }) => {
+// Search result card - shows document title and ReadOnlyLine
+const SearchResultCard = ({
+  item,
+  onNavigate,
+}: {
+  item: SearchResultItem
+  onNavigate: () => void
+}) => {
   return (
-    <Link
-      to="/n/$title"
-      params={{ title: item.note_title }}
-      className="block px-3 py-2.5 hover:bg-zinc-800 rounded-lg transition-colors border border-transparent hover:border-zinc-700"
+    <div
+      className="rounded-lg border border-zinc-800 hover:border-zinc-700 transition-colors overflow-hidden cursor-pointer"
+      onClick={onNavigate}
     >
-      <div className="flex items-center gap-2 text-xs text-zinc-400 mb-1">
-        <span className="font-medium text-zinc-300">{item.note_title}</span>
-        <span className="text-zinc-500">:{item.line_idx + 1}</span>
-        {item.has_timer && <ClockIcon className="size-3.5 text-blue-400" />}
-        {item.has_task &&
-          (item.task_status === 'complete' ? (
-            <CheckCircleIcon className="size-3.5 text-green-400" />
-          ) : (
-            <XCircleIcon className="size-3.5 text-zinc-500" />
-          ))}
+      {/* Document header */}
+      <div className="px-3 py-2 bg-zinc-800/50 border-b border-zinc-800">
+        <div className="flex items-center justify-between">
+          <span className="text-xs font-medium text-zinc-300">
+            {item.note_title}
+          </span>
+          {item.child_count > 0 && (
+            <span className="text-xs text-zinc-500">
+              +{item.child_count} line{item.child_count !== 1 ? 's' : ''}
+            </span>
+          )}
+        </div>
       </div>
-      <div className="text-sm text-zinc-100 leading-relaxed line-clamp-2">
-        {item.content || <span className="text-zinc-500 italic">empty line</span>}
+
+      {/* Line content using ReadOnlyLine */}
+      <div className="px-2 py-1">
+        <ReadOnlyLine
+          content={item.content}
+          indent={item.indent}
+          datumTaskStatus={item.datum_task_status ?? undefined}
+          datumTimeSeconds={item.datum_time_seconds ?? undefined}
+          datumPinnedAt={item.datum_pinned_at ?? undefined}
+        />
       </div>
-    </Link>
+    </div>
   )
 }
 
@@ -229,6 +244,7 @@ const SavedSearchesDropdown = ({
 export const Search = () => {
   const [query, setQuery] = useState('')
   const [viewMode, setViewMode] = useState<SearchViewMode>('text')
+  const navigate = useNavigate()
 
   // Debounce query for API calls (300ms)
   const debouncedQuery = useDebouncedValue(query, 300)
@@ -261,7 +277,14 @@ export const Search = () => {
     setQuery(savedQuery)
   }, [])
 
-  const items = (linesQuery.data?.items || []) as TextResultItem[]
+  const handleNavigateToResult = useCallback(
+    (noteTitle: string) => {
+      navigate({ to: '/n/$title', params: { title: noteTitle } })
+    },
+    [navigate]
+  )
+
+  const items = (linesQuery.data?.items || []) as SearchResultItem[]
 
   return (
     <div className="flex flex-col h-full">
@@ -280,7 +303,7 @@ export const Search = () => {
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="tag:exercise age:90d..."
+            placeholder="#exercise age:90d..."
             className="w-full pl-10 pr-4 py-2.5 text-sm bg-zinc-800 border border-zinc-600 rounded-lg text-zinc-100 placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-shadow"
           />
         </div>
@@ -338,11 +361,12 @@ export const Search = () => {
                   <div className="text-xs text-zinc-500 px-1 mb-3">
                     {items.length} result{items.length !== 1 ? 's' : ''}
                   </div>
-                  <div className="space-y-2">
+                  <div className="space-y-3">
                     {items.map((item, idx) => (
-                      <TextResultRow
+                      <SearchResultCard
                         key={`${item.note_title}-${item.line_idx}-${idx}`}
                         item={item}
+                        onNavigate={() => handleNavigateToResult(item.note_title)}
                       />
                     ))}
                   </div>
@@ -391,9 +415,9 @@ export const Search = () => {
             <div className="space-y-2">
               <div className="flex items-start gap-3 text-sm">
                 <code className="bg-zinc-800 text-zinc-200 px-2 py-1 rounded font-mono text-xs shrink-0">
-                  tag:
+                  #tag
                 </code>
-                <span className="text-zinc-400">Filter by tag prefix</span>
+                <span className="text-zinc-400">Filter by tag (prefix match)</span>
               </div>
               <div className="flex items-start gap-3 text-sm">
                 <code className="bg-zinc-800 text-zinc-200 px-2 py-1 rounded font-mono text-xs shrink-0">
