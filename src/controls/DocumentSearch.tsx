@@ -18,10 +18,13 @@ const DocumentSearchContent = () => {
     },
   })
 
-  // TODO: This fires on page load and shouldn't.
-
-  // Debounce the search query
+  // Debounce the search query - but reset immediately when query is empty
+  // (handles dialog open/close without needing to track visualState)
   useEffect(() => {
+    if (!query) {
+      setDebouncedQuery('')
+      return
+    }
     const timer = setTimeout(() => {
       setDebouncedQuery(query)
     }, 200)
@@ -32,8 +35,9 @@ const DocumentSearchContent = () => {
     { query: debouncedQuery },
     {
       enabled: true,
-      staleTime: 10000,
-      queryHash: 'search-docs',
+      staleTime: 5000,
+      // Keep previous results visible while loading new ones (prevents flashing)
+      placeholderData: (prev) => prev,
     }
   )
 
@@ -56,7 +60,7 @@ const DocumentSearchContent = () => {
       })
     }
 
-    if (!exactMatch) {
+    if (!exactMatch && query.trim()) {
       actions.push({
         id: 'create-doc',
         name: `Create document titled ${query}`,
@@ -92,8 +96,7 @@ export const DocumentSearch: React.FC<DocumentSearchProps> = ({ children }) => {
     <KBarProvider
       actions={[]}
       options={{
-        // TODO: This is broken with / 
-        toggleShortcut: '$mod+Slash',
+        toggleShortcut: '$mod+o',
       }}
     >
       <DocumentSearchContent />

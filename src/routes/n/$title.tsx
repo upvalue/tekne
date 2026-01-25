@@ -77,28 +77,30 @@ function RouteComponent() {
     }
   })
 
-  const createDocMutation = useCreateDoc({ navigateOnSuccess: true });
+  const createDocMutation = useCreateDoc();
 
   useEffect(() => {
     if (loadDocQuery.error && loadDocQuery.error.data?.code === 'NOT_FOUND') {
-      // Special case tutorial
+      // Special case tutorial - auto-create it
       if (title === 'Tutorial') {
-        createDocMutation.mutate({ name: title })
-        navigate({
-          to: '/open/$title',
-          params: { title: 'Tutorial' },
-          replace: true,
-        });
+        // Skip if mutation is already in flight
+        if (createDocMutation.isPending) {
+          return
+        }
+        // Create the tutorial, then invalidate the query to refetch
+        createDocMutation.mutateAsync({ name: title }).then(() => {
+          utils.doc.loadDoc.invalidate({ name: title })
+        })
         return
       }
-      // For tutorial
+      // For non-tutorial documents
       navigate({
         to: '/doc-not-found/$title',
         params: { title: title },
         replace: true,
       })
     }
-  }, [loadDocQuery.error, navigate, title, createDocMutation])
+  }, [loadDocQuery.error, navigate, title, createDocMutation, utils])
 
   // Document saving functionality
   // On an interval, if the document has changed this will send an updateDoc mutation

@@ -19,9 +19,16 @@ export interface Keybinding {
 
 export const keybindings = {
   documentSearch: {
-    key: 'meta+/',
+    key: 'meta+o',
     name: 'document-search',
     description: 'Open a document',
+    displayKey: '⌘ O',
+    type: 'react' as const,
+  },
+  searchPanel: {
+    key: 'meta+/',
+    name: 'search-panel',
+    description: 'Open search panel',
     displayKey: '⌘ /',
     type: 'react' as const,
   },
