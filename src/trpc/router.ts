@@ -3,6 +3,7 @@ import { sql } from 'kysely'
 import { router, proc } from './init'
 import { docRouter } from './routers/doc'
 import { analysisRouter } from './routers/analysis'
+import { searchRouter } from './routers/search'
 
 import fs from 'fs'
 import child_process from 'child_process'
@@ -10,6 +11,7 @@ import child_process from 'child_process'
 export const appRouter = router({
   doc: docRouter,
   analysis: analysisRouter,
+  search: searchRouter,
 
   healthcheck: proc.query(async ({ ctx: { db } }) => {
     const q = await db

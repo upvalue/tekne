@@ -4,6 +4,33 @@ Tekne is a freestyle productivity application structured as an outline editor
 (like Logseq) which allows users to tag chunks of text, record structured data
 (such as time spent on a task) and search or navigate through that data easily.
 
+# Testing changes
+
+After making changes
+
+> pnpm types
+
+To ensure there are no type errors and
+
+> pnpm test
+
+if you changed a file with tests that should be tested
+
+If there are any tests present for a specific file, you can run them with
+
+> pnpm run test filename
+
+Once this is done, use the Playwright MCP to interact with the running application. Use
+browser snapshots to confirm that the page content has changed in a way that
+reflects the change being made.
+
+Prefer to use the browser_snapshot tool to observe changes, and only use the
+screenshot tool to verify styling changes.
+
+# GitHub issues
+
+If the user refers to GitHub issues, you can use the `gh` command line app to interact with them.
+
 # Architecture
 
 - Written in React
@@ -110,26 +137,3 @@ Migrations can be greated with
 > pnpm kysely migrate:make
 
 The resultant file should be filled out, and `src/db/migrations.ts` will need to be updated to account for the new migration.
-
-# Testing changes
-
-After making changes
-
-> pnpm types
-
-To ensure there are no type errors and
-
-> pnpm test
-
-if you changed a file with tests that should be testd
-
-If there are any tests present for a specific file, you can run them with
-
-> pnpm run test filename
-
-Once this is done, use the Playwright MCP to interact with the running application. Use
-browser snapshots to confirm that the page content has changed in a way that
-reflects the change being made.
-
-Prefer to use the browser_snapshot tool to observe changes, and only use the
-screenshot tool to verify styling changes.

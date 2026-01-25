@@ -44,7 +44,7 @@ const upsertNote = async (db: Kysely<Database>, name: string, body: ZDoc) => {
         title: name,
         body,
         revision: 0,
-        parsed_body: JSON.stringify(parsedBody),
+        parsed_body: parsedBody,
         updatedAt: sql`now()`,
       })
       .onConflict((oc) => oc.column('title').doUpdateSet({ body }))
@@ -105,12 +105,14 @@ const proposeRename = async (
   }
 }
 
-// TODO: Fix any
-const createFromTemplate = (doc: ZDoc, tmpl: any): ZDoc => {
-  console.log({ doc, tmpl })
+/**
+ * Creates a new document using a template's children structure.
+ * Each child gets fresh timestamps.
+ */
+const createFromTemplate = (doc: ZDoc, template: ZDoc): ZDoc => {
   return {
     ...doc,
-    children: tmpl.body.children.map((c: any) => ({
+    children: template.children.map((c) => ({
       ...c,
       timeCreated: new Date().toISOString(),
       timeUpdated: new Date().toISOString(),
@@ -138,8 +140,8 @@ const createNewDocument = async (
       .executeTakeFirst()
 
     if (dailyTemplate) {
-      const templateDoc = docMigrator(dailyTemplate)
-      newDoc = createFromTemplate(newDoc, templateDoc)
+      const migratedBody = docMigrator(dailyTemplate.title, dailyTemplate.body)
+      newDoc = createFromTemplate(newDoc, migratedBody)
     } else {
       console.log('$Daily template not found, using default content')
     }
@@ -362,7 +364,7 @@ export const docRouter = t.router({
     const allDocs = await db.selectFrom('notes').selectAll().execute()
 
     const results = allDocs.map((doc) => {
-      return validateDocumentWithMigrationCheck(doc)
+      return validateDocumentWithMigrationCheck(doc.title, doc.body)
     })
 
     const validDocs = results.filter((r) => r.valid)
@@ -392,7 +394,7 @@ export const docRouter = t.router({
 
     // Process each document
     for (const doc of allDocs) {
-      const { migratedDoc, report } = migrateDocWithReport(doc)
+      const { migratedBody, report } = migrateDocWithReport(doc.title, doc.body)
 
       migrationReports.push(report)
 
@@ -401,7 +403,7 @@ export const docRouter = t.router({
         await db
           .updateTable('notes')
           .set({
-            body: migratedDoc.body,
+            body: migratedBody,
             updatedAt: new Date(),
           })
           .where('title', '=', doc.title)

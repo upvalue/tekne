@@ -126,12 +126,14 @@ export const analysisRouter = t.router({
           tasks[pin.tag] = { tag: pin.tag }
         }
 
+        const currentPinnedAt = tasks[pin.tag].pinned_at
+        const newPinnedAt = pin.datum_pinned_at
+
         if (
-          (tasks[pin.tag].pinned_at &&
-            tasks[pin.tag].pinned_at! < pin.datum_pinned_at!) ||
-          !tasks[pin.tag].pinned_at
+          newPinnedAt &&
+          (!currentPinnedAt || currentPinnedAt < newPinnedAt)
         ) {
-          tasks[pin.tag].pinned_at = pin.datum_pinned_at!
+          tasks[pin.tag].pinned_at = newPinnedAt
           tasks[pin.tag].pinned_desc = pin.datum_pinned_content
         }
       }

@@ -1,5 +1,6 @@
 import { DevTools } from '@/dev/DevTools'
 import { Help } from './Help'
+import { Search } from './Search'
 import {
   Navbar,
   NavbarSection,
@@ -10,13 +11,25 @@ import {
   WrenchScrewdriverIcon,
   QuestionMarkCircleIcon,
   CircleStackIcon,
+  MagnifyingGlassIcon,
 } from '@heroicons/react/24/solid'
-import { useState } from 'react'
+import { useAtom } from 'jotai'
+import { useEffect } from 'react'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { DocumentOverview } from './DocumentOverview'
+import { activePanelTabAtom, type PanelTab } from './state'
 
 export function Panel() {
-  const [activeTab, setActiveTab] = useState('document')
+  const [activeTab, setActiveTab] = useAtom(activePanelTabAtom)
+
+  // Listen for panel tab change events from command palette
+  useEffect(() => {
+    const handler = (e: CustomEvent<{ tab: PanelTab }>) => {
+      setActiveTab(e.detail.tab)
+    }
+    window.addEventListener('tekne:panel-tab', handler as EventListener)
+    return () => window.removeEventListener('tekne:panel-tab', handler as EventListener)
+  }, [setActiveTab])
 
   return (
     <div className="flex flex-col h-[100vh]">
@@ -31,6 +44,13 @@ export function Panel() {
               <NavbarLabel>Document</NavbarLabel>
             </NavbarItem>
 
+            <NavbarItem
+              current={activeTab === 'search'}
+              onClick={() => setActiveTab('search')}
+            >
+              <MagnifyingGlassIcon className="w-4 h-4" data-slot="icon" />
+              <NavbarLabel>Search</NavbarLabel>
+            </NavbarItem>
 
             <NavbarItem
               current={activeTab === 'help'}
@@ -53,6 +73,7 @@ export function Panel() {
       <div className="flex-1 overflow-auto min-h-0">
         <ErrorBoundary title="Panel crashed">
           {activeTab === 'document' && <DocumentOverview />}
+          {activeTab === 'search' && <Search />}
           {activeTab === 'help' && <Help />}
           {activeTab === 'devtools' && (
             <div className="p-4 h-full">

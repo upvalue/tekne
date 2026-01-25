@@ -66,7 +66,7 @@ export const recomputeAllDocumentData = async (db: Kysely<Database>) => {
 
       await tx
         .updateTable('notes')
-        .set({ parsed_body: JSON.stringify(parsedBody) })
+        .set({ parsed_body: parsedBody })
         .where('title', '=', doc.title)
         .execute()
 

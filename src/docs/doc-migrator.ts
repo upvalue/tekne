@@ -2,7 +2,7 @@
 
 // This is a pretty hacky and slop-coded document migrator, intended
 // to make it relatively easy to change the document schema on the fly
-import { CURRENT_SCHEMA_VERSION, zdoc, zline } from './schema'
+import { CURRENT_SCHEMA_VERSION, zdoc, zline, type ZDoc, type ZLine } from './schema'
 import { ZodError } from 'zod'
 
 /**
@@ -46,26 +46,34 @@ export interface MigrationReport {
 }
 
 /**
- * Migrates a document to the current schema version and provides
- * a detailed report of what changes were made
+ * Migrates a document body to the current schema version and provides
+ * a detailed report of what changes were made.
+ *
+ * @param title - Document title (used for reporting only)
+ * @param body - Document body to migrate
+ * @returns The migrated body and a migration report
  */
 export const migrateDocWithReport = (
-  doc: any
-): { migratedDoc: any; report: MigrationReport } => {
+  title: string,
+  body: ZDoc
+): { migratedBody: ZDoc; report: MigrationReport } => {
   const report: MigrationReport = {
-    documentTitle: doc.title,
-    originalVersion: doc.body?.schemaVersion,
+    documentTitle: title,
+    originalVersion: body?.schemaVersion,
     targetVersion: CURRENT_SCHEMA_VERSION,
     operations: [],
     migrated: false,
   }
 
-  // Clone the document to avoid mutations
-  const migratedDoc = JSON.parse(JSON.stringify(doc))
+  // Clone the body to avoid mutations
+  // We cast through unknown because we need to handle legacy fields not in ZDoc
+  let migratedBody = JSON.parse(JSON.stringify(body)) as ZDoc & {
+    children?: Array<ZLine & { createdAt?: string; updatedAt?: string; datumTime?: number }>
+  }
 
-  // Ensure body exists
-  if (!migratedDoc.body) {
-    migratedDoc.body = {
+  // Ensure body has correct structure
+  if (!migratedBody || typeof migratedBody !== 'object') {
+    migratedBody = {
       type: 'doc',
       schemaVersion: CURRENT_SCHEMA_VERSION,
       children: [],
@@ -73,18 +81,18 @@ export const migrateDocWithReport = (
     report.operations.push({
       type: 'add',
       path: 'body',
-      newValue: migratedDoc.body,
+      newValue: migratedBody,
       description: 'Added missing document body structure',
     })
     report.migrated = true
   }
 
   // Ensure children array exists
-  if (!migratedDoc.body.children) {
-    migratedDoc.body.children = []
+  if (!migratedBody.children) {
+    migratedBody.children = []
     report.operations.push({
       type: 'add',
-      path: 'body.children',
+      path: 'children',
       newValue: [],
       description: 'Added missing children array',
     })
@@ -92,18 +100,24 @@ export const migrateDocWithReport = (
   }
 
   // Migrate each child line
-  migratedDoc.body.children = migratedDoc.body.children.map(
-    (child: any, index: number) => {
-      const mod = { ...child }
+  migratedBody.children = migratedBody.children.map(
+    (child, index: number) => {
+      // Cast to handle legacy fields
+      const legacyChild = child as ZLine & {
+        createdAt?: string
+        updatedAt?: string
+        datumTime?: number
+      }
+      const mod: ZLine = { ...legacyChild }
 
       // Migrate createdAt -> timeCreated
-      if (child.createdAt) {
-        mod.timeCreated = child.createdAt
-        delete mod.createdAt
+      if (legacyChild.createdAt) {
+        mod.timeCreated = legacyChild.createdAt
+        delete (mod as typeof legacyChild).createdAt
         report.operations.push({
           type: 'rename',
           path: `children[${index}].createdAt`,
-          oldValue: child.createdAt,
+          oldValue: legacyChild.createdAt,
           newValue: mod.timeCreated,
           description: `Renamed 'createdAt' to 'timeCreated'`,
         })
@@ -111,13 +125,13 @@ export const migrateDocWithReport = (
       }
 
       // Migrate updatedAt -> timeUpdated
-      if (child.updatedAt) {
-        mod.timeUpdated = child.updatedAt
-        delete mod.updatedAt
+      if (legacyChild.updatedAt) {
+        mod.timeUpdated = legacyChild.updatedAt
+        delete (mod as typeof legacyChild).updatedAt
         report.operations.push({
           type: 'rename',
           path: `children[${index}].updatedAt`,
-          oldValue: child.updatedAt,
+          oldValue: legacyChild.updatedAt,
           newValue: mod.timeUpdated,
           description: `Renamed 'updatedAt' to 'timeUpdated'`,
         })
@@ -125,24 +139,17 @@ export const migrateDocWithReport = (
       }
 
       // Migrate datumTime -> datumTimeSeconds
-      if (child.datumTime !== undefined) {
-        mod.datumTimeSeconds = child.datumTime
-        delete mod.datumTime
+      if (legacyChild.datumTime !== undefined) {
+        mod.datumTimeSeconds = legacyChild.datumTime
+        delete (mod as typeof legacyChild).datumTime
         report.operations.push({
           type: 'rename',
           path: `children[${index}].datumTime`,
-          oldValue: child.datumTime,
+          oldValue: legacyChild.datumTime,
           newValue: mod.datumTimeSeconds,
           description: `Renamed 'datumTime' to 'datumTimeSeconds'`,
         })
         report.migrated = true
-      }
-
-      // Handle datumTaskStatus (ensure it exists if referenced)
-      if (child.datumTaskStatus !== undefined) {
-        mod.datumTaskStatus = child.datumTaskStatus
-        // This field already exists in current schema, so no migration needed
-        // but we preserve it explicitly
       }
 
       return mod
@@ -150,12 +157,12 @@ export const migrateDocWithReport = (
   )
 
   // Update schema version if it's outdated
-  if (migratedDoc.body.schemaVersion !== CURRENT_SCHEMA_VERSION) {
-    const oldVersion = migratedDoc.body.schemaVersion
-    migratedDoc.body.schemaVersion = CURRENT_SCHEMA_VERSION
+  if (migratedBody.schemaVersion !== CURRENT_SCHEMA_VERSION) {
+    const oldVersion = migratedBody.schemaVersion
+    migratedBody.schemaVersion = CURRENT_SCHEMA_VERSION
     report.operations.push({
       type: 'update',
-      path: 'body.schemaVersion',
+      path: 'schemaVersion',
       oldValue: oldVersion,
       newValue: CURRENT_SCHEMA_VERSION,
       description: `Updated schema version from ${oldVersion || 'undefined'} to ${CURRENT_SCHEMA_VERSION}`,
@@ -163,16 +170,19 @@ export const migrateDocWithReport = (
     report.migrated = true
   }
 
-  return { migratedDoc, report }
+  return { migratedBody, report }
 }
 
 /**
- * Legacy function for backwards compatibility
- * This is the original docMigrator from router.ts without reporting
+ * Migrates a document body to the current schema version.
+ *
+ * @param title - Document title (used for reporting only)
+ * @param body - Document body to migrate
+ * @returns The migrated body
  */
-export const docMigrator = (doc: any): any => {
-  const { migratedDoc } = migrateDocWithReport(doc)
-  return migratedDoc
+export const docMigrator = (title: string, body: ZDoc): ZDoc => {
+  const { migratedBody } = migrateDocWithReport(title, body)
+  return migratedBody
 }
 
 export interface ValidationResult {
@@ -186,13 +196,18 @@ export interface ValidationResult {
 }
 
 /**
- * Validates a document against the current schema and checks if migration can fix issues
+ * Validates a document body against the current schema and checks if migration can fix issues.
+ *
+ * @param title - Document title (used for reporting)
+ * @param body - Document body to validate
+ * @returns Validation result with migration info if applicable
  */
 export const validateDocumentWithMigrationCheck = (
-  doc: any
+  title: string,
+  body: ZDoc
 ): ValidationResult => {
   const validationResult: ValidationResult = {
-    title: doc.title,
+    title,
     valid: true,
     errors: [],
     warnings: [],
@@ -202,13 +217,12 @@ export const validateDocumentWithMigrationCheck = (
 
   // First, try validating the original document
   try {
-    zdoc.parse(doc.body)
+    zdoc.parse(body)
 
     // Check for extra fields in document body
-    const docBody = doc.body
-    if (typeof docBody === 'object' && docBody !== null) {
+    if (typeof body === 'object' && body !== null) {
       const allowedDocFields = getZodObjectKeys(zdoc)
-      const actualDocFields = new Set(Object.keys(docBody))
+      const actualDocFields = new Set(Object.keys(body))
 
       for (const field of actualDocFields) {
         if (!allowedDocFields.has(field)) {
@@ -218,10 +232,10 @@ export const validateDocumentWithMigrationCheck = (
       }
 
       // Check children for extra fields
-      if (Array.isArray(docBody.children)) {
+      if (Array.isArray(body.children)) {
         const allowedLineFields = getZodObjectKeys(zline)
 
-        docBody.children.forEach((child: any, idx: number) => {
+        body.children.forEach((child: ZLine, idx: number) => {
           if (typeof child === 'object' && child !== null) {
             const actualLineFields = new Set(Object.keys(child))
 
@@ -239,7 +253,7 @@ export const validateDocumentWithMigrationCheck = (
     validationResult.valid = false
     if (error instanceof ZodError) {
       validationResult.errors.push(
-        ...error.issues.map((e: any) => `${e.path.join('.')}: ${e.message}`)
+        ...error.issues.map((e) => `${e.path.join('.')}: ${e.message}`)
       )
     } else {
       validationResult.errors.push(String(error))
@@ -253,21 +267,20 @@ export const validateDocumentWithMigrationCheck = (
 
   // Document is invalid, check if migration can fix it
   try {
-    const { migratedDoc, report } = migrateDocWithReport(doc)
+    const { migratedBody, report } = migrateDocWithReport(title, body)
     validationResult.migrationReport = report
 
     // Now validate the migrated document
     try {
-      zdoc.parse(migratedDoc.body)
+      zdoc.parse(migratedBody)
 
       // Check for extra fields in migrated document
       let migratedIsValid = true
       const migratedExtraFields: string[] = []
 
-      const docBody = migratedDoc.body
-      if (typeof docBody === 'object' && docBody !== null) {
+      if (typeof migratedBody === 'object' && migratedBody !== null) {
         const allowedDocFields = getZodObjectKeys(zdoc)
-        const actualDocFields = new Set(Object.keys(docBody))
+        const actualDocFields = new Set(Object.keys(migratedBody))
 
         for (const field of actualDocFields) {
           if (!allowedDocFields.has(field)) {
@@ -277,10 +290,10 @@ export const validateDocumentWithMigrationCheck = (
         }
 
         // Check children for extra fields
-        if (Array.isArray(docBody.children)) {
+        if (Array.isArray(migratedBody.children)) {
           const allowedLineFields = getZodObjectKeys(zline)
 
-          docBody.children.forEach((child: any, idx: number) => {
+          migratedBody.children.forEach((child: ZLine, idx: number) => {
             if (typeof child === 'object' && child !== null) {
               const actualLineFields = new Set(Object.keys(child))
 

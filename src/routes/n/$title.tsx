@@ -42,7 +42,6 @@ function RouteComponent() {
 
   const docLastSaved = useRef<Date>(new Date())
   const docDirty = useRef<boolean>(false)
-  const userNavigatingAway = useRef<boolean>(false)
   const utils = trpc.useUtils();
   // TODO: this whole thing needs a bit of cleanup
 
@@ -109,7 +108,7 @@ function RouteComponent() {
 
   // It also uses beforeunload to try to prevent user from navigating away if
 
-  const saveDocument = useCallback((chainOnSuccess?: () => void) => {
+  const saveDocument = useCallback(async (chainOnSuccess?: () => void) => {
     if (loadDocQuery.isLoading) {
       return
     }
@@ -120,29 +119,23 @@ function RouteComponent() {
       return
     }
 
-    updateDocMutation.mutate(
-      {
+    try {
+      await updateDocMutation.mutateAsync({
         name: title,
         doc: store.get(docAtom),
-      },
-      {
-        onSuccess: () => {
-          docDirty.current = false
-          docLastSaved.current = new Date()
+      })
+      docDirty.current = false
+      docLastSaved.current = new Date()
 
-          if (userNavigatingAway.current) {
-            toast.info(
-              'Your changes have been saved, you can navigate away now'
-            )
-            userNavigatingAway.current = false
-          }
-
-          if (chainOnSuccess) {
-            chainOnSuccess()
-          }
-        },
+      if (chainOnSuccess) {
+        chainOnSuccess()
       }
-    )
+    } catch (e) {
+      console.error('Error saving document', e)
+      toast.error(
+        `Error while updating document ${truncate(String(e), { length: 100 })}`
+      )
+    }
   }, [title, store, updateDocMutation, loadDocQuery.isLoading, loadDocQuery.data])
 
   // Try to save document if user navigates away while a change is present
@@ -154,8 +147,8 @@ function RouteComponent() {
   useAtom(allTagsAtom);
 
   useBlocker({
-    shouldBlockFn: () => {
-      saveDocument()
+    shouldBlockFn: async () => {
+      await saveDocument()
       if (store.get(globalTimerAtom).isActive) {
         toast.info('There is a timer active -- end the timer before navigating away');
         return true;
@@ -166,14 +159,15 @@ function RouteComponent() {
   })
 
   useEventListener('beforeunload', (event: BeforeUnloadEvent) => {
-    if (docDirty.current || store.get(globalTimerAtom).isActive) {
-      userNavigatingAway.current = true
+    // For browser navigation (close tab, refresh), we still save but can't await
+    if (docDirty.current) {
       saveDocument()
-      event.preventDefault()
-      event.returnValue =
-        'You have unsaved changes. Are you sure you want to leave?'
     }
-    return false
+    // Only show browser confirmation if timer is active
+    if (store.get(globalTimerAtom).isActive) {
+      event.preventDefault()
+      event.returnValue = 'You have a timer running. Are you sure you want to leave?'
+    }
   })
 
   useInterval(() => {

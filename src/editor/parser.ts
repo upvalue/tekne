@@ -133,16 +133,27 @@ export function visitMdTree(
 }
 
 /**
- * Converts syntax parser output into non-recursive JSON
- * for database querying
+ * Parsed markdown node structure for database storage/querying.
+ */
+export type ParsedMdNode = {
+  type: string
+  from: number
+  to: number
+  text: string
+  children: ParsedMdNode[]
+}
+
+/**
+ * Converts syntax parser output into JSON structure
+ * for database querying.
  */
 export const jsonifyMdTree = (
   node: SyntaxNode,
   source: string,
   level = 0
-): string => {
+): ParsedMdNode => {
   const nodeText = source.slice(node.from, node.to)
-  const result: any = {
+  const result: ParsedMdNode = {
     type: node.type.name,
     from: node.from,
     to: node.to,

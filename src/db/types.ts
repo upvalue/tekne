@@ -1,8 +1,18 @@
 import type { ZDoc } from '@/docs/schema'
+import type { ParsedMdNode } from '@/editor/parser'
 import type { ColumnType } from 'kysely'
 
 // Custom column type that handles Zod validation
 type ZodJsonColumn<T> = ColumnType<T, T, T>
+
+/**
+ * Structure of parsed_body column: an array of parsed line entries.
+ * This is stored as JSON.stringify() in the database.
+ */
+export type ParsedBodyEntry = {
+  line_idx: number
+  parsed_body: ParsedMdNode
+}
 
 export type DBNote = {
   title: string
@@ -10,7 +20,7 @@ export type DBNote = {
   createdAt: ColumnType<Date, Date | undefined, Date>
   updatedAt: ColumnType<Date, Date | undefined, Date>
   revision: number
-  parsed_body: ZodJsonColumn<any>
+  parsed_body: ZodJsonColumn<ParsedBodyEntry[]>
 }
 export type NoteDataStatus = 'complete' | 'incomplete' | 'unset'
 export type NoteDataType = 'task' | 'timer' | 'tag' | 'pin'
@@ -28,8 +38,17 @@ export type DBNoteData = {
   datum_pinned_content: string | null
 }
 
+export type DBSavedSearch = {
+  id: ColumnType<number, never, never>
+  name: string
+  query: string
+  created_at: ColumnType<Date, Date | undefined, Date>
+  updated_at: ColumnType<Date, Date | undefined, Date>
+}
+
 // Define your database schema interface here
 export type Database = {
   notes: DBNote
   note_data: DBNoteData
+  saved_searches: DBSavedSearch
 }

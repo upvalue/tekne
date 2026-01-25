@@ -152,6 +152,19 @@ const editorCommands: Command[] = [
 
 const navigationCommands: Command[] = [
   {
+    id: 'search',
+    name: 'Search',
+    description: 'Search across all documents',
+    shortcut: '/',
+    displayShortcut: '/',
+    keywords: ['search', 'find', 'query'],
+    requiresEditor: false,
+    execute: () => {
+      // Emit custom event to switch panel tab
+      window.dispatchEvent(new CustomEvent('tekne:panel-tab', { detail: { tab: 'search' } }))
+    },
+  },
+  {
     id: 'go',
     name: 'Go to',
     description: 'Navigation commands',
