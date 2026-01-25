@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useMemo, useRef, useEffect } from 'react'
 import { Link } from '@tanstack/react-router'
+import { useDebouncedValue } from '@/hooks/useDebouncedValue'
 import { trpc } from '@/trpc/client'
 import { parseQuery } from '@/search/query-parser'
 import type { SearchOperator, SearchViewMode } from '@/search/types'
@@ -229,20 +230,31 @@ export const Search = () => {
   const [query, setQuery] = useState('')
   const [viewMode, setViewMode] = useState<SearchViewMode>('text')
 
-  // Parse the query
+  // Debounce query for API calls (300ms)
+  const debouncedQuery = useDebouncedValue(query, 300)
+
+  // Parse both for instant validation feedback and debounced for queries
   const parsedQuery = useMemo(() => parseQuery(query), [query])
+  const debouncedParsedQuery = useMemo(
+    () => parseQuery(debouncedQuery),
+    [debouncedQuery]
+  )
+
   const hasValidQuery =
     parsedQuery.operators.length > 0 && parsedQuery.errors.length === 0
+  const hasDebouncedValidQuery =
+    debouncedParsedQuery.operators.length > 0 &&
+    debouncedParsedQuery.errors.length === 0
 
-  // Search queries
+  // Search queries use debounced value
   const linesQuery = trpc.search.searchLines.useQuery(
-    { operators: parsedQuery.operators as SearchOperator[] },
-    { enabled: hasValidQuery && viewMode === 'text' }
+    { operators: debouncedParsedQuery.operators as SearchOperator[] },
+    { enabled: hasDebouncedValidQuery && viewMode === 'text' }
   )
 
   const aggregateQuery = trpc.search.searchAggregate.useQuery(
-    { operators: parsedQuery.operators as SearchOperator[] },
-    { enabled: hasValidQuery && viewMode === 'aggregate' }
+    { operators: debouncedParsedQuery.operators as SearchOperator[] },
+    { enabled: hasDebouncedValidQuery && viewMode === 'aggregate' }
   )
 
   const handleSelectSearch = useCallback((savedQuery: string) => {
