@@ -46,11 +46,13 @@ export const recomputeAllDocumentData = async (db: Kysely<Database>) => {
     // Get all documents
     const allDocs = await tx.selectFrom('notes').selectAll().execute()
 
-    // Clear all existing note_data
+    // Clear all existing derived data
     await tx.deleteFrom('note_data').execute()
+    await tx.deleteFrom('note_lines').execute()
 
     let processedCount = 0
     let totalDataRows = 0
+    let totalLineRows = 0
 
     // Process each document
     for (const doc of allDocs) {
@@ -76,6 +78,21 @@ export const recomputeAllDocumentData = async (db: Kysely<Database>) => {
         totalDataRows += processedData.length
       }
 
+      // Populate note_lines for text search
+      const noteLines = doc.body.children.map((ln, line_idx) => ({
+        note_title: doc.title,
+        line_idx,
+        content: ln.mdContent,
+        indent: ln.indent,
+        time_created: new Date(ln.timeCreated),
+        time_updated: new Date(ln.timeUpdated),
+      }))
+
+      if (noteLines.length > 0) {
+        await tx.insertInto('note_lines').values(noteLines).execute()
+        totalLineRows += noteLines.length
+      }
+
       processedCount++
     }
 
@@ -83,6 +100,7 @@ export const recomputeAllDocumentData = async (db: Kysely<Database>) => {
       totalDocs: allDocs.length,
       processedDocs: processedCount,
       totalDataRows,
+      totalLineRows,
     }
   })
 

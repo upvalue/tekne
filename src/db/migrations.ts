@@ -9,6 +9,7 @@ import { tmigration as alterNoteDataTypeEnumMigration } from './migrations/17581
 import { tmigration as addNoteDataPinMigration } from './migrations/1758210899686_add-note-data-pin.ts'
 import { tmigration as addNoteParsedBodyMigration } from './migrations/1758235135865_add-note-parsed-body.ts'
 import { tmigration as addSavedSearchesMigration } from './migrations/1769300006926_add-saved-searches.ts'
+import { tmigration as addNoteLinesMigration } from './migrations/1769317427281_add-note-lines.ts'
 import type { Database } from './types'
 
 /**
@@ -32,6 +33,7 @@ class TekneMigrationProvider implements MigrationProvider {
     migrations['1758235135865_add-note-parsed-body'] =
       addNoteParsedBodyMigration
     migrations['1769300006926_add-saved-searches'] = addSavedSearchesMigration
+    migrations['1769317427281_add-note-lines'] = addNoteLinesMigration
 
     return migrations
   }

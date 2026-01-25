@@ -46,9 +46,19 @@ export type DBSavedSearch = {
   updated_at: ColumnType<Date, Date | undefined, Date>
 }
 
+export type DBNoteLine = {
+  note_title: string
+  line_idx: number
+  content: string
+  indent: number
+  time_created: ColumnType<Date, Date | undefined, Date> | null
+  time_updated: ColumnType<Date, Date | undefined, Date> | null
+}
+
 // Define your database schema interface here
 export type Database = {
   notes: DBNote
   note_data: DBNoteData
+  note_lines: DBNoteLine
   saved_searches: DBSavedSearch
 }

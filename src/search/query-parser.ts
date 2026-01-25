@@ -191,9 +191,35 @@ export function parseQuery(query: string): ParsedQuery {
     } else {
       // Bare text - full-text search
       // Strip quotes if present
-      const text = token.replace(/^"|"$/g, '')
+      let text = token.replace(/^"|"$/g, '')
       if (text) {
-        operators.push({ type: 'text', value: text })
+        // Detect wildcard patterns:
+        // run* = prefix (words starting with "run")
+        // *ing = suffix (words ending with "ing")
+        // *run* = none/contains (default)
+        // run = exact word match when no wildcards
+        let wildcard: 'none' | 'prefix' | 'suffix' | 'exact' = 'none'
+
+        if (text.startsWith('*') && text.endsWith('*')) {
+          // *run* = contains (same as default)
+          text = text.slice(1, -1)
+          wildcard = 'none'
+        } else if (text.endsWith('*')) {
+          // run* = prefix match
+          text = text.slice(0, -1)
+          wildcard = 'prefix'
+        } else if (text.startsWith('*')) {
+          // *ing = suffix match
+          text = text.slice(1)
+          wildcard = 'suffix'
+        } else {
+          // no wildcards = contains match (most intuitive default)
+          wildcard = 'none'
+        }
+
+        if (text) {
+          operators.push({ type: 'text', value: text, wildcard })
+        }
       }
     }
 
@@ -223,8 +249,13 @@ export function serializeQuery(operators: SearchOperator[]): string {
           return `has:${op.value}`
         case 'doc':
           return `doc:${op.value}`
-        case 'text':
-          return op.value.includes(' ') ? `"${op.value}"` : op.value
+        case 'text': {
+          let text = op.value
+          // Re-add wildcards for serialization
+          if (op.wildcard === 'prefix') text = `${text}*`
+          else if (op.wildcard === 'suffix') text = `*${text}`
+          return text.includes(' ') ? `"${text}"` : text
+        }
       }
     })
     .join(' ')

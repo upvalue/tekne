@@ -60,6 +60,22 @@ const upsertNote = async (db: Kysely<Database>, name: string, body: ZDoc) => {
       await tx.insertInto('note_data').values(processedData).execute()
     }
 
+    // Populate note_lines for text search
+    await tx.deleteFrom('note_lines').where('note_title', '=', name).execute()
+
+    const noteLines = body.children.map((ln, line_idx) => ({
+      note_title: name,
+      line_idx,
+      content: ln.mdContent,
+      indent: ln.indent,
+      time_created: new Date(ln.timeCreated),
+      time_updated: new Date(ln.timeUpdated),
+    }))
+
+    if (noteLines.length > 0) {
+      await tx.insertInto('note_lines').values(noteLines).execute()
+    }
+
     console.log('upsertNote', r)
   })
 }

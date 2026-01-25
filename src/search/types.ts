@@ -10,7 +10,8 @@ export type AgeOperator = { type: 'age'; value: number } // days
 export type StatusOperator = { type: 'status'; value: NoteDataStatus }
 export type HasOperator = { type: 'has'; value: Exclude<NoteDataType, 'tag'> }
 export type DocOperator = { type: 'doc'; value: string } // glob pattern
-export type TextOperator = { type: 'text'; value: string }
+export type TextWildcard = 'none' | 'prefix' | 'suffix' | 'exact'
+export type TextOperator = { type: 'text'; value: string; wildcard: TextWildcard }
 
 export type SearchOperator =
   | TagOperator

@@ -149,8 +149,16 @@ describe('parseQuery', () => {
     it('should parse bare text as full-text search', () => {
       const result = parseQuery('meeting notes')
       expect(result.operators).toHaveLength(2)
-      expect(result.operators[0]).toEqual({ type: 'text', value: 'meeting' })
-      expect(result.operators[1]).toEqual({ type: 'text', value: 'notes' })
+      expect(result.operators[0]).toEqual({
+        type: 'text',
+        value: 'meeting',
+        wildcard: 'none',
+      })
+      expect(result.operators[1]).toEqual({
+        type: 'text',
+        value: 'notes',
+        wildcard: 'none',
+      })
     })
 
     it('should handle quoted text', () => {
@@ -159,6 +167,37 @@ describe('parseQuery', () => {
       expect(result.operators[0]).toEqual({
         type: 'text',
         value: 'meeting notes',
+        wildcard: 'none',
+      })
+    })
+
+    it('should parse prefix wildcard', () => {
+      const result = parseQuery('run*')
+      expect(result.operators).toHaveLength(1)
+      expect(result.operators[0]).toEqual({
+        type: 'text',
+        value: 'run',
+        wildcard: 'prefix',
+      })
+    })
+
+    it('should parse suffix wildcard', () => {
+      const result = parseQuery('*ing')
+      expect(result.operators).toHaveLength(1)
+      expect(result.operators[0]).toEqual({
+        type: 'text',
+        value: 'ing',
+        wildcard: 'suffix',
+      })
+    })
+
+    it('should parse contains wildcard', () => {
+      const result = parseQuery('*run*')
+      expect(result.operators).toHaveLength(1)
+      expect(result.operators[0]).toEqual({
+        type: 'text',
+        value: 'run',
+        wildcard: 'none',
       })
     })
   })
@@ -179,7 +218,11 @@ describe('parseQuery', () => {
       const result = parseQuery('#proj/tekne refactor')
       expect(result.operators).toHaveLength(2)
       expect(result.operators[0]).toEqual({ type: 'tag', value: '#proj/tekne' })
-      expect(result.operators[1]).toEqual({ type: 'text', value: 'refactor' })
+      expect(result.operators[1]).toEqual({
+        type: 'text',
+        value: 'refactor',
+        wildcard: 'none',
+      })
     })
   })
 
@@ -247,13 +290,31 @@ describe('serializeQuery', () => {
   })
 
   it('should serialize text with spaces in quotes', () => {
-    const result = serializeQuery([{ type: 'text', value: 'meeting notes' }])
+    const result = serializeQuery([
+      { type: 'text', value: 'meeting notes', wildcard: 'none' },
+    ])
     expect(result).toBe('"meeting notes"')
   })
 
   it('should serialize text without spaces without quotes', () => {
-    const result = serializeQuery([{ type: 'text', value: 'meeting' }])
+    const result = serializeQuery([
+      { type: 'text', value: 'meeting', wildcard: 'none' },
+    ])
     expect(result).toBe('meeting')
+  })
+
+  it('should serialize text with prefix wildcard', () => {
+    const result = serializeQuery([
+      { type: 'text', value: 'run', wildcard: 'prefix' },
+    ])
+    expect(result).toBe('run*')
+  })
+
+  it('should serialize text with suffix wildcard', () => {
+    const result = serializeQuery([
+      { type: 'text', value: 'ing', wildcard: 'suffix' },
+    ])
+    expect(result).toBe('*ing')
   })
 
   it('should serialize multiple operators', () => {
