@@ -37,6 +37,44 @@ function globToLike(pattern: string): string {
   return pattern.replace(/\*/g, '%').replace(/\?/g, '_')
 }
 
+// Helper to build common filter conditions
+function buildFilterConditions(operators: SearchOperator[]) {
+  const conditions: {
+    fromDate?: Date
+    toDate?: Date
+    docPattern?: string
+    tagPrefix?: string
+  } = {}
+
+  for (const op of operators) {
+    switch (op.type) {
+      case 'tag':
+        conditions.tagPrefix = op.value
+        break
+      case 'from':
+        conditions.fromDate = op.value
+        break
+      case 'to': {
+        const toDate = new Date(op.value)
+        toDate.setDate(toDate.getDate() + 1)
+        conditions.toDate = toDate
+        break
+      }
+      case 'age': {
+        const cutoff = new Date()
+        cutoff.setDate(cutoff.getDate() - op.value)
+        conditions.fromDate = cutoff
+        break
+      }
+      case 'doc':
+        conditions.docPattern = globToLike(op.value)
+        break
+    }
+  }
+
+  return conditions
+}
+
 export const searchRouter = t.router({
   /**
    * Search for lines matching the query operators
@@ -85,12 +123,13 @@ export const searchRouter = t.router({
             query = query.where('note_data.time_created', '>=', op.value)
             break
 
-          case 'to':
+          case 'to': {
             // Add one day to include the end date
             const toDate = new Date(op.value)
             toDate.setDate(toDate.getDate() + 1)
             query = query.where('note_data.time_created', '<', toDate)
             break
+          }
 
           case 'age': {
             const cutoff = new Date()
@@ -110,11 +149,7 @@ export const searchRouter = t.router({
             break
 
           case 'doc':
-            query = query.where(
-              'notes.title',
-              'ilike',
-              globToLike(op.value)
-            )
+            query = query.where('notes.title', 'ilike', globToLike(op.value))
             break
 
           case 'text':
@@ -163,7 +198,10 @@ export const searchRouter = t.router({
             task_status: row.datum_type === 'task' ? row.datum_status : null,
           })
         } else {
-          if (row.datum_type === 'tag' && !existing.tags.includes(row.datum_tag)) {
+          if (
+            row.datum_type === 'tag' &&
+            !existing.tags.includes(row.datum_tag)
+          ) {
             existing.tags.push(row.datum_tag)
           }
           if (row.datum_type === 'timer') existing.has_timer = true
@@ -215,6 +253,7 @@ export const searchRouter = t.router({
     )
     .query(async ({ input, ctx: { db } }): Promise<TagAggregateData[]> => {
       const { operators } = input
+      const filters = buildFilterConditions(operators as SearchOperator[])
 
       // First, find all matching tags
       let tagQuery = db
@@ -225,39 +264,24 @@ export const searchRouter = t.router({
         .where('note_title', 'not ilike', '$%')
         .distinct()
 
-      // Apply operators to filter tags
-      for (const op of operators as SearchOperator[]) {
-        switch (op.type) {
-          case 'tag':
-            tagQuery = tagQuery.where('datum_tag', 'ilike', `${op.value}%`)
-            break
+      // Apply tag prefix filter
+      if (filters.tagPrefix) {
+        tagQuery = tagQuery.where(
+          'datum_tag',
+          'ilike',
+          `${filters.tagPrefix}%`
+        )
+      }
 
-          case 'from':
-            tagQuery = tagQuery.where('time_created', '>=', op.value)
-            break
-
-          case 'to': {
-            const toDate = new Date(op.value)
-            toDate.setDate(toDate.getDate() + 1)
-            tagQuery = tagQuery.where('time_created', '<', toDate)
-            break
-          }
-
-          case 'age': {
-            const cutoff = new Date()
-            cutoff.setDate(cutoff.getDate() - op.value)
-            tagQuery = tagQuery.where('time_created', '>=', cutoff)
-            break
-          }
-
-          case 'doc':
-            tagQuery = tagQuery.where(
-              'note_title',
-              'ilike',
-              globToLike(op.value)
-            )
-            break
-        }
+      // Apply date filters to tag query
+      if (filters.fromDate) {
+        tagQuery = tagQuery.where('time_created', '>=', filters.fromDate)
+      }
+      if (filters.toDate) {
+        tagQuery = tagQuery.where('time_created', '<', filters.toDate)
+      }
+      if (filters.docPattern) {
+        tagQuery = tagQuery.where('note_title', 'ilike', filters.docPattern)
       }
 
       const tags = await tagQuery.execute()
@@ -268,8 +292,8 @@ export const searchRouter = t.router({
 
       const tagNames = tags.map((t) => t.tag)
 
-      // Get task data for these tags
-      const taskData = await db
+      // Build task query with same filters
+      let taskQuery = db
         .selectFrom('note_data')
         .select([
           'datum_tag as tag',
@@ -286,11 +310,22 @@ export const searchRouter = t.router({
         .where('note_title', 'not ilike', '$%')
         .where('datum_type', '=', 'task')
         .where('datum_tag', 'in', tagNames)
-        .groupBy('datum_tag')
-        .execute()
 
-      // Get timer data for these tags
-      const timerData = await db
+      // Apply same date/doc filters to task data
+      if (filters.fromDate) {
+        taskQuery = taskQuery.where('time_created', '>=', filters.fromDate)
+      }
+      if (filters.toDate) {
+        taskQuery = taskQuery.where('time_created', '<', filters.toDate)
+      }
+      if (filters.docPattern) {
+        taskQuery = taskQuery.where('note_title', 'ilike', filters.docPattern)
+      }
+
+      const taskData = await taskQuery.groupBy('datum_tag').execute()
+
+      // Build timer query with same filters
+      let timerQuery = db
         .selectFrom('note_data')
         .select([
           'datum_tag as tag',
@@ -299,17 +334,40 @@ export const searchRouter = t.router({
         .where('note_title', 'not ilike', '$%')
         .where('datum_type', '=', 'timer')
         .where('datum_tag', 'in', tagNames)
-        .groupBy('datum_tag')
-        .execute()
 
-      // Get pin data for these tags
-      const pinData = await db
+      // Apply same date/doc filters to timer data
+      if (filters.fromDate) {
+        timerQuery = timerQuery.where('time_created', '>=', filters.fromDate)
+      }
+      if (filters.toDate) {
+        timerQuery = timerQuery.where('time_created', '<', filters.toDate)
+      }
+      if (filters.docPattern) {
+        timerQuery = timerQuery.where('note_title', 'ilike', filters.docPattern)
+      }
+
+      const timerData = await timerQuery.groupBy('datum_tag').execute()
+
+      // Build pin query with same filters
+      let pinQuery = db
         .selectFrom('note_data')
         .select(['datum_tag as tag', 'datum_pinned_at', 'datum_pinned_content'])
         .where('datum_type', '=', 'pin')
         .where('datum_tag', 'in', tagNames)
         .orderBy('datum_pinned_at', 'desc')
-        .execute()
+
+      // Apply same date/doc filters to pin data
+      if (filters.fromDate) {
+        pinQuery = pinQuery.where('time_created', '>=', filters.fromDate)
+      }
+      if (filters.toDate) {
+        pinQuery = pinQuery.where('time_created', '<', filters.toDate)
+      }
+      if (filters.docPattern) {
+        pinQuery = pinQuery.where('note_title', 'ilike', filters.docPattern)
+      }
+
+      const pinData = await pinQuery.execute()
 
       // Combine results
       const results: { [tag: string]: TagAggregateData } = {}
