@@ -44,7 +44,7 @@ const upsertNote = async (db: Kysely<Database>, name: string, body: ZDoc) => {
         title: name,
         body,
         revision: 0,
-        parsed_body: parsedBody,
+        parsed_body: sql`${JSON.stringify(parsedBody)}::jsonb`,
         updatedAt: sql`now()`,
       })
       .onConflict((oc) => oc.column('title').doUpdateSet({ body }))

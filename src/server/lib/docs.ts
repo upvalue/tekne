@@ -1,5 +1,5 @@
 import type { Database } from '@/db'
-import type { Kysely } from 'kysely'
+import { sql, type Kysely } from 'kysely'
 import type { ZDoc } from '@/docs/schema'
 import { extractDocData, treeifyDoc } from '@/docs/doc-analysis'
 import {
@@ -68,7 +68,7 @@ export const recomputeAllDocumentData = async (db: Kysely<Database>) => {
 
       await tx
         .updateTable('notes')
-        .set({ parsed_body: parsedBody })
+        .set({ parsed_body: sql`${JSON.stringify(parsedBody)}::jsonb` })
         .where('title', '=', doc.title)
         .execute()
 
