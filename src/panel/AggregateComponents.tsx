@@ -6,6 +6,7 @@ import {
   XCircleIcon,
   EllipsisHorizontalIcon,
   ClockIcon,
+  PlusIcon,
 } from '@heroicons/react/24/outline'
 
 interface TaskStatusItemProps {
@@ -59,13 +60,11 @@ export const TaskStatusDisplay = ({
         />
       ) : null}
       {incomplete && incomplete > 0 ? (
-        <>
-          <TaskStatusItem
-            icon={XCircleIcon}
-            count={incomplete}
-            className="text-zinc-400"
-          />
-        </>
+        <TaskStatusItem
+          icon={XCircleIcon}
+          count={incomplete}
+          className="text-zinc-400"
+        />
       ) : null}
       {unset && unset > 0 ? (
         <TaskStatusItem
@@ -87,6 +86,55 @@ export const TimerDisplay = ({ time }: { time: number }) => {
   )
 }
 
+const PageContribution = ({
+  pageComplete,
+  pageIncomplete,
+  pageUnset,
+  pageTime,
+}: {
+  pageComplete?: number
+  pageIncomplete?: number
+  pageUnset?: number
+  pageTime?: number
+}) => {
+  const hasTaskContribution =
+    (pageComplete && pageComplete > 0) ||
+    (pageIncomplete && pageIncomplete > 0) ||
+    (pageUnset && pageUnset > 0)
+  const hasTimerContribution = pageTime !== undefined && pageTime > 0
+  if (!hasTaskContribution && !hasTimerContribution) return null
+
+  return (
+    <div className="flex items-center space-x-1.5 text-sm text-zinc-500">
+      <PlusIcon className="size-3.5" />
+      {pageComplete && pageComplete > 0 ? (
+        <div className="flex items-center space-x-1 text-green-400">
+          <CheckCircleIcon className="size-3.5" />
+          <span>{pageComplete}</span>
+        </div>
+      ) : null}
+      {pageIncomplete && pageIncomplete > 0 ? (
+        <div className="flex items-center space-x-1 text-red-400">
+          <XCircleIcon className="size-3.5" />
+          <span>{pageIncomplete}</span>
+        </div>
+      ) : null}
+      {pageUnset && pageUnset > 0 ? (
+        <div className="flex items-center space-x-1 text-zinc-400">
+          <EllipsisHorizontalIcon className="size-3.5" />
+          <span>{pageUnset}</span>
+        </div>
+      ) : null}
+      {hasTimerContribution ? (
+        <div className="flex items-center space-x-1 text-zinc-400">
+          <ClockIcon className="size-3.5" />
+          <span>{renderTime(pageTime!)}</span>
+        </div>
+      ) : null}
+    </div>
+  )
+}
+
 export const PinnedDisplay = ({ pinnedDesc }: { pinnedDesc: string }) => {
   return (
     <div className="flex items-center text-zinc-500 space-x-1 text-sm">
@@ -103,13 +151,25 @@ export interface ResultCardData {
   total_time_seconds?: number
   pinned_at?: Date | string | null
   pinned_desc?: string | null
+  page_complete_tasks?: number
+  page_incomplete_tasks?: number
+  page_unset_tasks?: number
+  page_time_seconds?: number
 }
 
 export const ResultCard = ({ tagData }: { tagData: ResultCardData }) => {
   return (
     <div className="relative">
       <div className="bg-zinc-800 border border-zinc-700 rounded-lg shadow-sm p-4 flex flex-col space-y-2">
-        <span className="text-sm">{tagData.tag}</span>
+        <div className="flex items-center gap-2">
+          <span className="text-sm">{tagData.tag}</span>
+          <PageContribution
+            pageComplete={tagData.page_complete_tasks}
+            pageIncomplete={tagData.page_incomplete_tasks}
+            pageUnset={tagData.page_unset_tasks}
+            pageTime={tagData.page_time_seconds}
+          />
+        </div>
         {tagData.pinned_at && (
           <PinnedDisplay pinnedDesc={tagData.pinned_desc!} />
         )}

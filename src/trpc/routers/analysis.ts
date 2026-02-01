@@ -12,6 +12,10 @@ type TagAggregateData = {
   total_time_seconds?: number
   pinned_at?: Date
   pinned_desc?: string | null
+  page_complete_tasks?: number
+  page_incomplete_tasks?: number
+  page_unset_tasks?: number
+  page_time_seconds?: number
 }
 
 export const analysisRouter = t.router({
@@ -96,6 +100,46 @@ export const analysisRouter = t.router({
         .groupBy('datum_tag')
         .execute()
 
+      const pageTaskData = await db
+        .selectFrom('note_data')
+        .select([
+          'datum_tag as tag',
+          sql<number>`COUNT(CASE WHEN datum_status = 'complete' THEN 1 END)`.as(
+            'complete_tasks'
+          ),
+          sql<number>`COUNT(CASE WHEN datum_status = 'incomplete' THEN 1 END)`.as(
+            'incomplete_tasks'
+          ),
+          sql<number>`COUNT(CASE WHEN datum_status = 'unset' OR datum_status IS NULL THEN 1 END)`.as(
+            'unset_tasks'
+          ),
+        ])
+        .where('note_title', '=', input.title)
+        .where('datum_type', '=', 'task')
+        .where(
+          'datum_tag',
+          'in',
+          tagsInDoc.map((t) => t.tag)
+        )
+        .groupBy('datum_tag')
+        .execute()
+
+      const pageTimerData = await db
+        .selectFrom('note_data')
+        .select([
+          'datum_tag as tag',
+          sql<number>`SUM(datum_time_seconds)`.as('total_time_seconds'),
+        ])
+        .where('note_title', '=', input.title)
+        .where('datum_type', '=', 'timer')
+        .where(
+          'datum_tag',
+          'in',
+          tagsInDoc.map((t) => t.tag)
+        )
+        .groupBy('datum_tag')
+        .execute()
+
       const tasks: {
         [tag: string]: TagAggregateData
       } = {}
@@ -117,6 +161,22 @@ export const analysisRouter = t.router({
           tasks[timer.tag] = { tag: timer.tag }
         }
         tasks[timer.tag].total_time_seconds = timer.total_time_seconds
+      }
+
+      for (const pageTask of pageTaskData) {
+        if (!tasks[pageTask.tag]) {
+          tasks[pageTask.tag] = { tag: pageTask.tag }
+        }
+        tasks[pageTask.tag].page_complete_tasks = pageTask.complete_tasks
+        tasks[pageTask.tag].page_incomplete_tasks = pageTask.incomplete_tasks
+        tasks[pageTask.tag].page_unset_tasks = pageTask.unset_tasks
+      }
+
+      for (const pageTimer of pageTimerData) {
+        if (!tasks[pageTimer.tag]) {
+          tasks[pageTimer.tag] = { tag: pageTimer.tag }
+        }
+        tasks[pageTimer.tag].page_time_seconds = pageTimer.total_time_seconds
       }
 
       // Find most recent pin

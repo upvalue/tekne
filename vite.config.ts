@@ -32,6 +32,11 @@ export default defineConfig({
     },
   },
   envPrefix: ['VITE_', 'TEKNE_'],
+  server: {
+    watch: {
+      ignored: ['**/.pnpm-store/**'],
+    },
+  },
   optimizeDeps: {
     exclude: ['@electric-sql/pglite'],
   },

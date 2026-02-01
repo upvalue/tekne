@@ -262,6 +262,12 @@ export const useCodeMirror = (lineInfo: LineWithIdx) => {
             }
             delete draft.children[event.lineIdx].datumTimeSeconds
           }
+        } else {
+          // No data recorded — remove silently
+          if (globalTimer.lineIdx === event.lineIdx) {
+            globalTimer.stopTimer()
+          }
+          delete draft.children[event.lineIdx].datumTimeSeconds
         }
       } else {
         draft.children[event.lineIdx].datumTimeSeconds = 0
