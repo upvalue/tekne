@@ -409,7 +409,7 @@ export const TimerBadge = ({
 
               {/* Countdown Mode */}
               {globalTimer.mode === 'countdown' && (
-                <div className="space-y-6">
+                <form className="space-y-6" onSubmit={(e) => { e.preventDefault(); startTimer() }}>
                   <div className="text-center">
                     <div className="text-4xl font-mono mb-2">
                       {formatTimeDisplay(
@@ -446,7 +446,7 @@ export const TimerBadge = ({
                   <div className="flex gap-2 justify-center">
                     {!isThisTimerActive ? (
                       <Button
-                        onClick={startTimer}
+                        type="submit"
                         className="flex items-center gap-2"
                         disabled={isAnyTimerActive || parseTime(countdownInput) === null}
                       >
@@ -465,6 +465,7 @@ export const TimerBadge = ({
                       </Button>
                     )}
                     <Button
+                      type="button"
                       onClick={resetTimer}
                       outline
                       disabled={!isThisTimerActive}
@@ -472,12 +473,26 @@ export const TimerBadge = ({
                       Reset
                     </Button>
                   </div>
-                </div>
+                </form>
               )}
 
               {/* Manual Mode */}
               {globalTimer.mode === 'manual' && (
-                <div className="space-y-6">
+                <form className="space-y-6" onSubmit={(e) => {
+                  e.preventDefault()
+                  const duration = parseTime(timeInput)
+                  if (duration !== null) {
+                    setLine((line) => {
+                      if (!line) return;
+                      if (globalTimer.timeMode === 'additive') {
+                        line.datumTimeSeconds = (line.datumTimeSeconds || 0) + duration
+                      } else {
+                        line.datumTimeSeconds = duration
+                      }
+                    })
+                  }
+                  setOpen(false);
+                }}>
                   <div className="text-center">
                     <div className="text-2xl font-mono mb-2 text-gray-400">
                       Manual Entry
@@ -507,20 +522,7 @@ export const TimerBadge = ({
                     </div>
                     <div className="flex gap-2">
                       <Button
-                        onClick={() => {
-                          const duration = parseTime(timeInput)
-                          if (duration !== null) {
-                            setLine((line) => {
-                              if (!line) return;
-                              if (globalTimer.timeMode === 'additive') {
-                                line.datumTimeSeconds = (line.datumTimeSeconds || 0) + duration
-                              } else {
-                                line.datumTimeSeconds = duration
-                              }
-                            })
-                          }
-                          setOpen(false);
-                        }}
+                        type="submit"
                         disabled={parseTime(timeInput) === null}
                         color="sky"
                         className="flex-1"
@@ -529,7 +531,7 @@ export const TimerBadge = ({
                       </Button>
                     </div>
                   </div>
-                </div>
+                </form>
               )}
             </div>
           </div>
