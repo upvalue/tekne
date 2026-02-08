@@ -1,4 +1,4 @@
-import CopyLayout from '@/layouts/CopyLayout'
+import CopyLayout from '@/layout/CopyLayout'
 
 export default function NotFound() {
   return (

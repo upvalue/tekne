@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
-import CopyLayout from '@/layouts/CopyLayout'
+import CopyLayout from '@/layout/CopyLayout'
 
 export const Route = createFileRoute('/demo')({
   component: RouteComponent,

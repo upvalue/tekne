@@ -31,7 +31,6 @@ import { useAtom, useAtomValue, useStore } from 'jotai'
 import { setDetailTitle, setTimerActive } from '@/lib/title'
 import { formatTimeDisplay, renderTime } from '@/lib/time'
 import { trpc } from '@/trpc/client'
-import { useEventListener } from '@/hooks/useEventListener'
 import { EditorDialogContent } from '@/components/EditorDialogContent'
 import { noop } from 'lodash-es'
 import { TimerInfo } from './TimerInfo'
@@ -258,15 +257,6 @@ export const TimerBadge = ({
       globalTimer.stopTimer()
     }
   }, [isThisTimerActive, globalTimer])
-
-  useEventListener('beforeunload', (event: BeforeUnloadEvent) => {
-    console.log('unload gotten');
-    if (globalTimer.isActive) {
-      event.preventDefault()
-      event.returnValue = true;
-      'You have an active timer running. Are you sure you want to leave?'
-    }
-  })
 
   return (
     <Dialog
