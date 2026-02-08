@@ -7,6 +7,8 @@ import { trpcClient } from '@/trpc/client'
 import { noop } from 'lodash-es'
 import { produce } from 'immer'
 
+export const DEFAULT_COUNTDOWN_SECONDS = 30 * 60
+
 export const docAtom = withImmer(
   atom<ZDoc>({
     type: 'doc',
@@ -26,6 +28,10 @@ export const requestFocusLineAtom = atom({
  * The focused line (if any) will render it
  */
 export const commandPaletteOpenAtom = atom<boolean>(false)
+
+export const goToLineOpenAtom = atom<boolean>(false)
+
+export const showLineNumbersAtom = atom<boolean>(false)
 
 export type TimerMode = 'stopwatch' | 'countdown' | 'manual'
 
@@ -65,7 +71,7 @@ export const globalTimerAtom = atom<GlobalTimerState>({
   mode: 'stopwatch',
   timeMode: 'replacement',
   startTime: null,
-  targetDuration: 25 * 60,
+  targetDuration: DEFAULT_COUNTDOWN_SECONDS,
   tick: 0,
   stopTimer: noop,
   interval: null,

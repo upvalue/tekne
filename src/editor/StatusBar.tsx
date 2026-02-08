@@ -1,7 +1,7 @@
-import { useAtomValue, useSetAtom } from 'jotai'
+import { useAtomValue, useSetAtom, useAtom } from 'jotai'
 import { useEffect, useCallback, useRef, useMemo, useState } from 'react'
 import { docAtom, focusedLineAtom } from './state'
-import { errorMessageAtom, globalTimerAtom } from './state'
+import { errorMessageAtom, globalTimerAtom, goToLineOpenAtom, showLineNumbersAtom, requestFocusLineAtom } from './state'
 import { Button } from '@headlessui/react'
 import { X } from 'lucide-react'
 import { ExclamationTriangleIcon, StopIcon, ListBulletIcon, ClockIcon } from '@heroicons/react/16/solid'
@@ -40,6 +40,57 @@ const formatTimeDisplay = (seconds: number): string => {
   return `${minutes}:${secs.toString().padStart(2, '0')}`
 }
 
+const GoToLineInput = ({ totalLines, onClose }: { totalLines: number; onClose: () => void }) => {
+  const [value, setValue] = useState('')
+  const inputRef = useRef<HTMLInputElement>(null)
+  const setRequestFocusLine = useSetAtom(requestFocusLineAtom)
+  const setShowLineNumbers = useSetAtom(showLineNumbersAtom)
+
+  useEffect(() => {
+    inputRef.current?.focus()
+    setShowLineNumbers(true)
+    return () => setShowLineNumbers(false)
+  }, [setShowLineNumbers])
+
+  const handleSubmit = () => {
+    const num = parseInt(value, 10)
+    if (!isNaN(num) && num >= 1 && num <= totalLines) {
+      setRequestFocusLine({ lineIdx: num - 1, pos: 0 })
+    }
+    onClose()
+  }
+
+  return (
+    <div className="text-sm text-zinc-400 flex items-center gap-1">
+      <span>Go to:</span>
+      <input
+        ref={inputRef}
+        type="text"
+        inputMode="numeric"
+        value={value}
+        onChange={(e) => {
+          const filtered = e.target.value.replace(/[^0-9]/g, '')
+          setValue(filtered)
+        }}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault()
+            handleSubmit()
+          } else if (e.key === 'Escape') {
+            e.preventDefault()
+            onClose()
+          }
+        }}
+        onBlur={onClose}
+        className="w-12 bg-zinc-600 text-zinc-200 text-sm px-1 outline-none font-mono"
+        placeholder={`1-${totalLines}`}
+      />
+      <span>/ {totalLines}</span>
+      <ListBulletIcon className="w-4 h-4" />
+    </div>
+  )
+}
+
 export const StatusBar = ({ isLoading }: { isLoading: boolean }) => {
   const doc = useAtomValue(docAtom)
   const errorMessage = useAtomValue(errorMessageAtom)
@@ -48,6 +99,20 @@ export const StatusBar = ({ isLoading }: { isLoading: boolean }) => {
   const { stopTimer } = globalTimer
   const execHook = trpc.execHook.useMutation()
   const focusedLine = useAtomValue(focusedLineAtom);
+  const [goToLineOpen, setGoToLineOpen] = useAtom(goToLineOpenAtom)
+
+  // Listen for Ctrl+G to toggle go-to-line input
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.ctrlKey && e.key === 'g') {
+        e.preventDefault()
+        setGoToLineOpen((open) => !open)
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [setGoToLineOpen])
 
   const totalDocTime = useMemo(() => {
     return doc.children.reduce((acc, line) => acc + (line.datumTimeSeconds || 0), 0)
@@ -118,13 +183,20 @@ export const StatusBar = ({ isLoading }: { isLoading: boolean }) => {
       </div>
       <div className="flex items-center gap-4">
 
-        {!isLoading && doc.children.length > 1 &&
-          <div className="text-sm text-zinc-400 flex items-center">
-            {focusedLine !== null ? `${focusedLine + 1}/` : <span>&nbsp;&nbsp;</span>}{doc.children.length}
-            &nbsp;
-            <ListBulletIcon className="w-4 h-4" />
-          </div>
-        }
+        {!isLoading && doc.children.length > 1 && (
+          goToLineOpen ? (
+            <GoToLineInput
+              totalLines={doc.children.length}
+              onClose={() => setGoToLineOpen(false)}
+            />
+          ) : (
+            <div className="text-sm text-zinc-400 flex items-center">
+              {focusedLine !== null ? `${focusedLine + 1}/` : <span>&nbsp;&nbsp;</span>}{doc.children.length}
+              &nbsp;
+              <ListBulletIcon className="w-4 h-4" />
+            </div>
+          )
+        )}
         {totalDocTime > 0 && (
           <div className="text-sm text-zinc-400 flex items-center gap-2">
             {formatTimeDisplay(totalDocTime)}

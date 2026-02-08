@@ -46,6 +46,13 @@ export const keybindings = {
     displayKey: '⌘ .',
     type: 'codemirror' as const,
   },
+  goToLine: {
+    key: 'ctrl+g',
+    name: 'go-to-line',
+    description: 'Go to line number',
+    displayKey: 'Ctrl G',
+    type: 'react' as const,
+  },
 } as const satisfies Record<string, Keybinding>
 
 /** Get all keybindings as an array */

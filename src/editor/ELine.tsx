@@ -1,5 +1,5 @@
 import { useAtomValue, useSetAtom } from 'jotai'
-import { docAtom, focusedLineAtom, commandPaletteOpenAtom } from './state'
+import { docAtom, focusedLineAtom, commandPaletteOpenAtom, showLineNumbersAtom } from './state'
 import { Checkbox } from '@/components/vendor/Checkbox'
 import { Circle, CircleDot, Pin } from 'lucide-react'
 import { useCodeMirror, type LineWithIdx } from './line-editor'
@@ -56,14 +56,18 @@ const LineIcon = ({ line, collapseState }: { line: ZLine, collapseState: Collaps
   return <Circle width={8} height={8} />
 }
 
-export const Gutter = ({ timestamp }: { timestamp: GutterTimestamp | null }) => {
+export const Gutter = ({ timestamp, lineIdx }: { timestamp: GutterTimestamp | null; lineIdx: number }) => {
   const [isHovered, setIsHovered] = useState(false)
+  const showLineNumbers = useAtomValue(showLineNumbersAtom)
   return <div className="ELine-gutter text-zinc-600 text-sm flex-shrink-0 justify-end flex font-mono"
     onMouseEnter={() => setIsHovered(true)}
     onMouseLeave={() => setIsHovered(false)}
   >
     &nbsp;
-    {timestamp && (isHovered ? timestamp.fullString : timestamp.defaultString)}
+    {showLineNumbers
+      ? <span className="text-zinc-500">{lineIdx + 1}</span>
+      : timestamp && (isHovered ? timestamp.fullString : timestamp.defaultString)
+    }
   </div>
 }
 
@@ -109,7 +113,7 @@ export const ELine = (lineInfo: ELineProps) => {
         getColorClass(line.color)
       )}
     >
-      <Gutter timestamp={timestamp} />
+      <Gutter timestamp={timestamp} lineIdx={lineInfo.lineIdx} />
       <div
         style={{
           flex: 'none',

@@ -18,6 +18,7 @@ import {
   docAtom,
   setDocLineDirect,
   timerDialogRequestAtom,
+  DEFAULT_COUNTDOWN_SECONDS,
 } from './state'
 import { Input } from '@/components/vendor/Input'
 import parseDuration from 'parse-duration'
@@ -89,7 +90,7 @@ const stopTimer = (store: ReturnType<typeof useStore>, execHook: ReturnType<type
       mode: 'stopwatch',
       timeMode: 'replacement',
       startTime: null,
-      targetDuration: 25 * 60,
+      targetDuration: DEFAULT_COUNTDOWN_SECONDS,
       tick: 0,
       stopTimer: noop,
       interval: null,
@@ -123,7 +124,7 @@ export const TimerBadge = ({
   const isAnyTimerActive = globalTimer.isActive
 
   const [timeInput, setTimeInput] = React.useState(renderTime(time))
-  const [countdownInput, setCountdownInput] = React.useState('25m')
+  const [countdownInput, setCountdownInput] = React.useState('30m')
   const [timerDialogRequest, setTimerDialogRequest] = useAtom(timerDialogRequestAtom)
 
   // Handle programmatic dialog open requests (from command palette)
@@ -313,7 +314,7 @@ export const TimerBadge = ({
                       setGlobalTimer((prev) => ({ ...prev, mode }))
                       // Reset countdown input when switching to countdown mode
                       if (mode === 'countdown') {
-                        setCountdownInput('25m')
+                        setCountdownInput('30m')
                       }
                     }}
                     className="capitalize text-xs px-3 py-1"
@@ -427,6 +428,7 @@ export const TimerBadge = ({
                         Set Duration:
                       </label>
                       <Input
+                        autoFocus
                         type="text"
                         value={countdownInput}
                         onChange={(e) => setCountdownInput(e.target.value)}
@@ -491,6 +493,7 @@ export const TimerBadge = ({
                         Enter Time:
                       </label>
                       <Input
+                        autoFocus
                         type="text"
                         value={timeInput}
                         onChange={(e) => setTimeInput(e.target.value)}
