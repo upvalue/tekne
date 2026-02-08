@@ -48,7 +48,7 @@ export const errorMessageAtom = atom<string | null>(null)
 
 type GlobalTimerState = {
   isActive: boolean
-  lineIdx: number | null
+  lineTimeCreated: string | null
   lineContent: string | null
   mode: TimerMode
   timeMode: 'additive' | 'replacement'
@@ -66,7 +66,7 @@ type GlobalTimerState = {
  */
 export const globalTimerAtom = atom<GlobalTimerState>({
   isActive: false,
-  lineIdx: null,
+  lineTimeCreated: null,
   lineContent: null,
   mode: 'stopwatch',
   timeMode: 'replacement',
@@ -125,4 +125,18 @@ export const useDocLine = (
   )
 
   return [doc.children[lineIdx], setLine]
+}
+
+/**
+ * Find a line in the document by its timeCreated value.
+ * Used by the timer system to resolve a stable line identity to a current index.
+ */
+export const findLineByTimeCreated = (
+  doc: ZDoc,
+  timeCreated: string | null
+): { line: ZLine; lineIdx: number } | null => {
+  if (timeCreated === null) return null
+  const lineIdx = doc.children.findIndex((l) => l.timeCreated === timeCreated)
+  if (lineIdx === -1) return null
+  return { line: doc.children[lineIdx], lineIdx }
 }

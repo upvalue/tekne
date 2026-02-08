@@ -19,6 +19,7 @@ import {
   setDocLineDirect,
   timerDialogRequestAtom,
   DEFAULT_COUNTDOWN_SECONDS,
+  findLineByTimeCreated,
 } from './state'
 import { Input } from '@/components/vendor/Input'
 import parseDuration from 'parse-duration'
@@ -37,55 +38,61 @@ import { TimerInfo } from './TimerInfo'
 
 const parseTime = (time: string) => parseDuration(time, 's')
 
-const stopTimer = (store: ReturnType<typeof useStore>, execHook: ReturnType<typeof trpc.execHook.useMutation>, lineIdx: number) => {
+const stopTimer = (store: ReturnType<typeof useStore>, execHook: ReturnType<typeof trpc.execHook.useMutation>) => {
   return () => {
     const globalTimer = store.get(globalTimerAtom)
     const doc = store.get(docAtom);
-    const line = doc.children[lineIdx];
 
     if (globalTimer.interval) {
       clearInterval(globalTimer.interval)
     }
 
-    execHook.mutate({
-      hook: 'timer-stop',
-      argument: {
-        doc,
-        line: line.mdContent,
-        lineIdx,
-      },
-    })
-
     setDetailTitle(null)
     setTimerActive(false)
 
-    if (globalTimer.mode === 'stopwatch') {
-      const finalElapsed = globalTimer.startTime
-        ? Math.floor((Date.now() - globalTimer.startTime) / 1000)
-        : 0
-      setDocLineDirect(store, lineIdx, (line) => {
-        if (globalTimer.timeMode === 'additive') {
-          line.datumTimeSeconds = (line.datumTimeSeconds || 0) + finalElapsed
-        } else {
-          line.datumTimeSeconds = finalElapsed
-        }
+    // Resolve the timer's line by timeCreated at call time
+    const found = findLineByTimeCreated(doc, globalTimer.lineTimeCreated)
+
+    if (found) {
+      const { lineIdx } = found
+
+      execHook.mutate({
+        hook: 'timer-stop',
+        argument: {
+          doc,
+          line: found.line.mdContent,
+          lineIdx,
+        },
       })
-    } else if (globalTimer.mode === 'countdown') {
-      const timeWorked = globalTimer.startTime
-        ? Math.floor((Date.now() - globalTimer.startTime) / 1000)
-        : 0
-      setDocLineDirect(store, lineIdx, (line) => {
-        if (globalTimer.timeMode === 'additive') {
-          line.datumTimeSeconds = (line.datumTimeSeconds || 0) + Math.min(timeWorked, globalTimer.targetDuration)
-        } else {
-          line.datumTimeSeconds = Math.min(timeWorked, globalTimer.targetDuration)
-        }
-      })
+
+      if (globalTimer.mode === 'stopwatch') {
+        const finalElapsed = globalTimer.startTime
+          ? Math.floor((Date.now() - globalTimer.startTime) / 1000)
+          : 0
+        setDocLineDirect(store, lineIdx, (line) => {
+          if (globalTimer.timeMode === 'additive') {
+            line.datumTimeSeconds = (line.datumTimeSeconds || 0) + finalElapsed
+          } else {
+            line.datumTimeSeconds = finalElapsed
+          }
+        })
+      } else if (globalTimer.mode === 'countdown') {
+        const timeWorked = globalTimer.startTime
+          ? Math.floor((Date.now() - globalTimer.startTime) / 1000)
+          : 0
+        setDocLineDirect(store, lineIdx, (line) => {
+          if (globalTimer.timeMode === 'additive') {
+            line.datumTimeSeconds = (line.datumTimeSeconds || 0) + Math.min(timeWorked, globalTimer.targetDuration)
+          } else {
+            line.datumTimeSeconds = Math.min(timeWorked, globalTimer.targetDuration)
+          }
+        })
+      }
     }
 
     store.set(globalTimerAtom, {
       isActive: false,
-      lineIdx: null,
+      lineTimeCreated: null,
       lineContent: null,
       mode: 'stopwatch',
       timeMode: 'replacement',
@@ -120,7 +127,7 @@ export const TimerBadge = ({
   )
 
   const isThisTimerActive =
-    globalTimer.isActive && globalTimer.lineIdx === lineInfo.lineIdx
+    globalTimer.isActive && globalTimer.lineTimeCreated === lineInfo.line.timeCreated
   const isAnyTimerActive = globalTimer.isActive
 
   const [timeInput, setTimeInput] = React.useState(renderTime(time))
@@ -204,14 +211,14 @@ export const TimerBadge = ({
 
     setGlobalTimer({
       isActive: true,
-      lineIdx: lineInfo.lineIdx,
+      lineTimeCreated: lineInfo.line.timeCreated,
       lineContent: lineContent,
       mode,
       timeMode: globalTimer.timeMode,
       startTime: Date.now(),
       targetDuration,
       tick: 0,
-      stopTimer: stopTimer(store, execHook, lineInfo.lineIdx),
+      stopTimer: stopTimer(store, execHook),
       interval,
     })
 
@@ -230,12 +237,12 @@ export const TimerBadge = ({
     lineContent,
     execHook,
     lineInfo.line.mdContent,
+    lineInfo.line.timeCreated,
     globalTimer,
     setGlobalTimer,
     store,
     isAnyTimerActive,
     isThisTimerActive,
-    lineInfo.lineIdx,
     sendNotification,
     countdownInput,
     setLine,

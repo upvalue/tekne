@@ -1,7 +1,7 @@
 import { useAtomValue, useSetAtom, useAtom } from 'jotai'
 import { useEffect, useCallback, useRef, useMemo, useState } from 'react'
 import { docAtom, focusedLineAtom } from './state'
-import { errorMessageAtom, globalTimerAtom, goToLineOpenAtom, showLineNumbersAtom, requestFocusLineAtom } from './state'
+import { errorMessageAtom, globalTimerAtom, goToLineOpenAtom, showLineNumbersAtom, requestFocusLineAtom, findLineByTimeCreated } from './state'
 import { Button } from '@headlessui/react'
 import { X } from 'lucide-react'
 import { ExclamationTriangleIcon, StopIcon, ListBulletIcon, ClockIcon } from '@heroicons/react/16/solid'
@@ -119,11 +119,12 @@ export const StatusBar = ({ isLoading }: { isLoading: boolean }) => {
   }, [doc.children])
 
   const currentLineBaseTime = useMemo(() => {
-    if (globalTimer.isActive && globalTimer.lineIdx !== null) {
-      return doc.children[globalTimer.lineIdx]?.datumTimeSeconds || 0
+    if (globalTimer.isActive && globalTimer.lineTimeCreated !== null) {
+      const found = findLineByTimeCreated(doc, globalTimer.lineTimeCreated)
+      return found?.line.datumTimeSeconds || 0
     }
     return 0
-  }, [globalTimer.isActive, globalTimer.lineIdx, doc.children])
+  }, [globalTimer.isActive, globalTimer.lineTimeCreated, doc])
 
   useEffect(() => {
     if (errorMessage) {

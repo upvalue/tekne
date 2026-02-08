@@ -252,19 +252,21 @@ export const useCodeMirror = (lineInfo: LineWithIdx) => {
   // emitter. Could probably be moved one level up.
   useLineEvent('lineTimerToggle', lineInfo.lineIdx, (event) => {
     const globalTimer = store.get(globalTimerAtom)
+    const doc = store.get(docAtom)
+    const eventLineTimeCreated = doc.children[event.lineIdx]?.timeCreated
     setDoc((draft) => {
       const datumTimeSeconds = draft.children[event.lineIdx].datumTimeSeconds
       if (datumTimeSeconds !== undefined) {
         if (datumTimeSeconds > 0) {
           if (confirm('Timer has data, do you want to remove it?')) {
-            if (globalTimer.lineIdx === event.lineIdx) {
+            if (globalTimer.lineTimeCreated === eventLineTimeCreated) {
               globalTimer.stopTimer()
             }
             delete draft.children[event.lineIdx].datumTimeSeconds
           }
         } else {
           // No data recorded — remove silently
-          if (globalTimer.lineIdx === event.lineIdx) {
+          if (globalTimer.lineTimeCreated === eventLineTimeCreated) {
             globalTimer.stopTimer()
           }
           delete draft.children[event.lineIdx].datumTimeSeconds
