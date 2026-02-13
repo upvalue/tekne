@@ -2,7 +2,8 @@ import { lineMake } from '@/docs/schema'
 
 export const makeTutorial = () => {
   let i = 0
-  return [
+  const now = Date.now()
+  const lines = [
     lineMake(i, '# Welcome to Tekne!'),
     lineMake(++i, 'Try clicking on this line to edit it.'),
     lineMake(--i, '# Editing basics'),
@@ -84,4 +85,8 @@ export const makeTutorial = () => {
       'A good place to start is by opening the command palette and typing daily to create a daily note'
     ),
   ]
+  return lines.map((line, idx) => {
+    const ts = new Date(now + idx).toISOString()
+    return { ...line, timeCreated: ts, timeUpdated: ts }
+  })
 }

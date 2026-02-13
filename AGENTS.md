@@ -20,9 +20,9 @@ If there are any tests present for a specific file, you can run them with
 
 > pnpm run test filename
 
-Once this is done, use the Playwright skill to interact with the running
-application. Use browser snapshots to confirm that the page content has changed
-in a way that reflects the change being made.
+Once this is done, use the Playwright skill in .claude/skills to interact with
+the running application. Use browser snapshots to confirm that the page content
+has changed in a way that reflects the change being made.
 
 Prefer to use snapshots to observe changes, and only use the screenshot tool to
 verify styling changes.

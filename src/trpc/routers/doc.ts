@@ -20,11 +20,7 @@ import {
   recomputeAllDocumentData,
 } from '@/server/lib/docs'
 import { produce } from 'immer'
-import {
-  jsonifyMdTree,
-  TEKNE_MD_PARSER,
-  visitMdTree,
-} from '@/editor/parser'
+import { jsonifyMdTree, TEKNE_MD_PARSER, visitMdTree } from '@/editor/parser'
 import type { SyntaxNode } from '@lezer/common'
 import MagicString from 'magic-string'
 import { TRPCError } from '@trpc/server'
@@ -126,13 +122,13 @@ const proposeRename = async (
  * Each child gets fresh timestamps.
  */
 const createFromTemplate = (doc: ZDoc, template: ZDoc): ZDoc => {
+  const now = Date.now()
   return {
     ...doc,
-    children: template.children.map((c) => ({
-      ...c,
-      timeCreated: new Date().toISOString(),
-      timeUpdated: new Date().toISOString(),
-    })),
+    children: template.children.map((c, i) => {
+      const ts = new Date(now + i).toISOString()
+      return { ...c, timeCreated: ts, timeUpdated: ts }
+    }),
   }
 }
 
