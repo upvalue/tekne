@@ -3,6 +3,7 @@ import { useEffect } from 'react'
 import { trpc } from '@/trpc/client'
 import { Toaster } from '@/components/vendor/Sonner'
 import { DocumentSearch } from '@/controls/DocumentSearch'
+import { TemplateDialog } from '@/controls/TemplateDialog'
 import type { PanelTab } from '@/panel/state'
 
 export type RouterAppContext = {
@@ -30,6 +31,7 @@ const RootComponent = () => {
     <DocumentSearch>
       <Outlet />
       <Toaster />
+      <TemplateDialog />
     </DocumentSearch>
   )
 }

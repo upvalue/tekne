@@ -19,6 +19,7 @@ import {
   processDocumentForData,
   recomputeAllDocumentData,
 } from '@/server/lib/docs'
+import { applyTemplateDirectives } from '@/docs/template-directives'
 import { produce } from 'immer'
 import { jsonifyMdTree, TEKNE_MD_PARSER, visitMdTree } from '@/editor/parser'
 import type { SyntaxNode } from '@lezer/common'
@@ -121,15 +122,23 @@ const proposeRename = async (
  * Creates a new document using a template's children structure.
  * Each child gets fresh timestamps.
  */
-const createFromTemplate = (doc: ZDoc, template: ZDoc): ZDoc => {
+const createFromTemplate = (
+  doc: ZDoc,
+  template: ZDoc,
+  targetDate?: Date
+): ZDoc => {
   const now = Date.now()
-  return {
-    ...doc,
-    children: template.children.map((c, i) => {
-      const ts = new Date(now + i).toISOString()
-      return { ...c, timeCreated: ts, timeUpdated: ts }
-    }),
+  let children = template.children.map((c, i) => {
+    const ts = new Date(now + i).toISOString()
+    return { ...c, timeCreated: ts, timeUpdated: ts }
+  })
+  if (targetDate) {
+    children = applyTemplateDirectives(children, targetDate)
   }
+  if (children.length === 0) {
+    children = [lineMake(0, '')]
+  }
+  return { ...doc, children }
 }
 
 const createNewDocument = async (
@@ -153,7 +162,11 @@ const createNewDocument = async (
 
     if (dailyTemplate) {
       const migratedBody = docMigrator(dailyTemplate.title, dailyTemplate.body)
-      newDoc = createFromTemplate(newDoc, migratedBody)
+      newDoc = createFromTemplate(
+        newDoc,
+        migratedBody,
+        new Date(name + 'T00:00:00')
+      )
     } else {
       console.log('$Daily template not found, using default content')
     }
@@ -464,6 +477,72 @@ export const docRouter = t.router({
 
       // Delete document (note_data will cascade delete automatically)
       await db.deleteFrom('notes').where('title', '=', name).execute()
+
+      return { success: true, name }
+    }),
+
+  listTemplates: t.procedure.query(async ({ ctx: { db } }) => {
+    const templates = await db
+      .selectFrom('notes')
+      .select(['title'])
+      .where('title', 'like', '$%')
+      .execute()
+    return templates.map((t) => t.title)
+  }),
+
+  createDocFromTemplate: t.procedure
+    .input(
+      z.object({
+        name: documentNameSchema,
+        templateName: z.string(),
+      })
+    )
+    .mutation(async ({ input, ctx: { db } }) => {
+      const { name, templateName } = input
+
+      // Check if document already exists
+      const existingDoc = await db
+        .selectFrom('notes')
+        .select(['title'])
+        .where('title', '=', name)
+        .executeTakeFirst()
+
+      if (existingDoc) {
+        throw new TRPCError({
+          code: 'CONFLICT',
+          message: `Document "${name}" already exists`,
+        })
+      }
+
+      // Load template
+      const template = await db
+        .selectFrom('notes')
+        .selectAll()
+        .where('title', '=', templateName)
+        .executeTakeFirst()
+
+      if (!template) {
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: `Template "${templateName}" not found`,
+        })
+      }
+
+      const migratedBody = docMigrator(template.title, template.body)
+
+      let newDoc: ZDoc = {
+        type: 'doc',
+        schemaVersion: CURRENT_SCHEMA_VERSION,
+        children: [lineMake(0, '')],
+      }
+
+      const targetDate = isDailyDocument(name)
+        ? new Date(name + 'T00:00:00')
+        : undefined
+
+      newDoc = createFromTemplate(newDoc, migratedBody, targetDate)
+
+      await upsertNote(db, name, newDoc)
 
       return { success: true, name }
     }),

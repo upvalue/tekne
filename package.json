@@ -5,8 +5,8 @@
   "scripts": {
     "check": "tsc --noEmit && eslint . && prettier --check .",
     "types": "tsc --noEmit",
-    "dev:client-only": "vite --port 3000",
-    "dev:client-for-server": "TEKNE_TRPC_URL=http://localhost:3005/api/trpc vite --port 3000",
+    "dev:client-only": "__VITE_ADDITIONAL_SERVER_ALLOWED_HOSTS=dev-tekne vite --port 3000 --host 0.0.0.0",
+    "dev:client-for-server": "__VITE_ADDITIONAL_SERVER_ALLOWED_HOSTS=dev-tekne TEKNE_TRPC_URL=http://localhost:3005/api/trpc vite --port 3000 --host 0.0.0.0",
     "dev:client-and-server": "concurrently \"pnpm run dev:client-for-server\" \"pnpm run server:dev\"",
     "dev:all": "concurrently \"pnpm run dev:client-for-server\" \"pnpm run db\" \"pnpm run server:dev\"",
     "db": "docker compose -f docker-compose.yml up",

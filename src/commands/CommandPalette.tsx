@@ -110,6 +110,15 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
         return
       }
 
+      // In search mode, let typing keys reach the input field
+      if (searchMode && !pendingCommand) {
+        const isTypingKey = e.key.length === 1 && !e.altKey
+        const isEditKey = e.key === 'Backspace' || e.key === 'Delete'
+        if (isTypingKey || isEditKey) {
+          return
+        }
+      }
+
       // Prevent all other keyboard events from reaching the editor
       e.preventDefault()
       e.stopPropagation()

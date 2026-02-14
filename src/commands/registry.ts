@@ -240,6 +240,38 @@ const navigationCommands: Command[] = [
       // Parent command doesn't execute directly when subcommands exist
     },
   },
+  {
+    id: 'delete-doc',
+    name: 'Delete document',
+    description: 'Delete the current document',
+    shortcut: 'x',
+    displayShortcut: 'X',
+    keywords: ['delete', 'remove', 'destroy'],
+    requiresEditor: false,
+    execute: async () => {
+      const title = getDocTitle()
+      if (!title) return
+      if (!confirm(`Delete "${decodeURIComponent(title)}"?`)) return
+      try {
+        await trpcClient.doc.deleteDoc.mutate({ name: decodeURIComponent(title) })
+        window.location.href = '/'
+      } catch (error) {
+        console.error('Failed to delete document:', error)
+      }
+    },
+  },
+  {
+    id: 'new-from-template',
+    name: 'New from template',
+    description: 'Create a new document from a template',
+    shortcut: 'n',
+    displayShortcut: 'N',
+    keywords: ['template', 'new', 'create'],
+    requiresEditor: false,
+    execute: () => {
+      window.dispatchEvent(new CustomEvent('tekne:new-from-template'))
+    },
+  },
 ]
 
 // ============================================================================
