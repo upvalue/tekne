@@ -33,13 +33,6 @@ export const goToLineOpenAtom = atom<boolean>(false)
 
 export const showLineNumbersAtom = atom<boolean>(false)
 
-export const selectedLinesAtom = atom<Set<number>>(new Set<number>())
-
-export const dragStateAtom = atom<{
-  draggedIndices: number[]
-  dropTargetIdx: number | null
-} | null>(null)
-
 export type TimerMode = 'stopwatch' | 'countdown' | 'manual'
 
 /**
