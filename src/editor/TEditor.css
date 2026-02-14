@@ -22,7 +22,7 @@
 
 .ELine-gutter {
   width: 150px;
-  @apply pr-2;
+  @apply pr-1;
 }
 
 .ELine-focused {
@@ -135,4 +135,62 @@
 
 .editor-line-green {
   background-color: color-mix(in srgb, var(--color-green-500) 10%, transparent);
+}
+
+/* Drag-and-drop line reordering */
+
+.ELine-selected {
+  background-color: color-mix(in srgb, var(--color-sky-400) 8%, transparent);
+}
+
+.ELine-dragging {
+  opacity: 0.4;
+}
+
+.ELine-drag-handle {
+  opacity: 0;
+  cursor: grab;
+  display: flex;
+  align-items: center;
+  color: var(--color-zinc-500);
+  transition: opacity 0.15s ease;
+}
+
+.ELine-gutter:hover .ELine-drag-handle {
+  opacity: 1;
+}
+
+.ELine-drag-handle:active {
+  cursor: grabbing;
+}
+
+.ELine-gutter-content {
+  flex: 1;
+  text-align: right;
+}
+
+.ELine-timestamp-full {
+  display: none;
+}
+
+.ELine-gutter:hover .ELine-timestamp-default {
+  display: none;
+}
+
+.ELine-gutter:hover .ELine-timestamp-full {
+  display: inline;
+}
+
+.ELine-gutter-selected {
+  color: var(--color-sky-400);
+}
+
+.ELine-drag-overlay-badge {
+  background-color: var(--color-sky-600);
+  color: white;
+  padding: 4px 12px;
+  border-radius: 4px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  white-space: nowrap;
 }

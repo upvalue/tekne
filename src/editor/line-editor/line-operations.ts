@@ -36,7 +36,7 @@ export const toggleCollapse = (
 
 export const makeKeymap = (
   store: ReturnType<typeof useStore>,
-  lineIdx: number
+  getLineIdx: () => number
 ) => {
   let doc = store.get(docAtom)
   const unsubscribe = store.sub(docAtom, () => {
@@ -48,6 +48,7 @@ export const makeKeymap = (
   const setDoc = (updater: (draft: ZDoc) => void) => store.set(docAtom, updater)
 
   const deleteLineIfEmpty = (view: EditorView) => {
+    const lineIdx = getLineIdx()
     const { state } = view
     const { selection } = state
     const { ranges } = selection
@@ -99,6 +100,7 @@ export const makeKeymap = (
     {
       key: 'Tab',
       run: () => {
+        const lineIdx = getLineIdx()
         if (lineIdx === 0) return false
 
         if (
@@ -118,6 +120,7 @@ export const makeKeymap = (
     {
       key: 'Enter',
       run: (view) => {
+        const lineIdx = getLineIdx()
         console.log('Enter key pressed')
         const { state } = view
         const { selection } = state
@@ -187,6 +190,7 @@ export const makeKeymap = (
     {
       key: 'Shift-Tab',
       run: () => {
+        const lineIdx = getLineIdx()
         if (doc.children[lineIdx].indent === 0) {
           return false
         }
@@ -203,6 +207,7 @@ export const makeKeymap = (
     {
       key: 'ArrowUp',
       run: (view) => {
+        const lineIdx = getLineIdx()
         const cursorPos = view.state.selection.main.head
 
         if (lineIdx === 0) return false
@@ -221,6 +226,7 @@ export const makeKeymap = (
     {
       key: 'ArrowDown',
       run: (view) => {
+        const lineIdx = getLineIdx()
         const cursorPos = view.state.selection.main.head
 
         if (lineIdx >= doc.children.length - 1) return false
@@ -241,7 +247,7 @@ export const makeKeymap = (
     },
     {
       key: keybindings.toggleCollapse.key,
-      run: (view) => toggleCollapse(view, store, lineIdx),
+      run: (view) => toggleCollapse(view, store, getLineIdx()),
     },
     {
       key: 'Alt-Backspace',

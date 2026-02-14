@@ -80,11 +80,17 @@ export const useCodeMirror = (lineInfo: LineWithIdx) => {
   const setFocusedLine = useSetAtom(focusedLineAtom)
   const store = useStore()
 
+  // Mutable ref so CodeMirror closures always read the current lineIdx,
+  // even after drag-and-drop reordering changes the index without remounting.
+  const lineIdxRef = useRef(lineInfo.lineIdx)
+  lineIdxRef.current = lineInfo.lineIdx
+  const getLineIdx = () => lineIdxRef.current
+
   //
   const makeEditor = () => {
     const { keymap: customKeymap, cleanup: cleanupKeymap } = makeKeymap(
       store,
-      lineInfo.lineIdx
+      getLineIdx
     )
 
     const updateListener = EditorView.updateListener.of((update) => {
@@ -94,20 +100,20 @@ export const useCodeMirror = (lineInfo: LineWithIdx) => {
 
       console.log(
         'Line',
-        lineInfo.lineIdx,
+        getLineIdx(),
         'content updated',
         update.state.doc.toString()
       )
       setDoc((draft) => {
-        draft.children[lineInfo.lineIdx].mdContent = update.state.doc.toString()
-        draft.children[lineInfo.lineIdx].timeUpdated = new Date().toISOString()
+        draft.children[getLineIdx()].mdContent = update.state.doc.toString()
+        draft.children[getLineIdx()].timeUpdated = new Date().toISOString()
       })
     })
 
     const focusListener = EditorView.updateListener.of((update) => {
       if (!update.focusChanged) return
       if (update.view.hasFocus) {
-        setFocusedLine(lineInfo.lineIdx)
+        setFocusedLine(getLineIdx())
         // state.update({annotations: isActive.of(true) });
       } else {
         // state.update({annotations: isActive.of(false)});
@@ -118,26 +124,28 @@ export const useCodeMirror = (lineInfo: LineWithIdx) => {
     // certain circumstances
     const placeholderPlugin = placeholder(
       () => {
-        const line = store.get(docAtom).children[lineInfo.lineIdx]
+        const idx = getLineIdx()
+        const line = store.get(docAtom).children[idx]
         if (!line) return ''
-        if (store.get(docAtom).children[lineInfo.lineIdx].collapsed)
+        if (line.collapsed)
           return ' + collasped lines'
         return 'The world is your canvas'
       },
       (view) => {
         // If line is collapsed, we show a placeholder indicating collapsed line details
         const doc = store.get(docAtom)
+        const idx = getLineIdx()
 
-        if (!doc || !doc.children || !doc.children[lineInfo.lineIdx])
+        if (!doc || !doc.children || !doc.children[idx])
           return false
-        if (doc.children[lineInfo.lineIdx].collapsed) return true
+        if (doc.children[idx].collapsed) return true
 
         // Don't show placeholder if:
         // There's any content on the line
         if (view.state.doc.length > 0) return false
 
         // This isn't the first line of the doc
-        if (lineInfo.lineIdx !== 0) return false
+        if (idx !== 0) return false
 
         // There's more than one line in the doc
         if (doc.children.length > 1) return false
@@ -158,7 +166,7 @@ export const useCodeMirror = (lineInfo: LineWithIdx) => {
       placeholderPlugin,
       autocompletion({
         override: [
-          slashCommandsPlugin(lineInfo.lineIdx),
+          slashCommandsPlugin(getLineIdx),
           tagCompletionPlugin(store),
         ],
       }),

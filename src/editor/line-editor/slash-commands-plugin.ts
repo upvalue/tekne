@@ -4,7 +4,7 @@ import { allCommands } from '@/commands/registry'
 
 const SLASH_COMMAND_REGEX = /\/\w*/
 
-export const slashCommandsPlugin = (lineIdx: number) => {
+export const slashCommandsPlugin = (getLineIdx: () => number) => {
   return (context: CompletionContext) => {
     const word = context.matchBefore(SLASH_COMMAND_REGEX)
     if (!word) return null
@@ -34,7 +34,7 @@ export const slashCommandsPlugin = (lineIdx: number) => {
       ) => {
         // Execute command with editor context
         cmd.execute({
-          lineIdx,
+          lineIdx: getLineIdx(),
           view,
         })
 

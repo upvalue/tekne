@@ -1,17 +1,19 @@
 import { useAtomValue, useSetAtom } from 'jotai'
-import { docAtom, focusedLineAtom, commandPaletteOpenAtom, showLineNumbersAtom } from './state'
+import { docAtom, focusedLineAtom, commandPaletteOpenAtom, showLineNumbersAtom, selectedLinesAtom } from './state'
 import { Checkbox } from '@/components/vendor/Checkbox'
-import { Circle, CircleDot, Pin } from 'lucide-react'
+import { Circle, CircleDot, GripVertical, Pin } from 'lucide-react'
 import { useCodeMirror, type LineWithIdx } from './line-editor'
 import { TimerBadge } from './TimerBadge'
 import { cn } from '@/lib/utils'
 import type { CollapseState } from '@/docs/collapse'
 import type { ZLine } from '@/docs/schema';
 import type { GutterTimestamp } from '@/docs/gutters'
-import { useState } from 'react'
+import { useCallback } from 'react'
 import { CommandPalette } from '@/commands/CommandPalette'
+import { useSortable } from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 
-type ELineProps = LineWithIdx & {
+export type ELineProps = LineWithIdx & {
   timestamp: GutterTimestamp | null
   collapseState: CollapseState
 }
@@ -56,18 +58,71 @@ const LineIcon = ({ line, collapseState }: { line: ZLine, collapseState: Collaps
   return <Circle width={8} height={8} />
 }
 
-export const Gutter = ({ timestamp, lineIdx }: { timestamp: GutterTimestamp | null; lineIdx: number }) => {
-  const [isHovered, setIsHovered] = useState(false)
+export const Gutter = ({
+  timestamp,
+  lineIdx,
+  dragListeners,
+  dragAttributes,
+  setActivatorNodeRef,
+}: {
+  timestamp: GutterTimestamp | null
+  lineIdx: number
+  dragListeners?: Record<string, Function>
+  dragAttributes?: Record<string, any>
+  setActivatorNodeRef?: (el: HTMLElement | null) => void
+}) => {
   const showLineNumbers = useAtomValue(showLineNumbersAtom)
-  return <div className="ELine-gutter text-zinc-600 text-sm flex-shrink-0 justify-end flex font-mono"
-    onMouseEnter={() => setIsHovered(true)}
-    onMouseLeave={() => setIsHovered(false)}
-  >
-    &nbsp;
-    {showLineNumbers
-      ? <span className="text-zinc-500">{lineIdx + 1}</span>
-      : timestamp && (isHovered ? timestamp.fullString : timestamp.defaultString)
+  const setSelectedLines = useSetAtom(selectedLinesAtom)
+  const selectedLines = useAtomValue(selectedLinesAtom)
+  const isSelected = selectedLines.has(lineIdx)
+
+  const handleGutterClick = useCallback((e: React.MouseEvent) => {
+    if (e.shiftKey) {
+      setSelectedLines((prev: Set<number>) => {
+        const next = new Set(prev)
+        if (prev.size > 0) {
+          const existing = Array.from(prev).sort((a, b) => a - b)
+          const anchor = existing[0]
+          const from = Math.min(anchor, lineIdx)
+          const to = Math.max(anchor, lineIdx)
+          for (let i = from; i <= to; i++) next.add(i)
+        } else {
+          next.add(lineIdx)
+        }
+        return next
+      })
+    } else {
+      setSelectedLines((prev: Set<number>) => {
+        if (prev.has(lineIdx) && prev.size === 1) return new Set<number>()
+        return new Set([lineIdx])
+      })
     }
+  }, [lineIdx, setSelectedLines])
+
+  return <div
+    className={cn(
+      "ELine-gutter text-zinc-600 text-sm flex-shrink-0 justify-end flex font-mono items-center",
+      isSelected && "ELine-gutter-selected"
+    )}
+    onClick={handleGutterClick}
+  >
+    <span className="ELine-gutter-content">
+      {showLineNumbers
+        ? <span className="text-zinc-500">{lineIdx + 1}</span>
+        : timestamp && <>
+            <span className="ELine-timestamp-default">{timestamp.defaultString}</span>
+            <span className="ELine-timestamp-full">{timestamp.fullString}</span>
+          </>
+      }
+    </span>
+    <span
+      ref={setActivatorNodeRef}
+      className="ELine-drag-handle"
+      {...dragListeners}
+      {...dragAttributes}
+    >
+      <GripVertical width={14} height={14} />
+    </span>
   </div>
 }
 
@@ -81,10 +136,6 @@ export const Gutter = ({ timestamp, lineIdx }: { timestamp: GutterTimestamp | nu
 export const ELine = (lineInfo: ELineProps) => {
   const { cmRef, cmView } = useCodeMirror(lineInfo)
 
-  // Codemirror of course doesn't receive recreated
-  // callbacks with new component state; this table
-  // lets us update them on the fly
-
   const { line, timestamp, collapseState } = lineInfo
 
   const setDoc = useSetAtom(docAtom)
@@ -92,28 +143,53 @@ export const ELine = (lineInfo: ELineProps) => {
 
   const isFocused = useAtomValue(focusedLineAtom) === lineInfo.lineIdx
   const paletteOpen = useAtomValue(commandPaletteOpenAtom)
+  const selectedLines = useAtomValue(selectedLinesAtom)
+  const isSelected = selectedLines.has(lineInfo.lineIdx)
 
-  // This line renders the palette if it's focused and palette is open
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    setActivatorNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: line.timeCreated })
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  }
+
   const shouldRenderPalette = isFocused && paletteOpen
 
   const getColorClass = (color?: string) => {
     return `editor-line-${color}`
   }
 
-  // Disabled for now, experiment
   const lineIsHeader = line.mdContent.startsWith('### ') || line.mdContent.startsWith('## ') || line.mdContent.startsWith('# ');
   const headerLevel = line.mdContent.startsWith('### ') ? 3 : line.mdContent.startsWith('##') ? 2 : line.mdContent.startsWith('# ') ? 1 : 0;
 
   return (
     <div
+      ref={setNodeRef}
+      style={style}
       className={cn(
-        'ELine w-full py-1  flex items-baseline',
+        'ELine group w-full py-1 flex items-baseline',
         collapseState === 'collapsed' && 'hidden',
         isFocused && 'ELine-focused',
+        isSelected && 'ELine-selected',
+        isDragging && 'ELine-dragging',
         getColorClass(line.color)
       )}
     >
-      <Gutter timestamp={timestamp} lineIdx={lineInfo.lineIdx} />
+      <Gutter
+        timestamp={timestamp}
+        lineIdx={lineInfo.lineIdx}
+        dragListeners={listeners}
+        dragAttributes={attributes}
+        setActivatorNodeRef={setActivatorNodeRef}
+      />
       <div
         style={{
           flex: 'none',
