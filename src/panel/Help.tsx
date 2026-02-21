@@ -5,7 +5,7 @@ import {
   DescriptionList,
   DescriptionTerm,
 } from '@/components/vendor/DescriptionList'
-import { getAllKeybindings } from '@/lib/keys'
+import { getAllKeybindings, keybindings } from '@/lib/keys'
 import { DocsWrapper } from '@/documentation/DocsWrapper'
 import { Button } from '@/components/vendor/Button'
 import { Version } from '@/documentation/Version'
@@ -43,7 +43,7 @@ const Keybindings = () => {
 
       <h3 className="text-base font-semibold mb-2 mt-6">Command Palette Shortcuts</h3>
       <p className="text-sm text-gray-400 mb-2">
-        Press <Badge className="inline">⌘K</Badge> to open the command palette, then press any of these keys:
+        Press <Badge className="inline">{keybindings.commandPalette.displayKey}</Badge> to open the command palette, then press any of these keys:
       </p>
       <DescriptionList>
         {commandShortcuts.map((command) => (
