@@ -1,6 +1,8 @@
 import { TEditor } from '@/editor/TEditor'
 import { toast } from 'sonner'
 import { allTagsAtom, docAtom, globalTimerAtom } from '@/editor/state'
+import { resetUndoHistory } from '@/editor/undo'
+import { documentUndoEnabledAtom } from '@/lib/feature-flags'
 import { createStore, useAtom } from 'jotai'
 import '@/docs/schema'
 import { truncate } from 'lodash-es'
@@ -76,6 +78,14 @@ function RouteComponent() {
       return true
     }
   })
+
+  // Sync feature flags into the editor's isolated Jotai store
+  const flagsQuery = trpc.flags.getAll.useQuery()
+  useEffect(() => {
+    if (flagsQuery.data) {
+      store.set(documentUndoEnabledAtom, !!flagsQuery.data['document_undo'])
+    }
+  }, [flagsQuery.data, store])
 
   const createDocMutation = useCreateDoc();
 
@@ -213,6 +223,7 @@ function RouteComponent() {
   useEffect(() => {
     if (!loadDocQuery.isLoading && loadDocQuery.data) {
       store.set(docAtom, loadDocQuery.data)
+      resetUndoHistory(store)
     }
   }, [loadDocQuery.data, store, loadDocQuery.isLoading])
 

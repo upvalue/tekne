@@ -55,10 +55,17 @@ export type DBNoteLine = {
   time_updated: ColumnType<Date, Date | undefined, Date> | null
 }
 
+export type DBFeatureFlag = {
+  key: string
+  value: ColumnType<unknown, unknown, unknown>
+  updated_at: ColumnType<Date, Date | undefined, Date>
+}
+
 // Define your database schema interface here
 export type Database = {
   notes: DBNote
   note_data: DBNoteData
   note_lines: DBNoteLine
   saved_searches: DBSavedSearch
+  feature_flags: DBFeatureFlag
 }

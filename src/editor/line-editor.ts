@@ -4,7 +4,12 @@ import { useEffect, useRef } from 'react'
 
 import { EditorView, keymap } from '@codemirror/view'
 import { emacsStyleKeymap } from '@codemirror/commands'
-import { EditorSelection, EditorState, type Extension } from '@codemirror/state'
+import {
+  Annotation,
+  EditorSelection,
+  EditorState,
+  type Extension,
+} from '@codemirror/state'
 import { type ZLine } from '@/docs/schema'
 import { useAtom, useAtomValue, useSetAtom, useStore } from 'jotai'
 import {
@@ -21,6 +26,13 @@ import { placeholder } from './line-editor/placeholder-plugin'
 import { makeKeymap, toggleCollapse } from './line-editor/line-operations'
 import { syntaxPlugin } from './line-editor/syntax-plugin'
 import { tagCompletionPlugin } from './line-editor/tag-completion-plugin'
+
+/**
+ * Annotation used to mark CodeMirror transactions that come from
+ * external sync (e.g. undo/redo restoring document state).
+ * The updateListener skips these to prevent echo writes.
+ */
+export const externalSyncAnnotation = Annotation.define<boolean>()
 
 const theme = EditorView.theme(
   // Preferring to do these in TEditor.css
@@ -88,13 +100,21 @@ export const useCodeMirror = (lineInfo: LineWithIdx) => {
 
   //
   const makeEditor = () => {
-    const { keymap: customKeymap, cleanup: cleanupKeymap } = makeKeymap(
-      store,
-      getLineIdx
-    )
+    const {
+      keymap: customKeymap,
+      undoRedoHandler,
+      cleanup: cleanupKeymap,
+    } = makeKeymap(store, getLineIdx)
 
     const updateListener = EditorView.updateListener.of((update) => {
       if (!update.docChanged) {
+        return
+      }
+
+      // Skip echoed writes from external sync (undo/redo restores)
+      if (
+        update.transactions.some((t) => t.annotation(externalSyncAnnotation))
+      ) {
         return
       }
 
@@ -157,6 +177,7 @@ export const useCodeMirror = (lineInfo: LineWithIdx) => {
 
     const extensions: Extension[] = [
       theme,
+      undoRedoHandler,
       updateListener,
       focusListener,
       customKeymap,
@@ -204,8 +225,14 @@ export const useCodeMirror = (lineInfo: LineWithIdx) => {
     // React state with Codemirror state
     if (v.state.doc.toString() !== line.mdContent) {
       console.log('Line changed externally, updating', lineInfo.lineIdx)
-      cmView.current?.destroy()
-      makeEditor()
+      v.dispatch({
+        changes: {
+          from: 0,
+          to: v.state.doc.length,
+          insert: line.mdContent,
+        },
+        annotations: [externalSyncAnnotation.of(true)],
+      })
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lineInfo])

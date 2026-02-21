@@ -14,6 +14,7 @@ import { docAtom } from '@/editor/state'
 import { Button } from '@/components/vendor/Button'
 import { PgliteDevtools } from './PgliteDevtools'
 import { DatabaseMigrations } from './DatabaseMigrations'
+import { FeatureFlags } from './FeatureFlags'
 
 const RawDocument = ({ isActive }: { isActive: boolean }) => {
   const [doc, setDoc] = useAtom(docAtom)
@@ -124,6 +125,7 @@ export const DevTools = () => {
         <TabsTrigger value="raw">Document Content</TabsTrigger>
         <TabsTrigger value="tree">Tree Document</TabsTrigger>
         <TabsTrigger value="data">Document Data</TabsTrigger>
+        <TabsTrigger value="flags">Flags</TabsTrigger>
         <TabsTrigger value="migrations">Migrations</TabsTrigger>
         <TabsTrigger value="tanstackdev">TanStack</TabsTrigger>
         {usingPglite && <TabsTrigger value="pglite">pglite</TabsTrigger>}
@@ -136,6 +138,9 @@ export const DevTools = () => {
       </TabsContent>
       <TabsContent value="data">
         <DocumentData isActive={activeTab === 'data'} />
+      </TabsContent>
+      <TabsContent value="flags">
+        <FeatureFlags isActive={activeTab === 'flags'} />
       </TabsContent>
       <TabsContent value="migrations">
         <DatabaseMigrations isActive={activeTab === 'migrations'} />

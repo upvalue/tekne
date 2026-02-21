@@ -1,6 +1,8 @@
 // line-operations.ts - line operations and key bindings
 import { keymap, EditorView } from '@codemirror/view'
 import { docAtom, requestFocusLineAtom } from '../state'
+import { undo, redo } from '../undo'
+import { documentUndoEnabledAtom } from '@/lib/feature-flags'
 import { lineMake, type ZDoc } from '@/docs/schema'
 import { keybindings } from '@/lib/keys'
 import type { useStore } from 'jotai'
@@ -255,8 +257,29 @@ export const makeKeymap = (
     },
   ])
 
+  // Undo/redo uses domEventHandlers instead of keymap bindings because
+  // CM's Mod-z matches both Ctrl+Z and Ctrl+Shift+Z on Linux
+  const undoRedoHandler = EditorView.domEventHandlers({
+    keydown: (event) => {
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'z') {
+        // Only intercept when document undo is enabled via feature flag
+        if (!store.get(documentUndoEnabledAtom)) return false
+
+        event.preventDefault()
+        if (event.shiftKey) {
+          redo(store)
+        } else {
+          undo(store)
+        }
+        return true
+      }
+      return false
+    },
+  })
+
   return {
     keymap: keymapExtension,
+    undoRedoHandler,
     cleanup: unsubscribe,
   }
 }
