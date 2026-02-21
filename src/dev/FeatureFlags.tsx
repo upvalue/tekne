@@ -1,7 +1,8 @@
 import { trpc } from '@/trpc/client'
+import { modName } from '@/lib/keys'
 
 const KNOWN_FLAGS = [
-  { key: 'document_undo', label: 'Document Undo', description: 'Enable document-level undo/redo (Cmd+Z / Cmd+Shift+Z)' },
+  { key: 'document_undo', label: 'Document Undo', description: `Enable document-level undo/redo (${modName}+Z / ${modName}+Shift+Z)` },
 ]
 
 export function FeatureFlags({ isActive }: { isActive: boolean }) {

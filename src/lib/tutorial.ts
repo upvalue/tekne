@@ -1,4 +1,5 @@
 import { lineMake } from '@/docs/schema'
+import { modName } from './keys'
 
 export const makeTutorial = () => {
   let i = 0
@@ -17,7 +18,7 @@ export const makeTutorial = () => {
       ++i,
       'Lines can be indented with `Tab` and de-dented with `Shift-Tab`'
     ),
-    lineMake(--i, 'You can collapse a group of indented lines with `Cmd-.`'),
+    lineMake(--i, `You can collapse a group of indented lines with \`${modName}-.\``),
     lineMake(
       ++i,
       'Try it out by selecting the above line and then using the key binding'
@@ -76,9 +77,9 @@ export const makeTutorial = () => {
       }
     ),
     lineMake((i = 0), '# Navigation'),
-    lineMake(++i, 'You can open or create documents with `Cmd-O`'),
-    lineMake(i, 'You can search across all documents with `Cmd-/`'),
-    lineMake(i, 'And trigger a command palette with `Cmd-K`'),
+    lineMake(++i, `You can open or create documents with \`${modName}-O\``),
+    lineMake(i, `You can search across all documents with \`${modName}-/\``),
+    lineMake(i, `And trigger a command palette with \`${modName}-K\``),
     lineMake(i, 'For more help, see the help section of the side panel'),
     lineMake(
       i,
