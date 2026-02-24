@@ -44,10 +44,6 @@ function RouteComponent() {
           The demo saves data in your browser storage, doesn't persist it, and
           may contain bugs.
         </p>
-        <p>
-          It's also currently targeting a Mac laptop -- key bindings aren't yet
-          OS aware and the design is not responsive for small screens.
-        </p>
       </div>
     </CopyLayout>
   )

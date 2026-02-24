@@ -5,7 +5,7 @@ import { trpc } from '@/trpc/client'
 import { Toaster } from '@/components/vendor/Sonner'
 import { DocumentSearch } from '@/controls/DocumentSearch'
 import { TemplateDialog } from '@/controls/TemplateDialog'
-import type { PanelTab } from '@/panel/state'
+import { panelVisibleAtom, type PanelTab } from '@/panel/state'
 import { documentUndoEnabledAtom } from '@/lib/feature-flags'
 
 export type RouterAppContext = {
@@ -23,21 +23,30 @@ const RootComponent = () => {
     }
   }, [flagsQuery.data, setDocumentUndoEnabled])
 
-  // Global keybinding for search panel (Cmd-/)
+  const setPanelVisible = useSetAtom(panelVisibleAtom)
+
+  // Global keybindings
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Cmd/Ctrl+/ — open search panel (also ensures panel is visible)
       if ((e.metaKey || e.ctrlKey) && e.key === '/') {
         e.preventDefault()
+        setPanelVisible(true)
         window.dispatchEvent(
           new CustomEvent<{ tab: PanelTab }>('tekne:panel-tab', {
             detail: { tab: 'search' },
           })
         )
       }
+      // Cmd/Ctrl+\ — toggle panel visibility
+      if ((e.metaKey || e.ctrlKey) && e.key === '\\') {
+        e.preventDefault()
+        setPanelVisible((v) => !v)
+      }
     }
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [])
+  }, [setPanelVisible])
 
   return (
     <DocumentSearch>

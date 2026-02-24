@@ -129,7 +129,7 @@ export const TitleBar = ({
 
   return (
     <div className="flex py-2 px-4 items-center TitleBar">
-      <div style={{ flexBasis: `${GUTTER_WIDTH_PIXELS}px` }} className="flex justify-end pr-4">
+      <div style={{ flexBasis: `${GUTTER_WIDTH_PIXELS}px` }} className="hidden lg:flex justify-end pr-4">
         <div className="text text-sky-500">{isDev && '[dev]'}</div>
         <div className="text text-sky-500">{isDemo && '[demo]'}</div>
         <div className="text text-sky-500">{isDevServer && '[server]'}</div>

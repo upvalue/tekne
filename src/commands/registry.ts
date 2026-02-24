@@ -4,6 +4,8 @@ import type { Command } from './types'
 import { emitCodemirrorEvent } from '@/editor/line-editor/cm-events'
 import { formatDate, getDocTitle } from '@/lib/utils'
 import { trpcClient } from '@/trpc/client'
+import { getDefaultStore } from 'jotai'
+import { panelVisibleAtom } from '@/panel/state'
 
 /** Check if a string is a valid YYYY-MM-DD date */
 const isDateString = (str: string): boolean => /^\d{4}-\d{2}-\d{2}$/.test(str)
@@ -270,6 +272,19 @@ const navigationCommands: Command[] = [
     requiresEditor: false,
     execute: () => {
       window.dispatchEvent(new CustomEvent('tekne:new-from-template'))
+    },
+  },
+  {
+    id: 'toggle-panel',
+    name: 'Toggle panel',
+    description: 'Show or hide the sidebar panel',
+    shortcut: 'b',
+    displayShortcut: 'B',
+    keywords: ['panel', 'sidebar', 'toggle', 'hide', 'show'],
+    requiresEditor: false,
+    execute: () => {
+      const store = getDefaultStore()
+      store.set(panelVisibleAtom, (v) => !v)
     },
   },
 ]
