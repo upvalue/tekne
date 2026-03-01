@@ -2,11 +2,11 @@
 
 import type { Command } from './types'
 import { emitCodemirrorEvent } from '@/editor/line-editor/cm-events'
+import { deleteLine } from '@/editor/line-editor/line-operations'
 import { formatDate, getDocTitle } from '@/lib/utils'
 import { trpcClient } from '@/trpc/client'
 import { getDefaultStore } from 'jotai'
 import { panelVisibleAtom } from '@/panel/state'
-import { docAtom, requestFocusLineAtom } from '@/editor/state'
 
 /** Check if a string is a valid YYYY-MM-DD date */
 const isDateString = (str: string): boolean => /^\d{4}-\d{2}-\d{2}$/.test(str)
@@ -163,28 +163,7 @@ const editorCommands: Command[] = [
         description: 'Delete the entire current line',
         execute: ({ lineIdx }) => {
           if (lineIdx === null) return
-          const store = getDefaultStore()
-          const doc = store.get(docAtom)
-
-          // Don't delete the last remaining line, clear it instead
-          if (doc.children.length === 1) {
-            store.set(docAtom, (draft) => {
-              draft.children[lineIdx].mdContent = ''
-            })
-            return
-          }
-
-          const focusIdx = lineIdx > 0 ? lineIdx - 1 : 0
-          const focusPos = doc.children[focusIdx]?.mdContent.length ?? 0
-
-          store.set(requestFocusLineAtom, {
-            lineIdx: focusIdx,
-            pos: focusPos,
-          })
-
-          store.set(docAtom, (draft) => {
-            draft.children.splice(lineIdx, 1)
-          })
+          deleteLine(lineIdx)
         },
       },
     ],

@@ -6,7 +6,32 @@ import { documentUndoEnabledAtom } from '@/lib/feature-flags'
 import { lineMake, type ZDoc } from '@/docs/schema'
 import { keybindings } from '@/lib/keys'
 import type { useStore } from 'jotai'
+import { getDefaultStore } from 'jotai'
 import { Transaction } from '@codemirror/state'
+
+/** Delete an entire line by index, moving focus to the previous line.
+ *  If it's the last remaining line, clears its content instead. */
+export const deleteLine = (lineIdx: number, store?: ReturnType<typeof useStore>) => {
+  const s = store ?? getDefaultStore()
+  const doc = s.get(docAtom)
+
+  if (doc.children.length === 1) {
+    s.set(docAtom, (draft: ZDoc) => {
+      draft.children[lineIdx].mdContent = ''
+    })
+    return
+  }
+
+  const focusIdx = lineIdx > 0 ? lineIdx - 1 : 0
+  s.set(requestFocusLineAtom, {
+    lineIdx: focusIdx,
+    pos: doc.children[focusIdx]?.mdContent.length ?? 0,
+  })
+
+  s.set(docAtom, (draft: ZDoc) => {
+    draft.children.splice(lineIdx, 1)
+  })
+}
 
 export const toggleCollapse = (
   view: EditorView,
@@ -258,25 +283,7 @@ export const makeKeymap = (
     {
       key: 'Mod-Shift-k',
       run: () => {
-        const lineIdx = getLineIdx()
-
-        // Don't delete the last remaining line, clear it instead
-        if (doc.children.length === 1) {
-          setDoc((draft: ZDoc) => {
-            draft.children[lineIdx].mdContent = ''
-          })
-          return true
-        }
-
-        const focusIdx = lineIdx > 0 ? lineIdx - 1 : 0
-        setRequestFocusLine({
-          lineIdx: focusIdx,
-          pos: doc.children[focusIdx]?.mdContent.length ?? 0,
-        })
-
-        setDoc((draft: ZDoc) => {
-          draft.children.splice(lineIdx, 1)
-        })
+        deleteLine(getLineIdx(), store)
         return true
       },
     },
