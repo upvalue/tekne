@@ -16,7 +16,7 @@ export const CommandPaletteProvider: React.FC<{
     const handleKeyDown = (e: KeyboardEvent) => {
       const isMod = e.metaKey || e.ctrlKey
 
-      if (isMod && e.key === 'k') {
+      if (isMod && e.key === 'k' && !e.shiftKey) {
         e.preventDefault()
         setPaletteOpen((open) => !open)
       }
