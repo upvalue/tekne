@@ -2,6 +2,7 @@
 
 import type { Command } from './types'
 import { emitCodemirrorEvent } from '@/editor/line-editor/cm-events'
+import { deleteLine } from '@/editor/line-editor/line-operations'
 import { formatDate, getDocTitle } from '@/lib/utils'
 import { trpcClient } from '@/trpc/client'
 import { getDefaultStore } from 'jotai'
@@ -144,6 +145,30 @@ const editorCommands: Command[] = [
           insert: date,
         },
       })
+    },
+  },
+  {
+    id: 'line-edit',
+    name: 'Line edit',
+    description: 'Line editing shortcuts',
+    shortcut: 'l',
+    displayShortcut: 'L',
+    keywords: ['line', 'edit', 'delete', 'remove'],
+    requiresEditor: true,
+    subcommands: [
+      {
+        key: 'd',
+        displayKey: 'D',
+        name: 'Delete line',
+        description: 'Delete the entire current line',
+        execute: ({ lineIdx }) => {
+          if (lineIdx === null) return
+          deleteLine(lineIdx)
+        },
+      },
+    ],
+    execute: () => {
+      // Parent command doesn't execute directly when subcommands exist
     },
   },
 ]
