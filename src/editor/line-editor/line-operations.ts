@@ -255,6 +255,31 @@ export const makeKeymap = (
       key: 'Alt-Backspace',
       run: (view) => deleteLineIfEmpty(view),
     },
+    {
+      key: 'Mod-Shift-k',
+      run: () => {
+        const lineIdx = getLineIdx()
+
+        // Don't delete the last remaining line, clear it instead
+        if (doc.children.length === 1) {
+          setDoc((draft: ZDoc) => {
+            draft.children[lineIdx].mdContent = ''
+          })
+          return true
+        }
+
+        const focusIdx = lineIdx > 0 ? lineIdx - 1 : 0
+        setRequestFocusLine({
+          lineIdx: focusIdx,
+          pos: doc.children[focusIdx]?.mdContent.length ?? 0,
+        })
+
+        setDoc((draft: ZDoc) => {
+          draft.children.splice(lineIdx, 1)
+        })
+        return true
+      },
+    },
   ])
 
   // Undo/redo uses domEventHandlers instead of keymap bindings because

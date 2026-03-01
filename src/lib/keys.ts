@@ -58,6 +58,13 @@ export const keybindings = {
     displayKey: 'Ctrl G',
     type: 'react' as const,
   },
+  deleteLine: {
+    key: 'Mod-Shift-k',
+    name: 'delete-line',
+    description: 'Delete the entire current line',
+    displayKey: `${modSymbol} Shift K`,
+    type: 'codemirror' as const,
+  },
 } satisfies Record<string, Keybinding>
 
 /** Get all keybindings as an array */
