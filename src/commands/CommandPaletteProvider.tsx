@@ -4,6 +4,7 @@ import React, { useEffect } from 'react'
 import { useAtom, useAtomValue } from 'jotai'
 import { focusedLineAtom, commandPaletteOpenAtom } from '@/editor/state'
 import { CommandPalette } from './CommandPalette'
+import { isMac } from '@/lib/platform'
 
 export const CommandPaletteProvider: React.FC<{
   children: React.ReactNode
@@ -14,7 +15,7 @@ export const CommandPaletteProvider: React.FC<{
   // Listen for Cmd-K to toggle palette
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      const isMod = e.metaKey || e.ctrlKey
+      const isMod = isMac ? e.metaKey : e.ctrlKey
 
       if (isMod && e.key === 'k' && !e.shiftKey) {
         e.preventDefault()
