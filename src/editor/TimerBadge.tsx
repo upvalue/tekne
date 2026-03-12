@@ -129,7 +129,7 @@ export const TimerBadge = ({
     globalTimer.isActive && globalTimer.lineTimeCreated === lineInfo.line.timeCreated
   const isAnyTimerActive = globalTimer.isActive
 
-  const [timeInput, setTimeInput] = React.useState(renderTime(time))
+  const [timeInput, setTimeInput] = React.useState(time ? renderTime(time) : '')
   const [countdownInput, setCountdownInput] = React.useState('30m')
   const [timerDialogRequest, setTimerDialogRequest] = useAtom(timerDialogRequestAtom)
 
