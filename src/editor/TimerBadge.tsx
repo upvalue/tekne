@@ -31,6 +31,7 @@ import { useAtom, useAtomValue, useStore } from 'jotai'
 import { setDetailTitle, setTimerActive } from '@/lib/title'
 import { formatTimeDisplay, renderTime } from '@/lib/time'
 import { trpc } from '@/trpc/client'
+import { playTimerCompleteSound } from '@/lib/sound'
 import { EditorDialogContent } from '@/components/EditorDialogContent'
 import { noop } from 'lodash-es'
 import { TimerInfo } from './TimerInfo'
@@ -198,6 +199,7 @@ export const TimerBadge = ({
         const remaining = Math.max(0, globalTimer.targetDuration - elapsed)
         if (remaining === 0) {
           sendNotification(`Timer completed for: ${globalTimer.lineContent}`)
+          playTimerCompleteSound()
           const { stopTimer } = globalTimer;
           if (stopTimer) {
             stopTimer()
