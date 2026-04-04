@@ -8,6 +8,7 @@ import { useEffect } from 'react'
 import { useCreateDoc } from '@/hooks/useCreateDoc'
 import { StatusBar } from '@/editor/StatusBar'
 import NonEditorLayout from '@/layout/NonEditorLayout'
+import { CommandPaletteProvider } from '@/commands/CommandPaletteProvider'
 
 export const Route = createFileRoute('/doc-not-found/$title')({
   component: RouteComponent,
@@ -29,33 +30,35 @@ function RouteComponent() {
   }
 
   return (
-    <EditorLayout
-      editor={
-        <>
-          <TitleBar title={title} allowTitleEdit={false} />
-          <StatusBar isLoading={false} />
-          <NonEditorLayout>
+    <CommandPaletteProvider>
+      <EditorLayout
+        editor={
+          <>
+            <TitleBar title={title} allowTitleEdit={false} />
+            <StatusBar isLoading={false} />
+            <NonEditorLayout>
 
 
-            <div className="space-y-2">
-              <h2 className="text-xl font-semibold">Document does not exist</h2>
-              <p className="text-muted-foreground">
-                The document "{title}" has not been created yet.
-              </p>
-            </div>
-            <div>
+              <div className="space-y-2">
+                <h2 className="text-xl font-semibold">Document does not exist</h2>
+                <p className="text-muted-foreground">
+                  The document "{title}" has not been created yet.
+                </p>
+              </div>
+              <div>
 
-              <Button
-                onClick={handleCreateDocument}
-                disabled={createDocMutation.isPending}
-              >
-                {createDocMutation.isPending ? 'Creating...' : 'Create Document'}
-              </Button>
-            </div>
-          </NonEditorLayout>
-        </>
-      }
-      sidepanel={<Panel />}
-    />
+                <Button
+                  onClick={handleCreateDocument}
+                  disabled={createDocMutation.isPending}
+                >
+                  {createDocMutation.isPending ? 'Creating...' : 'Create Document'}
+                </Button>
+              </div>
+            </NonEditorLayout>
+          </>
+        }
+        sidepanel={<Panel />}
+      />
+    </CommandPaletteProvider>
   )
 }
