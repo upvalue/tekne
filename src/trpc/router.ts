@@ -8,6 +8,7 @@ import { flagsRouter } from './routers/flags'
 
 import fs from 'fs'
 import child_process from 'child_process'
+import path from 'path'
 
 export const appRouter = router({
   doc: docRouter,
@@ -44,15 +45,38 @@ export const appRouter = router({
         if (hook === 'timer-start' || hook === 'timer-stop') {
           const { line, lineIdx, doc } = argument
 
-          if (fs.existsSync(`hooks/${hook}`)) {
-            child_process.execSync(`hooks/${hook}`, {
-              input: JSON.stringify({
+          const hookPath = path.resolve('hooks', hook)
+
+          if (fs.existsSync(hookPath)) {
+            const child = child_process.spawn(hookPath, [], {
+              stdio: ['pipe', 'ignore', 'pipe'],
+            })
+
+            const timeout = setTimeout(() => {
+              child.kill('SIGKILL')
+            }, 5_000)
+
+            child.on('close', () => {
+              clearTimeout(timeout)
+            })
+
+            child.stderr.on('data', (chunk) => {
+              console.error('[hook] execHook stderr', hook, chunk.toString())
+            })
+
+            child.on('error', (error) => {
+              console.error('[hook] execHook failed', hook, error)
+            })
+
+            child.stdin.write(
+              JSON.stringify({
                 type: 'timer-event',
                 line,
                 lineIdx,
                 doc,
-              }),
-            })
+              })
+            )
+            child.stdin.end()
           }
         }
       } else {
