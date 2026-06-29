@@ -42,18 +42,29 @@ const zdoc = z.object({
 
 type ZDoc = z.infer<typeof zdoc>
 
+let lastGeneratedLineTimestampMs = 0
+
+const lineTimestampMake = () => {
+  const timestampMs = Math.max(Date.now(), lastGeneratedLineTimestampMs + 1)
+  lastGeneratedLineTimestampMs = timestampMs
+  return new Date(timestampMs).toISOString()
+}
+
 const lineMake = (
   indent: number,
   mdContent: string = '',
   rest?: Partial<ZLine>
-): ZLine => ({
-  type: 'line',
-  mdContent,
-  indent,
-  timeCreated: new Date().toISOString(),
-  timeUpdated: new Date().toISOString(),
-  ...(rest ? rest : {}),
-})
+): ZLine => {
+  const timestamp = lineTimestampMake()
+  return {
+    type: 'line',
+    mdContent,
+    indent,
+    timeCreated: timestamp,
+    timeUpdated: timestamp,
+    ...(rest ? rest : {}),
+  }
+}
 
 const CURRENT_SCHEMA_VERSION = 1
 
@@ -67,6 +78,7 @@ export {
   zline,
   zdoc,
   lineMake,
+  lineTimestampMake,
   docMake,
   CURRENT_SCHEMA_VERSION,
   type ZLine,

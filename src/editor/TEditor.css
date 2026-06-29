@@ -21,16 +21,112 @@
 }
 
 .ELine-gutter {
-  width: 150px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 24px;
+  align-items: center;
+  column-gap: 4px;
+  flex: none;
+  width: 178px;
   @apply pr-2;
 }
 
+.ELine-gutter-text {
+  position: relative;
+  display: block;
+  min-width: 0;
+  min-height: 24px;
+  overflow: visible;
+  line-height: 24px;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.ELine-gutter-timestamp-base {
+  display: block;
+}
+
+.ELine-gutter-timestamp-full {
+  position: absolute;
+  top: 50%;
+  right: 0;
+  z-index: 2;
+  pointer-events: none;
+  transform: translateY(-50%);
+}
+
+.TEditor-boundary-drop-zone {
+  height: 10px;
+}
+
+.TEditor-boundary-drop-zone-active {
+  height: 18px;
+}
+
+.TEditor-boundary-drop-zone-over {
+  box-shadow: inset 0 2px 0 var(--color-emerald-400);
+}
+
 .ELine-focused {
+  background-color: color-mix(in srgb, var(--color-sky-400) 12%, transparent);
+}
+
+.ELine-drag-selected {
   background-color: color-mix(
     in srgb,
-    var(--color-sky-400) 12%,
+    var(--color-emerald-400) 12%,
     transparent
   );
+}
+
+.ELine-focused.ELine-drag-selected {
+  background-color: color-mix(
+    in srgb,
+    var(--color-sky-400) 10%,
+    var(--color-emerald-400) 10%
+  );
+}
+
+.ELine-dragging {
+  opacity: 0.55;
+}
+
+.ELine-active-drag-line {
+  z-index: 1;
+}
+
+.ELine-drop-before {
+  box-shadow: inset 0 2px 0 var(--color-emerald-400);
+}
+
+.ELine-drop-after {
+  box-shadow: inset 0 -2px 0 var(--color-emerald-400);
+}
+
+.ELine-drag-handle {
+  @apply inline-flex items-center justify-center text-zinc-600 hover:text-zinc-300;
+  align-self: center;
+  width: 24px;
+  min-height: 24px;
+  opacity: 0;
+  pointer-events: none;
+  cursor: grab;
+  border-radius: 4px;
+}
+
+.ELine-gutter:hover .ELine-drag-handle,
+.ELine-gutter:focus-within .ELine-drag-handle,
+.TEditor-has-drag-selection .ELine-drag-handle,
+.ELine-active-drag-line .ELine-drag-handle {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.ELine-drag-handle:active {
+  cursor: grabbing;
+}
+
+.ELine-drag-handle-selected {
+  @apply text-emerald-300;
 }
 
 .ELine-header {
@@ -102,11 +198,11 @@
 
 .cm-inline-code {
   font-family: var(--font-mono);
-  @apply bg-zinc-800
+  @apply bg-zinc-800;
 }
 
 .cm-editor.cm-focused .cm-inline-code {
-  @apply bg-sky-900
+  @apply bg-sky-900;
 }
 
 .editor-line-blue {

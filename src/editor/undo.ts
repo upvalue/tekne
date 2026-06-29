@@ -2,6 +2,7 @@ import { atom } from 'jotai'
 import type { ZDoc } from '@/docs/schema'
 import type { useStore } from 'jotai'
 import { rawDocAtom, requestFocusLineAtom, focusedLineAtom } from './state'
+import { ensureUniqueLineTimeCreateds } from '@/docs/line-identity'
 
 export type UndoEntry = {
   doc: ZDoc
@@ -39,7 +40,7 @@ export const undo = (store: ReturnType<typeof useStore>) => {
 
   // Restore without capturing undo
   store.set(suppressUndoCaptureAtom, true)
-  store.set(rawDocAtom, entry.doc)
+  store.set(rawDocAtom, ensureUniqueLineTimeCreateds(entry.doc))
   store.set(suppressUndoCaptureAtom, false)
 
   // Request focus on the line that was focused at snapshot time
@@ -69,7 +70,7 @@ export const redo = (store: ReturnType<typeof useStore>) => {
 
   // Restore without capturing undo
   store.set(suppressUndoCaptureAtom, true)
-  store.set(rawDocAtom, entry.doc)
+  store.set(rawDocAtom, ensureUniqueLineTimeCreateds(entry.doc))
   store.set(suppressUndoCaptureAtom, false)
 
   // Request focus

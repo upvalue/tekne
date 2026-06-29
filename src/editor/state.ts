@@ -1,6 +1,7 @@
 import { atom, useAtom, useStore } from 'jotai'
 import { withImmer } from 'jotai-immer'
 import { lineMake, type ZDoc, type ZLine } from '@/docs/schema'
+import { ensureUniqueLineTimeCreateds } from '@/docs/line-identity'
 import { useCallback } from 'react'
 import { atomWithQuery } from 'jotai-tanstack-query'
 import { trpcClient } from '@/trpc/client'
@@ -26,8 +27,9 @@ export const rawDocAtom = withImmer(
 export const docAtom = atom(
   (get) => get(rawDocAtom),
   (get, set, update: ZDoc | ((draft: Draft<ZDoc>) => void)) => {
+    const currentDoc = get(rawDocAtom)
+
     if (!get(suppressUndoCaptureAtom) && get(documentUndoEnabledAtom)) {
-      const currentDoc = get(rawDocAtom)
       const focusedLine = get(focusedLineAtom) ?? 0
       set(undoStackAtom, (prev) => {
         const next = [...prev, { doc: currentDoc, focusedLine }]
@@ -37,11 +39,18 @@ export const docAtom = atom(
       })
       set(redoStackAtom, [])
     }
-    set(rawDocAtom, update)
+
+    const nextDoc =
+      typeof update === 'function' ? produce(currentDoc, update) : update
+    set(rawDocAtom, ensureUniqueLineTimeCreateds(nextDoc))
   }
 )
 
 export const focusedLineAtom = atom<number | null>(null)
+
+export const dragSelectedLineIdsAtom = atom<string[]>([])
+
+export const dragSelectionAnchorIdAtom = atom<string | null>(null)
 
 export const requestFocusLineAtom = atom({
   lineIdx: -1,

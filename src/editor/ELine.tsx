@@ -1,19 +1,40 @@
 import { useAtomValue, useSetAtom } from 'jotai'
-import { docAtom, focusedLineAtom, commandPaletteOpenAtom, showLineNumbersAtom } from './state'
+import {
+  docAtom,
+  focusedLineAtom,
+  commandPaletteOpenAtom,
+  showLineNumbersAtom,
+} from './state'
 import { Checkbox } from '@/components/vendor/Checkbox'
-import { Circle, CircleDot, Pin } from 'lucide-react'
+import { Circle, CircleDot, GripVertical, Pin } from 'lucide-react'
 import { useCodeMirror, type LineWithIdx } from './line-editor'
 import { TimerBadge } from './TimerBadge'
 import { cn } from '@/lib/utils'
 import type { CollapseState } from '@/docs/collapse'
-import type { ZLine } from '@/docs/schema';
+import type { ZLine } from '@/docs/schema'
 import type { GutterTimestamp } from '@/docs/gutters'
-import { useState } from 'react'
+import {
+  useState,
+  type CSSProperties,
+  type MouseEvent as ReactMouseEvent,
+} from 'react'
 import { CommandPalette } from '@/commands/CommandPalette'
+import { useSortable } from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
+import type { DropEdge } from './line-reorder'
 
 type ELineProps = LineWithIdx & {
   timestamp: GutterTimestamp | null
   collapseState: CollapseState
+  isDragSelected: boolean
+  isActiveDragLine: boolean
+  dropEdge: DropEdge | null
+  disableTimestampHover: boolean
+  onDragHandleClick: (
+    event: ReactMouseEvent<HTMLButtonElement>,
+    lineIdx: number
+  ) => void
+  onEditorInteract: () => void
 }
 
 const INDENT_WIDTH_PIXELS = 24
@@ -31,22 +52,31 @@ const cycleCheckboxStatus = (status: 'complete' | 'incomplete' | 'unset') => {
 
 const checkboxStatus = (status: 'complete' | 'incomplete' | 'unset') => {
   switch (status) {
-    case 'complete': return {
-      checked: true,
-      indeterminate: false,
-    }
-    case 'incomplete': return {
-      checked: true,
-      indeterminate: true,
-    }
-    case 'unset': return {
-      checked: false,
-      indeterminate: false,
-    }
+    case 'complete':
+      return {
+        checked: true,
+        indeterminate: false,
+      }
+    case 'incomplete':
+      return {
+        checked: true,
+        indeterminate: true,
+      }
+    case 'unset':
+      return {
+        checked: false,
+        indeterminate: false,
+      }
   }
 }
 
-const LineIcon = ({ line, collapseState }: { line: ZLine, collapseState: CollapseState }) => {
+const LineIcon = ({
+  line,
+  collapseState,
+}: {
+  line: ZLine
+  collapseState: CollapseState
+}) => {
   if (line.datumPinnedAt) {
     return <Pin width={8} height={8} />
   }
@@ -56,19 +86,47 @@ const LineIcon = ({ line, collapseState }: { line: ZLine, collapseState: Collaps
   return <Circle width={8} height={8} />
 }
 
-export const Gutter = ({ timestamp, lineIdx }: { timestamp: GutterTimestamp | null; lineIdx: number }) => {
-  const [isHovered, setIsHovered] = useState(false)
+export const Gutter = ({
+  timestamp,
+  lineIdx,
+  dragHandle,
+  disableTimestampHover,
+}: {
+  timestamp: GutterTimestamp | null
+  lineIdx: number
+  dragHandle: React.ReactNode
+  disableTimestampHover: boolean
+}) => {
+  const [isTimestampHovered, setIsTimestampHovered] = useState(false)
   const showLineNumbers = useAtomValue(showLineNumbersAtom)
-  return <div className="ELine-gutter text-zinc-600 text-sm flex-shrink-0 justify-end flex font-mono"
-    onMouseEnter={() => setIsHovered(true)}
-    onMouseLeave={() => setIsHovered(false)}
-  >
-    &nbsp;
-    {showLineNumbers
-      ? <span className="text-zinc-500">{lineIdx + 1}</span>
-      : timestamp && (isHovered ? timestamp.fullString : timestamp.defaultString)
-    }
-  </div>
+  const showFullTimestamp =
+    Boolean(timestamp) && isTimestampHovered && !disableTimestampHover
+
+  return (
+    <div className="ELine-gutter text-zinc-600 text-sm font-mono">
+      <span
+        className="ELine-gutter-text"
+        onMouseEnter={() => setIsTimestampHovered(true)}
+        onMouseLeave={() => setIsTimestampHovered(false)}
+      >
+        {showLineNumbers ? (
+          <span className="text-zinc-500">{lineIdx + 1}</span>
+        ) : (
+          <>
+            <span className="ELine-gutter-timestamp-base">
+              {timestamp?.defaultString}
+            </span>
+            {showFullTimestamp && (
+              <span className="ELine-gutter-timestamp-full">
+                {timestamp?.fullString}
+              </span>
+            )}
+          </>
+        )}
+      </span>
+      {dragHandle}
+    </div>
+  )
 }
 
 /**
@@ -80,6 +138,18 @@ export const Gutter = ({ timestamp, lineIdx }: { timestamp: GutterTimestamp | nu
  */
 export const ELine = (lineInfo: ELineProps) => {
   const { cmRef, cmView } = useCodeMirror(lineInfo)
+  const {
+    attributes,
+    listeners,
+    setActivatorNodeRef,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({
+    id: lineInfo.line.timeCreated,
+    disabled: lineInfo.collapseState === 'collapsed',
+  })
 
   // Codemirror of course doesn't receive recreated
   // callbacks with new component state; this table
@@ -101,28 +171,69 @@ export const ELine = (lineInfo: ELineProps) => {
   }
 
   // Disabled for now, experiment
-  const lineIsHeader = line.mdContent.startsWith('### ') || line.mdContent.startsWith('## ') || line.mdContent.startsWith('# ');
-  const headerLevel = line.mdContent.startsWith('### ') ? 3 : line.mdContent.startsWith('##') ? 2 : line.mdContent.startsWith('# ') ? 1 : 0;
+  const lineIsHeader =
+    line.mdContent.startsWith('### ') ||
+    line.mdContent.startsWith('## ') ||
+    line.mdContent.startsWith('# ')
+  const headerLevel = line.mdContent.startsWith('### ')
+    ? 3
+    : line.mdContent.startsWith('##')
+      ? 2
+      : line.mdContent.startsWith('# ')
+        ? 1
+        : 0
+  const style: CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  }
 
   return (
     <div
+      ref={setNodeRef}
+      style={style}
       className={cn(
-        'ELine w-full py-1  flex items-baseline',
+        'ELine w-full py-1 flex items-center',
         collapseState === 'collapsed' && 'hidden',
         isFocused && 'ELine-focused',
+        lineInfo.isDragSelected && 'ELine-drag-selected',
+        lineInfo.isActiveDragLine && 'ELine-active-drag-line',
+        isDragging && 'ELine-dragging',
+        lineInfo.dropEdge === 'before' && 'ELine-drop-before',
+        lineInfo.dropEdge === 'after' && 'ELine-drop-after',
         getColorClass(line.color)
       )}
     >
-      <Gutter timestamp={timestamp} lineIdx={lineInfo.lineIdx} />
+      <Gutter
+        timestamp={timestamp}
+        lineIdx={lineInfo.lineIdx}
+        disableTimestampHover={lineInfo.disableTimestampHover}
+        dragHandle={
+          <button
+            type="button"
+            className={cn(
+              'ELine-drag-handle',
+              lineInfo.isDragSelected && 'ELine-drag-handle-selected'
+            )}
+            ref={setActivatorNodeRef}
+            onClick={(event) =>
+              lineInfo.onDragHandleClick(event, lineInfo.lineIdx)
+            }
+            onMouseDown={(event) => event.stopPropagation()}
+            aria-label={`Select and drag line ${lineInfo.lineIdx + 1}`}
+            {...attributes}
+            {...listeners}
+          >
+            <GripVertical width={14} height={14} />
+          </button>
+        }
+      />
       <div
         style={{
           flex: 'none',
           width: `${line.indent * INDENT_WIDTH_PIXELS}px`,
         }}
       />
-      {!lineIsHeader &&
-        <LineIcon line={line} collapseState={collapseState} />
-      }
+      {!lineIsHeader && <LineIcon line={line} collapseState={collapseState} />}
       {line.datumTaskStatus && (
         <Checkbox
           className="ml-2"
@@ -131,7 +242,10 @@ export const ELine = (lineInfo: ELineProps) => {
           onChange={() => {
             // TOOD: This pattern repeats itself and could be turned into a hook
             setDoc((draft) => {
-              draft.children[lineInfo.lineIdx].datumTaskStatus = cycleCheckboxStatus(draft.children[lineInfo.lineIdx].datumTaskStatus || 'unset')
+              draft.children[lineInfo.lineIdx].datumTaskStatus =
+                cycleCheckboxStatus(
+                  draft.children[lineInfo.lineIdx].datumTaskStatus || 'unset'
+                )
             })
           }}
         />
@@ -142,9 +256,14 @@ export const ELine = (lineInfo: ELineProps) => {
       )}
 
       <div
-        className={cn("cm-editor-container w-full ml-2 pr-[138px]", lineIsHeader && `ELine-header-${headerLevel}`)}
+        className={cn(
+          'cm-editor-container w-full ml-2 pr-[138px]',
+          lineIsHeader && `ELine-header-${headerLevel}`
+        )}
         ref={cmRef}
         data-line-idx={lineInfo.lineIdx}
+        onPointerDown={lineInfo.onEditorInteract}
+        onFocus={lineInfo.onEditorInteract}
       />
 
       {shouldRenderPalette && cmView.current && (

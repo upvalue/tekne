@@ -2,6 +2,7 @@
   "name": "fe",
   "private": true,
   "type": "module",
+  "packageManager": "pnpm@11.9.0",
   "scripts": {
     "check": "tsc --noEmit && eslint . && prettier --check .",
     "types": "tsc --noEmit",
@@ -28,6 +29,9 @@
     "@codemirror/commands": "^6.8.1",
     "@codemirror/state": "^6.5.2",
     "@codemirror/view": "^6.38.1",
+    "@dnd-kit/core": "^6.3.1",
+    "@dnd-kit/sortable": "^10.0.0",
+    "@dnd-kit/utilities": "^3.2.2",
     "@electric-sql/pglite": "^0.3.5",
     "@electric-sql/pglite-repl": "^0.2.23",
     "@floating-ui/dom": "^1.7.2",
