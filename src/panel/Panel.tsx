@@ -1,6 +1,7 @@
 import { DevTools } from '@/dev/DevTools'
 import { Help } from './Help'
 import { Search } from './Search'
+import { Tools } from './Tools'
 import {
   Navbar,
   NavbarSection,
@@ -12,6 +13,7 @@ import {
   QuestionMarkCircleIcon,
   CircleStackIcon,
   MagnifyingGlassIcon,
+  BoltIcon,
   XMarkIcon,
 } from '@heroicons/react/24/solid'
 import { useAtom, useSetAtom } from 'jotai'
@@ -55,6 +57,14 @@ export function Panel() {
             </NavbarItem>
 
             <NavbarItem
+              current={activeTab === 'tools'}
+              onClick={() => setActiveTab('tools')}
+            >
+              <BoltIcon className="w-4 h-4" data-slot="icon" />
+              <NavbarLabel>Tools</NavbarLabel>
+            </NavbarItem>
+
+            <NavbarItem
               current={activeTab === 'help'}
               onClick={() => setActiveTab('help')}
             >
@@ -83,6 +93,7 @@ export function Panel() {
         <ErrorBoundary title="Panel crashed">
           {activeTab === 'document' && <DocumentOverview />}
           {activeTab === 'search' && <Search />}
+          {activeTab === 'tools' && <Tools />}
           {activeTab === 'help' && <Help />}
           {activeTab === 'devtools' && (
             <div className="p-4 h-full">

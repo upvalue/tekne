@@ -2,7 +2,7 @@
 
 import { atom } from 'jotai'
 
-export type PanelTab = 'document' | 'search' | 'help' | 'devtools'
+export type PanelTab = 'document' | 'search' | 'tools' | 'help' | 'devtools'
 
 export const activePanelTabAtom = atom<PanelTab>('document')
 
