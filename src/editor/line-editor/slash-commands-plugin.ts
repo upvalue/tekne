@@ -1,10 +1,14 @@
 import { EditorView } from '@codemirror/view'
 import { type Completion, CompletionContext } from '@codemirror/autocomplete'
+import type { useStore } from 'jotai'
 import { allCommands } from '@/commands/registry'
 
 const SLASH_COMMAND_REGEX = /\/\w*/
 
-export const slashCommandsPlugin = (getLineIdx: () => number) => {
+export const slashCommandsPlugin = (
+  getLineIdx: () => number,
+  store: ReturnType<typeof useStore>
+) => {
   return (context: CompletionContext) => {
     const word = context.matchBefore(SLASH_COMMAND_REGEX)
     if (!word) return null
@@ -36,6 +40,7 @@ export const slashCommandsPlugin = (getLineIdx: () => number) => {
         cmd.execute({
           lineIdx: getLineIdx(),
           view,
+          store,
         })
 
         // Clear the slash command text

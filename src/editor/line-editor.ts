@@ -187,7 +187,7 @@ export const useCodeMirror = (lineInfo: LineWithIdx) => {
       placeholderPlugin,
       autocompletion({
         override: [
-          slashCommandsPlugin(getLineIdx),
+          slashCommandsPlugin(getLineIdx, store),
           tagCompletionPlugin(store),
         ],
       }),

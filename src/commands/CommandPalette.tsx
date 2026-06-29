@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import type { EditorView } from '@codemirror/view'
+import { useStore } from 'jotai'
 import { cn } from '@/lib/utils'
 import { allCommands, searchCommands, getCommandByShortcut } from './registry'
 import type { Command, CommandContext } from './types'
@@ -67,11 +68,12 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
   const [activeIndex, setActiveIndex] = useState(0)
   const [pendingCommand, setPendingCommand] = useState<Command | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+  const store = useStore()
 
   // Build command context
   const context: CommandContext = useMemo(
-    () => ({ lineIdx, view }),
-    [lineIdx, view]
+    () => ({ lineIdx, view, store }),
+    [lineIdx, view, store]
   )
 
   // Filter commands based on editor availability

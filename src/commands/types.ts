@@ -1,6 +1,7 @@
 // Command system types
 
 import type { EditorView } from '@codemirror/view'
+import type { useStore } from 'jotai'
 
 export interface CommandContext {
   /** Currently focused line index, null if no line focused */
@@ -8,6 +9,9 @@ export interface CommandContext {
 
   /** EditorView of focused line, null if no editor context */
   view: EditorView | null
+
+  /** Active Jotai store for commands that mutate editor state */
+  store: ReturnType<typeof useStore>
 }
 
 export interface SubCommand {

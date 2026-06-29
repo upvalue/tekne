@@ -161,9 +161,9 @@ const editorCommands: Command[] = [
         displayKey: 'D',
         name: 'Delete line',
         description: 'Delete the entire current line',
-        execute: ({ lineIdx }) => {
+        execute: ({ lineIdx, store }) => {
           if (lineIdx === null) return
-          deleteLine(lineIdx)
+          deleteLine(lineIdx, store)
         },
       },
     ],
