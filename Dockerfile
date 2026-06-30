@@ -5,14 +5,14 @@ WORKDIR /app
 ARG GIT_HASH
 ARG GIT_MESSAGE
 
-RUN npm install -g pnpm
+RUN npm install -g pnpm@11.9.0
 
 RUN apk update && \
   apk add --force --no-cache bash curl postgresql deno
 
-ADD .npmrc package.json pnpm-lock.yaml ./
+ADD .npmrc package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 
-RUN pnpm install
+RUN pnpm install --frozen-lockfile
 
 COPY ./ .
 
@@ -23,6 +23,4 @@ ENV GIT_MESSAGE=$GIT_MESSAGE
 RUN pnpm run client:build
 
 CMD ["pnpm", "run", "server:start"]
-
-
 
