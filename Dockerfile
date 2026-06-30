@@ -12,7 +12,7 @@ RUN apk update && \
 
 ADD .npmrc package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 
-RUN pnpm install --frozen-lockfile
+RUN CI=true pnpm install --frozen-lockfile
 
 COPY ./ .
 
@@ -20,7 +20,6 @@ ENV TEKNE_TRPC_URL=/api/trpc
 ENV GIT_HASH=$GIT_HASH
 ENV GIT_MESSAGE=$GIT_MESSAGE
 
-RUN pnpm run client:build
+RUN CI=true pnpm run client:build
 
 CMD ["pnpm", "run", "server:start"]
-
