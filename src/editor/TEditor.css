@@ -113,7 +113,7 @@
   border-radius: 4px;
 }
 
-.ELine-gutter:hover .ELine-drag-handle,
+.ELine:hover .ELine-drag-handle,
 .ELine-gutter:focus-within .ELine-drag-handle,
 .TEditor-has-drag-selection .ELine-drag-handle,
 .ELine-active-drag-line .ELine-drag-handle {
