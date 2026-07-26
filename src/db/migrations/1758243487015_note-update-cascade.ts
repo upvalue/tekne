@@ -1,4 +1,5 @@
-// adds a parsed_body table that gives the parsed body
+// cascades note_data rows when a note's title changes, so documents that
+// carry tagged data can be renamed
 import { sql, type Kysely } from 'kysely'
 
 // `any` is required here since migrations should be frozen in time. alternatively, keep a "snapshot" db interface.

@@ -23,7 +23,8 @@ const app = express()
 const PORT = process.env.PORT || 3005
 const NODE_ENV = process.env.NODE_ENV || 'development'
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
-const DIST_PATH = path.join(__dirname, '../../dist')
+const DIST_PATH =
+  process.env.TEKNE_DIST_PATH || path.resolve(process.cwd(), 'dist')
 
 app.use(
   helmet({

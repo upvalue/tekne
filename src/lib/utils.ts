@@ -1,5 +1,6 @@
 import { clsx, type ClassValue } from 'clsx'
 import { twMerge } from 'tailwind-merge'
+import { stripAppBasePath } from './app-path'
 
 /**
  * Tailwind friendly classnames merger
@@ -19,7 +20,7 @@ export function formatDate(date: Date) {
 }
 
 export const getDocTitle = () => {
-  const path = window.location.pathname
+  const path = stripAppBasePath(window.location.pathname)
   if (path.startsWith('/n/')) {
     return path.slice(3)
   }

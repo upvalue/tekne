@@ -10,10 +10,12 @@ import NotFound from './pages/NotFound'
 import './styles/styles.css'
 import reportWebVitals from './reportWebVitals.ts'
 import { trpc, trpcClient } from './trpc/client'
+import { appBasePath } from './lib/app-path'
 
 // Create a new router instance
 const router = createRouter({
   routeTree,
+  basepath: appBasePath || '/',
   context: {
     trpc,
   },

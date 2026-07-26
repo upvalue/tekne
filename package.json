@@ -6,7 +6,7 @@
   "scripts": {
     "check": "tsc --noEmit && eslint . && prettier --check .",
     "types": "tsc --noEmit",
-    "dev:client-only": "__VITE_ADDITIONAL_SERVER_ALLOWED_HOSTS=dev-tekne vite --port 3000 --host 0.0.0.0",
+    "dev:client-only": "__VITE_ADDITIONAL_SERVER_ALLOWED_HOSTS=svc-outline TEKNE_BASE_PATH=/dev/ vite --port 3000 --host 0.0.0.0",
     "dev:client-for-server": "__VITE_ADDITIONAL_SERVER_ALLOWED_HOSTS=dev-tekne TEKNE_TRPC_URL=http://localhost:3005/api/trpc vite --port 3000 --host 0.0.0.0",
     "dev:client-and-server": "concurrently \"pnpm run dev:client-for-server\" \"pnpm run server:dev\"",
     "dev:all": "concurrently \"pnpm run dev:client-for-server\" \"pnpm run db\" \"pnpm run server:dev\"",
@@ -19,9 +19,11 @@
     "generate:routes": "node scripts/generate-client-routes.js",
     "docs:build": "node scripts/build-docs.js",
     "server:dev": "DATABASE_URL=postgres://postgres:password@localhost/tekne tsx --watch src/server/index.ts",
-    "server:start": "NODE_ENV=production tsx src/server/index.ts",
-    "build": "pnpm run generate:routes && pnpm run client:build",
+    "server:build": "esbuild src/server/index.ts --bundle --platform=node --format=esm --packages=external --sourcemap --outfile=dist-server/server.mjs",
+    "server:start": "NODE_ENV=production node dist-server/server.mjs",
+    "build": "pnpm run generate:routes && pnpm run client:build && pnpm run server:build",
     "start": "pnpm run server:start",
+    "deploy:local": "scripts/deploy-local.sh",
     "prod": "NODE_ENV=production DATABASE_URL=postgres://postgres:password@localhost/tekne pnpm run start"
   },
   "dependencies": {
@@ -104,6 +106,7 @@
     "@types/node": "^24.0.13",
     "@types/react": "^19.0.8",
     "@types/react-dom": "^19.0.3",
+    "esbuild": "^0.25.6",
     "@typescript-eslint/eslint-plugin": "^8.37.0",
     "@typescript-eslint/parser": "^8.37.0",
     "@vitejs/plugin-react": "^4.3.4",

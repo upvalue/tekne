@@ -7,6 +7,7 @@ import { formatDate, getDocTitle } from '@/lib/utils'
 import { trpcClient } from '@/trpc/client'
 import { getDefaultStore } from 'jotai'
 import { panelVisibleAtom } from '@/panel/state'
+import { appPath, stripAppBasePath } from '@/lib/app-path'
 
 /** Check if a string is a valid YYYY-MM-DD date */
 const isDateString = (str: string): boolean => /^\d{4}-\d{2}-\d{2}$/.test(str)
@@ -20,7 +21,7 @@ const parseDate = (str: string): Date | null => {
 
 /** Navigate to a document */
 const navigateTo = (title: string) => {
-  window.location.href = `/n/${encodeURIComponent(title)}`
+  window.location.href = appPath(`/n/${encodeURIComponent(title)}`)
 }
 
 // ============================================================================
@@ -252,7 +253,9 @@ const navigationCommands: Command[] = [
                 throw e
               }
             }
-            if (window.location.pathname === '/n/Tutorial') {
+            if (
+              stripAppBasePath(window.location.pathname) === '/n/Tutorial'
+            ) {
               window.location.reload()
             } else {
               navigateTo('Tutorial')
@@ -281,7 +284,7 @@ const navigationCommands: Command[] = [
       if (!confirm(`Delete "${decodeURIComponent(title)}"?`)) return
       try {
         await trpcClient.doc.deleteDoc.mutate({ name: decodeURIComponent(title) })
-        window.location.href = '/'
+        window.location.href = appPath('/')
       } catch (error) {
         console.error('Failed to delete document:', error)
       }

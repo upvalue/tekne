@@ -18,6 +18,11 @@ let trpcUrl: string | undefined
 if (import.meta && import.meta.env && import.meta.env.TEKNE_TRPC_URL) {
   trpcUrl = import.meta.env.TEKNE_TRPC_URL
   console.log('[init] Using TRPC at backend ', trpcUrl)
+} else if (import.meta && import.meta.env && import.meta.env.PROD) {
+  // The production server serves the client and mounts tRPC on the same
+  // origin; the in-memory database is a development-only convenience.
+  trpcUrl = '/api/trpc'
+  console.log('[init] Using TRPC at backend ', trpcUrl)
 } else if (!(typeof process !== 'undefined')) {
   console.log('[init] Using in-memory TRPC and database')
 }

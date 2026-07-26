@@ -1,11 +1,12 @@
 import { useLocation } from '@tanstack/react-router'
+import { stripAppBasePath } from '@/lib/app-path'
 
 /**
  * Non-hook function that extracts the document title from a pathname if it's on the /n/$title route,
  * otherwise returns null.
  */
 export function getDocTitle(): string | null {
-  const pathname = window.location.pathname
+  const pathname = stripAppBasePath(window.location.pathname)
   // Check if we're on the /n/$title route
   if (pathname.startsWith('/n/')) {
     // Extract the title from the pathname (everything after /n/)
@@ -22,7 +23,7 @@ export function getDocTitle(): string | null {
  */
 export function useDocTitle(): string | null {
   const location = useLocation()
-  const pathname = location.pathname
+  const pathname = stripAppBasePath(location.pathname)
   if (pathname.startsWith('/n/')) {
     return pathname.slice(3)
   }

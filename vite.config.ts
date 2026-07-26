@@ -17,7 +17,7 @@ function getGitInfo() {
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  base: '/',
+  base: process.env.TEKNE_BASE_PATH || '/',
   plugins: [
     TanStackRouterVite({ autoCodeSplitting: true }),
     viteReact(),

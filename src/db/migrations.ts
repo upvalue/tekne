@@ -8,6 +8,7 @@ import { tmigration as addNoteDataMigration } from './migrations/1757182212830_a
 import { tmigration as alterNoteDataTypeEnumMigration } from './migrations/1758154595036_alter-note-data-type-enum.ts'
 import { tmigration as addNoteDataPinMigration } from './migrations/1758210899686_add-note-data-pin.ts'
 import { tmigration as addNoteParsedBodyMigration } from './migrations/1758235135865_add-note-parsed-body.ts'
+import { tmigration as noteUpdateCascadeMigration } from './migrations/1758243487015_note-update-cascade.ts'
 import { tmigration as addSavedSearchesMigration } from './migrations/1769300006926_add-saved-searches.ts'
 import { tmigration as addNoteLinesMigration } from './migrations/1769317427281_add-note-lines.ts'
 import { tmigration as addFeatureFlagsMigration } from './migrations/1771632000000_add-feature-flags.ts'
@@ -33,6 +34,8 @@ class TekneMigrationProvider implements MigrationProvider {
     migrations['1758210899686_add-note-data-pin'] = addNoteDataPinMigration
     migrations['1758235135865_add-note-parsed-body'] =
       addNoteParsedBodyMigration
+    migrations['1758243487015_note-update-cascade'] =
+      noteUpdateCascadeMigration
     migrations['1769300006926_add-saved-searches'] = addSavedSearchesMigration
     migrations['1769317427281_add-note-lines'] = addNoteLinesMigration
     migrations['1771632000000_add-feature-flags'] = addFeatureFlagsMigration
