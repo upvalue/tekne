@@ -2,7 +2,6 @@ import { TEditor } from '@/editor/TEditor'
 import { toast } from 'sonner'
 import { allTagsAtom, docAtom, globalTimerAtom } from '@/editor/state'
 import { resetUndoHistory } from '@/editor/undo'
-import { documentUndoEnabledAtom } from '@/lib/feature-flags'
 import { createStore, useAtom } from 'jotai'
 import '@/docs/schema'
 import { truncate } from 'lodash-es'
@@ -44,7 +43,7 @@ function RouteComponent() {
 
   const docLastSaved = useRef<Date>(new Date())
   const docDirty = useRef<boolean>(false)
-  const utils = trpc.useUtils();
+  const utils = trpc.useUtils()
   // TODO: this whole thing needs a bit of cleanup
 
   useEffect(() => {
@@ -53,7 +52,7 @@ function RouteComponent() {
 
   const updateDocMutation = trpc.doc.updateDoc.useMutation({
     onSuccess: () => {
-      utils.analysis.aggregateData.invalidate();
+      utils.analysis.aggregateData.invalidate()
     },
     onError: (e) => {
       console.error(e)
@@ -69,25 +68,20 @@ function RouteComponent() {
     return store
   }, [])
 
-  const loadDocQuery = trpc.doc.loadDoc.useQuery({ name: title }, {
-    enabled: () => !docDirty.current,
-    retry: (_fc, error) => {
-      if (error?.data?.code === 'NOT_FOUND') {
-        return false
-      }
-      return true
+  const loadDocQuery = trpc.doc.loadDoc.useQuery(
+    { name: title },
+    {
+      enabled: () => !docDirty.current,
+      retry: (_fc, error) => {
+        if (error?.data?.code === 'NOT_FOUND') {
+          return false
+        }
+        return true
+      },
     }
-  })
+  )
 
-  // Sync feature flags into the editor's isolated Jotai store
-  const flagsQuery = trpc.flags.getAll.useQuery()
-  useEffect(() => {
-    if (flagsQuery.data) {
-      store.set(documentUndoEnabledAtom, !!flagsQuery.data['document_undo'])
-    }
-  }, [flagsQuery.data, store])
-
-  const createDocMutation = useCreateDoc();
+  const createDocMutation = useCreateDoc()
 
   useEffect(() => {
     if (loadDocQuery.error && loadDocQuery.error.data?.code === 'NOT_FOUND') {
@@ -120,35 +114,38 @@ function RouteComponent() {
 
   // It also uses beforeunload to try to prevent user from navigating away if
 
-  const saveDocument = useCallback(async (chainOnSuccess?: () => void) => {
-    if (loadDocQuery.isLoading) {
-      return
-    }
-
-    // Doc hasn't changed, don't do anything
-    if (store.get(docAtom) === loadDocQuery.data) {
-      if (chainOnSuccess) chainOnSuccess();
-      return
-    }
-
-    try {
-      await updateDocMutation.mutateAsync({
-        name: title,
-        doc: store.get(docAtom),
-      })
-      docDirty.current = false
-      docLastSaved.current = new Date()
-
-      if (chainOnSuccess) {
-        chainOnSuccess()
+  const saveDocument = useCallback(
+    async (chainOnSuccess?: () => void) => {
+      if (loadDocQuery.isLoading) {
+        return
       }
-    } catch (e) {
-      console.error('Error saving document', e)
-      toast.error(
-        `Error while updating document ${truncate(String(e), { length: 100 })}`
-      )
-    }
-  }, [title, store, updateDocMutation, loadDocQuery.isLoading, loadDocQuery.data])
+
+      // Doc hasn't changed, don't do anything
+      if (store.get(docAtom) === loadDocQuery.data) {
+        if (chainOnSuccess) chainOnSuccess()
+        return
+      }
+
+      try {
+        await updateDocMutation.mutateAsync({
+          name: title,
+          doc: store.get(docAtom),
+        })
+        docDirty.current = false
+        docLastSaved.current = new Date()
+
+        if (chainOnSuccess) {
+          chainOnSuccess()
+        }
+      } catch (e) {
+        console.error('Error saving document', e)
+        toast.error(
+          `Error while updating document ${truncate(String(e), { length: 100 })}`
+        )
+      }
+    },
+    [title, store, updateDocMutation, loadDocQuery.isLoading, loadDocQuery.data]
+  )
 
   // Try to save document if user navigates away while a change is present
   // We don't use "enableBeforeUnload" right now because it always registers
@@ -156,14 +153,16 @@ function RouteComponent() {
   // this could probably be used better
 
   // Side effect to cause query to fire
-  useAtom(allTagsAtom);
+  useAtom(allTagsAtom)
 
   useBlocker({
     shouldBlockFn: async () => {
       await saveDocument()
       if (store.get(globalTimerAtom).isActive) {
-        toast.info('There is a timer active -- end the timer before navigating away');
-        return true;
+        toast.info(
+          'There is a timer active -- end the timer before navigating away'
+        )
+        return true
       }
       return false
     },
@@ -178,7 +177,8 @@ function RouteComponent() {
     // Only show browser confirmation if timer is active
     if (store.get(globalTimerAtom).isActive) {
       event.preventDefault()
-      event.returnValue = 'You have a timer running. Are you sure you want to leave?'
+      event.returnValue =
+        'You have a timer running. Are you sure you want to leave?'
     }
   })
 

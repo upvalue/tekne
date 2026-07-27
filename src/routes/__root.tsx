@@ -6,23 +6,12 @@ import { Toaster } from '@/components/vendor/Sonner'
 import { DocumentSearch } from '@/controls/DocumentSearch'
 import { TemplateDialog } from '@/controls/TemplateDialog'
 import { activePanelTabAtom, panelVisibleAtom } from '@/panel/state'
-import { documentUndoEnabledAtom } from '@/lib/feature-flags'
 
 export type RouterAppContext = {
   trpc: typeof trpc
 }
 
 const RootComponent = () => {
-  // Load feature flags and sync to synchronous atoms
-  const flagsQuery = trpc.flags.getAll.useQuery()
-  const setDocumentUndoEnabled = useSetAtom(documentUndoEnabledAtom)
-
-  useEffect(() => {
-    if (flagsQuery.data) {
-      setDocumentUndoEnabled(!!flagsQuery.data['document_undo'])
-    }
-  }, [flagsQuery.data, setDocumentUndoEnabled])
-
   const setPanelVisible = useSetAtom(panelVisibleAtom)
   const setActiveTab = useSetAtom(activePanelTabAtom)
 

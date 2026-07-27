@@ -2,7 +2,6 @@
 import { keymap, EditorView } from '@codemirror/view'
 import { docAtom, requestFocusLineAtom } from '../state'
 import { undo, redo } from '../undo'
-import { documentUndoEnabledAtom } from '@/lib/feature-flags'
 import { lineMake, type ZDoc } from '@/docs/schema'
 import { keybindings } from '@/lib/keys'
 import type { useStore } from 'jotai'
@@ -11,7 +10,10 @@ import { Transaction } from '@codemirror/state'
 
 /** Delete an entire line by index, moving focus to the previous line.
  *  If it's the last remaining line, clears its content instead. */
-export const deleteLine = (lineIdx: number, store?: ReturnType<typeof useStore>) => {
+export const deleteLine = (
+  lineIdx: number,
+  store?: ReturnType<typeof useStore>
+) => {
   const s = store ?? getDefaultStore()
   const doc = s.get(docAtom)
 
@@ -293,16 +295,20 @@ export const makeKeymap = (
   // CM's Mod-z matches both Ctrl+Z and Ctrl+Shift+Z on Linux
   const undoRedoHandler = EditorView.domEventHandlers({
     keydown: (event) => {
-      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'z') {
-        // Only intercept when document undo is enabled via feature flag
-        if (!store.get(documentUndoEnabledAtom)) return false
-
+      if (!(event.ctrlKey || event.metaKey)) return false
+      const key = event.key.toLowerCase()
+      if (key === 'z') {
         event.preventDefault()
         if (event.shiftKey) {
           redo(store)
         } else {
           undo(store)
         }
+        return true
+      }
+      if (key === 'y') {
+        event.preventDefault()
+        redo(store)
         return true
       }
       return false

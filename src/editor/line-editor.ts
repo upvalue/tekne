@@ -15,6 +15,7 @@ import { useAtom, useAtomValue, useSetAtom, useStore } from 'jotai'
 import {
   docAtom,
   focusedLineAtom,
+  focusedPosAtom,
   globalTimerAtom,
   requestFocusLineAtom,
   timerDialogRequestAtom,
@@ -131,9 +132,15 @@ export const useCodeMirror = (lineInfo: LineWithIdx) => {
     })
 
     const focusListener = EditorView.updateListener.of((update) => {
+      // Runs after updateListener, so undo capture during a typing
+      // transaction reads the pre-keystroke cursor position.
+      if (update.selectionSet && update.view.hasFocus) {
+        store.set(focusedPosAtom, update.state.selection.main.head)
+      }
       if (!update.focusChanged) return
       if (update.view.hasFocus) {
         setFocusedLine(getLineIdx())
+        store.set(focusedPosAtom, update.state.selection.main.head)
         // state.update({annotations: isActive.of(true) });
       } else {
         // state.update({annotations: isActive.of(false)});
@@ -147,8 +154,7 @@ export const useCodeMirror = (lineInfo: LineWithIdx) => {
         const idx = getLineIdx()
         const line = store.get(docAtom).children[idx]
         if (!line) return ''
-        if (line.collapsed)
-          return ' + collasped lines'
+        if (line.collapsed) return ' + collasped lines'
         return 'The world is your canvas'
       },
       (view) => {
@@ -156,8 +162,7 @@ export const useCodeMirror = (lineInfo: LineWithIdx) => {
         const doc = store.get(docAtom)
         const idx = getLineIdx()
 
-        if (!doc || !doc.children || !doc.children[idx])
-          return false
+        if (!doc || !doc.children || !doc.children[idx]) return false
         if (doc.children[idx].collapsed) return true
 
         // Don't show placeholder if:
@@ -320,7 +325,10 @@ export const useCodeMirror = (lineInfo: LineWithIdx) => {
       }
     })
     // Request opening the timer dialog with the specified mode
-    store.set(timerDialogRequestAtom, { lineIdx: event.lineIdx, mode: event.mode })
+    store.set(timerDialogRequestAtom, {
+      lineIdx: event.lineIdx,
+      mode: event.mode,
+    })
   })
 
   useLineEvent('linePinToggle', lineInfo.lineIdx, (event) => {

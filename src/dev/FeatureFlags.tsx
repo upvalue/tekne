@@ -1,12 +1,11 @@
 import { trpc } from '@/trpc/client'
-import { modName } from '@/lib/keys'
 
-const KNOWN_FLAGS = [
-  { key: 'document_undo', label: 'Document Undo', description: `Enable document-level undo/redo (${modName}+Z / ${modName}+Shift+Z)` },
-]
+const KNOWN_FLAGS: { key: string; label: string; description: string }[] = []
 
 export function FeatureFlags({ isActive }: { isActive: boolean }) {
-  const flagsQuery = trpc.flags.getAll.useQuery(undefined, { enabled: isActive })
+  const flagsQuery = trpc.flags.getAll.useQuery(undefined, {
+    enabled: isActive,
+  })
   const setFlagMutation = trpc.flags.set.useMutation()
   const utils = trpc.useUtils()
 
@@ -18,11 +17,19 @@ export function FeatureFlags({ isActive }: { isActive: boolean }) {
   }
 
   if (!isActive) {
-    return <div className="p-4 text-gray-500">Feature flags will load when tab is active</div>
+    return (
+      <div className="p-4 text-gray-500">
+        Feature flags will load when tab is active
+      </div>
+    )
   }
 
   if (flagsQuery.isLoading) {
     return <div className="p-4 text-gray-500">Loading flags...</div>
+  }
+
+  if (KNOWN_FLAGS.length === 0) {
+    return <div className="p-4 text-gray-500">No feature flags defined</div>
   }
 
   return (
@@ -42,9 +49,7 @@ export function FeatureFlags({ isActive }: { isActive: boolean }) {
               onClick={() => handleToggle(flag.key, value)}
               disabled={setFlagMutation.isPending}
               className={`px-3 py-1 rounded text-sm font-bold min-w-[50px] border-none cursor-pointer ${
-                value
-                  ? 'bg-green-400 text-black'
-                  : 'bg-zinc-600 text-white'
+                value ? 'bg-green-400 text-black' : 'bg-zinc-600 text-white'
               }`}
             >
               {value ? 'ON' : 'OFF'}

@@ -7,13 +7,7 @@ import { atomWithQuery } from 'jotai-tanstack-query'
 import { trpcClient } from '@/trpc/client'
 import { noop } from 'lodash-es'
 import { produce, type Draft } from 'immer'
-import {
-  undoStackAtom,
-  redoStackAtom,
-  suppressUndoCaptureAtom,
-  UNDO_STACK_LIMIT,
-} from './undo'
-import { documentUndoEnabledAtom } from '@/lib/feature-flags'
+import { captureUndoEntry, suppressUndoCaptureAtom } from './undo'
 
 export const DEFAULT_COUNTDOWN_SECONDS = 30 * 60
 
@@ -28,25 +22,25 @@ export const docAtom = atom(
   (get) => get(rawDocAtom),
   (get, set, update: ZDoc | ((draft: Draft<ZDoc>) => void)) => {
     const currentDoc = get(rawDocAtom)
-
-    if (!get(suppressUndoCaptureAtom) && get(documentUndoEnabledAtom)) {
-      const focusedLine = get(focusedLineAtom) ?? 0
-      set(undoStackAtom, (prev) => {
-        const next = [...prev, { doc: currentDoc, focusedLine }]
-        return next.length > UNDO_STACK_LIMIT
-          ? next.slice(-UNDO_STACK_LIMIT)
-          : next
-      })
-      set(redoStackAtom, [])
-    }
-
     const nextDoc =
       typeof update === 'function' ? produce(currentDoc, update) : update
+
+    if (!get(suppressUndoCaptureAtom)) {
+      captureUndoEntry(get, set, currentDoc, nextDoc)
+    }
+
     set(rawDocAtom, ensureUniqueLineTimeCreateds(nextDoc))
   }
 )
 
 export const focusedLineAtom = atom<number | null>(null)
+
+/**
+ * Cursor column within the focused line, synced from CodeMirror selection
+ * changes. Captured into undo entries so restores can return the cursor
+ * to where it was, not just the line.
+ */
+export const focusedPosAtom = atom<number>(0)
 
 export const dragSelectedLineIdsAtom = atom<string[]>([])
 
