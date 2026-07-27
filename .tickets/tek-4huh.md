@@ -21,3 +21,11 @@ Option A: registry becomes the runtime — add useGlobalKeybinding(id, handler) 
 
 All global bindings resolved from the registry (single modifier-normalization path); Help panel display provably matches behavior; meta+\ registered; unused code (getKeybinding or the hook dep, depending on option) removed; rationale for chosen option recorded in ticket notes after investigating history.
 
+
+## Notes
+
+**2026-07-27T05:47:40Z**
+
+tek-bxzt removed the other unused deps but left react-hotkeys-hook installed --
+option B adopts it, so pulling it now and re-adding it later is churn. Removing
+it is part of this ticket if option A wins.
