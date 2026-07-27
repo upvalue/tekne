@@ -5,7 +5,7 @@ import {
   DescriptionList,
   DescriptionTerm,
 } from '@/components/vendor/DescriptionList'
-import { getAllKeybindings, keybindings } from '@/lib/keys'
+import { displayKey, getAllKeybindings, keybindings } from '@/lib/keys'
 import { DocsWrapper } from '@/documentation/DocsWrapper'
 import { Button } from '@/components/vendor/Button'
 import { Version } from '@/documentation/Version'
@@ -35,7 +35,7 @@ const Keybindings = () => {
           <React.Fragment key={keybinding.name}>
             <DescriptionTerm>{keybinding.description}</DescriptionTerm>
             <DescriptionDetails>
-              <Badge>{keybinding.displayKey}</Badge>
+              <Badge>{displayKey(keybinding)}</Badge>
             </DescriptionDetails>
           </React.Fragment>
         ))}
@@ -47,7 +47,7 @@ const Keybindings = () => {
       <p className="text-sm text-gray-400 mb-2">
         Press{' '}
         <Badge className="inline">
-          {keybindings.commandPalette.displayKey}
+          {displayKey(keybindings.commandPalette)}
         </Badge>{' '}
         to open the command palette, then press any of these keys:
       </p>

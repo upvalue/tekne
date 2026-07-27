@@ -3,7 +3,7 @@ import { keymap, EditorView } from '@codemirror/view'
 import { docAtom, requestFocusLineAtom } from '../state'
 import { undo, redo } from '../undo'
 import { lineMake, type ZDoc } from '@/docs/schema'
-import { keybindings } from '@/lib/keys'
+import { codeMirrorKey } from '@/lib/keys'
 import type { useStore } from 'jotai'
 import { getDefaultStore } from 'jotai'
 import { Transaction } from '@codemirror/state'
@@ -272,7 +272,7 @@ export const makeKeymap = (
       run: (view) => deleteLineIfEmpty(view),
     },
     {
-      key: keybindings.toggleCollapse.key,
+      key: codeMirrorKey('toggleCollapse'),
       run: (view) => toggleCollapse(view, store, getLineIdx()),
     },
     {
@@ -280,7 +280,7 @@ export const makeKeymap = (
       run: (view) => deleteLineIfEmpty(view),
     },
     {
-      key: 'Mod-Shift-k',
+      key: codeMirrorKey('deleteLine'),
       run: () => {
         deleteLine(getLineIdx(), store)
         return true

@@ -21,6 +21,7 @@ import { trpc } from '@/trpc/client'
 import { setDetailTitle } from '@/lib/title'
 import { noop } from 'lodash-es'
 import { TimerInfo } from './TimerInfo'
+import { useGlobalKeybinding } from '@/hooks/useGlobalKeybinding'
 
 const STATUS_BAR_TRUNCATE_LENGTH = 50
 
@@ -115,18 +116,7 @@ export const StatusBar = ({ isLoading }: { isLoading: boolean }) => {
   const focusedLine = useAtomValue(focusedLineAtom)
   const [goToLineOpen, setGoToLineOpen] = useAtom(goToLineOpenAtom)
 
-  // Listen for Ctrl+G to toggle go-to-line input
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.ctrlKey && e.key === 'g') {
-        e.preventDefault()
-        setGoToLineOpen((open) => !open)
-      }
-    }
-
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [setGoToLineOpen])
+  useGlobalKeybinding('goToLine', () => setGoToLineOpen((open) => !open))
 
   const totalDocTime = useMemo(() => {
     return doc.children.reduce(

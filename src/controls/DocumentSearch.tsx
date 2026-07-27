@@ -6,6 +6,7 @@ import { useMemo, useEffect, useState } from 'react'
 import { KBarModal, KBarSearchInput, KBarResultRenderer } from './KBar'
 import { docRoute } from '@/lib/utils'
 import { useCreateDoc } from '@/hooks/useCreateDoc'
+import { kbarShortcut } from '@/lib/keys'
 
 const DocumentSearchContent = () => {
   const navigate = useNavigate()
@@ -96,7 +97,9 @@ export const DocumentSearch: React.FC<DocumentSearchProps> = ({ children }) => {
     <KBarProvider
       actions={[]}
       options={{
-        toggleShortcut: '$mod+o',
+        // kbar does its own platform normalization, so it keeps the binding
+        // and only takes the combo from the registry.
+        toggleShortcut: kbarShortcut('documentSearch'),
       }}
     >
       <DocumentSearchContent />

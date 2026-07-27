@@ -1,6 +1,6 @@
 ---
 id: tek-4huh
-status: open
+status: closed
 deps: []
 links: [tek-bxzt, tek-e59x]
 created: 2026-07-27T04:19:31Z
@@ -29,3 +29,44 @@ All global bindings resolved from the registry (single modifier-normalization pa
 tek-bxzt removed the other unused deps but left react-hotkeys-hook installed --
 option B adopts it, so pulling it now and re-adding it later is churn. Removing
 it is part of this ticket if option A wins.
+
+**2026-07-27T06:06:32Z**
+
+Went with option A, scoped down. Two things turned up first.
+
+The history the note asked about: react-hotkeys-hook was real. It was used in
+src/controls/ControlBar.tsx, which became TopBar.tsx in e463805, and the hotkey
+usage died with that file. So `type: 'react'` wasn't aspirational, it described
+reality and then rotted.
+
+And there are five mechanisms, not four. documentSearch isn't hand-rolled at
+all -- it's kbar's own toggleShortcut: '$mod+o' in DocumentSearch.tsx.
+CommandPalette.tsx:244 is palette-internal navigation, not a global binding, so
+it stays where it is. The registry also wasn't display-only:
+line-operations.ts:275 already read keybindings.toggleCollapse.key, while
+deleteLine eight lines below hardcoded 'Mod-Shift-k'. Same file, same keymap,
+one drifted.
+
+So kbar and CodeMirror keep their own binding systems -- both normalize
+modifiers correctly already and reimplementing that behind a shared hook would
+be a downgrade -- and only read the combo from the registry, through
+kbarShortcut() and codeMirrorKey(). useGlobalKeybinding replaces the three
+hand-rolled window listeners, which were the only real inconsistency.
+
+Combos are now one canonical format: lowercase, '+'-separated, 'mod' for the
+platform's primary modifier and 'ctrl' for the literal Control key. displayKey
+is derived from that string rather than stored next to it, which is what makes
+Help unable to drift -- there's nothing left to keep in sync. `type` says
+'global' | 'codemirror' | 'kbar' now, since 'react' had stopped being true.
+
+Behavior does change in one place: modifiers match exactly, so Cmd+Shift+/ no
+longer opens the search panel. The old handler never checked shift. __root also
+used metaKey || ctrlKey, so Ctrl+/ fired on Mac; 'mod' is Cmd there now. Both
+seem like what you'd want, but they're changes.
+
+mod+\ registered, getKeybinding deleted, react-hotkeys-hook dropped.
+
+Eight tests in keys.test.ts. Then pressed all seven in the browser: Ctrl+O opens
+kbar, Ctrl+/ the search panel, Ctrl+\ toggles the panel, Ctrl+K the palette,
+Ctrl+G the go-to-line input, Ctrl+Shift+K deletes the focused line. Help lists
+all seven with the strings they actually fire on.
