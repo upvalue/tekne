@@ -43,21 +43,5 @@ export default tseslint.config(
         version: 'detect',
       },
     },
-  },
-  {
-    // Debug logging kept creeping into the editor's hot paths, where it fires
-    // on every keystroke. Server startup, migrations, the tRPC client's init
-    // banner and the dev tools all log on purpose, so they're exempt.
-    files: ['src/**/*.{ts,tsx}'],
-    ignores: [
-      'src/server/**',
-      'src/db/**',
-      'src/dev/**',
-      'src/trpc/**',
-      'src/**/*.test.{ts,tsx}',
-    ],
-    rules: {
-      'no-console': ['error', { allow: ['warn', 'error'] }],
-    },
   }
 )
