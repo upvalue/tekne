@@ -45,7 +45,6 @@ export const TitleBar = ({
   const renameDocExecuteMutation = trpc.doc.renameDocExecute.useMutation({
     onSuccess: (r) => {
       if (r.success) {
-        console.log('woodle doodle doo')
         toast.success(`Document renamed to "${proposedTitle.trim()}"`)
         navigate({
           to: '/n/$title',

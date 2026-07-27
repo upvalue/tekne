@@ -174,8 +174,6 @@ export const StatusBar = ({ isLoading }: { isLoading: boolean }) => {
             <StopIcon
               className="w-4 h-4 text-red-400 cursor-pointer hover:text-red-300"
               onClick={() => {
-                console.log('Stopping ye timer')
-                console.log({ stopTimer })
                 stopTimer()
               }}
             />

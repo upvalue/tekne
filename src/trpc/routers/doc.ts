@@ -119,7 +119,6 @@ const proposeRename = async (
 
   docAlreadyExists = existingDoc !== undefined
 
-  console.log({ oldName })
   const referencesToDoc = await db
     .selectFrom('notes')
     .select(['title'])

@@ -150,7 +150,6 @@ export const makeKeymap = (
       key: 'Enter',
       run: (view) => {
         const lineIdx = getLineIdx()
-        console.log('Enter key pressed')
         const { state } = view
         const { selection } = state
 
@@ -197,7 +196,6 @@ export const makeKeymap = (
           })
         }
 
-        console.log('After line addition, setting focus line to', lineIdx + 1)
         setRequestFocusLine({
           lineIdx: lineIdx + 1,
           pos: 0,
@@ -243,7 +241,6 @@ export const makeKeymap = (
 
         const prevLine = doc.children[lineIdx - 1]
 
-        console.log('Set focus line to', lineIdx - 1)
         setRequestFocusLine({
           lineIdx: lineIdx - 1,
           pos: Math.min(cursorPos, prevLine.mdContent.length),

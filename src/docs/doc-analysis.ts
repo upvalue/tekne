@@ -150,6 +150,5 @@ export const extractDocData = (lines: Array<ZTreeLine>): Array<ZDocDatum> => {
   for (const line of lines) {
     extractDocDataImpl(line, ret, tags)
   }
-  console.log({ ret })
   return ret
 }

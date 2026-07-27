@@ -119,12 +119,6 @@ export const useCodeMirror = (lineInfo: LineWithIdx) => {
         return
       }
 
-      console.log(
-        'Line',
-        getLineIdx(),
-        'content updated',
-        update.state.doc.toString()
-      )
       setDoc((draft) => {
         draft.children[getLineIdx()].mdContent = update.state.doc.toString()
         draft.children[getLineIdx()].timeUpdated = new Date().toISOString()
@@ -229,7 +223,6 @@ export const useCodeMirror = (lineInfo: LineWithIdx) => {
     // When the document itself is updated, we need to synchronize
     // React state with Codemirror state
     if (v.state.doc.toString() !== line.mdContent) {
-      console.log('Line changed externally, updating', lineInfo.lineIdx)
       v.dispatch({
         changes: {
           from: 0,
@@ -255,13 +248,10 @@ export const useCodeMirror = (lineInfo: LineWithIdx) => {
       return
     }
 
-    console.log('Focus requested on line ', lineIdx, ' view ', cmView.current)
-
     const obtainFocus = () => {
       const view = cmView.current
 
       if (!view) {
-        console.log('Focus: View not defined, returning early')
         setTimeout(obtainFocus, 10)
         return
       }
@@ -348,8 +338,6 @@ export const useCodeMirror = (lineInfo: LineWithIdx) => {
         draft.children[event.lineIdx].datumTaskStatus = 'unset'
       }
     })
-
-    console.log('Tag toggle event', event.lineIdx)
   })
 
   // Line collapse toggle -- note that this only handles
