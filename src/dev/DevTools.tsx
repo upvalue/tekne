@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { lazy, Suspense, useMemo, useState } from 'react'
 import { useRouter } from '@tanstack/react-router'
 import {
   Tabs,
@@ -12,9 +12,17 @@ import { zdoc } from '@/docs/schema'
 import { extractDocData, treeifyDoc } from '@/docs/doc-analysis'
 import { docAtom } from '@/editor/state'
 import { Button } from '@/components/vendor/Button'
-import { PgliteDevtools } from './PgliteDevtools'
 import { DatabaseMigrations } from './DatabaseMigrations'
 import { FeatureFlags } from './FeatureFlags'
+
+// PGlite only exists in the development in-memory mode, so this panel — and
+// with it the pglite wasm and the REPL — is compiled out of production
+// builds rather than merely split into a chunk nothing ever fetches.
+const PgliteDevtools = import.meta.env.PROD
+  ? null
+  : lazy(() =>
+      import('./PgliteDevtools').then((m) => ({ default: m.PgliteDevtools }))
+    )
 
 const RawDocument = ({ isActive }: { isActive: boolean }) => {
   const [doc, setDoc] = useAtom(docAtom)
@@ -122,7 +130,7 @@ const DocumentData = ({ isActive }: { isActive: boolean }) => {
 }
 
 export const DevTools = () => {
-  const usingPglite = !!window.dbHandle
+  const usingPglite = PgliteDevtools !== null && !!window.dbHandle
   const [activeTab, setActiveTab] = useState('raw')
 
   const router = useRouter()
@@ -152,9 +160,13 @@ export const DevTools = () => {
       <TabsContent value="migrations">
         <DatabaseMigrations isActive={activeTab === 'migrations'} />
       </TabsContent>
-      {usingPglite && (
+      {usingPglite && PgliteDevtools && (
         <TabsContent value="pglite">
-          <PgliteDevtools />
+          <Suspense
+            fallback={<div className="p-4 text-gray-500">Loading…</div>}
+          >
+            <PgliteDevtools />
+          </Suspense>
         </TabsContent>
       )}
       <TabsContent value="tanstackdev">

@@ -1,4 +1,4 @@
-import { defineConfig } from 'vite'
+import { defineConfig, type Plugin } from 'vite'
 import viteReact from '@vitejs/plugin-react'
 import { TanStackRouterVite } from '@tanstack/router-plugin/vite'
 import tailwindcss from '@tailwindcss/vite'
@@ -21,6 +21,43 @@ function getGitInfo() {
   }
 }
 
+/**
+ * Keeps the development-only backend out of production builds.
+ *
+ * The in-memory mode runs the tRPC router in the browser against PGlite, and
+ * both places that reach for it import it dynamically behind an
+ * `import.meta.env.PROD` check. Rollup does drop those branches — but only
+ * after loading the modules, by which point Vite has already emitted PGlite's
+ * ~14MB of wasm and data into dist/assets as orphans nothing ever fetches.
+ * Resolving the imports to an empty stub keeps them out of the module graph in
+ * the first place.
+ *
+ * Stubbing happens at load rather than resolve so it survives Vite's alias
+ * plugin, and the stub can be empty because the only production-reachable
+ * imports of these modules are `import type`, which is erased before Rollup
+ * sees it. The `import.meta.env.PROD` guards are still what stops the runtime
+ * from reaching an empty module.
+ *
+ * Scoped to production mode, the same condition the branches are compiled out
+ * under, so the dev server is untouched.
+ */
+const stubDevOnlyModules = (): Plugin => {
+  const DEV_ONLY = [
+    '/src/trpc/router.ts',
+    '/src/db/index.ts',
+    '/src/dev/PgliteDevtools.tsx',
+  ]
+
+  return {
+    name: 'tekne:stub-dev-only-modules',
+    enforce: 'pre',
+    apply: (_config, { mode }) => mode === 'production',
+    load(id) {
+      return DEV_ONLY.some((path) => id.endsWith(path)) ? 'export {}\n' : null
+    },
+  }
+}
+
 // https://vitejs.dev/config/
 export default defineConfig({
   base: process.env.TEKNE_BASE_PATH || '/',
@@ -28,6 +65,7 @@ export default defineConfig({
     TanStackRouterVite({ autoCodeSplitting: true }),
     viteReact(),
     tailwindcss(),
+    stubDevOnlyModules(),
   ],
   define: {
     TEKNE_GIT_INFO: JSON.stringify(getGitInfo()),
