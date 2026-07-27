@@ -1,6 +1,6 @@
 ---
 id: tek-umse
-status: open
+status: closed
 deps: []
 links: []
 created: 2026-07-27T04:19:13Z
@@ -20,4 +20,28 @@ Delete linesToZodDoc; pass doc straight to treeifyDoc(doc). Extract deriveNoteRo
 ## Acceptance Criteria
 
 linesToZodDoc removed; parsedBody/noteLines built in exactly one place; upsert still bumps revision, recompute still leaves revisions untouched; derived rows identical before/after for existing docs.
+
+## Notes
+
+**2026-07-27T05:53:51Z**
+
+deriveNoteRows lives in server/lib/docs.ts and returns { parsedBody, noteData,
+noteLines }. Both writers keep their own deletes and inserts. processDocumentForData
+stays exported but is now only called from deriveNoteRows.
+
+linesToZodDoc is gone and treeifyDoc gets the real doc. No behavior change today
+-- CURRENT_SCHEMA_VERSION is 1, which is what the synthetic doc hardcoded -- so
+this only matters once something branches on the version. There's a test pinning
+it (a doc at schemaVersion 99 still extracts its tag) so the plumbing doesn't
+quietly regress.
+
+Four tests in server/lib/docs.test.ts, the first for either of these files.
+Tags keep their '#' in datum_tag, which surprised me; the test records it.
+
+Checked the round trip against pglite in the browser rather than trusting the
+unit tests. Created a doc, typed a tagged line, then read the tables directly:
+revision 1, one note_data row (#umse-check, line 0), one note_lines row, one
+parsed_body entry. Ran Recompute Data twice from the Dev panel -- it reproduced
+the same rows and left revision at 1 both times, which covers the "identical
+before/after" and "revisions untouched" criteria in one go.
 

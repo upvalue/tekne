@@ -15,13 +15,10 @@ import {
   migrateDocWithReport,
   validateDocumentWithMigrationCheck,
 } from '@/docs/doc-migrator'
-import {
-  processDocumentForData,
-  recomputeAllDocumentData,
-} from '@/server/lib/docs'
+import { deriveNoteRows, recomputeAllDocumentData } from '@/server/lib/docs'
 import { applyTemplateDirectives } from '@/docs/template-directives'
 import { produce } from 'immer'
-import { jsonifyMdTree, TEKNE_MD_PARSER, visitMdTree } from '@/editor/parser'
+import { TEKNE_MD_PARSER, visitMdTree } from '@/editor/parser'
 import type { SyntaxNode } from '@lezer/common'
 import MagicString from 'magic-string'
 import { TRPCError } from '@trpc/server'
@@ -37,13 +34,8 @@ export const upsertNoteInTx = async (
   name: string,
   body: ZDoc
 ): Promise<number> => {
-  const parsedBody = body.children.map((ln, line_idx) => {
-    const parsedLine = TEKNE_MD_PARSER.parse(ln.mdContent)
-    return {
-      line_idx,
-      parsed_body: jsonifyMdTree(parsedLine.topNode, ln.mdContent),
-    }
-  })
+  const { parsedBody, noteData, noteLines } = deriveNoteRows(name, body)
+
   const r = await tx
     .insertInto('notes')
     .values({
@@ -64,27 +56,15 @@ export const upsertNoteInTx = async (
     .returning('revision')
     .executeTakeFirstOrThrow()
 
-  // Process document for data using shared function
-  const processedData = processDocumentForData(name, body)
-
   // Drop all data by note title
   await tx.deleteFrom('note_data').where('note_title', '=', name).execute()
 
-  if (processedData.length > 0) {
-    await tx.insertInto('note_data').values(processedData).execute()
+  if (noteData.length > 0) {
+    await tx.insertInto('note_data').values(noteData).execute()
   }
 
   // Populate note_lines for text search
   await tx.deleteFrom('note_lines').where('note_title', '=', name).execute()
-
-  const noteLines = body.children.map((ln, line_idx) => ({
-    note_title: name,
-    line_idx,
-    content: ln.mdContent,
-    indent: ln.indent,
-    time_created: new Date(ln.timeCreated),
-    time_updated: new Date(ln.timeUpdated),
-  }))
 
   if (noteLines.length > 0) {
     await tx.insertInto('note_lines').values(noteLines).execute()

@@ -4,20 +4,12 @@ import type { ZDoc } from '@/docs/schema'
 import { extractDocData, treeifyDoc } from '@/docs/doc-analysis'
 import { jsonifyMdTree, TEKNE_MD_PARSER } from '@/editor/parser'
 
-const linesToZodDoc = (title: string, children: Array<any>): ZDoc => {
-  return {
-    type: 'doc',
-    children,
-    schemaVersion: 1,
-  }
-}
-
 /**
  * Process a document and return the derived data for database insertion
  */
 export const processDocumentForData = (title: string, doc: ZDoc) => {
   // Analyze doc to get data
-  const tree = treeifyDoc(linesToZodDoc(title, doc.children))
+  const tree = treeifyDoc(doc)
   const data = extractDocData(tree.children)
 
   return data.map((d) => ({
@@ -32,6 +24,34 @@ export const processDocumentForData = (title: string, doc: ZDoc) => {
     datum_pinned_content: d.datumPinnedContent,
     datum_type: d.datumType,
   }))
+}
+
+/**
+ * Everything a note's body determines: the per-line parsed markdown stored on
+ * the note itself, the extracted data rows, and the line rows backing text
+ * search.
+ */
+export const deriveNoteRows = (title: string, body: ZDoc) => {
+  const parsedBody = body.children.map((ln, line_idx) => {
+    const parsedLine = TEKNE_MD_PARSER.parse(ln.mdContent)
+    return {
+      line_idx,
+      parsed_body: jsonifyMdTree(parsedLine.topNode, ln.mdContent),
+    }
+  })
+
+  const noteData = processDocumentForData(title, body)
+
+  const noteLines = body.children.map((ln, line_idx) => ({
+    note_title: title,
+    line_idx,
+    content: ln.mdContent,
+    indent: ln.indent,
+    time_created: new Date(ln.timeCreated),
+    time_updated: new Date(ln.timeUpdated),
+  }))
+
+  return { parsedBody, noteData, noteLines }
 }
 
 /**
@@ -53,15 +73,10 @@ export const recomputeAllDocumentData = async (db: Kysely<Database>) => {
 
     // Process each document
     for (const doc of allDocs) {
-      const processedData = processDocumentForData(doc.title, doc.body)
-
-      const parsedBody = doc.body.children.map((line, lineIdx) => {
-        const tree = TEKNE_MD_PARSER.parse(line.mdContent)
-        return {
-          line_idx: lineIdx,
-          parsed_body: jsonifyMdTree(tree.topNode, line.mdContent),
-        }
-      })
+      const { parsedBody, noteData, noteLines } = deriveNoteRows(
+        doc.title,
+        doc.body
+      )
 
       await tx
         .updateTable('notes')
@@ -69,21 +84,11 @@ export const recomputeAllDocumentData = async (db: Kysely<Database>) => {
         .where('title', '=', doc.title)
         .execute()
 
-      if (processedData.length > 0) {
-        await tx.insertInto('note_data').values(processedData).execute()
+      if (noteData.length > 0) {
+        await tx.insertInto('note_data').values(noteData).execute()
 
-        totalDataRows += processedData.length
+        totalDataRows += noteData.length
       }
-
-      // Populate note_lines for text search
-      const noteLines = doc.body.children.map((ln, line_idx) => ({
-        note_title: doc.title,
-        line_idx,
-        content: ln.mdContent,
-        indent: ln.indent,
-        time_created: new Date(ln.timeCreated),
-        time_updated: new Date(ln.timeUpdated),
-      }))
 
       if (noteLines.length > 0) {
         await tx.insertInto('note_lines').values(noteLines).execute()
