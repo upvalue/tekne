@@ -20,10 +20,32 @@
   font-family: var(--font-editor);
 }
 
+.ELine,
+.ReadOnlyLine {
+  /*
+    Height of the first rendered text line, used to align the gutter, bullet,
+    checkbox and timer badge with the first line of a wrapped line's content
+    rather than with the middle of the whole block. 1.4 is CodeMirror's
+    default scroller line-height, and the editor inherits its font size from
+    the line, so this stays in sync with the rendered text.
+  */
+  --eline-first-line-height: 1.4em;
+}
+
+/* A decoration to the left of the text, centered on its first line */
+.ELine-leading {
+  display: flex;
+  align-items: center;
+  align-self: flex-start;
+  flex: none;
+  min-height: var(--eline-first-line-height);
+}
+
 .ELine-gutter {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 24px;
   align-items: center;
+  align-self: flex-start;
   column-gap: 4px;
   flex: none;
   width: 178px;

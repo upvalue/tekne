@@ -147,7 +147,7 @@ export const ReadOnlyLine = ({
   return (
     <div
       className={cn(
-        'ReadOnlyLine w-full py-1 flex items-baseline',
+        'ReadOnlyLine w-full py-1 flex items-start',
         onClick && 'cursor-pointer',
         className
       )}
@@ -162,14 +162,22 @@ export const ReadOnlyLine = ({
       />
 
       {/* Line icon (bullet/pin) */}
-      <LineIcon isPinned={!!datumPinnedAt} />
+      <div className="ELine-leading">
+        <LineIcon isPinned={!!datumPinnedAt} />
+      </div>
 
       {/* Task checkbox */}
-      {datumTaskStatus && <ReadOnlyCheckbox status={datumTaskStatus} />}
+      {datumTaskStatus && (
+        <div className="ELine-leading">
+          <ReadOnlyCheckbox status={datumTaskStatus} />
+        </div>
+      )}
 
       {/* Timer badge */}
       {datumTimeSeconds !== undefined && (
-        <ReadOnlyTimerBadge time={datumTimeSeconds} />
+        <div className="ELine-leading">
+          <ReadOnlyTimerBadge time={datumTimeSeconds} />
+        </div>
       )}
 
       {/* CodeMirror content */}

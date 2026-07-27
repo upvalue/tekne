@@ -192,7 +192,7 @@ export const ELine = (lineInfo: ELineProps) => {
       ref={setNodeRef}
       style={style}
       className={cn(
-        'ELine w-full py-1 flex items-center',
+        'ELine w-full py-1 flex items-start',
         collapseState === 'collapsed' && 'hidden',
         isFocused && 'ELine-focused',
         lineInfo.isDragSelected && 'ELine-drag-selected',
@@ -233,26 +233,34 @@ export const ELine = (lineInfo: ELineProps) => {
           width: `${line.indent * INDENT_WIDTH_PIXELS}px`,
         }}
       />
-      {!lineIsHeader && <LineIcon line={line} collapseState={collapseState} />}
+      {!lineIsHeader && (
+        <div className="ELine-leading">
+          <LineIcon line={line} collapseState={collapseState} />
+        </div>
+      )}
       {line.datumTaskStatus && (
-        <Checkbox
-          className="ml-2"
-          tabIndex={-1}
-          {...checkboxStatus(line.datumTaskStatus)}
-          onChange={() => {
-            // TOOD: This pattern repeats itself and could be turned into a hook
-            setDoc((draft) => {
-              draft.children[lineInfo.lineIdx].datumTaskStatus =
-                cycleCheckboxStatus(
-                  draft.children[lineInfo.lineIdx].datumTaskStatus || 'unset'
-                )
-            })
-          }}
-        />
+        <div className="ELine-leading">
+          <Checkbox
+            className="ml-2"
+            tabIndex={-1}
+            {...checkboxStatus(line.datumTaskStatus)}
+            onChange={() => {
+              // TOOD: This pattern repeats itself and could be turned into a hook
+              setDoc((draft) => {
+                draft.children[lineInfo.lineIdx].datumTaskStatus =
+                  cycleCheckboxStatus(
+                    draft.children[lineInfo.lineIdx].datumTaskStatus || 'unset'
+                  )
+              })
+            }}
+          />
+        </div>
       )}
 
       {line.datumTimeSeconds !== undefined && (
-        <TimerBadge lineInfo={lineInfo} time={line.datumTimeSeconds} />
+        <div className="ELine-leading">
+          <TimerBadge lineInfo={lineInfo} time={line.datumTimeSeconds} />
+        </div>
       )}
 
       <div
