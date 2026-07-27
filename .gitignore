@@ -9,6 +9,7 @@ count.txt
 .env
 .nitro
 .tanstack
+/.vite
 
 # project specific ignores
 /dev
@@ -16,6 +17,8 @@ count.txt
 /Justfile
 ./dev/data
 /.playwright-mcp
+/.playwright-cli
+/ops
 
 # Ignore hooks except for sample hooks
 /hooks/*
