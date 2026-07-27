@@ -20,3 +20,4 @@ count.txt
 # Ignore hooks except for sample hooks
 /hooks/*
 /.pnpm-ignore
+.agents/skills/playwright-cli/.playwright-cli/
