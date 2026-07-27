@@ -23,7 +23,6 @@
     "server:start": "NODE_ENV=production node dist-server/server.mjs",
     "build": "pnpm run generate:routes && pnpm run client:build && pnpm run server:build",
     "start": "pnpm run server:start",
-    "deploy:local": "scripts/deploy-local.sh",
     "prod": "NODE_ENV=production DATABASE_URL=postgres://postgres:password@localhost/tekne pnpm run start"
   },
   "dependencies": {
