@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { sql } from 'kysely'
 import { t } from '../init'
 import type { SearchOperator } from '@/search/types'
+import { aggregateTagData, type TagAggregateData } from '../lib/tag-aggregates'
 
 // Zod schemas for search operators
 const searchOperatorSchema = z.discriminatedUnion('type', [
@@ -25,16 +26,6 @@ const searchOperatorSchema = z.discriminatedUnion('type', [
     wildcard: z.enum(['none', 'prefix', 'suffix', 'exact']),
   }),
 ])
-
-type TagAggregateData = {
-  tag: string
-  complete_tasks: number
-  incomplete_tasks: number
-  unset_tasks: number
-  total_time_seconds: number
-  pinned_at: Date | null
-  pinned_desc: string | null
-}
 
 // Convert glob pattern to SQL LIKE pattern
 function globToLike(pattern: string): string {
@@ -373,120 +364,14 @@ export const searchRouter = t.router({
 
       const tagNames = tags.map((t) => t.tag)
 
-      // Build task query with same filters
-      let taskQuery = db
-        .selectFrom('note_data')
-        .select([
-          'datum_tag as tag',
-          sql<number>`COUNT(CASE WHEN datum_status = 'complete' THEN 1 END)`.as(
-            'complete_tasks'
-          ),
-          sql<number>`COUNT(CASE WHEN datum_status = 'incomplete' THEN 1 END)`.as(
-            'incomplete_tasks'
-          ),
-          sql<number>`COUNT(CASE WHEN datum_status = 'unset' OR datum_status IS NULL THEN 1 END)`.as(
-            'unset_tasks'
-          ),
-        ])
-        .where('note_title', 'not ilike', '$%')
-        .where('datum_type', '=', 'task')
-        .where('datum_tag', 'in', tagNames)
+      const aggregates = await aggregateTagData(db, tagNames, {
+        fromDate: filters.fromDate,
+        toDate: filters.toDate,
+        docPattern: filters.docPattern,
+        excludeTemplates: true,
+      })
 
-      // Apply same date/doc filters to task data
-      if (filters.fromDate) {
-        taskQuery = taskQuery.where('time_created', '>=', filters.fromDate)
-      }
-      if (filters.toDate) {
-        taskQuery = taskQuery.where('time_created', '<', filters.toDate)
-      }
-      if (filters.docPattern) {
-        taskQuery = taskQuery.where('note_title', 'ilike', filters.docPattern)
-      }
-
-      const taskData = await taskQuery.groupBy('datum_tag').execute()
-
-      // Build timer query with same filters
-      let timerQuery = db
-        .selectFrom('note_data')
-        .select([
-          'datum_tag as tag',
-          sql<number>`SUM(datum_time_seconds)`.as('total_time_seconds'),
-        ])
-        .where('note_title', 'not ilike', '$%')
-        .where('datum_type', '=', 'timer')
-        .where('datum_tag', 'in', tagNames)
-
-      // Apply same date/doc filters to timer data
-      if (filters.fromDate) {
-        timerQuery = timerQuery.where('time_created', '>=', filters.fromDate)
-      }
-      if (filters.toDate) {
-        timerQuery = timerQuery.where('time_created', '<', filters.toDate)
-      }
-      if (filters.docPattern) {
-        timerQuery = timerQuery.where('note_title', 'ilike', filters.docPattern)
-      }
-
-      const timerData = await timerQuery.groupBy('datum_tag').execute()
-
-      // Build pin query with same filters
-      let pinQuery = db
-        .selectFrom('note_data')
-        .select(['datum_tag as tag', 'datum_pinned_at', 'datum_pinned_content'])
-        .where('datum_type', '=', 'pin')
-        .where('datum_tag', 'in', tagNames)
-        .orderBy('datum_pinned_at', 'desc')
-
-      // Apply same date/doc filters to pin data
-      if (filters.fromDate) {
-        pinQuery = pinQuery.where('time_created', '>=', filters.fromDate)
-      }
-      if (filters.toDate) {
-        pinQuery = pinQuery.where('time_created', '<', filters.toDate)
-      }
-      if (filters.docPattern) {
-        pinQuery = pinQuery.where('note_title', 'ilike', filters.docPattern)
-      }
-
-      const pinData = await pinQuery.execute()
-
-      // Combine results
-      const results: { [tag: string]: TagAggregateData } = {}
-
-      for (const tag of tagNames) {
-        results[tag] = {
-          tag,
-          complete_tasks: 0,
-          incomplete_tasks: 0,
-          unset_tasks: 0,
-          total_time_seconds: 0,
-          pinned_at: null,
-          pinned_desc: null,
-        }
-      }
-
-      for (const task of taskData) {
-        if (results[task.tag]) {
-          results[task.tag].complete_tasks = task.complete_tasks
-          results[task.tag].incomplete_tasks = task.incomplete_tasks
-          results[task.tag].unset_tasks = task.unset_tasks
-        }
-      }
-
-      for (const timer of timerData) {
-        if (results[timer.tag]) {
-          results[timer.tag].total_time_seconds = timer.total_time_seconds
-        }
-      }
-
-      for (const pin of pinData) {
-        if (results[pin.tag] && !results[pin.tag].pinned_at) {
-          results[pin.tag].pinned_at = pin.datum_pinned_at ?? null
-          results[pin.tag].pinned_desc = pin.datum_pinned_content
-        }
-      }
-
-      return Object.values(results).sort((a, b) => a.tag.localeCompare(b.tag))
+      return [...aggregates.values()].sort((a, b) => a.tag.localeCompare(b.tag))
     }),
 
   /**

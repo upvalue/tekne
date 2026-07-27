@@ -1,6 +1,6 @@
 ---
 id: tek-kjmb
-status: open
+status: closed
 deps: []
 links: []
 created: 2026-07-27T04:19:07Z
@@ -21,3 +21,43 @@ One shared builder, e.g. src/trpc/lib/tag-aggregates.ts: aggregateTagData(db, ta
 
 Both procedures return the same results as before for non-template data (snapshot before/after); one TagAggregateData type; duplicated blocks gone (~370 lines -> ~100); template exclusion behavior consistent and documented.
 
+
+## Notes
+
+**2026-07-27T06:13:14Z**
+
+aggregateTagData in src/trpc/lib/tag-aggregates.ts owns the task, timer and pin
+queries plus the filter block that used to be pasted around them. Tag discovery
+stayed in the routers: analysis wants the tags in one document ordered by first
+use, search wants tags matching a prefix and the query filters. Those aren't the
+same query wearing two hats, so there was nothing to share.
+
+analysis.ts went 207 -> 66 and the aggregate half of search.ts 160 -> 12,
+against 188 shared lines. Not the 370 -> 100 the ticket guessed, but the
+duplication is gone.
+
+Template exclusion is one flag now, and it covers pins. The page-scoped call
+passes false: it has already named a document, and a template's own page would
+otherwise report nothing about itself.
+
+Pin-max is DISTINCT ON (datum_tag) with ORDER BY datum_pinned_at DESC. It also
+drops rows whose datum_pinned_at is null, which under DESC sort first in
+Postgres -- so search could take an unpinned row over a real pin.
+
+The two TagAggregateData types are one. Base fields are required and zero-filled
+the way search always did it; page_* stay optional since only analysis fills
+them. analysis used to leave out tags with no data anywhere, so hasAggregateData
+keeps that rather than start rendering empty cards. Dead total_tasks select
+dropped.
+
+Something I wasn't looking for: COUNT and SUM come back as bigint, which the
+driver hands over as strings, and both routers have always typed them as
+numbers. The client compares with > 0 so the coercion hid it. There are ::int
+casts now, which does change the wire format from "1" to 1.
+
+Twelve tests against a real PGlite instance in-process, node environment rather
+than jsdom. First tests any of the router code has had.
+
+Checked it in the browser with a template holding a pin *newer* than the real
+document's. Aggregate shows PIN FROM REAL DOC and one complete task instead of
+two; the search aggregate agrees. Before this that template pin would have won.

@@ -2,26 +2,16 @@
 import { uniqBy } from 'lodash-es'
 import z from 'zod'
 import { t } from '../init'
-import { sql } from 'kysely'
-
-type TagAggregateData = {
-  tag: string
-  complete_tasks?: number
-  incomplete_tasks?: number
-  unset_tasks?: number
-  total_time_seconds?: number
-  pinned_at?: Date
-  pinned_desc?: string | null
-  page_complete_tasks?: number
-  page_incomplete_tasks?: number
-  page_unset_tasks?: number
-  page_time_seconds?: number
-}
+import {
+  aggregateTagData,
+  hasAggregateData,
+  type TagAggregateData,
+} from '../lib/tag-aggregates'
 
 export const analysisRouter = t.router({
   /**
-   * This function does a few different queries to
-   * create the aggregate summary of a tag over time
+   * Aggregate summary of every tag in a document: the totals across all
+   * documents, plus what this one page contributes.
    */
   aggregateData: t.procedure
     .input(
@@ -33,175 +23,46 @@ export const analysisRouter = t.router({
       const allTagsInDoc = await db
         .selectFrom('note_data')
         .select(['datum_tag as tag'])
-        // .select([sql<string>`DISTINCT datum_tag`.as('tag')])
         .where('datum_type', '=', 'tag')
         .where('note_title', '=', input.title)
         .orderBy('time_created', 'asc')
         .execute()
 
-      const tagsInDoc = uniqBy(allTagsInDoc, 'tag')
+      const tagsInDoc = uniqBy(allTagsInDoc, 'tag').map((t) => t.tag)
 
       if (tagsInDoc.length === 0) {
         return []
       }
 
-      const taskPins = await db
-        .selectFrom('note_data')
-        .select(['datum_tag as tag', 'datum_pinned_at', 'datum_pinned_content'])
-        .where('datum_type', '=', 'pin')
-        .where(
-          'datum_tag',
-          'in',
-          tagsInDoc.map((t) => t.tag)
-        )
-        .orderBy('datum_pinned_at', 'desc')
-        .execute()
+      const [overall, onThisPage] = await Promise.all([
+        aggregateTagData(db, tagsInDoc, { excludeTemplates: true }),
+        // Already narrowed to one document, and that document may itself be a
+        // template. Pins are a global notion, so there is no page-scoped one
+        // to look up.
+        aggregateTagData(
+          db,
+          tagsInDoc,
+          { docTitle: input.title, excludeTemplates: false },
+          { withPins: false }
+        ),
+      ])
 
-      const taskData = await db
-        .selectFrom('note_data')
-        .select([
-          'datum_tag as tag',
-          sql<number>`COUNT(CASE WHEN datum_status = 'complete' THEN 1 END)`.as(
-            'complete_tasks'
-          ),
-          sql<number>`COUNT(CASE WHEN datum_status = 'incomplete' THEN 1 END)`.as(
-            'incomplete_tasks'
-          ),
-          sql<number>`COUNT(CASE WHEN datum_status = 'unset' OR datum_status IS NULL THEN 1 END)`.as(
-            'unset_tasks'
-          ),
-          sql<number>`COUNT(*)`.as('total_tasks'),
-        ])
-        // Exclude templates from aggregate view
-        .where('note_title', 'not ilike', '$%')
-        .where('datum_type', '=', 'task')
-        .where(
-          'datum_tag',
-          'in',
-          tagsInDoc.map((t) => t.tag)
-        )
-        .groupBy('datum_tag')
-        .execute()
-
-      const timerData = await db
-        .selectFrom('note_data')
-        .select([
-          'datum_tag as tag',
-          sql<number>`SUM(datum_time_seconds)`.as('total_time_seconds'),
-        ])
-        // Exclude templates from aggregate view
-        .where('note_title', 'not ilike', '$%')
-        .where('datum_type', '=', 'timer')
-        .where(
-          'datum_tag',
-          'in',
-          tagsInDoc.map((t) => t.tag)
-        )
-        .groupBy('datum_tag')
-        .execute()
-
-      const pageTaskData = await db
-        .selectFrom('note_data')
-        .select([
-          'datum_tag as tag',
-          sql<number>`COUNT(CASE WHEN datum_status = 'complete' THEN 1 END)`.as(
-            'complete_tasks'
-          ),
-          sql<number>`COUNT(CASE WHEN datum_status = 'incomplete' THEN 1 END)`.as(
-            'incomplete_tasks'
-          ),
-          sql<number>`COUNT(CASE WHEN datum_status = 'unset' OR datum_status IS NULL THEN 1 END)`.as(
-            'unset_tasks'
-          ),
-        ])
-        .where('note_title', '=', input.title)
-        .where('datum_type', '=', 'task')
-        .where(
-          'datum_tag',
-          'in',
-          tagsInDoc.map((t) => t.tag)
-        )
-        .groupBy('datum_tag')
-        .execute()
-
-      const pageTimerData = await db
-        .selectFrom('note_data')
-        .select([
-          'datum_tag as tag',
-          sql<number>`SUM(datum_time_seconds)`.as('total_time_seconds'),
-        ])
-        .where('note_title', '=', input.title)
-        .where('datum_type', '=', 'timer')
-        .where(
-          'datum_tag',
-          'in',
-          tagsInDoc.map((t) => t.tag)
-        )
-        .groupBy('datum_tag')
-        .execute()
-
-      const tasks: {
-        [tag: string]: TagAggregateData
-      } = {}
-
-      for (const task of taskData) {
-        if (!tasks[task.tag]) {
-          tasks[task.tag] = { tag: task.tag }
-        }
-        tasks[task.tag] = {
-          tag: task.tag,
-          complete_tasks: task.complete_tasks,
-          incomplete_tasks: task.incomplete_tasks,
-          unset_tasks: task.unset_tasks,
-        }
-      }
-
-      for (const timer of timerData) {
-        if (!tasks[timer.tag]) {
-          tasks[timer.tag] = { tag: timer.tag }
-        }
-        tasks[timer.tag].total_time_seconds = timer.total_time_seconds
-      }
-
-      for (const pageTask of pageTaskData) {
-        if (!tasks[pageTask.tag]) {
-          tasks[pageTask.tag] = { tag: pageTask.tag }
-        }
-        tasks[pageTask.tag].page_complete_tasks = pageTask.complete_tasks
-        tasks[pageTask.tag].page_incomplete_tasks = pageTask.incomplete_tasks
-        tasks[pageTask.tag].page_unset_tasks = pageTask.unset_tasks
-      }
-
-      for (const pageTimer of pageTimerData) {
-        if (!tasks[pageTimer.tag]) {
-          tasks[pageTimer.tag] = { tag: pageTimer.tag }
-        }
-        tasks[pageTimer.tag].page_time_seconds = pageTimer.total_time_seconds
-      }
-
-      // Find most recent pin
-      // Should be done in SQL
-      for (const pin of taskPins) {
-        if (!tasks[pin.tag]) {
-          tasks[pin.tag] = { tag: pin.tag }
-        }
-
-        const currentPinnedAt = tasks[pin.tag].pinned_at
-        const newPinnedAt = pin.datum_pinned_at
-
-        if (
-          newPinnedAt &&
-          (!currentPinnedAt || currentPinnedAt < newPinnedAt)
-        ) {
-          tasks[pin.tag].pinned_at = newPinnedAt
-          tasks[pin.tag].pinned_desc = pin.datum_pinned_content
-        }
-      }
-
-      // Return tasks ordered by name
-      return tagsInDoc
-        .map((tagInDoc) => tasks[tagInDoc.tag])
-        .filter((task): task is TagAggregateData => task !== undefined)
-        .sort((a, b) => a.tag.localeCompare(b.tag))
+      return (
+        tagsInDoc
+          .map((tag) => {
+            const page = onThisPage.get(tag)
+            return {
+              ...overall.get(tag)!,
+              page_complete_tasks: page?.complete_tasks,
+              page_incomplete_tasks: page?.incomplete_tasks,
+              page_unset_tasks: page?.unset_tasks,
+              page_time_seconds: page?.total_time_seconds,
+            }
+          })
+          // A tag that is only ever written bare has nothing to show, and the
+          // panel says as much rather than rendering an empty card.
+          .filter(hasAggregateData)
+          .sort((a, b) => a.tag.localeCompare(b.tag))
+      )
     }),
 })
