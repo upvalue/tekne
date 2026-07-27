@@ -7,8 +7,14 @@ import { execSync } from 'node:child_process'
 
 function getGitInfo() {
   try {
-    const hash = process.env.GIT_HASH || process.env.VERCEL_GIT_COMMIT_SHA || execSync('git rev-parse HEAD', { encoding: 'utf8' }).trim()
-    const message = process.env.GIT_MESSAGE || process.env.VERCEL_GIT_COMMIT_MESSAGE || execSync('git log -1 --pretty=%B', { encoding: 'utf8' }).trim()
+    const hash =
+      process.env.GIT_HASH ||
+      process.env.VERCEL_GIT_COMMIT_SHA ||
+      execSync('git rev-parse HEAD', { encoding: 'utf8' }).trim()
+    const message =
+      process.env.GIT_MESSAGE ||
+      process.env.VERCEL_GIT_COMMIT_MESSAGE ||
+      execSync('git log -1 --pretty=%B', { encoding: 'utf8' }).trim()
     return { hash, message }
   } catch {
     return { hash: 'unknown', message: 'unknown' }

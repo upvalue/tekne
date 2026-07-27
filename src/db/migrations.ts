@@ -35,8 +35,7 @@ class TekneMigrationProvider implements MigrationProvider {
     migrations['1758210899686_add-note-data-pin'] = addNoteDataPinMigration
     migrations['1758235135865_add-note-parsed-body'] =
       addNoteParsedBodyMigration
-    migrations['1758243487015_note-update-cascade'] =
-      noteUpdateCascadeMigration
+    migrations['1758243487015_note-update-cascade'] = noteUpdateCascadeMigration
     migrations['1769300006926_add-saved-searches'] = addSavedSearchesMigration
     migrations['1769317427281_add-note-lines'] = addNoteLinesMigration
     migrations['1771632000000_add-feature-flags'] = addFeatureFlagsMigration

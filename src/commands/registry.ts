@@ -189,7 +189,9 @@ const navigationCommands: Command[] = [
     requiresEditor: false,
     execute: () => {
       // Emit custom event to switch panel tab
-      window.dispatchEvent(new CustomEvent('tekne:panel-tab', { detail: { tab: 'search' } }))
+      window.dispatchEvent(
+        new CustomEvent('tekne:panel-tab', { detail: { tab: 'search' } })
+      )
     },
   },
   {
@@ -253,9 +255,7 @@ const navigationCommands: Command[] = [
                 throw e
               }
             }
-            if (
-              stripAppBasePath(window.location.pathname) === '/n/Tutorial'
-            ) {
+            if (stripAppBasePath(window.location.pathname) === '/n/Tutorial') {
               window.location.reload()
             } else {
               navigateTo('Tutorial')
@@ -283,7 +283,9 @@ const navigationCommands: Command[] = [
       if (!title) return
       if (!confirm(`Delete "${decodeURIComponent(title)}"?`)) return
       try {
-        await trpcClient.doc.deleteDoc.mutate({ name: decodeURIComponent(title) })
+        await trpcClient.doc.deleteDoc.mutate({
+          name: decodeURIComponent(title),
+        })
         window.location.href = appPath('/')
       } catch (error) {
         console.error('Failed to delete document:', error)

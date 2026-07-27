@@ -239,7 +239,6 @@ export const useCodeMirror = (lineInfo: LineWithIdx) => {
         annotations: [externalSyncAnnotation.of(true)],
       })
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lineInfo])
 
   /**

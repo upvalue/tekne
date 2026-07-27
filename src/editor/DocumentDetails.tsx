@@ -40,7 +40,7 @@ export const DocumentDetailsButton = () => {
       <DialogTrigger>
         <DocumentTextIcon className="w-4 h-4 cursor-pointer text-zinc-500" />
       </DialogTrigger>
-      <DialogContent >
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>Document Details</DialogTitle>
         </DialogHeader>

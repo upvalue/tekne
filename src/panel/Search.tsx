@@ -366,7 +366,9 @@ export const Search = () => {
                       <SearchResultCard
                         key={`${item.note_title}-${item.line_idx}-${idx}`}
                         item={item}
-                        onNavigate={() => handleNavigateToResult(item.note_title)}
+                        onNavigate={() =>
+                          handleNavigateToResult(item.note_title)
+                        }
                       />
                     ))}
                   </div>
@@ -417,7 +419,9 @@ export const Search = () => {
                 <code className="bg-zinc-800 text-zinc-200 px-2 py-1 rounded font-mono text-xs shrink-0">
                   #tag
                 </code>
-                <span className="text-zinc-400">Filter by tag (prefix match)</span>
+                <span className="text-zinc-400">
+                  Filter by tag (prefix match)
+                </span>
               </div>
               <div className="flex items-start gap-3 text-sm">
                 <code className="bg-zinc-800 text-zinc-200 px-2 py-1 rounded font-mono text-xs shrink-0">

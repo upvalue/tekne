@@ -20,7 +20,7 @@ The resultant file should be filled out, and `src/db/migrations.ts` will need to
 
 - Files are grouped by feature, for example editor code is in `./src/editor`
 - Tests should be placed in the same directory as the file they test, not in a
-  separate tests folder. 
+  separate tests folder.
 
 # CodeMirror Editor
 
@@ -36,4 +36,3 @@ system) and React is custom:
 
 The editor has a standalone route at `/lab` -- this can be useful for testing the document
 editor in isolation from other features from the application.
-

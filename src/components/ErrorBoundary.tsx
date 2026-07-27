@@ -29,7 +29,7 @@ export class ErrorBoundary extends React.Component<
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     this.setState({ errorInfo })
-    
+
     console.error('ErrorBoundary caught an error:', {
       error: {
         name: error.name,
@@ -55,7 +55,12 @@ export class ErrorBoundary extends React.Component<
     if (this.state.hasError) {
       if (this.props.fallback) {
         const FallbackComponent = this.props.fallback
-        return <FallbackComponent error={this.state.error} retry={this.handleRetry} />
+        return (
+          <FallbackComponent
+            error={this.state.error}
+            retry={this.handleRetry}
+          />
+        )
       }
 
       return (
@@ -74,8 +79,12 @@ export class ErrorBoundary extends React.Component<
               <div className="text-left bg-zinc-100 dark:bg-zinc-800 p-3 rounded text-sm">
                 <div className="font-medium mb-2">Error details</div>
                 <div className="text-zinc-700 dark:text-zinc-300">
-                  <div><strong>Type:</strong> {this.state.error.name}</div>
-                  <div><strong>Message:</strong> {this.state.error.message}</div>
+                  <div>
+                    <strong>Type:</strong> {this.state.error.name}
+                  </div>
+                  <div>
+                    <strong>Message:</strong> {this.state.error.message}
+                  </div>
                 </div>
               </div>
             )}

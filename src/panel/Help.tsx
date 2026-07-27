@@ -41,9 +41,15 @@ const Keybindings = () => {
         ))}
       </DescriptionList>
 
-      <h3 className="text-base font-semibold mb-2 mt-6">Command Palette Shortcuts</h3>
+      <h3 className="text-base font-semibold mb-2 mt-6">
+        Command Palette Shortcuts
+      </h3>
       <p className="text-sm text-gray-400 mb-2">
-        Press <Badge className="inline">{keybindings.commandPalette.displayKey}</Badge> to open the command palette, then press any of these keys:
+        Press{' '}
+        <Badge className="inline">
+          {keybindings.commandPalette.displayKey}
+        </Badge>{' '}
+        to open the command palette, then press any of these keys:
       </p>
       <DescriptionList>
         {commandShortcuts.map((command) => (
@@ -64,7 +70,9 @@ const Keybindings = () => {
                       {sub.name}
                     </DescriptionTerm>
                     <DescriptionDetails>
-                      <Badge>{command.displayShortcut || command.shortcut}</Badge>
+                      <Badge>
+                        {command.displayShortcut || command.shortcut}
+                      </Badge>
                       <span className="text-gray-500 mx-1">then</span>
                       <Badge>{sub.displayKey || sub.key.toUpperCase()}</Badge>
                     </DescriptionDetails>
@@ -110,7 +118,6 @@ const SyntaxHelp = () => {
         <DescriptionTerm>Headers</DescriptionTerm>
         <DescriptionDetails className="flex flex-col gap-2">
           <div>
-
             <Badge>{`# Header`}</Badge>
           </div>
           <div>
@@ -141,7 +148,6 @@ const SyntaxHelp = () => {
           <Badge>{`_italic_`}</Badge>
         </DescriptionDetails>
       </DescriptionList>
-
 
       <DescriptionList>
         <DescriptionTerm>Strikethrough</DescriptionTerm>

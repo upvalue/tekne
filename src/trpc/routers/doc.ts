@@ -94,9 +94,7 @@ export const upsertNoteInTx = async (
 }
 
 const upsertNote = async (db: Kysely<Database>, name: string, body: ZDoc) => {
-  return await db
-    .transaction()
-    .execute((tx) => upsertNoteInTx(tx, name, body))
+  return await db.transaction().execute((tx) => upsertNoteInTx(tx, name, body))
 }
 
 const isDailyDocument = (name: string): boolean => {

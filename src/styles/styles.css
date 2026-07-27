@@ -46,7 +46,6 @@ body {
   border-left: 1px solid var(--color-zinc-800);
 }
 
-
 * {
   scrollbar-width: thin;
   scrollbar-color: #888 transparent;

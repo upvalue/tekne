@@ -23,14 +23,12 @@ export const TimerInfo = ({
   globalTimer,
   isThisTimer,
   format = 'compact',
-  className = ''
+  className = '',
 }: TimerInfoProps) => {
   // If this timer is not active, just show the base time
   if (!isThisTimer) {
     return baseTime > 0 ? (
-      <span className={className}>
-        {renderTime(baseTime)}
-      </span>
+      <span className={className}>{renderTime(baseTime)}</span>
     ) : null
   }
 
@@ -49,11 +47,7 @@ export const TimerInfo = ({
 
   // For replacement mode, just show current timer
   if (globalTimer.timeMode === 'replacement') {
-    return (
-      <span className={className}>
-        {currentTime}
-      </span>
-    )
+    return <span className={className}>{currentTime}</span>
   }
 
   // For additive mode, show base + current if there's base time
@@ -66,9 +60,5 @@ export const TimerInfo = ({
   }
 
   // Additive mode but no base time - just show current
-  return (
-    <span className={className}>
-      {currentTime}
-    </span>
-  )
+  return <span className={className}>{currentTime}</span>
 }

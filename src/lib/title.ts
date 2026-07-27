@@ -2,7 +2,11 @@ let mainTitle: string | null = null
 let detailTitle: string | null = null
 let timerActive = false
 
-const formatTitle = (main: string | null, detail: string | null, isTimerActive: boolean) => {
+const formatTitle = (
+  main: string | null,
+  detail: string | null,
+  isTimerActive: boolean
+) => {
   const parts = []
   if (detail) parts.push(detail)
   if (main) parts.push(main)

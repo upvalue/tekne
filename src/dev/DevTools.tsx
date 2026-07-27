@@ -108,11 +108,18 @@ const DocumentData = ({ isActive }: { isActive: boolean }) => {
   }, [doc])
 
   if (!isActive) {
-    return <div className="p-4 text-gray-500">Document data will load when tab is active</div>
+    return (
+      <div className="p-4 text-gray-500">
+        Document data will load when tab is active
+      </div>
+    )
   }
-  return <div className="whitespace-pre-wrap font-mono">{JSON.stringify(data, null, 2)}</div>
+  return (
+    <div className="whitespace-pre-wrap font-mono">
+      {JSON.stringify(data, null, 2)}
+    </div>
+  )
 }
-
 
 export const DevTools = () => {
   const usingPglite = !!window.dbHandle

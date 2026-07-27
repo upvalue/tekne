@@ -51,7 +51,10 @@ export const TemplateDialog = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (!selectedTemplate || !docName.trim()) return
-    createMutation.mutate({ name: docName.trim(), templateName: selectedTemplate })
+    createMutation.mutate({
+      name: docName.trim(),
+      templateName: selectedTemplate,
+    })
   }
 
   return (

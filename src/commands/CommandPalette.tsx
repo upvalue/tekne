@@ -89,7 +89,9 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
 
   const filteredCommands = useMemo(() => {
     if (!searchMode || !query) return availableCommands
-    return searchCommands(query).filter((cmd) => availableCommands.includes(cmd))
+    return searchCommands(query).filter((cmd) =>
+      availableCommands.includes(cmd)
+    )
   }, [searchMode, query, availableCommands])
 
   // Reset state when opening
@@ -129,7 +131,9 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
       // In main mode: index 0 = Search, index 1+ = commands
       if (e.key === 'ArrowDown') {
         if (pendingCommand?.subcommands) {
-          setActiveIndex((i) => Math.min(i + 1, pendingCommand.subcommands!.length - 1))
+          setActiveIndex((i) =>
+            Math.min(i + 1, pendingCommand.subcommands!.length - 1)
+          )
         } else if (searchMode) {
           setActiveIndex((i) => Math.min(i + 1, filteredCommands.length - 1))
         } else {
@@ -238,7 +242,8 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
     }
 
     window.addEventListener('keydown', handleKeyDown, { capture: true })
-    return () => window.removeEventListener('keydown', handleKeyDown, { capture: true })
+    return () =>
+      window.removeEventListener('keydown', handleKeyDown, { capture: true })
   }, [
     isOpen,
     searchMode,
@@ -276,7 +281,9 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
             </div>
             <span className="text-gray-400">+</span>
             <span className="text-gray-400 text-sm">...</span>
-            <span className="ml-auto text-xs text-gray-500">ESC to go back</span>
+            <span className="ml-auto text-xs text-gray-500">
+              ESC to go back
+            </span>
           </div>
         )}
         {searchMode && (
@@ -323,30 +330,31 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
             />
           )}
           {/* Command list (index 1+ in main mode, index 0+ in search mode) */}
-          {!pendingCommand && filteredCommands.map((cmd, idx) => {
-            const itemIndex = searchMode ? idx : idx + 1
-            return (
-              <CommandItem
-                key={cmd.id}
-                name={cmd.name}
-                description={cmd.description}
-                shortcut={cmd.displayShortcut}
-                hasSubcommands={!!cmd.subcommands?.length}
-                isActive={itemIndex === activeIndex}
-                showShortcut={!searchMode}
-                onClick={() => {
-                  if (cmd.subcommands?.length) {
-                    setPendingCommand(cmd)
-                    setActiveIndex(0)
-                  } else {
-                    cmd.execute(context)
-                    onClose()
-                  }
-                }}
-                onMouseEnter={() => setActiveIndex(itemIndex)}
-              />
-            )
-          })}
+          {!pendingCommand &&
+            filteredCommands.map((cmd, idx) => {
+              const itemIndex = searchMode ? idx : idx + 1
+              return (
+                <CommandItem
+                  key={cmd.id}
+                  name={cmd.name}
+                  description={cmd.description}
+                  shortcut={cmd.displayShortcut}
+                  hasSubcommands={!!cmd.subcommands?.length}
+                  isActive={itemIndex === activeIndex}
+                  showShortcut={!searchMode}
+                  onClick={() => {
+                    if (cmd.subcommands?.length) {
+                      setPendingCommand(cmd)
+                      setActiveIndex(0)
+                    } else {
+                      cmd.execute(context)
+                      onClose()
+                    }
+                  }}
+                  onMouseEnter={() => setActiveIndex(itemIndex)}
+                />
+              )
+            })}
         </div>
       </div>
     </div>,

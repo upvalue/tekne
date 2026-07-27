@@ -9,14 +9,13 @@ document schema.
 
 - [tekne.app](https://tekne.app) - website
 - [Demo](https://demo.tekne.app) - live demo; the built-in application help on the right
-  has some help with syntax and keyboard shortcuts 
+  has some help with syntax and keyboard shortcuts
 
 ## Credits
 
 Tekne is released under the AGPL. Tekne depends on a lot of projects, here are a couple:
 
-- Codemirror and `@lezer/markdown` form the core of the editor 
+- Codemirror and `@lezer/markdown` form the core of the editor
 - Some Tailwind Plus templates and Tailwind Catalyst are used with a license for the app and website
 - General stack: React with tanstack-router, express/TRPC for server, postgres (& pglite) for
   database, Jotai for state management
-

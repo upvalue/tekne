@@ -52,9 +52,9 @@ describe('findChildTags', () => {
 
 describe('rewriteLineTags', () => {
   test('renames a tag mid-line', () => {
-    expect(rewriteLineTags('do stuff #proj today', pairs(['proj', 'work']))).toBe(
-      'do stuff #work today'
-    )
+    expect(
+      rewriteLineTags('do stuff #proj today', pairs(['proj', 'work']))
+    ).toBe('do stuff #work today')
   })
 
   test('renames a tag at end of line', () => {
@@ -89,7 +89,9 @@ describe('rewriteLineTags', () => {
 
   test('does not touch non-tag text that looks like a tag', () => {
     // Trailing punctuation means the parser does not recognize a tag
-    expect(rewriteLineTags('#proj, not a tag', pairs(['proj', 'work']))).toBeNull()
+    expect(
+      rewriteLineTags('#proj, not a tag', pairs(['proj', 'work']))
+    ).toBeNull()
   })
 
   test('renames children when included in pairs', () => {
@@ -121,9 +123,9 @@ describe('rewriteLineTags', () => {
     })
 
     test('dedupes when two different tags merge into the same target', () => {
-      expect(
-        rewriteLineTags('#x and #y', pairs(['x', 'z'], ['y', 'z']))
-      ).toBe('#z and')
+      expect(rewriteLineTags('#x and #y', pairs(['x', 'z'], ['y', 'z']))).toBe(
+        '#z and'
+      )
     })
 
     test('dedupes with text between tags', () => {
@@ -146,7 +148,10 @@ describe('rewriteDocTags', () => {
       lineMake(1, 'child of #proj/tekne'),
     ])
 
-    const { newDoc, changedLines } = rewriteDocTags(doc, pairs(['proj', 'work']))
+    const { newDoc, changedLines } = rewriteDocTags(
+      doc,
+      pairs(['proj', 'work'])
+    )
 
     expect(changedLines).toEqual([
       { lineIdx: 1, before: 'work on #proj', after: 'work on #work' },
@@ -167,7 +172,10 @@ describe('rewriteDocTags', () => {
 
   test('reports no changes when nothing matches', () => {
     const doc = docMake([lineMake(0, 'nothing to do')])
-    const { newDoc, changedLines } = rewriteDocTags(doc, pairs(['proj', 'work']))
+    const { newDoc, changedLines } = rewriteDocTags(
+      doc,
+      pairs(['proj', 'work'])
+    )
     expect(changedLines).toEqual([])
     expect(newDoc).toEqual(doc)
   })

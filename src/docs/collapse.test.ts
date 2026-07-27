@@ -14,7 +14,12 @@ describe('generateCollapse', () => {
     ]
 
     const result = generateCollapse(lines)
-    expect(result).toEqual(['uncollapsed', 'uncollapsed', 'uncollapsed', 'uncollapsed'])
+    expect(result).toEqual([
+      'uncollapsed',
+      'uncollapsed',
+      'uncollapsed',
+      'uncollapsed',
+    ])
   })
 
   it('should not collapse the line with collapsed=true itself', () => {

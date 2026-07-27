@@ -18,7 +18,10 @@ export const makeTutorial = () => {
       ++i,
       'Lines can be indented with `Tab` and de-dented with `Shift-Tab`'
     ),
-    lineMake(--i, `You can collapse a group of indented lines with \`${modName}-.\``),
+    lineMake(
+      --i,
+      `You can collapse a group of indented lines with \`${modName}-.\``
+    ),
     lineMake(
       ++i,
       'Try it out by selecting the above line and then using the key binding'

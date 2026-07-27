@@ -37,21 +37,22 @@ function RouteComponent() {
             <TitleBar title={title} allowTitleEdit={false} />
             <StatusBar isLoading={false} />
             <NonEditorLayout>
-
-
               <div className="space-y-2">
-                <h2 className="text-xl font-semibold">Document does not exist</h2>
+                <h2 className="text-xl font-semibold">
+                  Document does not exist
+                </h2>
                 <p className="text-muted-foreground">
                   The document "{title}" has not been created yet.
                 </p>
               </div>
               <div>
-
                 <Button
                   onClick={handleCreateDocument}
                   disabled={createDocMutation.isPending}
                 >
-                  {createDocMutation.isPending ? 'Creating...' : 'Create Document'}
+                  {createDocMutation.isPending
+                    ? 'Creating...'
+                    : 'Create Document'}
                 </Button>
               </div>
             </NonEditorLayout>

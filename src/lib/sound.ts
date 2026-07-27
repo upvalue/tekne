@@ -21,10 +21,10 @@ export function playTimerCompleteSound() {
     // Phase 1: Fast ascending notes (16-bit triangle wave style)
     const phrase: [number, number, number][] = [
       // [frequency, startTime, duration]
-      [523.25, 0, 0.12],     // C5
-      [587.33, 0.1, 0.12],   // D5
-      [659.25, 0.2, 0.12],   // E5
-      [783.99, 0.3, 0.12],   // G5
+      [523.25, 0, 0.12], // C5
+      [587.33, 0.1, 0.12], // D5
+      [659.25, 0.2, 0.12], // E5
+      [783.99, 0.3, 0.12], // G5
     ]
 
     for (const [freq, start, dur] of phrase) {
@@ -64,7 +64,10 @@ export function playTimerCompleteSound() {
     shimmer.type = 'sine'
     shimmer.frequency.value = 1046.5 // C6
     shimmerGain.gain.setValueAtTime(0.25, now + chordStart)
-    shimmerGain.gain.exponentialRampToValueAtTime(0.001, now + chordStart + chordDur)
+    shimmerGain.gain.exponentialRampToValueAtTime(
+      0.001,
+      now + chordStart + chordDur
+    )
     shimmer.connect(shimmerGain)
     shimmerGain.connect(master)
     shimmer.start(now + chordStart)

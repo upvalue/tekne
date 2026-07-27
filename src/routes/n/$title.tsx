@@ -142,10 +142,7 @@ function RouteComponent() {
           chainOnSuccess()
         }
       } catch (e) {
-        if (
-          e instanceof TRPCClientError &&
-          e.data?.code === 'CONFLICT'
-        ) {
+        if (e instanceof TRPCClientError && e.data?.code === 'CONFLICT') {
           // The document changed underneath us (e.g. a tag rename rewrote
           // it). Drop local changes and reload rather than clobbering.
           docDirty.current = false

@@ -1,10 +1,22 @@
 import { useAtomValue, useSetAtom, useAtom } from 'jotai'
 import { useEffect, useCallback, useRef, useMemo, useState } from 'react'
 import { docAtom, focusedLineAtom } from './state'
-import { errorMessageAtom, globalTimerAtom, goToLineOpenAtom, showLineNumbersAtom, requestFocusLineAtom, findLineByTimeCreated } from './state'
+import {
+  errorMessageAtom,
+  globalTimerAtom,
+  goToLineOpenAtom,
+  showLineNumbersAtom,
+  requestFocusLineAtom,
+  findLineByTimeCreated,
+} from './state'
 import { Button } from '@headlessui/react'
 import { X } from 'lucide-react'
-import { ExclamationTriangleIcon, StopIcon, ListBulletIcon, ClockIcon } from '@heroicons/react/16/solid'
+import {
+  ExclamationTriangleIcon,
+  StopIcon,
+  ListBulletIcon,
+  ClockIcon,
+} from '@heroicons/react/16/solid'
 import { trpc } from '@/trpc/client'
 import { setDetailTitle } from '@/lib/title'
 import { noop } from 'lodash-es'
@@ -22,11 +34,7 @@ const LoadingDots = () => {
     return () => clearInterval(interval)
   }, [])
 
-  return (
-    <div className="text-sm text-zinc-400">
-      Loading{'.'.repeat(dots)}
-    </div>
-  )
+  return <div className="text-sm text-zinc-400">Loading{'.'.repeat(dots)}</div>
 }
 
 const formatTimeDisplay = (seconds: number): string => {
@@ -40,7 +48,13 @@ const formatTimeDisplay = (seconds: number): string => {
   return `${minutes}:${secs.toString().padStart(2, '0')}`
 }
 
-const GoToLineInput = ({ totalLines, onClose }: { totalLines: number; onClose: () => void }) => {
+const GoToLineInput = ({
+  totalLines,
+  onClose,
+}: {
+  totalLines: number
+  onClose: () => void
+}) => {
   const [value, setValue] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
   const setRequestFocusLine = useSetAtom(requestFocusLineAtom)
@@ -98,7 +112,7 @@ export const StatusBar = ({ isLoading }: { isLoading: boolean }) => {
   const globalTimer = useAtomValue(globalTimerAtom)
   const { stopTimer } = globalTimer
   const execHook = trpc.execHook.useMutation()
-  const focusedLine = useAtomValue(focusedLineAtom);
+  const focusedLine = useAtomValue(focusedLineAtom)
   const [goToLineOpen, setGoToLineOpen] = useAtom(goToLineOpenAtom)
 
   // Listen for Ctrl+G to toggle go-to-line input
@@ -115,7 +129,10 @@ export const StatusBar = ({ isLoading }: { isLoading: boolean }) => {
   }, [setGoToLineOpen])
 
   const totalDocTime = useMemo(() => {
-    return doc.children.reduce((acc, line) => acc + (line.datumTimeSeconds || 0), 0)
+    return doc.children.reduce(
+      (acc, line) => acc + (line.datumTimeSeconds || 0),
+      0
+    )
   }, [doc.children])
 
   const currentLineBaseTime = useMemo(() => {
@@ -157,8 +174,8 @@ export const StatusBar = ({ isLoading }: { isLoading: boolean }) => {
             <StopIcon
               className="w-4 h-4 text-red-400 cursor-pointer hover:text-red-300"
               onClick={() => {
-                console.log('Stopping ye timer');
-                console.log({ stopTimer });
+                console.log('Stopping ye timer')
+                console.log({ stopTimer })
                 stopTimer()
               }}
             />
@@ -174,30 +191,34 @@ export const StatusBar = ({ isLoading }: { isLoading: boolean }) => {
             <div className="text-zinc-400">
               {globalTimer.lineContent
                 ? globalTimer.lineContent.substring(
-                  0,
-                  STATUS_BAR_TRUNCATE_LENGTH
-                ) + '...'
+                    0,
+                    STATUS_BAR_TRUNCATE_LENGTH
+                  ) + '...'
                 : globalTimer.lineContent}
             </div>
           </div>
         )}
       </div>
       <div className="flex items-center gap-4">
-
-        {!isLoading && doc.children.length > 1 && (
-          goToLineOpen ? (
+        {!isLoading &&
+          doc.children.length > 1 &&
+          (goToLineOpen ? (
             <GoToLineInput
               totalLines={doc.children.length}
               onClose={() => setGoToLineOpen(false)}
             />
           ) : (
             <div className="text-sm text-zinc-400 flex items-center">
-              {focusedLine !== null ? `${focusedLine + 1}/` : <span>&nbsp;&nbsp;</span>}{doc.children.length}
+              {focusedLine !== null ? (
+                `${focusedLine + 1}/`
+              ) : (
+                <span>&nbsp;&nbsp;</span>
+              )}
+              {doc.children.length}
               &nbsp;
               <ListBulletIcon className="w-4 h-4" />
             </div>
-          )
-        )}
+          ))}
         {totalDocTime > 0 && (
           <div className="text-sm text-zinc-400 flex items-center gap-2">
             {formatTimeDisplay(totalDocTime)}
@@ -205,6 +226,6 @@ export const StatusBar = ({ isLoading }: { isLoading: boolean }) => {
           </div>
         )}
       </div>
-    </div >
+    </div>
   )
 }

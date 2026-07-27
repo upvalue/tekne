@@ -114,18 +114,14 @@ describe('applyTemplateDirectives', () => {
   })
 
   it('includes matching lines with directive stripped', () => {
-    const lines = [
-      lineMake(1, '@dayofweek(sat,sun) Weekend project #personal'),
-    ]
+    const lines = [lineMake(1, '@dayofweek(sat,sun) Weekend project #personal')]
     const result = applyTemplateDirectives(lines, saturday)
     expect(result).toHaveLength(1)
     expect(result[0].mdContent).toBe('Weekend project #personal')
   })
 
   it('excludes non-matching lines', () => {
-    const lines = [
-      lineMake(1, '@dayofweek(fri) Submit weekly report [ ]'),
-    ]
+    const lines = [lineMake(1, '@dayofweek(fri) Submit weekly report [ ]')]
     const result = applyTemplateDirectives(lines, saturday)
     expect(result).toHaveLength(0)
   })
@@ -160,9 +156,7 @@ describe('applyTemplateDirectives', () => {
 
   it('applies AND semantics for multiple directives', () => {
     // Saturday matches sat but not fri — AND means both must match
-    const lines = [
-      lineMake(0, '@dayofweek(sat) @dayofweek(fri) Both needed'),
-    ]
+    const lines = [lineMake(0, '@dayofweek(sat) @dayofweek(fri) Both needed')]
     const result = applyTemplateDirectives(lines, saturday)
     expect(result).toHaveLength(0)
   })

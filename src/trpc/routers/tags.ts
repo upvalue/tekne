@@ -261,10 +261,7 @@ export const tagsRouter = t.router({
       const description = input.description.trim()
 
       if (description === '') {
-        await db
-          .deleteFrom('tags')
-          .where('tag_name', '=', input.name)
-          .execute()
+        await db.deleteFrom('tags').where('tag_name', '=', input.name).execute()
         return { success: true }
       }
 

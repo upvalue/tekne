@@ -266,7 +266,9 @@ export const searchRouter = t.router({
         if (!notesByTitle.has(line.note_title)) {
           notesByTitle.set(line.note_title, [])
         }
-        notesByTitle.get(line.note_title)!.push({ key, line_idx: line.line_idx })
+        notesByTitle
+          .get(line.note_title)!
+          .push({ key, line_idx: line.line_idx })
       }
 
       const lineResults = []
@@ -349,11 +351,7 @@ export const searchRouter = t.router({
 
       // Apply tag prefix filter (value already includes # prefix)
       if (filters.tagPrefix) {
-        tagQuery = tagQuery.where(
-          'datum_tag',
-          'ilike',
-          `${filters.tagPrefix}%`
-        )
+        tagQuery = tagQuery.where('datum_tag', 'ilike', `${filters.tagPrefix}%`)
       }
 
       // Apply date filters to tag query
@@ -531,10 +529,7 @@ export const searchRouter = t.router({
   deleteSavedSearch: t.procedure
     .input(z.object({ id: z.number() }))
     .mutation(async ({ input, ctx: { db } }) => {
-      await db
-        .deleteFrom('saved_searches')
-        .where('id', '=', input.id)
-        .execute()
+      await db.deleteFrom('saved_searches').where('id', '=', input.id).execute()
 
       return { success: true }
     }),

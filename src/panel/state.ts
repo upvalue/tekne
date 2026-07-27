@@ -11,7 +11,8 @@ export const PANEL_BREAKPOINT = 1024
 
 /** Whether the sidebar panel is visible. Defaults to true on desktop (≥1024px), false on smaller screens. */
 const getDefaultPanelVisible = () =>
-  typeof window !== 'undefined' && window.matchMedia(`(min-width: ${PANEL_BREAKPOINT}px)`).matches
+  typeof window !== 'undefined' &&
+  window.matchMedia(`(min-width: ${PANEL_BREAKPOINT}px)`).matches
 
 export const panelVisibleAtom = atom<boolean>(getDefaultPanelVisible())
 

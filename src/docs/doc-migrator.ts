@@ -2,7 +2,13 @@
 
 // This is a pretty hacky and slop-coded document migrator, intended
 // to make it relatively easy to change the document schema on the fly
-import { CURRENT_SCHEMA_VERSION, zdoc, zline, type ZDoc, type ZLine } from './schema'
+import {
+  CURRENT_SCHEMA_VERSION,
+  zdoc,
+  zline,
+  type ZDoc,
+  type ZLine,
+} from './schema'
 import { ZodError } from 'zod'
 
 /**
@@ -14,14 +20,14 @@ const getZodObjectKeys = (zodSchema: any): Set<string> => {
     if (zodSchema._def && zodSchema._def.shape) {
       return new Set(Object.keys(zodSchema._def.shape))
     }
-    
+
     // Fallback: try to parse an empty object to get validation errors
     // This will tell us what fields are required
     const shape = zodSchema.shape || zodSchema._def.shape
     if (shape) {
       return new Set(Object.keys(shape))
     }
-    
+
     return new Set()
   } catch (error) {
     console.warn('Could not extract keys from Zod schema:', error)
@@ -68,7 +74,9 @@ export const migrateDocWithReport = (
   // Clone the body to avoid mutations
   // We cast through unknown because we need to handle legacy fields not in ZDoc
   let migratedBody = JSON.parse(JSON.stringify(body)) as ZDoc & {
-    children?: Array<ZLine & { createdAt?: string; updatedAt?: string; datumTime?: number }>
+    children?: Array<
+      ZLine & { createdAt?: string; updatedAt?: string; datumTime?: number }
+    >
   }
 
   // Ensure body has correct structure
@@ -100,61 +108,59 @@ export const migrateDocWithReport = (
   }
 
   // Migrate each child line
-  migratedBody.children = migratedBody.children.map(
-    (child, index: number) => {
-      // Cast to handle legacy fields
-      const legacyChild = child as ZLine & {
-        createdAt?: string
-        updatedAt?: string
-        datumTime?: number
-      }
-      const mod: ZLine = { ...legacyChild }
-
-      // Migrate createdAt -> timeCreated
-      if (legacyChild.createdAt) {
-        mod.timeCreated = legacyChild.createdAt
-        delete (mod as typeof legacyChild).createdAt
-        report.operations.push({
-          type: 'rename',
-          path: `children[${index}].createdAt`,
-          oldValue: legacyChild.createdAt,
-          newValue: mod.timeCreated,
-          description: `Renamed 'createdAt' to 'timeCreated'`,
-        })
-        report.migrated = true
-      }
-
-      // Migrate updatedAt -> timeUpdated
-      if (legacyChild.updatedAt) {
-        mod.timeUpdated = legacyChild.updatedAt
-        delete (mod as typeof legacyChild).updatedAt
-        report.operations.push({
-          type: 'rename',
-          path: `children[${index}].updatedAt`,
-          oldValue: legacyChild.updatedAt,
-          newValue: mod.timeUpdated,
-          description: `Renamed 'updatedAt' to 'timeUpdated'`,
-        })
-        report.migrated = true
-      }
-
-      // Migrate datumTime -> datumTimeSeconds
-      if (legacyChild.datumTime !== undefined) {
-        mod.datumTimeSeconds = legacyChild.datumTime
-        delete (mod as typeof legacyChild).datumTime
-        report.operations.push({
-          type: 'rename',
-          path: `children[${index}].datumTime`,
-          oldValue: legacyChild.datumTime,
-          newValue: mod.datumTimeSeconds,
-          description: `Renamed 'datumTime' to 'datumTimeSeconds'`,
-        })
-        report.migrated = true
-      }
-
-      return mod
+  migratedBody.children = migratedBody.children.map((child, index: number) => {
+    // Cast to handle legacy fields
+    const legacyChild = child as ZLine & {
+      createdAt?: string
+      updatedAt?: string
+      datumTime?: number
     }
-  )
+    const mod: ZLine = { ...legacyChild }
+
+    // Migrate createdAt -> timeCreated
+    if (legacyChild.createdAt) {
+      mod.timeCreated = legacyChild.createdAt
+      delete (mod as typeof legacyChild).createdAt
+      report.operations.push({
+        type: 'rename',
+        path: `children[${index}].createdAt`,
+        oldValue: legacyChild.createdAt,
+        newValue: mod.timeCreated,
+        description: `Renamed 'createdAt' to 'timeCreated'`,
+      })
+      report.migrated = true
+    }
+
+    // Migrate updatedAt -> timeUpdated
+    if (legacyChild.updatedAt) {
+      mod.timeUpdated = legacyChild.updatedAt
+      delete (mod as typeof legacyChild).updatedAt
+      report.operations.push({
+        type: 'rename',
+        path: `children[${index}].updatedAt`,
+        oldValue: legacyChild.updatedAt,
+        newValue: mod.timeUpdated,
+        description: `Renamed 'updatedAt' to 'timeUpdated'`,
+      })
+      report.migrated = true
+    }
+
+    // Migrate datumTime -> datumTimeSeconds
+    if (legacyChild.datumTime !== undefined) {
+      mod.datumTimeSeconds = legacyChild.datumTime
+      delete (mod as typeof legacyChild).datumTime
+      report.operations.push({
+        type: 'rename',
+        path: `children[${index}].datumTime`,
+        oldValue: legacyChild.datumTime,
+        newValue: mod.datumTimeSeconds,
+        description: `Renamed 'datumTime' to 'datumTimeSeconds'`,
+      })
+      report.migrated = true
+    }
+
+    return mod
+  })
 
   // Update schema version if it's outdated
   if (migratedBody.schemaVersion !== CURRENT_SCHEMA_VERSION) {

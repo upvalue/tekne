@@ -45,7 +45,7 @@ export const TitleBar = ({
   const renameDocExecuteMutation = trpc.doc.renameDocExecute.useMutation({
     onSuccess: (r) => {
       if (r.success) {
-        console.log('woodle doodle doo');
+        console.log('woodle doodle doo')
         toast.success(`Document renamed to "${proposedTitle.trim()}"`)
         navigate({
           to: '/n/$title',
@@ -60,9 +60,11 @@ export const TitleBar = ({
       setErrorMessage(null)
 
       if (res.docAlreadyExists) {
-        setErrorMessage(`Document with name "${proposedTitle.trim()}" already exists`)
+        setErrorMessage(
+          `Document with name "${proposedTitle.trim()}" already exists`
+        )
         setDisplayedTitle(title)
-        return;
+        return
       }
 
       // Show confirmation dialog when renaming is possible
@@ -101,8 +103,7 @@ export const TitleBar = ({
       renameDocProposeMutation.mutate({
         oldName: title,
         newName: proposedTitle.trim(),
-      });
-
+      })
     } else {
       setErrorMessage(null)
     }
@@ -129,7 +130,10 @@ export const TitleBar = ({
 
   return (
     <div className="flex py-2 px-4 items-center TitleBar">
-      <div style={{ flexBasis: `${GUTTER_WIDTH_PIXELS}px` }} className="hidden lg:flex justify-end pr-4">
+      <div
+        style={{ flexBasis: `${GUTTER_WIDTH_PIXELS}px` }}
+        className="hidden lg:flex justify-end pr-4"
+      >
         <div className="text text-sky-500">{isDev && '[dev]'}</div>
         <div className="text text-sky-500">{isDemo && '[demo]'}</div>
         <div className="text text-sky-500">{isDevServer && '[server]'}</div>
@@ -156,20 +160,30 @@ export const TitleBar = ({
         </div>
       </div>
 
-      <Dialog open={showConfirmDialog.show} onOpenChange={(open) => setShowConfirmDialog(sc => ({ ...sc, show: open }))}>
+      <Dialog
+        open={showConfirmDialog.show}
+        onOpenChange={(open) =>
+          setShowConfirmDialog((sc) => ({ ...sc, show: open }))
+        }
+      >
         <EditorDialogContent>
           <DialogHeader>
             <DialogTitle>Confirm Rename</DialogTitle>
-            <DialogDescription>Confirm the rename of the document</DialogDescription>
+            <DialogDescription>
+              Confirm the rename of the document
+            </DialogDescription>
           </DialogHeader>
           <div>
-
-            Are you sure you want to rename "{title}" to "{proposedTitle.trim()}"?
+            Are you sure you want to rename "{title}" to "{proposedTitle.trim()}
+            "?
           </div>
 
           {showConfirmDialog.linksToUpdate.length > 0 && (
             <>
-              <div>This will update {showConfirmDialog.linksToUpdate.length} other document{showConfirmDialog.linksToUpdate.length > 1 ? 's' : ''}.</div>
+              <div>
+                This will update {showConfirmDialog.linksToUpdate.length} other
+                document{showConfirmDialog.linksToUpdate.length > 1 ? 's' : ''}.
+              </div>
               <div>
                 {showConfirmDialog.linksToUpdate.map((link) => (
                   <div key={link.title}>{link.title}</div>
@@ -181,7 +195,7 @@ export const TitleBar = ({
             <Button
               outline
               onClick={() => {
-                setShowConfirmDialog(sc => ({ ...sc, show: false }))
+                setShowConfirmDialog((sc) => ({ ...sc, show: false }))
                 setDisplayedTitle(title)
               }}
             >
@@ -189,7 +203,7 @@ export const TitleBar = ({
             </Button>
             <Button
               onClick={() => {
-                setShowConfirmDialog(sc => ({ ...sc, show: false }))
+                setShowConfirmDialog((sc) => ({ ...sc, show: false }))
                 renameDocExecuteMutation.mutate({
                   oldName: title,
                   newName: proposedTitle.trim(),

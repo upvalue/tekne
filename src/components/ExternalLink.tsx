@@ -13,10 +13,7 @@ export const ExternalLink = ({
   return (
     <div className="inline">
       <div
-        className={cn(
-          'text-sky-400 inline-flex items-center gap-1',
-          className
-        )}
+        className={cn('text-sky-400 inline-flex items-center gap-1', className)}
       >
         <a href={href} target="_blank" rel="noopener noreferrer">
           {children}

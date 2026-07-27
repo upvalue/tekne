@@ -20,10 +20,7 @@ const ExampleDoc = ({ children }: { children: React.ReactNode }) => {
       docAtom,
       docMake([
         {
-          ...lineMake(
-            0,
-            '_italic_ **bold** ~~strikethrough~~ '
-          ),
+          ...lineMake(0, '_italic_ **bold** ~~strikethrough~~ '),
         },
       ]),
     ],

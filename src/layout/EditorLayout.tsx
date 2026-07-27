@@ -13,7 +13,11 @@ export function EditorLayout({ editor, sidepanel }: EditorLayoutProps) {
   return (
     <div className="w-full flex flex-col relative">
       <div className="flex flex-grow">
-        <div className={panelVisible ? 'w-full lg:w-[60%] Editor' : 'w-full Editor'}>
+        <div
+          className={
+            panelVisible ? 'w-full lg:w-[60%] Editor' : 'w-full Editor'
+          }
+        >
           {editor}
         </div>
 

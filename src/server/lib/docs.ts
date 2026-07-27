@@ -2,10 +2,7 @@ import type { Database } from '@/db'
 import { sql, type Kysely } from 'kysely'
 import type { ZDoc } from '@/docs/schema'
 import { extractDocData, treeifyDoc } from '@/docs/doc-analysis'
-import {
-  jsonifyMdTree,
-  TEKNE_MD_PARSER,
-} from '@/editor/parser'
+import { jsonifyMdTree, TEKNE_MD_PARSER } from '@/editor/parser'
 
 const linesToZodDoc = (title: string, children: Array<any>): ZDoc => {
   return {

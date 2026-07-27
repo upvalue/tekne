@@ -32,7 +32,8 @@ export function Panel() {
       setActiveTab(e.detail.tab)
     }
     window.addEventListener('tekne:panel-tab', handler as EventListener)
-    return () => window.removeEventListener('tekne:panel-tab', handler as EventListener)
+    return () =>
+      window.removeEventListener('tekne:panel-tab', handler as EventListener)
   }, [setActiveTab])
 
   return (

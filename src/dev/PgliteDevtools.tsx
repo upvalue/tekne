@@ -15,7 +15,6 @@ import {
 } from '@/components/vendor/Dialog'
 import { Input } from '@/components/vendor/Input'
 
-
 interface PgliteDatabase {
   name: string
   path: string
@@ -261,7 +260,6 @@ export const PgliteDevtools = () => {
     setIsDialogOpen(false)
     window.location.reload()
   }
-
 
   return (
     <div>

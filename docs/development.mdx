@@ -12,9 +12,9 @@ NodeJS+express backend, and postgres as the database.
 Tekne has a few different development "modes" for trading off convenience vs. fidelity to a
 production environment.
 
-The default and recommended way of developing is with 
+The default and recommended way of developing is with
 
-> pnpm run dev:client-only 
+> pnpm run dev:client-only
 
 This will run a frontend-only version with TRPC and postgres (via pglite) in the browser.
 
@@ -31,7 +31,7 @@ There's currently a very alpha Docker image based on Alpine that can be used to 
 application to production. The only required environment variable you'll need to set in that case is
 `DATABASE_URL` to a postgres database URL (see `package.json` for an example)
 
-Database access is with kysely; with `DATABASE_URL` set, use 
+Database access is with kysely; with `DATABASE_URL` set, use
 
 > pnpm kysely
 
