@@ -55,6 +55,14 @@ export type DBNoteLine = {
   time_updated: ColumnType<Date, Date | undefined, Date> | null
 }
 
+/** Tag metadata; tag_name is stored without the leading '#'. */
+export type DBTag = {
+  tag_name: string
+  description: string | null
+  created_at: ColumnType<Date, Date | undefined, Date>
+  updated_at: ColumnType<Date, Date | undefined, Date>
+}
+
 export type DBFeatureFlag = {
   key: string
   value: ColumnType<unknown, unknown, unknown>
@@ -68,4 +76,5 @@ export type Database = {
   note_lines: DBNoteLine
   saved_searches: DBSavedSearch
   feature_flags: DBFeatureFlag
+  tags: DBTag
 }

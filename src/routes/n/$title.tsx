@@ -7,6 +7,7 @@ import '@/docs/schema'
 import { truncate } from 'lodash-es'
 import { Provider } from 'jotai'
 import { trpc } from '@/trpc/client'
+import { TRPCClientError } from '@trpc/client'
 import {
   createFileRoute,
   useBlocker,
@@ -43,6 +44,7 @@ function RouteComponent() {
 
   const docLastSaved = useRef<Date>(new Date())
   const docDirty = useRef<boolean>(false)
+  const docRevision = useRef<number>(0)
   const utils = trpc.useUtils()
   // TODO: this whole thing needs a bit of cleanup
 
@@ -121,16 +123,18 @@ function RouteComponent() {
       }
 
       // Doc hasn't changed, don't do anything
-      if (store.get(docAtom) === loadDocQuery.data) {
+      if (store.get(docAtom) === loadDocQuery.data?.doc) {
         if (chainOnSuccess) chainOnSuccess()
         return
       }
 
       try {
-        await updateDocMutation.mutateAsync({
+        const { revision } = await updateDocMutation.mutateAsync({
           name: title,
           doc: store.get(docAtom),
+          expectedRevision: docRevision.current,
         })
+        docRevision.current = revision
         docDirty.current = false
         docLastSaved.current = new Date()
 
@@ -138,13 +142,31 @@ function RouteComponent() {
           chainOnSuccess()
         }
       } catch (e) {
+        if (
+          e instanceof TRPCClientError &&
+          e.data?.code === 'CONFLICT'
+        ) {
+          // The document changed underneath us (e.g. a tag rename rewrote
+          // it). Drop local changes and reload rather than clobbering.
+          docDirty.current = false
+          await utils.doc.loadDoc.invalidate({ name: title })
+          toast.warning('Document was updated elsewhere — reloaded')
+          return
+        }
         console.error('Error saving document', e)
         toast.error(
           `Error while updating document ${truncate(String(e), { length: 100 })}`
         )
       }
     },
-    [title, store, updateDocMutation, loadDocQuery.isLoading, loadDocQuery.data]
+    [
+      title,
+      store,
+      updateDocMutation,
+      loadDocQuery.isLoading,
+      loadDocQuery.data,
+      utils,
+    ]
   )
 
   // Try to save document if user navigates away while a change is present
@@ -201,7 +223,7 @@ function RouteComponent() {
     }
     const unsub = store.sub(docAtom, () => {
       // Document changed, mark dirty
-      if (store.get(docAtom) === loadDocQuery.data) {
+      if (store.get(docAtom) === loadDocQuery.data?.doc) {
         return
       }
       docDirty.current = true
@@ -222,10 +244,19 @@ function RouteComponent() {
 
   useEffect(() => {
     if (!loadDocQuery.isLoading && loadDocQuery.data) {
-      store.set(docAtom, loadDocQuery.data)
+      store.set(docAtom, loadDocQuery.data.doc)
+      docRevision.current = loadDocQuery.data.revision
       resetUndoHistory(store)
     }
   }, [loadDocQuery.data, store, loadDocQuery.isLoading])
+
+  // Allows components outside this route (e.g. the tag rename dialog in the
+  // side panel) to flush any pending editor changes before a server-side
+  // rewrite of documents.
+  useEventListener('tekne:request-save', (event: Event) => {
+    const detail = (event as CustomEvent<{ onComplete?: () => void }>).detail
+    saveDocument(detail?.onComplete)
+  })
 
   useCodemirrorEvent('internalLinkClick', (event) => {
     saveDocument(() => {

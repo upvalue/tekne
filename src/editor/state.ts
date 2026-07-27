@@ -112,7 +112,7 @@ export const notificationPermissionAtom = atom<NotificationPermission | null>(
 export const allTagsAtom = atomWithQuery(() => ({
   queryKey: ['allTags'],
   queryFn: () => {
-    return trpcClient.doc.allTags.query()
+    return trpcClient.tags.allTags.query()
   },
   // every 5 minutes
   refetchInterval: 60 * 5 * 1000,

@@ -14,3 +14,9 @@ const getDefaultPanelVisible = () =>
   typeof window !== 'undefined' && window.matchMedia(`(min-width: ${PANEL_BREAKPOINT}px)`).matches
 
 export const panelVisibleAtom = atom<boolean>(getDefaultPanelVisible())
+
+/**
+ * Tag (without '#') that tag management in the Tools tab should highlight,
+ * e.g. after clicking a tag in the editor. Cleared once handled.
+ */
+export const tagManagerTargetAtom = atom<string | null>(null)

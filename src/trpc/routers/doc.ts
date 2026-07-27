@@ -26,55 +26,77 @@ import type { SyntaxNode } from '@lezer/common'
 import MagicString from 'magic-string'
 import { TRPCError } from '@trpc/server'
 
-const upsertNote = async (db: Kysely<Database>, name: string, body: ZDoc) => {
-  await db.transaction().execute(async (tx) => {
-    const parsedBody = body.children.map((ln, line_idx) => {
-      const parsedLine = TEKNE_MD_PARSER.parse(ln.mdContent)
-      return {
-        line_idx,
-        parsed_body: jsonifyMdTree(parsedLine.topNode, ln.mdContent),
-      }
+/**
+ * Upserts a note and rebuilds its derived data (note_data, note_lines,
+ * parsed_body) inside an existing transaction. Increments the revision on
+ * update so callers can detect concurrent modification via expectedRevision.
+ * Returns the note's new revision.
+ */
+export const upsertNoteInTx = async (
+  tx: Kysely<Database>,
+  name: string,
+  body: ZDoc
+): Promise<number> => {
+  const parsedBody = body.children.map((ln, line_idx) => {
+    const parsedLine = TEKNE_MD_PARSER.parse(ln.mdContent)
+    return {
+      line_idx,
+      parsed_body: jsonifyMdTree(parsedLine.topNode, ln.mdContent),
+    }
+  })
+  const r = await tx
+    .insertInto('notes')
+    .values({
+      title: name,
+      body,
+      revision: 0,
+      parsed_body: sql`${JSON.stringify(parsedBody)}::jsonb`,
+      updatedAt: sql`now()`,
     })
-    const r = await tx
-      .insertInto('notes')
-      .values({
-        title: name,
+    .onConflict((oc) =>
+      oc.column('title').doUpdateSet({
         body,
-        revision: 0,
         parsed_body: sql`${JSON.stringify(parsedBody)}::jsonb`,
         updatedAt: sql`now()`,
+        revision: sql`notes.revision + 1`,
       })
-      .onConflict((oc) => oc.column('title').doUpdateSet({ body }))
-      .execute()
+    )
+    .returning('revision')
+    .executeTakeFirstOrThrow()
 
-    // Process document for data using shared function
-    const processedData = processDocumentForData(name, body)
+  // Process document for data using shared function
+  const processedData = processDocumentForData(name, body)
 
-    // Drop all data by note title
-    await tx.deleteFrom('note_data').where('note_title', '=', name).execute()
+  // Drop all data by note title
+  await tx.deleteFrom('note_data').where('note_title', '=', name).execute()
 
-    if (processedData.length > 0) {
-      await tx.insertInto('note_data').values(processedData).execute()
-    }
+  if (processedData.length > 0) {
+    await tx.insertInto('note_data').values(processedData).execute()
+  }
 
-    // Populate note_lines for text search
-    await tx.deleteFrom('note_lines').where('note_title', '=', name).execute()
+  // Populate note_lines for text search
+  await tx.deleteFrom('note_lines').where('note_title', '=', name).execute()
 
-    const noteLines = body.children.map((ln, line_idx) => ({
-      note_title: name,
-      line_idx,
-      content: ln.mdContent,
-      indent: ln.indent,
-      time_created: new Date(ln.timeCreated),
-      time_updated: new Date(ln.timeUpdated),
-    }))
+  const noteLines = body.children.map((ln, line_idx) => ({
+    note_title: name,
+    line_idx,
+    content: ln.mdContent,
+    indent: ln.indent,
+    time_created: new Date(ln.timeCreated),
+    time_updated: new Date(ln.timeUpdated),
+  }))
 
-    if (noteLines.length > 0) {
-      await tx.insertInto('note_lines').values(noteLines).execute()
-    }
+  if (noteLines.length > 0) {
+    await tx.insertInto('note_lines').values(noteLines).execute()
+  }
 
-    console.log('upsertNote', r)
-  })
+  return r.revision
+}
+
+const upsertNote = async (db: Kysely<Database>, name: string, body: ZDoc) => {
+  return await db
+    .transaction()
+    .execute((tx) => upsertNoteInTx(tx, name, body))
 }
 
 const isDailyDocument = (name: string): boolean => {
@@ -204,22 +226,27 @@ export const docRouter = t.router({
         name: z.string(),
       })
     )
-    .query(async ({ input, ctx: { db } }): Promise<ZDoc> => {
-      const doc = await db
-        .selectFrom('notes')
-        .selectAll()
-        .where('title', '=', input.name)
-        .executeTakeFirst()
+    .query(
+      async ({
+        input,
+        ctx: { db },
+      }): Promise<{ doc: ZDoc; revision: number }> => {
+        const doc = await db
+          .selectFrom('notes')
+          .selectAll()
+          .where('title', '=', input.name)
+          .executeTakeFirst()
 
-      if (!doc) {
-        throw new TRPCError({
-          code: 'NOT_FOUND',
-          message: `Document "${input.name}" not found`,
-        })
+        if (!doc) {
+          throw new TRPCError({
+            code: 'NOT_FOUND',
+            message: `Document "${input.name}" not found`,
+          })
+        }
+
+        return { doc: doc.body, revision: doc.revision }
       }
-
-      return doc!.body
-    }),
+    ),
 
   loadDocDetails: t.procedure
     .input(
@@ -250,12 +277,31 @@ export const docRouter = t.router({
       z.object({
         name: z.string(),
         doc: zdoc,
+        // When provided, the write is conditional: it fails with CONFLICT if
+        // the stored revision no longer matches (e.g. a bulk rewrite like a
+        // tag rename touched this document since the client last loaded it).
+        expectedRevision: z.number().optional(),
       })
     )
     .mutation(async ({ input, ctx: { db } }) => {
-      await upsertNote(db, input.name, input.doc)
+      const revision = await db.transaction().execute(async (tx) => {
+        if (input.expectedRevision !== undefined) {
+          const current = await tx
+            .selectFrom('notes')
+            .select('revision')
+            .where('title', '=', input.name)
+            .executeTakeFirst()
+          if (current && current.revision !== input.expectedRevision) {
+            throw new TRPCError({
+              code: 'CONFLICT',
+              message: `Document "${input.name}" was modified elsewhere (revision ${current.revision}, expected ${input.expectedRevision})`,
+            })
+          }
+        }
+        return await upsertNoteInTx(tx, input.name, input.doc)
+      })
 
-      return true
+      return { revision }
     }),
 
   renameDocPropose: t.procedure
@@ -546,17 +592,4 @@ export const docRouter = t.router({
 
       return { success: true, name }
     }),
-
-  /**
-   * Returns all tags that occur in the whole database
-   */
-  allTags: t.procedure.query(async ({ ctx: { db } }) => {
-    const tags = await db
-      .selectFrom('note_data')
-      .select(['datum_tag'])
-      .where('datum_type', '=', 'tag')
-      .distinct()
-      .execute()
-    return tags.map((t) => t.datum_tag.slice(1))
-  }),
 })

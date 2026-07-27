@@ -34,6 +34,11 @@ import {
   dragSelectionAnchorIdAtom,
   requestFocusLineAtom,
 } from './state'
+import {
+  activePanelTabAtom,
+  panelVisibleAtom,
+  tagManagerTargetAtom,
+} from '@/panel/state'
 import { generateGutterTimestamps } from '@/docs/gutters'
 import { generateCollapse } from '@/docs/collapse'
 import { ELine } from './ELine'
@@ -130,6 +135,9 @@ export const TEditor = () => {
     dragSelectionAnchorIdAtom
   )
   const setRequestFocusLine = useSetAtom(requestFocusLineAtom)
+  const setTagManagerTarget = useSetAtom(tagManagerTargetAtom)
+  const setActivePanelTab = useSetAtom(activePanelTabAtom)
+  const setPanelVisible = useSetAtom(panelVisibleAtom)
   const containerRef = useRef<HTMLDivElement>(null)
   const dragSelectedLineIdsRef = useRef(dragSelectedLineIds)
   const [activeDragLineId, setActiveDragLineId] = useState<string | null>(null)
@@ -169,7 +177,10 @@ export const TEditor = () => {
   }, [collapsedStates, doc.children])
 
   useCodemirrorEvent('tagClick', (event) => {
-    console.log('Tag clicked', event.name)
+    // Open tag management in the Tools tab, focused on the clicked tag
+    setTagManagerTarget(event.name)
+    setActivePanelTab('tools')
+    setPanelVisible(true)
   })
 
   const clearDragSelection = useCallback(() => {

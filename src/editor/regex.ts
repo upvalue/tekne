@@ -4,10 +4,15 @@
 // (but good enough for now)
 export const InternalLinkRegex = new RegExp('[$]?[a-zA-Z0-9 /]+\\]\\]')
 
-export const TAG_REGEX_STR = '^[a-zA-Z][a-zA-Z0-9-/]*(?=\\s|$)'
+const TAG_BODY_STR = '[a-zA-Z][a-zA-Z0-9-/]*'
+
+export const TAG_REGEX_STR = `^${TAG_BODY_STR}(?=\\s|$)`
 export const FULL_TAG_REGEX_STR = `#${TAG_REGEX_STR}`
-export const TAG_REGEX_MATCH_BEFORE_STR = `\\#[a-zA-Z][a-zA-Z0-9-/]*`
+export const TAG_REGEX_MATCH_BEFORE_STR = `\\#${TAG_BODY_STR}`
 
 export const TagRegex = new RegExp(TAG_REGEX_STR)
 export const FullTagRegex = new RegExp(FULL_TAG_REGEX_STR)
 export const TagRegexMatchBefore = new RegExp(TAG_REGEX_MATCH_BEFORE_STR)
+
+/** Matches a standalone tag name (no leading '#', whole string). */
+export const TagNameExactRegex = new RegExp(`^${TAG_BODY_STR}$`)

@@ -5,6 +5,7 @@ import { docRouter } from './routers/doc'
 import { analysisRouter } from './routers/analysis'
 import { searchRouter } from './routers/search'
 import { flagsRouter } from './routers/flags'
+import { tagsRouter } from './routers/tags'
 
 import fs from 'fs'
 import child_process from 'child_process'
@@ -15,6 +16,7 @@ export const appRouter = router({
   analysis: analysisRouter,
   search: searchRouter,
   flags: flagsRouter,
+  tags: tagsRouter,
 
   healthcheck: proc.query(async ({ ctx: { db } }) => {
     const q = await db
