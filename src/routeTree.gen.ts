@@ -12,7 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as TrpcTestRouteImport } from './routes/trpc-test'
 import { Route as ScratchRouteImport } from './routes/scratch'
 import { Route as LabRouteImport } from './routes/lab'
-import { Route as DevRouteImport } from './routes/dev'
+import { Route as DevSettingsRouteImport } from './routes/dev-settings'
 import { Route as DemoRouteImport } from './routes/demo'
 import { Route as R404RouteImport } from './routes/404'
 import { Route as IndexRouteImport } from './routes/index'
@@ -35,9 +35,9 @@ const LabRoute = LabRouteImport.update({
   path: '/lab',
   getParentRoute: () => rootRouteImport,
 } as any)
-const DevRoute = DevRouteImport.update({
-  id: '/dev',
-  path: '/dev',
+const DevSettingsRoute = DevSettingsRouteImport.update({
+  id: '/dev-settings',
+  path: '/dev-settings',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DemoRoute = DemoRouteImport.update({
@@ -75,7 +75,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/404': typeof R404Route
   '/demo': typeof DemoRoute
-  '/dev': typeof DevRoute
+  '/dev-settings': typeof DevSettingsRoute
   '/lab': typeof LabRoute
   '/scratch': typeof ScratchRoute
   '/trpc-test': typeof TrpcTestRoute
@@ -87,7 +87,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/404': typeof R404Route
   '/demo': typeof DemoRoute
-  '/dev': typeof DevRoute
+  '/dev-settings': typeof DevSettingsRoute
   '/lab': typeof LabRoute
   '/scratch': typeof ScratchRoute
   '/trpc-test': typeof TrpcTestRoute
@@ -100,7 +100,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/404': typeof R404Route
   '/demo': typeof DemoRoute
-  '/dev': typeof DevRoute
+  '/dev-settings': typeof DevSettingsRoute
   '/lab': typeof LabRoute
   '/scratch': typeof ScratchRoute
   '/trpc-test': typeof TrpcTestRoute
@@ -114,7 +114,7 @@ export interface FileRouteTypes {
     | '/'
     | '/404'
     | '/demo'
-    | '/dev'
+    | '/dev-settings'
     | '/lab'
     | '/scratch'
     | '/trpc-test'
@@ -126,7 +126,7 @@ export interface FileRouteTypes {
     | '/'
     | '/404'
     | '/demo'
-    | '/dev'
+    | '/dev-settings'
     | '/lab'
     | '/scratch'
     | '/trpc-test'
@@ -138,7 +138,7 @@ export interface FileRouteTypes {
     | '/'
     | '/404'
     | '/demo'
-    | '/dev'
+    | '/dev-settings'
     | '/lab'
     | '/scratch'
     | '/trpc-test'
@@ -151,7 +151,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   R404Route: typeof R404Route
   DemoRoute: typeof DemoRoute
-  DevRoute: typeof DevRoute
+  DevSettingsRoute: typeof DevSettingsRoute
   LabRoute: typeof LabRoute
   ScratchRoute: typeof ScratchRoute
   TrpcTestRoute: typeof TrpcTestRoute
@@ -183,11 +183,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LabRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/dev': {
-      id: '/dev'
-      path: '/dev'
-      fullPath: '/dev'
-      preLoaderRoute: typeof DevRouteImport
+    '/dev-settings': {
+      id: '/dev-settings'
+      path: '/dev-settings'
+      fullPath: '/dev-settings'
+      preLoaderRoute: typeof DevSettingsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/demo': {
@@ -239,7 +239,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   R404Route: R404Route,
   DemoRoute: DemoRoute,
-  DevRoute: DevRoute,
+  DevSettingsRoute: DevSettingsRoute,
   LabRoute: LabRoute,
   ScratchRoute: ScratchRoute,
   TrpcTestRoute: TrpcTestRoute,

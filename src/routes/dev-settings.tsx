@@ -1,7 +1,11 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { FeatureFlags } from '@/dev/FeatureFlags'
 
-export const Route = createFileRoute('/dev')({
+// Deliberately not '/dev': the development deployment is mounted at a /dev
+// basepath, and TanStack Router strips the basepath from route paths too, so a
+// route whose path equals the mount point collapses to '/' and shadows the
+// index route. See src/lib/app-path.ts.
+export const Route = createFileRoute('/dev-settings')({
   component: DevRoute,
 })
 

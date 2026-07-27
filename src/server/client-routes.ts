@@ -9,7 +9,7 @@ export const STATIC_ROUTES = [
   '/',
   '/404',
   '/demo',
-  '/dev',
+  '/dev-settings',
   '/lab',
   '/scratch',
   '/trpc-test',

@@ -33,6 +33,9 @@ export default defineConfig({
   },
   envPrefix: ['VITE_', 'TEKNE_'],
   server: {
+    // Fail loudly instead of drifting to 3001: the dev deployment is reverse
+    // proxied to a fixed port, so a silent fallback just yields 502s.
+    strictPort: true,
     watch: {
       ignored: ['**/.pnpm-store/**'],
     },

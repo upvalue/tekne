@@ -5,6 +5,10 @@ const configuredBase = import.meta.env.BASE_URL || '/'
  *
  * Production is mounted at the origin root, while the development instance is
  * mounted at /dev. TanStack Router uses this as its basepath.
+ *
+ * No file route may use the mount point as its path. TanStack Router strips the
+ * basepath from route paths as well as from the location, so a route at '/dev'
+ * would collapse to '/' and outrank the real index route.
  */
 export const appBasePath =
   configuredBase === '/' ? '' : configuredBase.replace(/\/+$/, '')
