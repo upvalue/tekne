@@ -42,6 +42,8 @@ export type TagRenameProposal = {
   renames: Array<{ from: string; to: string }>
   totalLines: number
   docs: Array<ProposedDoc>
+  /** Every tag name in use before the rename, without the leading '#' */
+  usedNames: string[]
   /** Documents whose new body to apply on execute, keyed by title */
   newDocs: Map<string, ZDoc>
 }
@@ -55,6 +57,18 @@ const getAllTagNames = async (db: Kysely<Database>): Promise<string[]> => {
     .distinct()
     .execute()
   return rows.map((r) => r.datum_tag.slice(1))
+}
+
+/** Names of archived tags, without the leading '#'. */
+const getArchivedTagNames = async (
+  db: Kysely<Database>
+): Promise<Set<string>> => {
+  const rows = await db
+    .selectFrom('tags')
+    .select(['tag_name'])
+    .where('archived_at', 'is not', null)
+    .execute()
+  return new Set(rows.map((r) => r.tag_name))
 }
 
 /**
@@ -141,17 +155,21 @@ const proposeTagRename = async (
     renames: [...pairs.entries()].map(([from, to]) => ({ from, to })),
     totalLines,
     docs,
+    usedNames: allNames,
     newDocs,
   }
 }
 
 /**
- * Moves tag descriptions along with a rename. On merge, the target's
- * existing description wins; the source's fills a blank.
+ * Moves tag metadata along with a rename. On merge, the target's existing
+ * metadata wins; the source's fills a blank. Archived state only follows a
+ * pure rename -- merging a retired tag into one that is still in use must not
+ * retire the survivor.
  */
-const migrateTagDescriptions = async (
+const migrateTagMetadata = async (
   db: Kysely<Database>,
-  renames: Array<{ from: string; to: string }>
+  renames: Array<{ from: string; to: string }>,
+  usedNames: Set<string>
 ) => {
   for (const { from, to } of renames) {
     const source = await db
@@ -169,18 +187,28 @@ const migrateTagDescriptions = async (
       .where('tag_name', '=', to)
       .executeTakeFirst()
 
-    // On merge the target's existing description wins
-    if (source.description && !target?.description) {
+    const description =
+      target?.description ?? (source.description || null) ?? null
+    const isRename = !target && !usedNames.has(to)
+    const archived_at = target
+      ? target.archived_at
+      : isRename
+        ? source.archived_at
+        : null
+
+    if (description !== null || archived_at !== null) {
       await db
         .insertInto('tags')
         .values({
           tag_name: to,
-          description: source.description,
+          description,
+          archived_at,
           updated_at: new Date(),
         })
         .onConflict((oc) =>
           oc.column('tag_name').doUpdateSet({
-            description: source.description,
+            description,
+            archived_at,
             updated_at: new Date(),
           })
         )
@@ -215,6 +243,7 @@ export const tagsRouter = t.router({
       {
         name: string
         description: string | null
+        archived: boolean
         lineCount: number
         docCount: number
       }
@@ -224,6 +253,7 @@ export const tagsRouter = t.router({
       byName.set(name, {
         name,
         description: null,
+        archived: false,
         lineCount: Number(row.line_count),
         docCount: Number(row.doc_count),
       })
@@ -232,10 +262,12 @@ export const tagsRouter = t.router({
       const existing = byName.get(row.tag_name)
       if (existing) {
         existing.description = row.description
+        existing.archived = row.archived_at !== null
       } else {
         byName.set(row.tag_name, {
           name: row.tag_name,
           description: row.description,
+          archived: row.archived_at !== null,
           lineCount: 0,
           docCount: 0,
         })
@@ -245,10 +277,79 @@ export const tagsRouter = t.router({
     return [...byName.values()].sort((a, b) => a.name.localeCompare(b.name))
   }),
 
-  /** All tag names in the database (no leading '#') -- feeds autocomplete. */
+  /**
+   * Tag names offered for new use (no leading '#') -- feeds autocomplete.
+   * Archived tags are left out: they stay valid where they already occur,
+   * they just stop being suggested.
+   */
   allTags: t.procedure.query(async ({ ctx: { db } }) => {
-    return await getAllTagNames(db)
+    const [names, archived] = await Promise.all([
+      getAllTagNames(db),
+      getArchivedTagNames(db),
+    ])
+    return names.filter((name) => !archived.has(name))
   }),
+
+  /**
+   * Archives or restores a tag. This is metadata only -- documents keep every
+   * occurrence of the tag, so it is reversible.
+   */
+  setArchived: t.procedure
+    .input(
+      z.object({
+        name: tagNameSchema,
+        archived: z.boolean(),
+      })
+    )
+    .mutation(async ({ input, ctx: { db } }) => {
+      if (!input.archived) {
+        // Rows exist only for tags with metadata, so an unarchived tag with no
+        // description leaves nothing behind.
+        const existing = await db
+          .selectFrom('tags')
+          .select(['description'])
+          .where('tag_name', '=', input.name)
+          .executeTakeFirst()
+
+        if (!existing) {
+          return { success: true }
+        }
+
+        if (existing.description === null) {
+          await db
+            .deleteFrom('tags')
+            .where('tag_name', '=', input.name)
+            .execute()
+        } else {
+          await db
+            .updateTable('tags')
+            .set({ archived_at: null, updated_at: new Date() })
+            .where('tag_name', '=', input.name)
+            .execute()
+        }
+
+        return { success: true }
+      }
+
+      const archived_at = new Date()
+      await db
+        .insertInto('tags')
+        .values({
+          tag_name: input.name,
+          description: null,
+          archived_at,
+          updated_at: archived_at,
+        })
+        .onConflict((oc) =>
+          oc.column('tag_name').doUpdateSet({
+            archived_at,
+            updated_at: archived_at,
+          })
+        )
+        .execute()
+
+      return { success: true }
+    }),
 
   setDescription: t.procedure
     .input(
@@ -261,7 +362,26 @@ export const tagsRouter = t.router({
       const description = input.description.trim()
 
       if (description === '') {
-        await db.deleteFrom('tags').where('tag_name', '=', input.name).execute()
+        // Clearing the description only drops the row if nothing else lives on
+        // it -- an archived tag keeps its row.
+        const existing = await db
+          .selectFrom('tags')
+          .select(['archived_at'])
+          .where('tag_name', '=', input.name)
+          .executeTakeFirst()
+
+        if (existing?.archived_at) {
+          await db
+            .updateTable('tags')
+            .set({ description: null, updated_at: new Date() })
+            .where('tag_name', '=', input.name)
+            .execute()
+        } else {
+          await db
+            .deleteFrom('tags')
+            .where('tag_name', '=', input.name)
+            .execute()
+        }
         return { success: true }
       }
 
@@ -308,7 +428,11 @@ export const tagsRouter = t.router({
           await upsertNoteInTx(tx, title, newDoc)
         }
 
-        await migrateTagDescriptions(tx, proposal.renames)
+        await migrateTagMetadata(
+          tx,
+          proposal.renames,
+          new Set(proposal.usedNames)
+        )
 
         return {
           success: true,

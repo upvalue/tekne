@@ -13,6 +13,7 @@ import { tmigration as addSavedSearchesMigration } from './migrations/1769300006
 import { tmigration as addNoteLinesMigration } from './migrations/1769317427281_add-note-lines.ts'
 import { tmigration as addFeatureFlagsMigration } from './migrations/1771632000000_add-feature-flags.ts'
 import { tmigration as addTagsMigration } from './migrations/1785124754665_add-tags.ts'
+import { tmigration as addTagArchivedMigration } from './migrations/1785217524142_add-tag-archived.ts'
 import type { Database } from './types'
 
 /**
@@ -40,6 +41,7 @@ class TekneMigrationProvider implements MigrationProvider {
     migrations['1769317427281_add-note-lines'] = addNoteLinesMigration
     migrations['1771632000000_add-feature-flags'] = addFeatureFlagsMigration
     migrations['1785124754665_add-tags'] = addTagsMigration
+    migrations['1785217524142_add-tag-archived'] = addTagArchivedMigration
 
     return migrations
   }

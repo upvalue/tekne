@@ -8,6 +8,8 @@ import { tagManagerTargetAtom } from './state'
 import { TagCard } from './tags/TagCard'
 import { TagRenameDialog } from './tags/TagRenameDialog'
 import { Input } from '@/components/vendor/Input'
+import { ChevronRight } from 'lucide-react'
+import { cn } from '@/lib/utils'
 
 type ActiveTag = {
   tag: string
@@ -79,23 +81,65 @@ export const Tools = () => {
   const [filter, setFilter] = useState('')
   const [highlightTarget, setHighlightTarget] = useAtom(tagManagerTargetAtom)
 
+  const [showArchived, setShowArchived] = useState(false)
+
   const tagsList = trpc.tags.list.useQuery()
-  const descriptions = useMemo(() => {
-    const map = new Map<string, string | null>()
+  const meta = useMemo(() => {
+    const map = new Map<
+      string,
+      { description: string | null; archived: boolean }
+    >()
     for (const tag of tagsList.data ?? []) {
-      map.set(tag.name, tag.description)
+      map.set(tag.name, {
+        description: tag.description,
+        archived: tag.archived,
+      })
     }
     return map
   }, [tagsList.data])
 
-  const allTags = useMemo(() => {
+  const { liveTags, archivedTags } = useMemo(() => {
     const needle = filter.trim().toLowerCase()
-    const tags = tagsList.data ?? []
-    if (needle === '') {
-      return tags
+    const tags = (tagsList.data ?? []).filter(
+      (t) => needle === '' || t.name.toLowerCase().includes(needle)
+    )
+    return {
+      liveTags: tags.filter((t) => !t.archived),
+      archivedTags: tags.filter((t) => t.archived),
     }
-    return tags.filter((t) => t.name.toLowerCase().includes(needle))
   }, [tagsList.data, filter])
+
+  const renderTag = (tag: {
+    name: string
+    description: string | null
+    archived: boolean
+    lineCount: number
+    docCount: number
+  }) => (
+    <TagCard
+      key={tag.name}
+      name={tag.name}
+      description={tag.description}
+      archived={tag.archived}
+      highlighted={highlightTarget === tag.name}
+      onRename={(n) => {
+        setHighlightTarget(null)
+        setRenameTarget(n)
+      }}
+      stats={
+        tag.lineCount === 0 ? (
+          <span className="text-zinc-600">no occurrences</span>
+        ) : (
+          <>
+            <span>{tag.lineCount} lines</span>
+            <span>
+              {tag.docCount} doc{tag.docCount === 1 ? '' : 's'}
+            </span>
+          </>
+        )
+      }
+    />
+  )
 
   return (
     <div className="space-y-6 p-4">
@@ -113,7 +157,8 @@ export const Tools = () => {
                 <TagCard
                   key={name}
                   name={name}
-                  description={descriptions.get(name) ?? null}
+                  description={meta.get(name)?.description ?? null}
+                  archived={meta.get(name)?.archived}
                   highlighted={highlightTarget === name}
                   onRename={(n) => {
                     setHighlightTarget(null)
@@ -148,36 +193,32 @@ export const Tools = () => {
           <div className="rounded-lg border border-zinc-800 p-4 text-sm text-zinc-500">
             Loading tags…
           </div>
-        ) : allTags.length === 0 ? (
+        ) : liveTags.length === 0 ? (
           <div className="rounded-lg border border-zinc-800 p-4 text-sm text-zinc-500">
             {filter ? 'No tags match the filter' : 'No tags yet'}
           </div>
         ) : (
+          <div className="space-y-2">{liveTags.map(renderTag)}</div>
+        )}
+
+        {archivedTags.length > 0 && (
           <div className="space-y-2">
-            {allTags.map((tag) => (
-              <TagCard
-                key={tag.name}
-                name={tag.name}
-                description={tag.description}
-                highlighted={highlightTarget === tag.name}
-                onRename={(n) => {
-                  setHighlightTarget(null)
-                  setRenameTarget(n)
-                }}
-                stats={
-                  tag.lineCount === 0 ? (
-                    <span className="text-zinc-600">no occurrences</span>
-                  ) : (
-                    <>
-                      <span>{tag.lineCount} lines</span>
-                      <span>
-                        {tag.docCount} doc{tag.docCount === 1 ? '' : 's'}
-                      </span>
-                    </>
-                  )
-                }
+            <button
+              type="button"
+              className="flex w-full items-center gap-1.5 text-xs text-zinc-500 hover:text-zinc-300"
+              onClick={() => setShowArchived((v) => !v)}
+            >
+              <ChevronRight
+                className={cn(
+                  'size-3.5 transition-transform',
+                  showArchived && 'rotate-90'
+                )}
               />
-            ))}
+              {archivedTags.length} archived
+            </button>
+            {showArchived && (
+              <div className="space-y-2">{archivedTags.map(renderTag)}</div>
+            )}
           </div>
         )}
       </ToolsSection>

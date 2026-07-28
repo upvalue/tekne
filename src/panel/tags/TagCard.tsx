@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { TagIcon, PencilIcon } from '@heroicons/react/24/outline'
-import { Replace } from 'lucide-react'
+import { useQueryClient } from '@tanstack/react-query'
+import { Archive, ArchiveRestore, Replace } from 'lucide-react'
 import { toast } from 'sonner'
 import { trpc } from '@/trpc/client'
 import { cn } from '@/lib/utils'
@@ -12,17 +13,20 @@ import { cn } from '@/lib/utils'
 export const TagCard = ({
   name,
   description,
+  archived,
   stats,
   highlighted,
   onRename,
 }: {
   name: string
   description: string | null
+  archived?: boolean
   stats: React.ReactNode
   highlighted?: boolean
   onRename: (name: string) => void
 }) => {
   const utils = trpc.useUtils()
+  const queryClient = useQueryClient()
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState('')
   const cardRef = useRef<HTMLDivElement>(null)
@@ -34,6 +38,20 @@ export const TagCard = ({
     },
     onError: (e) => {
       toast.error(`Failed to save description: ${e.message}`)
+    },
+  })
+
+  const setArchived = trpc.tags.setArchived.useMutation({
+    onSuccess: (_data, variables) => {
+      utils.tags.list.invalidate()
+      // Autocomplete reads this through its own Jotai-backed query
+      queryClient.invalidateQueries({ queryKey: ['allTags'] })
+      toast.success(
+        variables.archived ? `Archived #${name}` : `Restored #${name}`
+      )
+    },
+    onError: (e) => {
+      toast.error(`Failed to archive tag: ${e.message}`)
     },
   })
 
@@ -67,14 +85,38 @@ export const TagCard = ({
       ref={cardRef}
       className={cn(
         'group rounded-lg border border-zinc-800 bg-zinc-900/40 p-3',
-        highlighted && 'border-amber-500/60'
+        highlighted && 'border-amber-500/60',
+        archived && 'opacity-60'
       )}
     >
       <div className="flex items-center gap-2">
         <TagIcon className="size-4 text-zinc-500" />
-        <span className="min-w-0 flex-1 truncate text-sm font-medium text-zinc-100">
+        <span
+          className={cn(
+            'min-w-0 flex-1 truncate text-sm font-medium',
+            archived ? 'text-zinc-400' : 'text-zinc-100'
+          )}
+        >
           #{name}
         </span>
+        {archived && (
+          <span className="rounded bg-zinc-800 px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-zinc-400">
+            Archived
+          </span>
+        )}
+        <button
+          type="button"
+          title={archived ? 'Restore tag' : 'Archive tag'}
+          className="rounded p-1 text-zinc-500 opacity-0 transition-opacity hover:bg-zinc-800 hover:text-zinc-200 focus:opacity-100 group-hover:opacity-100"
+          disabled={setArchived.isPending}
+          onClick={() => setArchived.mutate({ name, archived: !archived })}
+        >
+          {archived ? (
+            <ArchiveRestore className="size-4" />
+          ) : (
+            <Archive className="size-4" />
+          )}
+        </button>
         <button
           type="button"
           title="Edit description"

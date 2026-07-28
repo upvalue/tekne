@@ -59,6 +59,8 @@ export type DBNoteLine = {
 export type DBTag = {
   tag_name: string
   description: string | null
+  /** Set when the tag is retired: existing occurrences stay, new use is discouraged. */
+  archived_at: ColumnType<Date, Date | undefined, Date> | null
   created_at: ColumnType<Date, Date | undefined, Date>
   updated_at: ColumnType<Date, Date | undefined, Date>
 }
