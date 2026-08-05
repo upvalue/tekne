@@ -1,9 +1,21 @@
 // search.ts - TRPC router for search functionality
 import { z } from 'zod'
 import { sql } from 'kysely'
+import { TRPCError } from '@trpc/server'
 import { t } from '../init'
 import type { SearchOperator } from '@/search/types'
+import { TAG_REGEX_MATCH_BEFORE_STR } from '@/docs/regex'
 import { aggregateTagData, type TagAggregateData } from '../lib/tag-aggregates'
+import {
+  ageCutoff,
+  buildTextCondition,
+  escapeLike,
+  globToLike,
+  toDateExclusive,
+  unsupportedAggregateOperators,
+} from '../lib/search-operators'
+
+const TAG_IN_CONTENT_REGEX = new RegExp(TAG_REGEX_MATCH_BEFORE_STR, 'g')
 
 // Zod schemas for search operators
 const searchOperatorSchema = z.discriminatedUnion('type', [
@@ -27,11 +39,6 @@ const searchOperatorSchema = z.discriminatedUnion('type', [
   }),
 ])
 
-// Convert glob pattern to SQL LIKE pattern
-function globToLike(pattern: string): string {
-  return pattern.replace(/\*/g, '%').replace(/\?/g, '_')
-}
-
 // Helper to build common filter conditions
 function buildFilterConditions(operators: SearchOperator[]) {
   const conditions: {
@@ -49,18 +56,12 @@ function buildFilterConditions(operators: SearchOperator[]) {
       case 'from':
         conditions.fromDate = op.value
         break
-      case 'to': {
-        const toDate = new Date(op.value)
-        toDate.setDate(toDate.getDate() + 1)
-        conditions.toDate = toDate
+      case 'to':
+        conditions.toDate = toDateExclusive(op.value)
         break
-      }
-      case 'age': {
-        const cutoff = new Date()
-        cutoff.setDate(cutoff.getDate() - op.value)
-        conditions.fromDate = cutoff
+      case 'age':
+        conditions.fromDate = ageCutoff(op.value)
         break
-      }
       case 'doc':
         conditions.docPattern = globToLike(op.value)
         break
@@ -68,28 +69,6 @@ function buildFilterConditions(operators: SearchOperator[]) {
   }
 
   return conditions
-}
-
-// Helper to build text search condition based on wildcard type
-function buildTextCondition(value: string, wildcard: string) {
-  // Escape special regex characters in the value
-  const escaped = value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-
-  switch (wildcard) {
-    case 'prefix':
-      // Word starting with value: \m = word boundary start
-      return { pattern: `\\m${escaped}`, useRegex: true }
-    case 'suffix':
-      // Word ending with value: \M = word boundary end
-      return { pattern: `${escaped}\\M`, useRegex: true }
-    case 'exact':
-      // Exact word: both boundaries
-      return { pattern: `\\m${escaped}\\M`, useRegex: true }
-    case 'none':
-    default:
-      // Contains anywhere (simple ILIKE)
-      return { pattern: `%${value}%`, useRegex: false }
-  }
 }
 
 export const searchRouter = t.router({
@@ -125,7 +104,12 @@ export const searchRouter = t.router({
         ])
         // Exclude templates
         .where('note_lines.note_title', 'not ilike', '$%')
+        // Tiebreakers keep the order stable when many lines share a
+        // creation timestamp; without them offset pagination can repeat
+        // or skip rows across pages.
         .orderBy('note_lines.time_created', 'desc')
+        .orderBy('note_lines.note_title')
+        .orderBy('note_lines.line_idx')
         .limit(limit + 1)
 
       if (cursor) {
@@ -139,19 +123,21 @@ export const searchRouter = t.router({
             query = query.where('note_lines.time_created', '>=', op.value)
             break
 
-          case 'to': {
-            const toDate = new Date(op.value)
-            toDate.setDate(toDate.getDate() + 1)
-            query = query.where('note_lines.time_created', '<', toDate)
+          case 'to':
+            query = query.where(
+              'note_lines.time_created',
+              '<',
+              toDateExclusive(op.value)
+            )
             break
-          }
 
-          case 'age': {
-            const cutoff = new Date()
-            cutoff.setDate(cutoff.getDate() - op.value)
-            query = query.where('note_lines.time_created', '>=', cutoff)
+          case 'age':
+            query = query.where(
+              'note_lines.time_created',
+              '>=',
+              ageCutoff(op.value)
+            )
             break
-          }
 
           case 'doc':
             query = query.where(
@@ -193,7 +179,7 @@ export const searchRouter = t.router({
                 subquery = subquery.where(
                   'note_data.datum_tag',
                   'ilike',
-                  `${op.value}%`
+                  `${escapeLike(op.value)}%`
                 )
                 break
 
@@ -219,94 +205,47 @@ export const searchRouter = t.router({
       const hasMore = results.length > limit
       const items = hasMore ? results.slice(0, limit) : results
 
-      // Deduplicate lines (datum joins can cause multiple rows per line)
-      const uniqueLines = new Map<
-        string,
-        {
-          note_title: string
-          line_idx: number
-          content: string
-          indent: number
-          time_created: Date | null
-        }
-      >()
-
-      for (const row of items) {
-        const key = `${row.note_title}:${row.line_idx}`
-        if (!uniqueLines.has(key)) {
-          uniqueLines.set(key, {
-            note_title: row.note_title,
-            line_idx: row.line_idx,
-            content: row.content,
-            indent: row.indent,
-            time_created: row.time_created,
-          })
-        }
-      }
-
-      // Get datum info and child counts from notes.body
-      // Group by note_title to batch fetches
-      const notesByTitle = new Map<
-        string,
-        Array<{ key: string; line_idx: number }>
-      >()
-      for (const [key, line] of uniqueLines) {
-        if (!notesByTitle.has(line.note_title)) {
-          notesByTitle.set(line.note_title, [])
-        }
-        notesByTitle
-          .get(line.note_title)!
-          .push({ key, line_idx: line.line_idx })
-      }
+      // Datum info and child counts come from notes.body; one batched fetch
+      // for every note on this page.
+      const titles = [...new Set(items.map((row) => row.note_title))]
+      const notes =
+        titles.length > 0
+          ? await db
+              .selectFrom('notes')
+              .select(['title', 'body'])
+              .where('title', 'in', titles)
+              .execute()
+          : []
+      const bodyByTitle = new Map(notes.map((n) => [n.title, n.body]))
 
       const lineResults = []
-      for (const [noteTitle, lineRefs] of notesByTitle) {
-        const note = await db
-          .selectFrom('notes')
-          .select(['body'])
-          .where('title', '=', noteTitle)
-          .executeTakeFirst()
+      for (const row of items) {
+        const children = bodyByTitle.get(row.note_title)?.children
+        const lineData = children?.[row.line_idx]
+        if (!children || !lineData) continue
 
-        if (!note?.body?.children) continue
-
-        for (const { key, line_idx } of lineRefs) {
-          const line = uniqueLines.get(key)!
-          const lineData = note.body.children[line_idx]
-          if (!lineData) continue
-
-          // Count child lines (lines with greater indent that follow)
-          let childCount = 0
-          const baseIndent = lineData.indent
-          for (let i = line_idx + 1; i < note.body.children.length; i++) {
-            const child = note.body.children[i]
-            if (child.indent > baseIndent) {
-              childCount++
-            } else {
-              break
-            }
+        // Count child lines (lines with greater indent that follow)
+        let childCount = 0
+        for (let i = row.line_idx + 1; i < children.length; i++) {
+          if (children[i].indent > lineData.indent) {
+            childCount++
+          } else {
+            break
           }
-
-          // Get tags for this line
-          const tags: string[] = []
-          // We could query note_data here, but for now just extract from content
-          const tagMatches = line.content.match(/#[a-zA-Z][a-zA-Z0-9-/]*/g)
-          if (tagMatches) {
-            tags.push(...tagMatches)
-          }
-
-          lineResults.push({
-            note_title: line.note_title,
-            line_idx: line.line_idx,
-            time_created: line.time_created,
-            tags,
-            content: line.content,
-            indent: line.indent,
-            datum_task_status: lineData.datumTaskStatus || null,
-            datum_time_seconds: lineData.datumTimeSeconds ?? null,
-            datum_pinned_at: lineData.datumPinnedAt || null,
-            child_count: childCount,
-          })
         }
+
+        lineResults.push({
+          note_title: row.note_title,
+          line_idx: row.line_idx,
+          time_created: row.time_created,
+          tags: row.content.match(TAG_IN_CONTENT_REGEX) ?? [],
+          content: row.content,
+          indent: row.indent,
+          datum_task_status: lineData.datumTaskStatus || null,
+          datum_time_seconds: lineData.datumTimeSeconds ?? null,
+          datum_pinned_at: lineData.datumPinnedAt || null,
+          child_count: childCount,
+        })
       }
 
       return {
@@ -326,6 +265,19 @@ export const searchRouter = t.router({
     )
     .query(async ({ input, ctx: { db } }): Promise<TagAggregateData[]> => {
       const { operators } = input
+
+      const unsupported = unsupportedAggregateOperators(
+        operators as SearchOperator[]
+      )
+      if (unsupported.length > 0) {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: `The aggregate view cannot filter by ${unsupported
+            .map((op) => `"${op}:"`)
+            .join(', ')} — switch to the text view for those operators`,
+        })
+      }
+
       const filters = buildFilterConditions(operators as SearchOperator[])
 
       // First, find all matching tags
@@ -339,7 +291,11 @@ export const searchRouter = t.router({
 
       // Apply tag prefix filter (value already includes # prefix)
       if (filters.tagPrefix) {
-        tagQuery = tagQuery.where('datum_tag', 'ilike', `${filters.tagPrefix}%`)
+        tagQuery = tagQuery.where(
+          'datum_tag',
+          'ilike',
+          `${escapeLike(filters.tagPrefix)}%`
+        )
       }
 
       // Apply date filters to tag query

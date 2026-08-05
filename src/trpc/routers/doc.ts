@@ -16,6 +16,7 @@ import {
   validateDocumentWithMigrationCheck,
 } from '@/docs/doc-migrator'
 import { deriveNoteRows, recomputeAllDocumentData } from '@/trpc/lib/docs'
+import { escapeLike } from '@/trpc/lib/search-operators'
 import { applyTemplateDirectives } from '@/docs/template-directives'
 import { produce } from 'immer'
 import { TEKNE_MD_PARSER, visitMdTree } from '@/docs/parser'
@@ -197,7 +198,7 @@ export const docRouter = t.router({
       let query = db.selectFrom('notes').select(['title'])
 
       if (input.query.length > 0) {
-        query = query.where('title', 'ilike', `%${input.query}%`)
+        query = query.where('title', 'ilike', `%${escapeLike(input.query)}%`)
       }
 
       const docs = await query.execute()

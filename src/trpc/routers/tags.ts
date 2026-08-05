@@ -171,21 +171,29 @@ const migrateTagMetadata = async (
   renames: Array<{ from: string; to: string }>,
   usedNames: Set<string>
 ) => {
+  // One batched read covers every source and target row; a namespace rename
+  // with many children would otherwise hold the transaction open for two
+  // queries per pair.
+  const names = [...new Set(renames.flatMap(({ from, to }) => [from, to]))]
+  const rows =
+    names.length > 0
+      ? await db
+          .selectFrom('tags')
+          .selectAll()
+          .where('tag_name', 'in', names)
+          .execute()
+      : []
+  const rowsByName = new Map(rows.map((row) => [row.tag_name, row]))
+  const sourcesToDelete: string[] = []
+
   for (const { from, to } of renames) {
-    const source = await db
-      .selectFrom('tags')
-      .selectAll()
-      .where('tag_name', '=', from)
-      .executeTakeFirst()
+    const source = rowsByName.get(from)
     if (!source) {
       continue
     }
+    sourcesToDelete.push(from)
 
-    const target = await db
-      .selectFrom('tags')
-      .selectAll()
-      .where('tag_name', '=', to)
-      .executeTakeFirst()
+    const target = rowsByName.get(to)
 
     const description =
       target?.description ?? (source.description || null) ?? null
@@ -214,8 +222,13 @@ const migrateTagMetadata = async (
         )
         .execute()
     }
+  }
 
-    await db.deleteFrom('tags').where('tag_name', '=', from).execute()
+  if (sourcesToDelete.length > 0) {
+    await db
+      .deleteFrom('tags')
+      .where('tag_name', 'in', sourcesToDelete)
+      .execute()
   }
 }
 
