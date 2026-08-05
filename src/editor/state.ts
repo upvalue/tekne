@@ -4,7 +4,6 @@ import { ensureUniqueLineTimeCreateds } from '@/docs/line-identity'
 import { useCallback } from 'react'
 import { atomWithQuery } from 'jotai-tanstack-query'
 import { trpcClient } from '@/trpc/client'
-import { noop } from 'lodash-es'
 import { produce, type Draft } from 'immer'
 import { captureUndoEntry, suppressUndoCaptureAtom } from './undo'
 import { rawDocAtom } from './doc-atoms'
@@ -60,7 +59,7 @@ export const timerDialogRequestAtom = atom<{
 
 export const errorMessageAtom = atom<string | null>(null)
 
-type GlobalTimerState = {
+export type GlobalTimerState = {
   isActive: boolean
   lineTimeCreated: string | null
   lineContent: string | null
@@ -68,15 +67,12 @@ type GlobalTimerState = {
   timeMode: 'additive' | 'replacement'
   startTime: number | null
   targetDuration: number
-  tick: number
-  stopTimer: () => void
-  interval: NodeJS.Timeout | null
 }
 
 /**
- * Global timer state -- contains information about the
- * active timer (if there is one) and allows it to be
- * stopped from anywhere
+ * Global timer state. Deliberately serializable — the interval and the
+ * stop/cancel transitions live in timer/timer-controller.ts, and elapsed
+ * time derives from startTime rather than a tick counter.
  */
 export const globalTimerAtom = atom<GlobalTimerState>({
   isActive: false,
@@ -86,9 +82,6 @@ export const globalTimerAtom = atom<GlobalTimerState>({
   timeMode: 'replacement',
   startTime: null,
   targetDuration: DEFAULT_COUNTDOWN_SECONDS,
-  tick: 0,
-  stopTimer: noop,
-  interval: null,
 })
 
 export const notificationPermissionAtom = atom<NotificationPermission | null>(

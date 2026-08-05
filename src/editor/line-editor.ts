@@ -22,6 +22,7 @@ import {
 } from './state'
 import { autocompletion } from '@codemirror/autocomplete'
 import { useLineEvent } from './line-editor/cm-events'
+import { cancelTimer } from './timer/timer-controller'
 import { slashCommandsPlugin } from './line-editor/slash-commands-plugin'
 import { placeholder } from './line-editor/placeholder-plugin'
 import { makeKeymap, toggleCollapse } from './line-editor/line-operations'
@@ -280,29 +281,31 @@ export const useCodeMirror = (lineInfo: LineWithIdx) => {
   // Line specific events, emitted by the event
   // emitter. Could probably be moved one level up.
   useLineEvent('lineTimerToggle', lineInfo.lineIdx, (event) => {
-    const globalTimer = store.get(globalTimerAtom)
-    const doc = store.get(docAtom)
-    const eventLineTimeCreated = doc.children[event.lineIdx]?.timeCreated
-    setDoc((draft) => {
-      const datumTimeSeconds = draft.children[event.lineIdx].datumTimeSeconds
-      if (datumTimeSeconds !== undefined) {
-        if (datumTimeSeconds > 0) {
-          if (confirm('Timer has data, do you want to remove it?')) {
-            if (globalTimer.lineTimeCreated === eventLineTimeCreated) {
-              globalTimer.stopTimer()
-            }
-            delete draft.children[event.lineIdx].datumTimeSeconds
-          }
-        } else {
-          // No data recorded — remove silently
-          if (globalTimer.lineTimeCreated === eventLineTimeCreated) {
-            globalTimer.stopTimer()
-          }
-          delete draft.children[event.lineIdx].datumTimeSeconds
-        }
-      } else {
+    const line = store.get(docAtom).children[event.lineIdx]
+    if (!line) return
+
+    if (line.datumTimeSeconds === undefined) {
+      setDoc((draft) => {
         draft.children[event.lineIdx].datumTimeSeconds = 0
-      }
+      })
+      return
+    }
+
+    // Removing an existing timer: confirm when it has recorded data, and
+    // discard (not save) a running timer on this line. The prompt and the
+    // timer transition happen before the state update — never inside the
+    // Immer recipe.
+    if (
+      line.datumTimeSeconds > 0 &&
+      !confirm('Timer has data, do you want to remove it?')
+    ) {
+      return
+    }
+    if (store.get(globalTimerAtom).lineTimeCreated === line.timeCreated) {
+      cancelTimer(store)
+    }
+    setDoc((draft) => {
+      delete draft.children[event.lineIdx].datumTimeSeconds
     })
   })
 

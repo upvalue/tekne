@@ -1,5 +1,6 @@
-// TimerBadge.tsx - in addition to the badge, contains a lot of
-// the timer management code.
+// TimerBadge.tsx - the per-line timer badge and its dialog shell. The timer
+// engine itself lives in timer/timer-controller.ts; the per-mode dialog
+// bodies live in timer/.
 import * as React from 'react'
 import { BadgeButton } from '@/components/vendor/Badge'
 
@@ -15,103 +16,24 @@ import {
   useDocLine,
   globalTimerAtom,
   notificationPermissionAtom,
-  docAtom,
-  setDocLineDirect,
   timerDialogRequestAtom,
-  DEFAULT_COUNTDOWN_SECONDS,
-  findLineByTimeCreated,
 } from './state'
-import { Input } from '@/components/vendor/Input'
-import parseDuration from 'parse-duration'
 import { Button } from '@/components/vendor/Button'
 import { Switch, SwitchField } from '@/components/vendor/Switch'
-import { ClockIcon, PlayIcon, StopIcon } from '@heroicons/react/16/solid'
-import { useCallback } from 'react'
-import { useAtom, useAtomValue, useStore } from 'jotai'
-import { setDetailTitle, setTimerActive } from '@/lib/title'
-import { formatTimeDisplay, renderTime } from '@/lib/time'
-import { trpc } from '@/trpc/client'
-import { playTimerCompleteSound } from '@/lib/sound'
+import { ClockIcon } from '@heroicons/react/16/solid'
+import { useAtom, useStore } from 'jotai'
+import { renderTime } from '@/lib/time'
 import { EditorDialogContent } from '@/components/EditorDialogContent'
-import { noop } from 'lodash-es'
 import { TimerInfo } from './TimerInfo'
-
-const parseTime = (time: string) => parseDuration(time, 's')
-
-const stopTimer = (
-  store: ReturnType<typeof useStore>,
-  execHook: ReturnType<typeof trpc.execHook.useMutation>
-) => {
-  return () => {
-    const globalTimer = store.get(globalTimerAtom)
-    const doc = store.get(docAtom)
-
-    if (globalTimer.interval) {
-      clearInterval(globalTimer.interval)
-    }
-
-    setDetailTitle(null)
-    setTimerActive(false)
-
-    // Resolve the timer's line by timeCreated at call time
-    const found = findLineByTimeCreated(doc, globalTimer.lineTimeCreated)
-
-    if (found) {
-      const { lineIdx } = found
-
-      execHook.mutate({
-        hook: 'timer-stop',
-        argument: {
-          doc,
-          line: found.line.mdContent,
-          lineIdx,
-        },
-      })
-
-      if (globalTimer.mode === 'stopwatch') {
-        const finalElapsed = globalTimer.startTime
-          ? Math.floor((Date.now() - globalTimer.startTime) / 1000)
-          : 0
-        setDocLineDirect(store, lineIdx, (line) => {
-          if (globalTimer.timeMode === 'additive') {
-            line.datumTimeSeconds = (line.datumTimeSeconds || 0) + finalElapsed
-          } else {
-            line.datumTimeSeconds = finalElapsed
-          }
-        })
-      } else if (globalTimer.mode === 'countdown') {
-        const timeWorked = globalTimer.startTime
-          ? Math.floor((Date.now() - globalTimer.startTime) / 1000)
-          : 0
-        setDocLineDirect(store, lineIdx, (line) => {
-          if (globalTimer.timeMode === 'additive') {
-            line.datumTimeSeconds =
-              (line.datumTimeSeconds || 0) +
-              Math.min(timeWorked, globalTimer.targetDuration)
-          } else {
-            line.datumTimeSeconds = Math.min(
-              timeWorked,
-              globalTimer.targetDuration
-            )
-          }
-        })
-      }
-    }
-
-    store.set(globalTimerAtom, {
-      isActive: false,
-      lineTimeCreated: null,
-      lineContent: null,
-      mode: 'stopwatch',
-      timeMode: 'replacement',
-      startTime: null,
-      targetDuration: DEFAULT_COUNTDOWN_SECONDS,
-      tick: 0,
-      stopTimer: noop,
-      interval: null,
-    })
-  }
-}
+import {
+  cancelTimer,
+  startTimer,
+  stopAndSaveTimer,
+} from './timer/timer-controller'
+import { TimerModeStopwatch } from './timer/TimerModeStopwatch'
+import { TimerModeCountdown } from './timer/TimerModeCountdown'
+import { TimerModeManual } from './timer/TimerModeManual'
+import { parseTime } from './timer/parse-time'
 
 /**
  * Timer badge; shows time spent and allows user to control
@@ -124,9 +46,7 @@ export const TimerBadge = ({
   lineInfo: LineWithIdx
   time: number
 }) => {
-  const execHook = trpc.execHook.useMutation()
   const [open, setOpen] = React.useState(false)
-  const doc = useAtomValue(docAtom)
   const store = useStore()
   const [, setLine] = useDocLine(lineInfo.lineIdx)
   const [globalTimer, setGlobalTimer] = useAtom(globalTimerAtom)
@@ -161,120 +81,44 @@ export const TimerBadge = ({
     setTimerDialogRequest,
   ])
 
-  const requestNotificationPermission = useCallback(async () => {
+  const requestNotificationPermission = React.useCallback(async () => {
     if (notificationPermission === null && 'Notification' in window) {
       const permission = await Notification.requestPermission()
       setNotificationPermission(permission)
     }
   }, [notificationPermission, setNotificationPermission])
 
-  const sendNotification = useCallback(
-    (message: string) => {
-      if (notificationPermission === 'granted' && 'Notification' in window) {
-        new Notification('Timer Complete', {
-          body: message,
-          icon: '/favicon/tekne32-sky.png',
-        })
-      }
-    },
-    [notificationPermission]
-  )
+  const handleStart = React.useCallback(() => {
+    const mode = store.get(globalTimerAtom).mode
+    if (mode === 'manual') return
 
-  const lineContent = lineInfo.line.mdContent
-
-  const startTimer = useCallback(() => {
-    if (isAnyTimerActive && !isThisTimerActive) {
-      return
-    }
-
-    const mode = globalTimer.mode
-    let targetDuration = globalTimer.targetDuration
-
-    // For countdown mode, parse the user input and use it as the target duration
+    let targetDuration = store.get(globalTimerAtom).targetDuration
     if (mode === 'countdown') {
       const parsedDuration = parseTime(countdownInput)
-      if (parsedDuration === null) {
-        // Don't start timer with invalid duration
-        return
-      }
+      if (parsedDuration === null) return
       targetDuration = parsedDuration
     }
 
-    setDetailTitle(lineContent)
-    setTimerActive(true)
-
-    const interval = setInterval(() => {
-      const globalTimer = store.get(globalTimerAtom)
-
-      if (globalTimer.mode === 'stopwatch') {
-        setGlobalTimer((prev) => ({ ...prev, tick: prev.tick + 1 }))
-      } else if (globalTimer.mode === 'countdown') {
-        const elapsed = globalTimer.startTime
-          ? Math.floor((Date.now() - globalTimer.startTime) / 1000)
-          : 0
-        const remaining = Math.max(0, globalTimer.targetDuration - elapsed)
-        if (remaining === 0) {
-          sendNotification(`Timer completed for: ${globalTimer.lineContent}`)
-          playTimerCompleteSound()
-          const { stopTimer } = globalTimer
-          if (stopTimer) {
-            stopTimer()
-          }
-        } else {
-          setGlobalTimer((prev) => ({ ...prev, tick: prev.tick + 1 }))
-        }
-      }
-    }, 1000)
-
-    setGlobalTimer({
-      isActive: true,
-      lineTimeCreated: lineInfo.line.timeCreated,
-      lineContent: lineContent,
+    startTimer(store, {
+      line: lineInfo.line,
       mode,
-      timeMode: globalTimer.timeMode,
-      startTime: Date.now(),
+      timeMode: store.get(globalTimerAtom).timeMode,
       targetDuration,
-      tick: 0,
-      stopTimer: stopTimer(store, execHook),
-      interval,
     })
-
-    execHook.mutate({
-      hook: 'timer-start',
-      argument: {
-        doc,
-        line: lineInfo.line.mdContent,
-        lineIdx: lineInfo.lineIdx,
-      },
-    })
-
     setOpen(false)
-  }, [
-    doc,
-    lineContent,
-    execHook,
-    lineInfo.line.mdContent,
-    lineInfo.line.timeCreated,
-    globalTimer,
-    setGlobalTimer,
-    store,
-    isAnyTimerActive,
-    isThisTimerActive,
-    sendNotification,
-    countdownInput,
-    setLine,
-    setOpen,
-  ])
+  }, [store, countdownInput, lineInfo.line])
 
-  const callStopTimer = useCallback(() => {
-    globalTimer.stopTimer()
-  }, [globalTimer.stopTimer])
+  const handleStop = React.useCallback(() => {
+    stopAndSaveTimer(store)
+  }, [store])
 
-  const resetTimer = useCallback(() => {
+  const handleReset = React.useCallback(() => {
     if (isThisTimerActive) {
-      globalTimer.stopTimer()
+      cancelTimer(store)
     }
-  }, [isThisTimerActive, globalTimer])
+  }, [isThisTimerActive, store])
+
+  const lineContent = lineInfo.line.mdContent
 
   return (
     <Dialog
@@ -325,7 +169,7 @@ export const TimerBadge = ({
                       ? { color: 'sky' }
                       : { outline: true })}
                     onClick={() => {
-                      resetTimer()
+                      handleReset()
                       setGlobalTimer((prev) => ({ ...prev, mode }))
                       // Reset countdown input when switching to countdown mode
                       if (mode === 'countdown') {
@@ -385,199 +229,48 @@ export const TimerBadge = ({
           <div className="text-primary flex flex-col gap-4 h-full overflow-hidden">
             {/* Timer Content - Fixed height container */}
             <div className="flex-1 flex flex-col justify-center">
-              {/* Stopwatch Mode */}
               {globalTimer.mode === 'stopwatch' && (
-                <div className="space-y-6">
-                  <div className="text-center">
-                    <div className="text-4xl font-mono mb-2">
-                      {formatTimeDisplay(
-                        isThisTimerActive && globalTimer.startTime
-                          ? Math.floor(
-                              (Date.now() - globalTimer.startTime) / 1000
-                            )
-                          : 0
-                      )}
-                    </div>
-                    <div className="text-sm text-gray-400">
-                      Stopwatch Mode - counts up.
-                    </div>
-                  </div>
-                  <div className="flex gap-2 justify-center">
-                    {!isThisTimerActive ? (
-                      <Button
-                        onClick={startTimer}
-                        className="flex items-center gap-2"
-                        disabled={isAnyTimerActive}
-                      >
-                        <PlayIcon className="w-4 h-4" />
-                        {isAnyTimerActive ? 'Timer Active Elsewhere' : 'Start'}
-                      </Button>
-                    ) : (
-                      <Button
-                        onClick={callStopTimer}
-                        className="flex items-center gap-2"
-                      >
-                        <StopIcon className="w-4 h-4" />
-                        Stop & Save
-                      </Button>
-                    )}
-                    <Button
-                      onClick={resetTimer}
-                      outline
-                      disabled={!isThisTimerActive}
-                    >
-                      Reset
-                    </Button>
-                  </div>
-                </div>
+                <TimerModeStopwatch
+                  globalTimer={globalTimer}
+                  isThisTimerActive={isThisTimerActive}
+                  isAnyTimerActive={isAnyTimerActive}
+                  onStart={handleStart}
+                  onStop={handleStop}
+                  onReset={handleReset}
+                />
               )}
 
-              {/* Countdown Mode */}
               {globalTimer.mode === 'countdown' && (
-                <form
-                  className="space-y-6"
-                  onSubmit={(e) => {
-                    e.preventDefault()
-                    startTimer()
-                  }}
-                >
-                  <div className="text-center">
-                    <div className="text-4xl font-mono mb-2">
-                      {formatTimeDisplay(
-                        isThisTimerActive && globalTimer.startTime
-                          ? Math.max(
-                              0,
-                              globalTimer.targetDuration -
-                                Math.floor(
-                                  (Date.now() - globalTimer.startTime) / 1000
-                                )
-                            )
-                          : parseTime(countdownInput) ||
-                              globalTimer.targetDuration
-                      )}
-                    </div>
-                    <div className="text-sm text-gray-400">
-                      Countdown Mode - Counts down to zero.
-                    </div>
-                  </div>
-                  {!isThisTimerActive && (
-                    <div className="space-y-3">
-                      <label className="text-sm text-gray-400">
-                        Set Duration:
-                      </label>
-                      <Input
-                        autoFocus
-                        type="text"
-                        value={countdownInput}
-                        onChange={(e) => setCountdownInput(e.target.value)}
-                        placeholder="e.g., 25m, 1h 30m"
-                        className="w-full"
-                        disabled={isAnyTimerActive}
-                      />
-                      {parseTime(countdownInput) === null && countdownInput && (
-                        <div className="text-red-400 text-sm">
-                          Unable to parse duration. Try: 25m, 1h 30m, etc.
-                        </div>
-                      )}
-                    </div>
-                  )}
-                  <div className="flex gap-2 justify-center">
-                    {!isThisTimerActive ? (
-                      <Button
-                        type="submit"
-                        className="flex items-center gap-2"
-                        disabled={
-                          isAnyTimerActive || parseTime(countdownInput) === null
-                        }
-                      >
-                        <PlayIcon className="w-4 h-4" />
-                        {isAnyTimerActive ? 'Timer Active Elsewhere' : 'Start'}
-                      </Button>
-                    ) : (
-                      <Button
-                        onClick={callStopTimer}
-                        className="flex items-center gap-2"
-                      >
-                        <StopIcon className="w-4 h-4" />
-                        Stop
-                      </Button>
-                    )}
-                    <Button
-                      type="button"
-                      onClick={resetTimer}
-                      outline
-                      disabled={!isThisTimerActive}
-                    >
-                      Reset
-                    </Button>
-                  </div>
-                </form>
+                <TimerModeCountdown
+                  globalTimer={globalTimer}
+                  isThisTimerActive={isThisTimerActive}
+                  isAnyTimerActive={isAnyTimerActive}
+                  countdownInput={countdownInput}
+                  onCountdownInputChange={setCountdownInput}
+                  onStart={handleStart}
+                  onStop={handleStop}
+                  onReset={handleReset}
+                />
               )}
 
-              {/* Manual Mode */}
               {globalTimer.mode === 'manual' && (
-                <form
-                  className="space-y-6"
-                  onSubmit={(e) => {
-                    e.preventDefault()
-                    const duration = parseTime(timeInput)
-                    if (duration !== null) {
-                      setLine((line) => {
-                        if (!line) return
-                        if (globalTimer.timeMode === 'additive') {
-                          line.datumTimeSeconds =
-                            (line.datumTimeSeconds || 0) + duration
-                        } else {
-                          line.datumTimeSeconds = duration
-                        }
-                      })
-                    }
+                <TimerModeManual
+                  timeMode={globalTimer.timeMode}
+                  timeInput={timeInput}
+                  onTimeInputChange={setTimeInput}
+                  onSubmit={(duration) => {
+                    setLine((line) => {
+                      if (!line) return
+                      if (globalTimer.timeMode === 'additive') {
+                        line.datumTimeSeconds =
+                          (line.datumTimeSeconds || 0) + duration
+                      } else {
+                        line.datumTimeSeconds = duration
+                      }
+                    })
                     setOpen(false)
                   }}
-                >
-                  <div className="text-center">
-                    <div className="text-2xl font-mono mb-2 text-gray-400">
-                      Manual Entry
-                    </div>
-                    <div className="text-sm text-gray-400">
-                      Enter time directly without running a timer. <br />
-                      {globalTimer.timeMode === 'additive'
-                        ? 'Adds to existing time.'
-                        : 'Replaces existing time.'}
-                    </div>
-                  </div>
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <label className="text-sm text-gray-400">
-                        Enter Time:
-                      </label>
-                      <Input
-                        autoFocus
-                        type="text"
-                        value={timeInput}
-                        onChange={(e) => setTimeInput(e.target.value)}
-                        placeholder="e.g., 2h 30m, 45m, 1h"
-                      />
-                      {parseTime(timeInput) === null && timeInput && (
-                        <div className="text-red-400 text-sm">
-                          Unable to parse duration. Try: 2h 30m, 45m, etc.
-                        </div>
-                      )}
-                    </div>
-                    <div className="flex gap-2">
-                      <Button
-                        type="submit"
-                        disabled={parseTime(timeInput) === null}
-                        color="sky"
-                        className="flex-1"
-                      >
-                        {globalTimer.timeMode === 'additive'
-                          ? 'Add Time'
-                          : 'Set Time'}
-                      </Button>
-                    </div>
-                  </div>
-                </form>
+                />
               )}
             </div>
           </div>

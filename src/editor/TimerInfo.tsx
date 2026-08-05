@@ -1,14 +1,13 @@
 import { formatTimeDisplay, renderTime } from '@/lib/time'
+import type { GlobalTimerState } from './state'
+import { useTimerTick } from './timer/useTimerTick'
 
 interface TimerInfoProps {
   baseTime: number
-  globalTimer: {
-    startTime: number | null
-    targetDuration: number
-    mode: 'stopwatch' | 'countdown' | 'manual'
-    timeMode: 'additive' | 'replacement'
-    isActive: boolean
-  }
+  globalTimer: Pick<
+    GlobalTimerState,
+    'startTime' | 'targetDuration' | 'mode' | 'timeMode' | 'isActive'
+  >
   isThisTimer: boolean
   className?: string
 }
@@ -23,6 +22,9 @@ export const TimerInfo = ({
   isThisTimer,
   className = '',
 }: TimerInfoProps) => {
+  // Re-render each second while displaying a running timer
+  useTimerTick(isThisTimer && globalTimer.isActive)
+
   // If this timer is not active, just show the base time
   if (!isThisTimer) {
     return baseTime > 0 ? (

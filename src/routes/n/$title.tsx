@@ -1,6 +1,7 @@
 import { TEditor } from '@/editor/TEditor'
 import { toast } from 'sonner'
 import { allTagsAtom, docAtom, globalTimerAtom } from '@/editor/state'
+import { releaseTimer } from '@/editor/timer/timer-controller'
 import { resetUndoHistory } from '@/editor/undo'
 import { createStore, useAtom } from 'jotai'
 import '@/docs/schema'
@@ -69,6 +70,13 @@ function RouteComponent() {
     const store = createStore()
     return store
   }, [])
+
+  // The navigation blocker below normally prevents leaving with a timer
+  // running, but if this route unmounts anyway the interval and the title
+  // marker must not outlive the store.
+  useEffect(() => {
+    return () => releaseTimer(store)
+  }, [store])
 
   const loadDocQuery = trpc.doc.loadDoc.useQuery(
     { name: title },

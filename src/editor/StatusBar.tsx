@@ -1,4 +1,4 @@
-import { useAtomValue, useSetAtom, useAtom } from 'jotai'
+import { useAtomValue, useSetAtom, useAtom, useStore } from 'jotai'
 import { useEffect, useRef, useMemo, useState } from 'react'
 import { docAtom, focusedLineAtom } from './state'
 import {
@@ -18,6 +18,7 @@ import {
   ClockIcon,
 } from '@heroicons/react/16/solid'
 import { TimerInfo } from './TimerInfo'
+import { stopAndSaveTimer } from './timer/timer-controller'
 import { useGlobalKeybinding } from '@/hooks/useGlobalKeybinding'
 
 const STATUS_BAR_TRUNCATE_LENGTH = 50
@@ -108,7 +109,7 @@ export const StatusBar = ({ isLoading }: { isLoading: boolean }) => {
   const errorMessage = useAtomValue(errorMessageAtom)
   const setErrorMessage = useSetAtom(errorMessageAtom)
   const globalTimer = useAtomValue(globalTimerAtom)
-  const { stopTimer } = globalTimer
+  const store = useStore()
   const focusedLine = useAtomValue(focusedLineAtom)
   const [goToLineOpen, setGoToLineOpen] = useAtom(goToLineOpenAtom)
 
@@ -160,7 +161,7 @@ export const StatusBar = ({ isLoading }: { isLoading: boolean }) => {
             <StopIcon
               className="w-4 h-4 text-red-400 cursor-pointer hover:text-red-300"
               onClick={() => {
-                stopTimer()
+                stopAndSaveTimer(store)
               }}
             />
             <div className="flex items-center gap-1 text-green-400">
