@@ -77,6 +77,18 @@ const upsertNote = async (db: Kysely<Database>, name: string, body: ZDoc) => {
   return await db.transaction().execute((tx) => upsertNoteInTx(tx, name, body))
 }
 
+const docExists = async (
+  db: Kysely<Database>,
+  name: string
+): Promise<boolean> => {
+  const row = await db
+    .selectFrom('notes')
+    .select(['title'])
+    .where('title', '=', name)
+    .executeTakeFirst()
+  return row !== undefined
+}
+
 const isDailyDocument = (name: string): boolean => {
   return /^\d{4}-\d{2}-\d{2}$/.test(name)
 }
@@ -239,7 +251,10 @@ export const docRouter = t.router({
         .executeTakeFirst()
 
       if (!doc) {
-        throw new Error(`Document "${input.name}" not found`)
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: `Document "${input.name}" not found`,
+        })
       }
 
       return {
@@ -263,12 +278,23 @@ export const docRouter = t.router({
     .mutation(async ({ input, ctx: { db } }) => {
       const revision = await db.transaction().execute(async (tx) => {
         if (input.expectedRevision !== undefined) {
+          // Lock the row so a concurrent conditional write serializes behind
+          // this one instead of both passing the check.
           const current = await tx
             .selectFrom('notes')
             .select('revision')
             .where('title', '=', input.name)
+            .forUpdate()
             .executeTakeFirst()
-          if (current && current.revision !== input.expectedRevision) {
+          if (!current) {
+            // The client expected a specific revision of a document that no
+            // longer exists; recreating it here would resurrect a deletion.
+            throw new TRPCError({
+              code: 'NOT_FOUND',
+              message: `Document "${input.name}" no longer exists (expected revision ${input.expectedRevision})`,
+            })
+          }
+          if (current.revision !== input.expectedRevision) {
             throw new TRPCError({
               code: 'CONFLICT',
               message: `Document "${input.name}" was modified elsewhere (revision ${current.revision}, expected ${input.expectedRevision})`,
@@ -303,82 +329,79 @@ export const docRouter = t.router({
     .mutation(async ({ input, ctx: { db } }) => {
       const { oldName, newName } = input
 
-      const { docAlreadyExists, linksToUpdate } = await proposeRename(
-        db,
-        oldName,
-        newName
-      )
+      // One transaction covers the existence check, every link rewrite, and
+      // the rename itself, so a failure partway leaves nothing half-renamed.
+      return await db.transaction().execute(async (tx) => {
+        const { docAlreadyExists, linksToUpdate } = await proposeRename(
+          tx,
+          oldName,
+          newName
+        )
 
-      if (docAlreadyExists) {
-        return {
-          success: false,
-          newName: oldName,
-          error: `Document with name "${newName}" already exists`,
-        }
-      }
-
-      let linksUpdated = 0
-      // In order to be reliable about how we update InternalLinks,
-      // it gets a little complicated -- we do a real parse of the body,
-      // then use the indices we gain from that along with a library MagicString
-      // to update the body (since there could be multiple InternalLinks
-      // on the same line and a naive update might change the length of the
-      // string or miss updates)
-      for (const link of linksToUpdate) {
-        const noteToUpd = await db
-          .selectFrom('notes')
-          .select(['body', 'title'])
-          .where('title', '=', link.title)
-          .where('parsed_body', 'is not', null)
-          .executeTakeFirst()
-
-        if (!noteToUpd) {
-          throw new Error(`Document ${link.title} not found`)
+        if (docAlreadyExists) {
+          throw new TRPCError({
+            code: 'CONFLICT',
+            message: `Document with name "${newName}" already exists`,
+          })
         }
 
-        let contentChanged = false
-
-        const newNoteBody = produce(noteToUpd.body, (draft) => {
-          draft.children.forEach((ln, idx) => {
-            const parsedContent = TEKNE_MD_PARSER.parse(ln.mdContent)
-            const newMdContent = new MagicString(ln.mdContent)
-
-            visitMdTree(parsedContent.topNode, '', 0, (node: SyntaxNode) => {
-              const txt = ln.mdContent.slice(node.from, node.to)
-              if (node.type.name === 'InternalLinkBody' && txt === oldName) {
-                newMdContent.update(node.from, node.to, newName)
-                linksUpdated++
-                console.log(
-                  `Updating link to doc ${oldName} in doc ${noteToUpd.title} on line ${idx} from ${node.from} to ${node.to}`
+        const notesToUpdate =
+          linksToUpdate.length > 0
+            ? await tx
+                .selectFrom('notes')
+                .select(['body', 'title'])
+                .where(
+                  'title',
+                  'in',
+                  linksToUpdate.map((l) => l.title)
                 )
-                console.log(
-                  'New body for line ',
-                  idx,
-                  ':',
-                  newMdContent.toString()
-                )
+                .where('parsed_body', 'is not', null)
+                .execute()
+            : []
+
+        let linksUpdated = 0
+        // In order to be reliable about how we update InternalLinks,
+        // it gets a little complicated -- we do a real parse of the body,
+        // then use the indices we gain from that along with a library MagicString
+        // to update the body (since there could be multiple InternalLinks
+        // on the same line and a naive update might change the length of the
+        // string or miss updates)
+        for (const noteToUpd of notesToUpdate) {
+          let contentChanged = false
+
+          const newNoteBody = produce(noteToUpd.body, (draft) => {
+            draft.children.forEach((ln, idx) => {
+              const parsedContent = TEKNE_MD_PARSER.parse(ln.mdContent)
+              const newMdContent = new MagicString(ln.mdContent)
+
+              visitMdTree(parsedContent.topNode, '', 0, (node: SyntaxNode) => {
+                const txt = ln.mdContent.slice(node.from, node.to)
+                if (node.type.name === 'InternalLinkBody' && txt === oldName) {
+                  newMdContent.update(node.from, node.to, newName)
+                  linksUpdated++
+                }
+              })
+
+              if (newMdContent.toString() !== ln.mdContent) {
+                draft.children[idx].mdContent = newMdContent.toString()
+                contentChanged = true
               }
             })
-
-            if (newMdContent.toString() !== ln.mdContent) {
-              draft.children[idx].mdContent = newMdContent.toString()
-              contentChanged = true
-            }
           })
-        })
 
-        if (contentChanged) {
-          await upsertNote(db, noteToUpd.title, newNoteBody)
+          if (contentChanged) {
+            await upsertNoteInTx(tx, noteToUpd.title, newNoteBody)
+          }
         }
-      }
 
-      await db
-        .updateTable('notes')
-        .set({ title: newName })
-        .where('title', '=', oldName)
-        .execute()
+        await tx
+          .updateTable('notes')
+          .set({ title: newName })
+          .where('title', '=', oldName)
+          .execute()
 
-      return { success: true, newName, linksUpdated }
+        return { success: true, newName, linksUpdated }
+      })
     }),
 
   createDoc: t.procedure
@@ -390,15 +413,11 @@ export const docRouter = t.router({
     .mutation(async ({ input, ctx: { db } }) => {
       const { name } = input
 
-      // Check if document already exists
-      const existingDoc = await db
-        .selectFrom('notes')
-        .select(['title'])
-        .where('title', '=', name)
-        .executeTakeFirst()
-
-      if (existingDoc) {
-        throw new Error(`Document with name "${name}" already exists`)
+      if (await docExists(db, name)) {
+        throw new TRPCError({
+          code: 'CONFLICT',
+          message: `Document with name "${name}" already exists`,
+        })
       }
 
       const newDoc = await createNewDocument(db, name)
@@ -435,42 +454,40 @@ export const docRouter = t.router({
   }),
 
   migrateAllDocs: t.procedure.mutation(async ({ ctx: { db } }) => {
-    const allDocs = await db.selectFrom('notes').selectAll().execute()
+    // One transaction so a failure partway leaves no documents migrated, and
+    // upsertNoteInTx so derived data (note_data, note_lines, parsed_body)
+    // tracks the rewritten bodies and revisions record the change.
+    return await db.transaction().execute(async (tx) => {
+      const allDocs = await tx.selectFrom('notes').selectAll().execute()
 
-    const migrationReports = []
-    let migratedCount = 0
+      const migrationReports = []
+      let migratedCount = 0
 
-    // Process each document
-    for (const doc of allDocs) {
-      const { migratedBody, report } = migrateDocWithReport(doc.title, doc.body)
+      for (const doc of allDocs) {
+        const { migratedBody, report } = migrateDocWithReport(
+          doc.title,
+          doc.body
+        )
 
-      migrationReports.push(report)
+        migrationReports.push(report)
 
-      if (report.migrated) {
-        // Update the document in the database
-        await db
-          .updateTable('notes')
-          .set({
-            body: migratedBody,
-            updatedAt: new Date(),
-          })
-          .where('title', '=', doc.title)
-          .execute()
-
-        migratedCount++
+        if (report.migrated) {
+          await upsertNoteInTx(tx, doc.title, migratedBody)
+          migratedCount++
+        }
       }
-    }
 
-    const summary = {
-      totalDocs: allDocs.length,
-      migratedDocs: migratedCount,
-      unchangedDocs: allDocs.length - migratedCount,
-    }
+      const summary = {
+        totalDocs: allDocs.length,
+        migratedDocs: migratedCount,
+        unchangedDocs: allDocs.length - migratedCount,
+      }
 
-    return {
-      summary,
-      reports: migrationReports.filter((r) => r.migrated), // Only return docs that were actually migrated
-    }
+      return {
+        summary,
+        reports: migrationReports.filter((r) => r.migrated), // Only return docs that were actually migrated
+      }
+    })
   }),
 
   recomputeAllData: t.procedure.mutation(async ({ ctx: { db } }) => {
@@ -487,15 +504,11 @@ export const docRouter = t.router({
     .mutation(async ({ input, ctx: { db } }) => {
       const { name } = input
 
-      // Check if document exists
-      const existingDoc = await db
-        .selectFrom('notes')
-        .select(['title'])
-        .where('title', '=', name)
-        .executeTakeFirst()
-
-      if (!existingDoc) {
-        throw new Error(`Document "${name}" not found`)
+      if (!(await docExists(db, name))) {
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: `Document "${name}" not found`,
+        })
       }
 
       // Delete document (note_data will cascade delete automatically)
@@ -523,14 +536,7 @@ export const docRouter = t.router({
     .mutation(async ({ input, ctx: { db } }) => {
       const { name, templateName } = input
 
-      // Check if document already exists
-      const existingDoc = await db
-        .selectFrom('notes')
-        .select(['title'])
-        .where('title', '=', name)
-        .executeTakeFirst()
-
-      if (existingDoc) {
+      if (await docExists(db, name)) {
         throw new TRPCError({
           code: 'CONFLICT',
           message: `Document "${name}" already exists`,

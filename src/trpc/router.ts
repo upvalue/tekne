@@ -1,5 +1,5 @@
 import z from 'zod'
-import { sql } from 'kysely'
+import { zdoc } from '@/docs/schema'
 import { router, proc } from './init'
 import { docRouter } from './routers/doc'
 import { analysisRouter } from './routers/analysis'
@@ -18,15 +18,6 @@ export const appRouter = router({
   flags: flagsRouter,
   tags: tagsRouter,
 
-  healthcheck: proc.query(async ({ ctx: { db } }) => {
-    const q = await db
-      .selectFrom(sql`(select 1)`.as('subquery'))
-      .selectAll()
-      .execute()
-
-    return q
-  }),
-
   ping: proc.query(() => {
     return 'pong2'
   }),
@@ -35,11 +26,14 @@ export const appRouter = router({
     .input(
       z.object({
         hook: z.enum(['timer-start', 'timer-stop']),
-        argument: z.any(),
+        argument: z.object({
+          doc: zdoc,
+          line: z.string(),
+          lineIdx: z.number().int().nonnegative(),
+        }),
       })
     )
     .mutation(async ({ input }) => {
-      console.log('execHook', input)
       const { hook, argument } = input
 
       // If running on server
