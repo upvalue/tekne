@@ -16,29 +16,13 @@ import {
   BoltIcon,
   XMarkIcon,
 } from '@heroicons/react/24/solid'
-import { useAtom, useSetAtom } from 'jotai'
-import { useEffect } from 'react'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { DocumentOverview } from './DocumentOverview'
-import {
-  activePanelTabAtom,
-  panelVisibleAtom,
-  type PanelTab,
-} from '@/hooks/panel-state'
+import { useActivePanelTab, useSetPanelVisible } from '@/hooks/panel-state'
 
 export function Panel() {
-  const [activeTab, setActiveTab] = useAtom(activePanelTabAtom)
-  const setPanelVisible = useSetAtom(panelVisibleAtom)
-
-  // Listen for panel tab change events from command palette
-  useEffect(() => {
-    const handler = (e: CustomEvent<{ tab: PanelTab }>) => {
-      setActiveTab(e.detail.tab)
-    }
-    window.addEventListener('tekne:panel-tab', handler as EventListener)
-    return () =>
-      window.removeEventListener('tekne:panel-tab', handler as EventListener)
-  }, [setActiveTab])
+  const [activeTab, setActiveTab] = useActivePanelTab()
+  const setPanelVisible = useSetPanelVisible()
 
   return (
     <div className="flex flex-col h-[100vh]">

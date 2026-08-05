@@ -1,5 +1,4 @@
-import { useAtom } from 'jotai'
-import { panelVisibleAtom } from '@/hooks/panel-state'
+import { usePanelVisible } from '@/hooks/panel-state'
 import { Bars3Icon, XMarkIcon } from '@heroicons/react/24/solid'
 
 interface EditorLayoutProps {
@@ -8,7 +7,7 @@ interface EditorLayoutProps {
 }
 
 export function EditorLayout({ editor, sidepanel }: EditorLayoutProps) {
-  const [panelVisible, setPanelVisible] = useAtom(panelVisibleAtom)
+  const [panelVisible, setPanelVisible] = usePanelVisible()
 
   return (
     <div className="w-full flex flex-col relative">

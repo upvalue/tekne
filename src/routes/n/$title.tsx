@@ -248,9 +248,8 @@ function RouteComponent() {
   // Allows components outside this route (e.g. the tag rename dialog in the
   // side panel) to flush any pending editor changes before a server-side
   // rewrite of documents.
-  useEventListener('tekne:request-save', (event: Event) => {
-    const detail = (event as CustomEvent<{ onComplete?: () => void }>).detail
-    saveDocument(detail?.onComplete)
+  useEventListener('tekne:request-save', (event) => {
+    saveDocument(event.detail?.onComplete)
   })
 
   useCodemirrorEvent('internalLinkClick', (event) => {

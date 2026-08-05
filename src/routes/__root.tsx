@@ -1,11 +1,10 @@
 import { Outlet, createRootRouteWithContext } from '@tanstack/react-router'
-import { useSetAtom } from 'jotai'
 import { useGlobalKeybinding } from '@/hooks/useGlobalKeybinding'
 import { trpc } from '@/trpc/client'
 import { Toaster } from '@/components/vendor/Sonner'
 import { DocumentSearch } from '@/controls/DocumentSearch'
 import { TemplateDialog } from '@/controls/TemplateDialog'
-import { activePanelTabAtom, panelVisibleAtom } from '@/hooks/panel-state'
+import { openPanelTab, useSetPanelVisible } from '@/hooks/panel-state'
 // Registers all commands with the editor's command registry.
 import '@/commands/definitions'
 
@@ -14,13 +13,9 @@ export type RouterAppContext = {
 }
 
 const RootComponent = () => {
-  const setPanelVisible = useSetAtom(panelVisibleAtom)
-  const setActiveTab = useSetAtom(activePanelTabAtom)
+  const setPanelVisible = useSetPanelVisible()
 
-  useGlobalKeybinding('searchPanel', () => {
-    setPanelVisible(true)
-    setActiveTab('search')
-  })
+  useGlobalKeybinding('searchPanel', () => openPanelTab('search'))
 
   useGlobalKeybinding('togglePanel', () => setPanelVisible((v) => !v))
 

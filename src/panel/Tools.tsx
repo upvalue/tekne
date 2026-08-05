@@ -1,10 +1,10 @@
 import { docAtom } from '@/editor/state'
 import { treeifyDoc, type ZTreeLine } from '@/docs/doc-analysis'
 import type { ZDoc } from '@/docs/schema'
-import { useAtom, useAtomValue } from 'jotai'
+import { useAtomValue } from 'jotai'
 import { useMemo, useState } from 'react'
 import { trpc } from '@/trpc/client'
-import { tagManagerTargetAtom } from '@/hooks/panel-state'
+import { useTagManagerTarget } from '@/hooks/panel-state'
 import { TagCard } from './tags/TagCard'
 import { TagRenameDialog } from './tags/TagRenameDialog'
 import { Input } from '@/components/vendor/Input'
@@ -79,7 +79,7 @@ export const Tools = () => {
   const activeTags = useMemo(() => getActiveTags(doc), [doc])
   const [renameTarget, setRenameTarget] = useState<string | null>(null)
   const [filter, setFilter] = useState('')
-  const [highlightTarget, setHighlightTarget] = useAtom(tagManagerTargetAtom)
+  const [highlightTarget, setHighlightTarget] = useTagManagerTarget()
 
   const [showArchived, setShowArchived] = useState(false)
 

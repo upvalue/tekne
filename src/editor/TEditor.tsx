@@ -35,9 +35,9 @@ import {
   requestFocusLineAtom,
 } from './state'
 import {
-  activePanelTabAtom,
-  panelVisibleAtom,
-  tagManagerTargetAtom,
+  useSetActivePanelTab,
+  useSetPanelVisible,
+  useSetTagManagerTarget,
 } from '@/hooks/panel-state'
 import { generateGutterTimestamps } from '@/docs/gutters'
 import { generateCollapse } from '@/docs/collapse'
@@ -135,9 +135,9 @@ export const TEditor = () => {
     dragSelectionAnchorIdAtom
   )
   const setRequestFocusLine = useSetAtom(requestFocusLineAtom)
-  const setTagManagerTarget = useSetAtom(tagManagerTargetAtom)
-  const setActivePanelTab = useSetAtom(activePanelTabAtom)
-  const setPanelVisible = useSetAtom(panelVisibleAtom)
+  const setTagManagerTarget = useSetTagManagerTarget()
+  const setActivePanelTab = useSetActivePanelTab()
+  const setPanelVisible = useSetPanelVisible()
   const containerRef = useRef<HTMLDivElement>(null)
   const dragSelectedLineIdsRef = useRef(dragSelectedLineIds)
   const [activeDragLineId, setActiveDragLineId] = useState<string | null>(null)

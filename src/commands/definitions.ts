@@ -6,8 +6,7 @@ import { emitCodemirrorEvent } from '@/editor/line-editor/cm-events'
 import { deleteLine } from '@/editor/line-editor/line-operations'
 import { formatDate, getDocTitle } from '@/lib/utils'
 import { trpcClient } from '@/trpc/client'
-import { getDefaultStore } from 'jotai'
-import { panelVisibleAtom } from '@/hooks/panel-state'
+import { openPanelTab, panelVisibleAtom, uiStore } from '@/hooks/panel-state'
 import { appPath, stripAppBasePath } from '@/lib/app-path'
 
 /** Check if a string is a valid YYYY-MM-DD date */
@@ -189,10 +188,7 @@ const navigationCommands: Command[] = [
     keywords: ['search', 'find', 'query'],
     requiresEditor: false,
     execute: () => {
-      // Emit custom event to switch panel tab
-      window.dispatchEvent(
-        new CustomEvent('tekne:panel-tab', { detail: { tab: 'search' } })
-      )
+      openPanelTab('search')
     },
   },
   {
@@ -314,8 +310,7 @@ const navigationCommands: Command[] = [
     keywords: ['panel', 'sidebar', 'toggle', 'hide', 'show'],
     requiresEditor: false,
     execute: () => {
-      const store = getDefaultStore()
-      store.set(panelVisibleAtom, (v) => !v)
+      uiStore.set(panelVisibleAtom, (v) => !v)
     },
   },
 ]
