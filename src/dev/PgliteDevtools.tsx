@@ -22,19 +22,17 @@ interface PgliteDatabase {
 }
 
 const listPgliteDatabases = async (): Promise<PgliteDatabase[]> => {
-  try {
-    const databases = await indexedDB.databases()
-    return databases
-      .filter((db) => db.name && db.name.startsWith('/pglite'))
-      .map((db) => ({
-        name: db.name!.replace('/pglite/', ''),
-        path: db.name!.replace('/pglite/', ''),
-        version: db.version || 1,
-      }))
-  } catch (error) {
-    console.error('Failed to list databases:', error)
-    return []
-  }
+  const databases = await indexedDB.databases()
+  return databases
+    .filter(
+      (db): db is IDBDatabaseInfo & { name: string } =>
+        typeof db.name === 'string' && db.name.startsWith('/pglite')
+    )
+    .map((db) => ({
+      name: db.name.replace('/pglite/', ''),
+      path: db.name.replace('/pglite/', ''),
+      version: db.version || 1,
+    }))
 }
 
 const getCurrentDatabasePath = (): string => {
@@ -45,16 +43,12 @@ const setDatabasePath = (path: string) => {
   window.localStorage.setItem(DB_PATH_KEY, path)
 }
 
-const createNewDatabase = async (name: string): Promise<boolean> => {
-  try {
-    const { PGlite } = await import('@electric-sql/pglite')
-    const testDb = new PGlite(`idb://${name}`)
-    await testDb.close()
-    return true
-  } catch (error) {
-    console.error('Failed to create database:', error)
-    return false
-  }
+const createNewDatabase = async (name: string): Promise<void> => {
+  // Opening (and immediately closing) a PGlite instance is what creates the
+  // backing IndexedDB store; there is no separate "create" API.
+  const { PGlite } = await import('@electric-sql/pglite')
+  const testDb = new PGlite(`idb://${name}`)
+  await testDb.close()
 }
 
 // IndexedDB helper functions
@@ -69,7 +63,7 @@ const openIndexedDB = (dbName: string): Promise<IDBDatabase> => {
 const getAllFromObjectStore = (
   db: IDBDatabase,
   storeName: string
-): Promise<any[]> => {
+): Promise<unknown[]> => {
   return new Promise((resolve, reject) => {
     const transaction = db.transaction([storeName], 'readonly')
     const objectStore = transaction.objectStore(storeName)
@@ -83,7 +77,7 @@ const getAllFromObjectStore = (
 const createDatabaseWithData = (
   dbName: string,
   version: number,
-  data: any[]
+  data: unknown[]
 ): Promise<boolean> => {
   return new Promise((resolve, reject) => {
     // Delete existing database first
@@ -128,69 +122,45 @@ const createDatabaseWithData = (
   })
 }
 
+/** Copy a PGlite database at the IndexedDB level. Throws on failure. */
 const copyDatabase = async (
   sourceName: string,
   destinationName: string
-): Promise<boolean> => {
-  try {
-    const sourceDbName = `/pglite/${sourceName}`
-    const destDbName = `/pglite/${destinationName}`
+): Promise<void> => {
+  const sourceDbName = `/pglite/${sourceName}`
+  const destDbName = `/pglite/${destinationName}`
 
-    console.log(
-      `🚀 Starting IndexedDB copy from ${sourceDbName} to ${destDbName}`
-    )
-
-    // Check if source database exists
-    const databases = await indexedDB.databases()
-    const sourceExists = databases.some((db) => db.name === sourceDbName)
-    if (!sourceExists) {
-      throw new Error(`Source database ${sourceDbName} does not exist`)
-    }
-
-    // Open source database
-    console.log('📂 Opening source database...')
-    const sourceDb = await openIndexedDB(sourceDbName)
-    const sourceVersion = sourceDb.version
-
-    // Get all data from FILE_DATA object store
-    console.log('📊 Reading source data...')
-    const allData = await getAllFromObjectStore(sourceDb, 'FILE_DATA')
-    console.log(
-      `📦 Found ${allData.length} items to copy (${Math.round(JSON.stringify(allData).length / 1024)} KB)`
-    )
-
-    sourceDb.close()
-
-    // Check if destination already exists and warn
-    const destExists = databases.some((db) => db.name === destDbName)
-    if (destExists) {
-      console.log(
-        `⚠️  Destination database ${destDbName} already exists, will be overwritten`
-      )
-    }
-
-    // Create destination database with same structure and data
-    console.log('🔨 Creating destination database...')
-    await createDatabaseWithData(destDbName, sourceVersion, allData)
-    console.log(`✅ Successfully copied database to ${destDbName}`)
-
-    return true
-  } catch (error) {
-    console.error('❌ Failed to copy database via IndexedDB:', error)
-
-    // Provide more specific error messages
-    if (error instanceof Error) {
-      if (error.message.includes('does not exist')) {
-        console.error('💡 Make sure the source database name is correct')
-      } else if (error.name === 'QuotaExceededError') {
-        console.error('💡 Not enough storage space to complete the copy')
-      } else if (error.name === 'InvalidStateError') {
-        console.error('💡 Database might be in use, try again in a moment')
-      }
-    }
-
-    return false
+  // Check if source database exists
+  const databases = await indexedDB.databases()
+  const sourceExists = databases.some((db) => db.name === sourceDbName)
+  if (!sourceExists) {
+    throw new Error(`Source database ${sourceDbName} does not exist`)
   }
+
+  const sourceDb = await openIndexedDB(sourceDbName)
+  const sourceVersion = sourceDb.version
+
+  // Get all data from FILE_DATA object store
+  const allData = await getAllFromObjectStore(sourceDb, 'FILE_DATA')
+  sourceDb.close()
+
+  // Create destination database with same structure and data (an existing
+  // destination is overwritten)
+  await createDatabaseWithData(destDbName, sourceVersion, allData)
+}
+
+/** Turn a database-management failure into a message the dialog can show. */
+const describeError = (error: unknown): string => {
+  if (error instanceof Error) {
+    if (error.name === 'QuotaExceededError') {
+      return `${error.message} — not enough storage space to complete the copy`
+    }
+    if (error.name === 'InvalidStateError') {
+      return `${error.message} — the database might be in use, try again in a moment`
+    }
+    return error.message
+  }
+  return String(error)
 }
 
 export const PgliteRepl = () => {
@@ -218,6 +188,7 @@ export const PgliteDevtools = () => {
   const [copyDestName, setCopyDestName] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [currentDbPath, setCurrentDbPath] = useState('')
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
   useEffect(() => {
     setCurrentDbPath(getCurrentDatabasePath())
@@ -225,18 +196,24 @@ export const PgliteDevtools = () => {
   }, [])
 
   const loadDatabases = async () => {
-    const dbList = await listPgliteDatabases()
-    setDatabases(dbList)
+    try {
+      setDatabases(await listPgliteDatabases())
+    } catch (error) {
+      setErrorMessage(describeError(error))
+    }
   }
 
   const handleCreateNewDatabase = async () => {
     if (!newDbName.trim()) return
 
     setIsLoading(true)
-    const success = await createNewDatabase(newDbName)
-    if (success) {
+    setErrorMessage(null)
+    try {
+      await createNewDatabase(newDbName)
       await loadDatabases()
       setNewDbName('')
+    } catch (error) {
+      setErrorMessage(describeError(error))
     }
     setIsLoading(false)
   }
@@ -245,11 +222,14 @@ export const PgliteDevtools = () => {
     if (!copySourceName || !copyDestName.trim()) return
 
     setIsLoading(true)
-    const success = await copyDatabase(copySourceName, copyDestName)
-    if (success) {
+    setErrorMessage(null)
+    try {
+      await copyDatabase(copySourceName, copyDestName)
       await loadDatabases()
       setCopySourceName('')
       setCopyDestName('')
+    } catch (error) {
+      setErrorMessage(describeError(error))
     }
     setIsLoading(false)
   }
@@ -285,6 +265,12 @@ export const PgliteDevtools = () => {
               </DialogHeader>
 
               <div className="space-y-6">
+                {errorMessage && (
+                  <div className="p-3 bg-red-900/20 border border-red-800 rounded-lg text-sm text-red-300">
+                    {errorMessage}
+                  </div>
+                )}
+
                 {/* Available Databases */}
                 <div>
                   <h4 className="text-sm font-medium mb-3">

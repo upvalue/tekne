@@ -12,7 +12,6 @@ import { zdoc } from '@/docs/schema'
 import { extractDocData, treeifyDoc } from '@/docs/doc-analysis'
 import { docAtom } from '@/editor/state'
 import { Button } from '@/components/vendor/Button'
-import { DatabaseMigrations } from './DatabaseMigrations'
 import { FeatureFlags } from './FeatureFlags'
 
 // PGlite only exists in the development in-memory mode, so this panel — and
@@ -22,6 +21,17 @@ const PgliteDevtools = import.meta.env.PROD
   ? null
   : lazy(() =>
       import('./PgliteDevtools').then((m) => ({ default: m.PgliteDevtools }))
+    )
+
+// The migration/recompute panel drives whole-database rewrites
+// (doc.migrateAllDocs, doc.recomputeAllData); like the PGlite tools it is
+// compiled out of production builds rather than left one click away.
+const DatabaseMigrations = import.meta.env.PROD
+  ? null
+  : lazy(() =>
+      import('./DatabaseMigrations').then((m) => ({
+        default: m.DatabaseMigrations,
+      }))
     )
 
 const RawDocument = ({ isActive }: { isActive: boolean }) => {
@@ -141,7 +151,9 @@ export const DevTools = () => {
         <TabsTrigger value="tree">Tree Document</TabsTrigger>
         <TabsTrigger value="data">Document Data</TabsTrigger>
         <TabsTrigger value="flags">Flags</TabsTrigger>
-        <TabsTrigger value="migrations">Migrations</TabsTrigger>
+        {DatabaseMigrations && (
+          <TabsTrigger value="migrations">Migrations</TabsTrigger>
+        )}
         <TabsTrigger value="tanstackdev">TanStack</TabsTrigger>
         {usingPglite && <TabsTrigger value="pglite">pglite</TabsTrigger>}
       </TabsList>
@@ -157,9 +169,15 @@ export const DevTools = () => {
       <TabsContent value="flags">
         <FeatureFlags isActive={activeTab === 'flags'} />
       </TabsContent>
-      <TabsContent value="migrations">
-        <DatabaseMigrations isActive={activeTab === 'migrations'} />
-      </TabsContent>
+      {DatabaseMigrations && (
+        <TabsContent value="migrations">
+          <Suspense
+            fallback={<div className="p-4 text-gray-500">Loading…</div>}
+          >
+            <DatabaseMigrations isActive={activeTab === 'migrations'} />
+          </Suspense>
+        </TabsContent>
+      )}
       {usingPglite && PgliteDevtools && (
         <TabsContent value="pglite">
           <Suspense

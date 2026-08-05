@@ -3,6 +3,26 @@ import { Button } from '@/components/vendor/Button'
 import { trpc } from '@/trpc/client'
 import type { MigrateAllDocsOutput, RecomputeAllDataOutput } from '@/trpc/types'
 
+/** One value in a summary grid: label over a large monospace number. */
+const Stat = ({
+  label,
+  value,
+  color,
+}: {
+  label: string
+  value: React.ReactNode
+  /** Tailwind text color classes applied to both label and value. */
+  color?: string
+}) => (
+  <div>
+    <span className={color ?? 'text-gray-600 dark:text-gray-400'}>
+      {label}:
+    </span>
+    <br />
+    <span className={`font-mono text-lg ${color ?? ''}`}>{value}</span>
+  </div>
+)
+
 export const DatabaseMigrations = ({ isActive }: { isActive: boolean }) => {
   const [shouldValidate, setShouldValidate] = useState(false)
   const [migrationResults, setMigrationResults] = useState<
@@ -11,6 +31,8 @@ export const DatabaseMigrations = ({ isActive }: { isActive: boolean }) => {
   const [recomputeResults, setRecomputeResults] = useState<
     RecomputeAllDataOutput | { error: string } | null
   >(null)
+
+  const utils = trpc.useUtils()
 
   const {
     data: validationResults,
@@ -23,12 +45,12 @@ export const DatabaseMigrations = ({ isActive }: { isActive: boolean }) => {
   const migrateMutation = trpc.doc.migrateAllDocs.useMutation({
     onSuccess: (data) => {
       setMigrationResults(data)
-      // Trigger revalidation after migration
-      setShouldValidate(false)
-      setTimeout(() => setShouldValidate(true), 100)
+      // Revalidate against the migrated documents
+      setShouldValidate(true)
+      utils.doc.validateAllDocs.invalidate()
     },
     onError: (error) => {
-      setMigrationResults({ error: String(error) })
+      setMigrationResults({ error: error.message })
     },
   })
 
@@ -37,7 +59,7 @@ export const DatabaseMigrations = ({ isActive }: { isActive: boolean }) => {
       setRecomputeResults(data)
     },
     onError: (error) => {
-      setRecomputeResults({ error: String(error) })
+      setRecomputeResults({ error: error.message })
     },
   })
 
@@ -107,33 +129,20 @@ export const DatabaseMigrations = ({ isActive }: { isActive: boolean }) => {
                 ✅ Data Recompute Complete
               </h3>
               <div className="grid grid-cols-3 gap-4 text-sm">
-                <div>
-                  <span className="text-gray-600 dark:text-gray-400">
-                    Total Documents:
-                  </span>
-                  <br />
-                  <span className="font-mono text-lg">
-                    {recomputeResults.totalDocs}
-                  </span>
-                </div>
-                <div>
-                  <span className="text-green-600 dark:text-green-400">
-                    Processed:
-                  </span>
-                  <br />
-                  <span className="font-mono text-lg text-green-600 dark:text-green-400">
-                    {recomputeResults.processedDocs}
-                  </span>
-                </div>
-                <div>
-                  <span className="text-blue-600 dark:text-blue-400">
-                    Data Rows:
-                  </span>
-                  <br />
-                  <span className="font-mono text-lg text-blue-600 dark:text-blue-400">
-                    {recomputeResults.totalDataRows}
-                  </span>
-                </div>
+                <Stat
+                  label="Total Documents"
+                  value={recomputeResults.totalDocs}
+                />
+                <Stat
+                  label="Processed"
+                  value={recomputeResults.processedDocs}
+                  color="text-green-600 dark:text-green-400"
+                />
+                <Stat
+                  label="Data Rows"
+                  value={recomputeResults.totalDataRows}
+                  color="text-blue-600 dark:text-blue-400"
+                />
               </div>
             </div>
           )}
@@ -156,33 +165,19 @@ export const DatabaseMigrations = ({ isActive }: { isActive: boolean }) => {
               <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
                 <h3 className="font-semibold mb-2">Migration Results</h3>
                 <div className="grid grid-cols-3 gap-4 text-sm">
-                  <div>
-                    <span className="text-gray-600 dark:text-gray-400">
-                      Total Documents:
-                    </span>
-                    <br />
-                    <span className="font-mono text-lg">
-                      {migrationResults.summary.totalDocs}
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-blue-600 dark:text-blue-400">
-                      Migrated:
-                    </span>
-                    <br />
-                    <span className="font-mono text-lg text-blue-600 dark:text-blue-400">
-                      {migrationResults.summary.migratedDocs}
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-gray-600 dark:text-gray-400">
-                      Unchanged:
-                    </span>
-                    <br />
-                    <span className="font-mono text-lg text-gray-600 dark:text-gray-400">
-                      {migrationResults.summary.unchangedDocs}
-                    </span>
-                  </div>
+                  <Stat
+                    label="Total Documents"
+                    value={migrationResults.summary.totalDocs}
+                  />
+                  <Stat
+                    label="Migrated"
+                    value={migrationResults.summary.migratedDocs}
+                    color="text-blue-600 dark:text-blue-400"
+                  />
+                  <Stat
+                    label="Unchanged"
+                    value={migrationResults.summary.unchangedDocs}
+                  />
                 </div>
               </div>
 
@@ -246,51 +241,30 @@ export const DatabaseMigrations = ({ isActive }: { isActive: boolean }) => {
             <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
               <h3 className="font-semibold mb-2">Validation Summary</h3>
               <div className="grid grid-cols-5 gap-4 text-sm">
-                <div>
-                  <span className="text-gray-600 dark:text-gray-400">
-                    Total:
-                  </span>
-                  <br />
-                  <span className="font-mono text-lg">
-                    {validationResults.summary.totalDocs}
-                  </span>
-                </div>
-                <div>
-                  <span className="text-green-600 dark:text-green-400">
-                    Valid:
-                  </span>
-                  <br />
-                  <span className="font-mono text-lg text-green-600 dark:text-green-400">
-                    {validationResults.summary.validDocs}
-                  </span>
-                </div>
-                <div>
-                  <span className="text-red-600 dark:text-red-400">
-                    Invalid:
-                  </span>
-                  <br />
-                  <span className="font-mono text-lg text-red-600 dark:text-red-400">
-                    {validationResults.summary.invalidDocs}
-                  </span>
-                </div>
-                <div>
-                  <span className="text-blue-600 dark:text-blue-400">
-                    Fixable:
-                  </span>
-                  <br />
-                  <span className="font-mono text-lg text-blue-600 dark:text-blue-400">
-                    {validationResults.summary.fixableByMigration || 0}
-                  </span>
-                </div>
-                <div>
-                  <span className="text-orange-600 dark:text-orange-400">
-                    Unfixable:
-                  </span>
-                  <br />
-                  <span className="font-mono text-lg text-orange-600 dark:text-orange-400">
-                    {validationResults.summary.unfixable || 0}
-                  </span>
-                </div>
+                <Stat
+                  label="Total"
+                  value={validationResults.summary.totalDocs}
+                />
+                <Stat
+                  label="Valid"
+                  value={validationResults.summary.validDocs}
+                  color="text-green-600 dark:text-green-400"
+                />
+                <Stat
+                  label="Invalid"
+                  value={validationResults.summary.invalidDocs}
+                  color="text-red-600 dark:text-red-400"
+                />
+                <Stat
+                  label="Fixable"
+                  value={validationResults.summary.fixableByMigration || 0}
+                  color="text-blue-600 dark:text-blue-400"
+                />
+                <Stat
+                  label="Unfixable"
+                  value={validationResults.summary.unfixable || 0}
+                  color="text-orange-600 dark:text-orange-400"
+                />
               </div>
             </div>
 
