@@ -5,7 +5,7 @@ import {
 import { Aggregate } from './Aggregate'
 import { useAtomValue, useSetAtom } from 'jotai'
 import { docAtom, focusedLineAtom } from '@/editor/state'
-import { ChevronDownIcon } from '@heroicons/react/24/outline'
+import { ChevronDown } from 'lucide-react'
 import { useState } from 'react'
 import { cn } from '@/lib/utils'
 import { scrollToLine } from '@/editor/navigation'
@@ -63,9 +63,7 @@ export const DocumentOverviewSection = ({
         className="flex text-lg items-center gap-2 bg-zinc-800 p-2 rounded-md cursor-pointer"
         onClick={() => setCollapsed(!collapsed)}
       >
-        <ChevronDownIcon
-          className={`w-4 h-4 ${collapsed ? 'rotate-180' : ''}`}
-        />
+        <ChevronDown className={`w-4 h-4 ${collapsed ? 'rotate-180' : ''}`} />
         <h2 className="text-lg font-bold">{label}</h2>
       </div>
       <div className={`${collapsed ? 'hidden' : ''}`}>{children}</div>

@@ -1,6 +1,6 @@
 import { Button } from '@/components/vendor/Button'
 import { Input } from '@/components/vendor/Input'
-import { PlayIcon, StopIcon } from '@heroicons/react/16/solid'
+import { Play, Square } from 'lucide-react'
 import { formatTimeDisplay } from '@/lib/time'
 import type { GlobalTimerState } from '../state'
 import { timerRemainingSeconds } from './timer-controller'
@@ -74,12 +74,12 @@ export const TimerModeCountdown = ({
             className="flex items-center gap-2"
             disabled={isAnyTimerActive || parseTime(countdownInput) === null}
           >
-            <PlayIcon className="w-4 h-4" />
+            <Play className="w-4 h-4" />
             {isAnyTimerActive ? 'Timer Active Elsewhere' : 'Start'}
           </Button>
         ) : (
           <Button onClick={onStop} className="flex items-center gap-2">
-            <StopIcon className="w-4 h-4" />
+            <Square className="w-4 h-4" />
             Stop
           </Button>
         )}

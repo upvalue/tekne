@@ -38,6 +38,30 @@ export default tseslint.config(
       'prefer-const': 'warn',
       'react-hooks/exhaustive-deps': 'warn',
     },
+  },
+  {
+    // The component kit lives behind src/components/vendor; everything else
+    // imports the wrappers so the kit can be swapped at one seam.
+    files: ['src/**/*.{ts,tsx}'],
+    ignores: ['src/components/vendor/**'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['@headlessui/react', '@radix-ui/*'],
+              message:
+                'Import UI primitives from @/components/vendor, not the kit directly.',
+            },
+            {
+              group: ['@heroicons/*'],
+              message: 'Use lucide-react icons (see components.json).',
+            },
+          ],
+        },
+      ],
+    },
     settings: {
       react: {
         version: 'detect',

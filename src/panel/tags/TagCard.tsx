@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
-import { TagIcon, PencilIcon } from '@heroicons/react/24/outline'
+import { Tag, Pencil, Archive, ArchiveRestore, Replace } from 'lucide-react'
 import { useQueryClient } from '@tanstack/react-query'
-import { Archive, ArchiveRestore, Replace } from 'lucide-react'
 import { toast } from 'sonner'
 import { trpc } from '@/trpc/client'
 import { cn } from '@/lib/utils'
@@ -90,7 +89,7 @@ export const TagCard = ({
       )}
     >
       <div className="flex items-center gap-2">
-        <TagIcon className="size-4 text-zinc-500" />
+        <Tag className="size-4 text-zinc-500" />
         <span
           className={cn(
             'min-w-0 flex-1 truncate text-sm font-medium',
@@ -123,7 +122,7 @@ export const TagCard = ({
           className="rounded p-1 text-zinc-500 opacity-0 transition-opacity hover:bg-zinc-800 hover:text-zinc-200 focus:opacity-100 group-hover:opacity-100"
           onClick={startEditing}
         >
-          <PencilIcon className="size-4" />
+          <Pencil className="size-4" />
         </button>
         <button
           type="button"

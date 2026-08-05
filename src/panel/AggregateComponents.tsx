@@ -1,13 +1,7 @@
 // Shared aggregate display components for use in Aggregate panel and Search
 
 import { renderTime } from '@/lib/time'
-import {
-  CheckCircleIcon,
-  XCircleIcon,
-  EllipsisHorizontalIcon,
-  ClockIcon,
-  PlusIcon,
-} from '@heroicons/react/24/outline'
+import { CircleCheck, CircleX, Ellipsis, Clock, Plus } from 'lucide-react'
 
 interface TaskStatusItemProps {
   icon: React.ComponentType<{ className?: string }>
@@ -52,21 +46,21 @@ export const TaskStatusDisplay = ({
     <div className={`flex space-x-4 items-center ${className || ''}`}>
       {complete !== undefined && complete > 0 && (
         <TaskStatusItem
-          icon={CheckCircleIcon}
+          icon={CircleCheck}
           count={complete}
           className="text-green-400"
         />
       )}
       {incomplete !== undefined && incomplete > 0 && (
         <TaskStatusItem
-          icon={XCircleIcon}
+          icon={CircleX}
           count={incomplete}
           className="text-zinc-400"
         />
       )}
       {unset !== undefined && unset > 0 && (
         <TaskStatusItem
-          icon={EllipsisHorizontalIcon}
+          icon={Ellipsis}
           count={unset}
           className="text-zinc-400"
         />
@@ -78,7 +72,7 @@ export const TaskStatusDisplay = ({
 export const TimerDisplay = ({ time }: { time: number }) => {
   return (
     <div className="flex items-center text-zinc-200 space-x-1">
-      <ClockIcon className="size-4" />
+      <Clock className="size-4" />
       <span className="text-lg font-medium">{renderTime(time)}</span>
     </div>
   )
@@ -102,28 +96,28 @@ const PageContribution = ({
 
   return (
     <div className="flex items-center space-x-1.5 text-sm text-zinc-500">
-      <PlusIcon className="size-3.5" />
+      <Plus className="size-3.5" />
       {pageComplete !== undefined && pageComplete > 0 && (
         <div className="flex items-center space-x-1 text-green-400">
-          <CheckCircleIcon className="size-3.5" />
+          <CircleCheck className="size-3.5" />
           <span>{pageComplete}</span>
         </div>
       )}
       {pageIncomplete !== undefined && pageIncomplete > 0 && (
         <div className="flex items-center space-x-1 text-red-400">
-          <XCircleIcon className="size-3.5" />
+          <CircleX className="size-3.5" />
           <span>{pageIncomplete}</span>
         </div>
       )}
       {pageUnset !== undefined && pageUnset > 0 && (
         <div className="flex items-center space-x-1 text-zinc-400">
-          <EllipsisHorizontalIcon className="size-3.5" />
+          <Ellipsis className="size-3.5" />
           <span>{pageUnset}</span>
         </div>
       )}
       {pageTime !== undefined && pageTime > 0 && (
         <div className="flex items-center space-x-1 text-zinc-400">
-          <ClockIcon className="size-3.5" />
+          <Clock className="size-3.5" />
           <span>{renderTime(pageTime)}</span>
         </div>
       )}

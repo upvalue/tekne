@@ -6,7 +6,7 @@ import { EditorView } from '@codemirror/view'
 import { EditorState } from '@codemirror/state'
 import { syntaxPlugin } from './line-editor/syntax-plugin'
 import { Checkbox } from '@/components/vendor/Checkbox'
-import { ClockIcon } from '@heroicons/react/16/solid'
+import { Clock } from 'lucide-react'
 import { BadgeButton } from '@/components/vendor/Badge'
 import { formatTimeDisplay } from '@/lib/time'
 import { cn } from '@/lib/utils'
@@ -95,7 +95,7 @@ const ReadOnlyTimerBadge = ({ time }: { time: number }) => {
         badgeClassName="px-[4px] py-[1px]"
       >
         <div className="flex items-center gap-1">
-          <ClockIcon style={{ width: '16px', height: '16px' }} />
+          <Clock style={{ width: '16px', height: '16px' }} />
           {time > 0 && <span>{formatTimeDisplay(time)}</span>}
         </div>
       </BadgeButton>

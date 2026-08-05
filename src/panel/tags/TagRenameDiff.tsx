@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/20/solid'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 import type { RouterOutputs } from '@/trpc/types'
 import { ReadOnlyLine } from '@/editor/ReadOnlyLine'
 
@@ -51,7 +51,7 @@ export const TagRenameDiff = ({ proposal }: { proposal: Proposal }) => {
           disabled={docIdx === 0}
           onClick={() => selectDoc(docIdx - 1)}
         >
-          <ChevronLeftIcon className="size-4" />
+          <ChevronLeft className="size-4" />
         </button>
         <span className="min-w-0 flex-1 truncate text-center text-sm font-medium text-zinc-200">
           {doc.title}
@@ -72,7 +72,7 @@ export const TagRenameDiff = ({ proposal }: { proposal: Proposal }) => {
           disabled={docIdx >= docs.length - 1}
           onClick={() => selectDoc(docIdx + 1)}
         >
-          <ChevronRightIcon className="size-4" />
+          <ChevronRight className="size-4" />
         </button>
       </div>
       <div className="flex-1 divide-y divide-zinc-800/60 overflow-y-auto">

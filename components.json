@@ -5,7 +5,7 @@
   "tsx": true,
   "tailwind": {
     "config": "",
-    "css": "src/editor/TEditor.css",
+    "css": "src/styles/styles.css",
     "baseColor": "zinc",
     "cssVariables": false,
     "prefix": ""
@@ -13,7 +13,7 @@
   "aliases": {
     "components": "@/components",
     "utils": "@/lib/utils",
-    "ui": "@/components/ui",
+    "ui": "@/components/vendor",
     "lib": "@/lib",
     "hooks": "@/hooks"
   },

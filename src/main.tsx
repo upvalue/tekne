@@ -5,7 +5,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 
 // Import the generated route tree
 import { routeTree } from './routeTree.gen'
-import NotFound from './pages/NotFound'
+import { NotFound } from './layout/NotFound'
 
 import './styles/styles.css'
 import { trpc, trpcClient } from './trpc/client'

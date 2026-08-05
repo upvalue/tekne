@@ -5,7 +5,7 @@ import clsx from 'clsx'
 import { LayoutGroup, motion } from 'framer-motion'
 import React, { forwardRef, useId } from 'react'
 import { TouchTarget } from './Button'
-import { Link } from './link'
+import { Link } from './Link'
 
 export function Navbar({
   className,

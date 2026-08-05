@@ -1,5 +1,5 @@
 import { usePanelVisible } from '@/hooks/panel-state'
-import { Bars3Icon, XMarkIcon } from '@heroicons/react/24/solid'
+import { Menu, X } from 'lucide-react'
 
 interface EditorLayoutProps {
   editor: React.ReactNode
@@ -27,9 +27,9 @@ export function EditorLayout({ editor, sidepanel }: EditorLayoutProps) {
           aria-label={panelVisible ? 'Hide panel' : 'Show panel'}
         >
           {panelVisible ? (
-            <XMarkIcon className="w-5 h-5" />
+            <X className="w-5 h-5" />
           ) : (
-            <Bars3Icon className="w-5 h-5" />
+            <Menu className="w-5 h-5" />
           )}
         </button>
 

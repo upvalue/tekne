@@ -1,6 +1,7 @@
-import CopyLayout from '@/layout/CopyLayout'
+import { CopyLayout } from './CopyLayout'
 
-export default function NotFound() {
+/** 404 page, used by the /404 route and as the router's default not-found. */
+export function NotFound() {
   return (
     <CopyLayout
       statusCode="404"

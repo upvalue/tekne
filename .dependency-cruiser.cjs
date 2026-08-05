@@ -39,9 +39,8 @@ const LAYER_ORDER = [
   'commands',
   'controls',
 
-  // App shell: layouts, standalone pages, and the route tree.
+  // App shell: layouts and the route tree.
   'layout',
-  'pages',
   'routes',
 ]
 

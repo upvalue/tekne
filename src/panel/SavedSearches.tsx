@@ -3,13 +3,12 @@
 // Escape, and focus handling come from the kit instead of a hand-rolled
 // document listener.
 import { useState } from 'react'
-import { Popover, PopoverButton, PopoverPanel } from '@headlessui/react'
 import {
-  BookmarkIcon,
-  TrashIcon,
-  PlusIcon,
-  ChevronDownIcon,
-} from '@heroicons/react/24/outline'
+  Popover,
+  PopoverButton,
+  PopoverPanel,
+} from '@/components/vendor/Popover'
+import { Bookmark, Trash2, Plus, ChevronDown } from 'lucide-react'
 import { trpc } from '@/trpc/client'
 import { cn } from '@/lib/utils'
 
@@ -60,11 +59,11 @@ export const SavedSearches = ({
                 : 'text-zinc-300 hover:text-zinc-100 hover:bg-zinc-800'
             )}
           >
-            <BookmarkIcon className="size-4" />
+            <Bookmark className="size-4" />
             <span className="flex-1 text-left">
               {count > 0 ? `Saved Searches (${count})` : 'Saved Searches'}
             </span>
-            <ChevronDownIcon
+            <ChevronDown
               className={cn(
                 'size-4 transition-transform text-zinc-400',
                 open && 'rotate-180'
@@ -81,7 +80,7 @@ export const SavedSearches = ({
                     onClick={() => setIsAdding(true)}
                     className="w-full px-4 py-3 text-sm text-left text-zinc-300 hover:text-zinc-100 hover:bg-zinc-700 flex items-center gap-2 border-b border-zinc-700"
                   >
-                    <PlusIcon className="size-4" />
+                    <Plus className="size-4" />
                     Save current search
                   </button>
                 )}
@@ -146,7 +145,7 @@ export const SavedSearches = ({
                           }}
                           className="p-1.5 text-zinc-500 hover:text-red-400 opacity-0 group-hover:opacity-100 shrink-0 transition-opacity"
                         >
-                          <TrashIcon className="size-4" />
+                          <Trash2 className="size-4" />
                         </button>
                       </div>
                     ))}

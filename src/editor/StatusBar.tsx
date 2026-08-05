@@ -9,14 +9,7 @@ import {
   requestFocusLineAtom,
   findLineByTimeCreated,
 } from './state'
-import { Button } from '@headlessui/react'
-import { X } from 'lucide-react'
-import {
-  ExclamationTriangleIcon,
-  StopIcon,
-  ListBulletIcon,
-  ClockIcon,
-} from '@heroicons/react/16/solid'
+import { X, TriangleAlert, Square, List, Clock } from 'lucide-react'
 import { TimerInfo } from './TimerInfo'
 import { formatTimeDisplay } from '@/lib/time'
 import { stopAndSaveTimer } from './timer/timer-controller'
@@ -89,7 +82,7 @@ const GoToLineInput = ({
         placeholder={`1-${totalLines}`}
       />
       <span>/ {totalLines}</span>
-      <ListBulletIcon className="w-4 h-4" />
+      <List className="w-4 h-4" />
     </div>
   )
 }
@@ -136,19 +129,19 @@ export const StatusBar = ({ isLoading }: { isLoading: boolean }) => {
         {isLoading && <LoadingDots />}
         {errorMessage && (
           <div className="flex items-center gap-2">
-            <ExclamationTriangleIcon className="w-4 h-4 text-red-400" />
+            <TriangleAlert className="w-4 h-4 text-red-400" />
             <div className="text-sm text-red-400">{errorMessage}</div>
-            <Button
+            <button
               onClick={() => setErrorMessage(null)}
               className="cursor-pointer"
             >
               <X className="w-4 h-4 text-zinc-400" />
-            </Button>
+            </button>
           </div>
         )}
         {globalTimer.isActive && (
           <div className="flex items-center gap-2 text-sm">
-            <StopIcon
+            <Square
               className="w-4 h-4 text-red-400 cursor-pointer hover:text-red-300"
               onClick={() => {
                 stopAndSaveTimer(store)
@@ -191,13 +184,13 @@ export const StatusBar = ({ isLoading }: { isLoading: boolean }) => {
               )}
               {doc.children.length}
               &nbsp;
-              <ListBulletIcon className="w-4 h-4" />
+              <List className="w-4 h-4" />
             </div>
           ))}
         {totalDocTime > 0 && (
           <div className="text-sm text-zinc-400 flex items-center gap-2">
             {formatTimeDisplay(totalDocTime)}
-            <ClockIcon className="w-4 h-4" />
+            <Clock className="w-4 h-4" />
           </div>
         )}
       </div>

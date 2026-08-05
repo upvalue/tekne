@@ -20,7 +20,7 @@ import {
 } from './state'
 import { Button } from '@/components/vendor/Button'
 import { Switch, SwitchField } from '@/components/vendor/Switch'
-import { ClockIcon } from '@heroicons/react/16/solid'
+import { Clock } from 'lucide-react'
 import { useAtom, useStore } from 'jotai'
 import { renderTime } from '@/lib/time'
 import { EditorDialogContent } from '@/components/EditorDialogContent'
@@ -138,7 +138,7 @@ export const TimerBadge = ({
             onClick={() => setOpen(true)}
           >
             <div className="flex items-center gap-1">
-              <ClockIcon style={{ width: '16px', height: '16px' }} />
+              <Clock style={{ width: '16px', height: '16px' }} />
               {(time > 0 || isThisTimerActive) && (
                 <TimerInfo
                   baseTime={time}

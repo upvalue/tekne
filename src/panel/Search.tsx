@@ -9,11 +9,7 @@ import type { SearchViewMode } from '@/search/types'
 import { ResultCardGrid } from './AggregateComponents'
 import { ReadOnlyLine } from '@/editor/ReadOnlyLine'
 import { SavedSearches } from './SavedSearches'
-import {
-  MagnifyingGlassIcon,
-  Bars3BottomLeftIcon,
-  ChartBarIcon,
-} from '@heroicons/react/24/outline'
+import { Search as SearchIcon, AlignLeft, ChartColumn } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 type SearchResultItem = RouterOutputs['search']['searchLines']['items'][number]
@@ -213,7 +209,7 @@ export const Search = () => {
 
         {/* Search input */}
         <div className="relative">
-          <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 size-5 text-zinc-400" />
+          <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 size-5 text-zinc-400" />
           <input
             type="text"
             value={query}
@@ -243,7 +239,7 @@ export const Search = () => {
                   : 'text-zinc-400 hover:text-zinc-200'
               )}
             >
-              <Bars3BottomLeftIcon className="size-4" />
+              <AlignLeft className="size-4" />
               Lines
             </button>
             <button
@@ -255,7 +251,7 @@ export const Search = () => {
                   : 'text-zinc-400 hover:text-zinc-200'
               )}
             >
-              <ChartBarIcon className="size-4" />
+              <ChartColumn className="size-4" />
               Aggregate
             </button>
           </div>

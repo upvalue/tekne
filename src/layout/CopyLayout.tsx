@@ -22,7 +22,7 @@ interface CopyLayoutProps {
   children?: ReactNode
 }
 
-export default function CopyLayout({
+export function CopyLayout({
   statusCode,
   title,
   subtitle,

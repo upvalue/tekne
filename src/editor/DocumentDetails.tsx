@@ -6,10 +6,10 @@ import {
   DialogTrigger,
 } from '@/components/vendor/Dialog'
 import { getDocTitle } from '@/lib/utils'
-import { DocumentTextIcon } from '@heroicons/react/16/solid'
+import { FileText } from 'lucide-react'
 import { useState } from 'react'
 import { trpc } from '@/trpc/client'
-import { DialogDescription } from '@radix-ui/react-dialog'
+import { DialogDescription } from '@/components/vendor/Dialog'
 
 const DocumentDetails = () => {
   const docTitle = getDocTitle()
@@ -38,7 +38,7 @@ export const DocumentDetailsButton = () => {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger>
-        <DocumentTextIcon className="w-4 h-4 cursor-pointer text-zinc-500" />
+        <FileText className="w-4 h-4 cursor-pointer text-zinc-500" />
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>

@@ -8,14 +8,7 @@ import {
   NavbarItem,
   NavbarLabel,
 } from '@/components/vendor/Navbar'
-import {
-  WrenchScrewdriverIcon,
-  QuestionMarkCircleIcon,
-  CircleStackIcon,
-  MagnifyingGlassIcon,
-  BoltIcon,
-  XMarkIcon,
-} from '@heroicons/react/24/solid'
+import { Wrench, CircleHelp, Database, SearchIcon, Zap, X } from 'lucide-react'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { DocumentOverview } from './DocumentOverview'
 import { useActivePanelTab, useSetPanelVisible } from '@/hooks/panel-state'
@@ -33,7 +26,7 @@ export function Panel() {
               current={activeTab === 'document'}
               onClick={() => setActiveTab('document')}
             >
-              <CircleStackIcon className="w-4 h-4" data-slot="icon" />
+              <Database className="w-4 h-4" data-slot="icon" />
               <NavbarLabel>Document</NavbarLabel>
             </NavbarItem>
 
@@ -41,7 +34,7 @@ export function Panel() {
               current={activeTab === 'search'}
               onClick={() => setActiveTab('search')}
             >
-              <MagnifyingGlassIcon className="w-4 h-4" data-slot="icon" />
+              <SearchIcon className="w-4 h-4" data-slot="icon" />
               <NavbarLabel>Search</NavbarLabel>
             </NavbarItem>
 
@@ -49,7 +42,7 @@ export function Panel() {
               current={activeTab === 'tools'}
               onClick={() => setActiveTab('tools')}
             >
-              <BoltIcon className="w-4 h-4" data-slot="icon" />
+              <Zap className="w-4 h-4" data-slot="icon" />
               <NavbarLabel>Tools</NavbarLabel>
             </NavbarItem>
 
@@ -57,7 +50,7 @@ export function Panel() {
               current={activeTab === 'help'}
               onClick={() => setActiveTab('help')}
             >
-              <QuestionMarkCircleIcon className="w-4 h-4" data-slot="icon" />
+              <CircleHelp className="w-4 h-4" data-slot="icon" />
               <NavbarLabel>Help</NavbarLabel>
             </NavbarItem>
 
@@ -65,7 +58,7 @@ export function Panel() {
               current={activeTab === 'devtools'}
               onClick={() => setActiveTab('devtools')}
             >
-              <WrenchScrewdriverIcon className="w-4 h-4" data-slot="icon" />
+              <Wrench className="w-4 h-4" data-slot="icon" />
               <NavbarLabel>Dev</NavbarLabel>
             </NavbarItem>
           </NavbarSection>
@@ -75,7 +68,7 @@ export function Panel() {
           className="lg:hidden p-1.5 rounded hover:bg-zinc-700 text-zinc-400 hover:text-zinc-200 transition-colors"
           aria-label="Close panel"
         >
-          <XMarkIcon className="w-5 h-5" />
+          <X className="w-5 h-5" />
         </button>
       </div>
       <div className="flex-1 overflow-auto min-h-0">

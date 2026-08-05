@@ -1,4 +1,4 @@
-import { LinkIcon } from '@heroicons/react/16/solid'
+import { Link as LinkGlyph } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 export const ExternalLink = ({
@@ -18,7 +18,7 @@ export const ExternalLink = ({
         <a href={href} target="_blank" rel="noopener noreferrer">
           {children}
         </a>
-        <LinkIcon className="w-4 h-4 text-sky-400" />
+        <LinkGlyph className="w-4 h-4 text-sky-400" />
       </div>
     </div>
   )
