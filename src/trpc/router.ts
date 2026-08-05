@@ -18,10 +18,6 @@ export const appRouter = router({
   flags: flagsRouter,
   tags: tagsRouter,
 
-  ping: proc.query(() => {
-    return 'pong2'
-  }),
-
   execHook: proc
     .input(
       z.object({

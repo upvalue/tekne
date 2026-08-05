@@ -9,8 +9,6 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as TrpcTestRouteImport } from './routes/trpc-test'
-import { Route as ScratchRouteImport } from './routes/scratch'
 import { Route as LabRouteImport } from './routes/lab'
 import { Route as DevSettingsRouteImport } from './routes/dev-settings'
 import { Route as DemoRouteImport } from './routes/demo'
@@ -20,16 +18,6 @@ import { Route as OpenTitleRouteImport } from './routes/open/$title'
 import { Route as NTitleRouteImport } from './routes/n/$title'
 import { Route as DocNotFoundTitleRouteImport } from './routes/doc-not-found/$title'
 
-const TrpcTestRoute = TrpcTestRouteImport.update({
-  id: '/trpc-test',
-  path: '/trpc-test',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ScratchRoute = ScratchRouteImport.update({
-  id: '/scratch',
-  path: '/scratch',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const LabRoute = LabRouteImport.update({
   id: '/lab',
   path: '/lab',
@@ -77,8 +65,6 @@ export interface FileRoutesByFullPath {
   '/demo': typeof DemoRoute
   '/dev-settings': typeof DevSettingsRoute
   '/lab': typeof LabRoute
-  '/scratch': typeof ScratchRoute
-  '/trpc-test': typeof TrpcTestRoute
   '/doc-not-found/$title': typeof DocNotFoundTitleRoute
   '/n/$title': typeof NTitleRoute
   '/open/$title': typeof OpenTitleRoute
@@ -89,8 +75,6 @@ export interface FileRoutesByTo {
   '/demo': typeof DemoRoute
   '/dev-settings': typeof DevSettingsRoute
   '/lab': typeof LabRoute
-  '/scratch': typeof ScratchRoute
-  '/trpc-test': typeof TrpcTestRoute
   '/doc-not-found/$title': typeof DocNotFoundTitleRoute
   '/n/$title': typeof NTitleRoute
   '/open/$title': typeof OpenTitleRoute
@@ -102,8 +86,6 @@ export interface FileRoutesById {
   '/demo': typeof DemoRoute
   '/dev-settings': typeof DevSettingsRoute
   '/lab': typeof LabRoute
-  '/scratch': typeof ScratchRoute
-  '/trpc-test': typeof TrpcTestRoute
   '/doc-not-found/$title': typeof DocNotFoundTitleRoute
   '/n/$title': typeof NTitleRoute
   '/open/$title': typeof OpenTitleRoute
@@ -116,8 +98,6 @@ export interface FileRouteTypes {
     | '/demo'
     | '/dev-settings'
     | '/lab'
-    | '/scratch'
-    | '/trpc-test'
     | '/doc-not-found/$title'
     | '/n/$title'
     | '/open/$title'
@@ -128,8 +108,6 @@ export interface FileRouteTypes {
     | '/demo'
     | '/dev-settings'
     | '/lab'
-    | '/scratch'
-    | '/trpc-test'
     | '/doc-not-found/$title'
     | '/n/$title'
     | '/open/$title'
@@ -140,8 +118,6 @@ export interface FileRouteTypes {
     | '/demo'
     | '/dev-settings'
     | '/lab'
-    | '/scratch'
-    | '/trpc-test'
     | '/doc-not-found/$title'
     | '/n/$title'
     | '/open/$title'
@@ -153,8 +129,6 @@ export interface RootRouteChildren {
   DemoRoute: typeof DemoRoute
   DevSettingsRoute: typeof DevSettingsRoute
   LabRoute: typeof LabRoute
-  ScratchRoute: typeof ScratchRoute
-  TrpcTestRoute: typeof TrpcTestRoute
   DocNotFoundTitleRoute: typeof DocNotFoundTitleRoute
   NTitleRoute: typeof NTitleRoute
   OpenTitleRoute: typeof OpenTitleRoute
@@ -162,20 +136,6 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/trpc-test': {
-      id: '/trpc-test'
-      path: '/trpc-test'
-      fullPath: '/trpc-test'
-      preLoaderRoute: typeof TrpcTestRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/scratch': {
-      id: '/scratch'
-      path: '/scratch'
-      fullPath: '/scratch'
-      preLoaderRoute: typeof ScratchRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/lab': {
       id: '/lab'
       path: '/lab'
@@ -241,8 +201,6 @@ const rootRouteChildren: RootRouteChildren = {
   DemoRoute: DemoRoute,
   DevSettingsRoute: DevSettingsRoute,
   LabRoute: LabRoute,
-  ScratchRoute: ScratchRoute,
-  TrpcTestRoute: TrpcTestRoute,
   DocNotFoundTitleRoute: DocNotFoundTitleRoute,
   NTitleRoute: NTitleRoute,
   OpenTitleRoute: OpenTitleRoute,

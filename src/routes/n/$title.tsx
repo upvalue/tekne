@@ -1,95 +1,51 @@
 import { TEditor } from '@/editor/TEditor'
-import { toast } from 'sonner'
-import { allTagsAtom, docAtom, globalTimerAtom } from '@/editor/state'
+import { allTagsAtom } from '@/editor/state'
 import { releaseTimer } from '@/editor/timer/timer-controller'
-import { resetUndoHistory } from '@/editor/undo'
+import { useDocumentSync } from '@/editor/useDocumentSync'
 import { createStore, useAtom } from 'jotai'
-import '@/docs/schema'
-import { truncate } from 'lodash-es'
-import { Provider } from 'jotai'
 import { trpc } from '@/trpc/client'
-import { TRPCClientError } from '@trpc/client'
-import {
-  createFileRoute,
-  useBlocker,
-  useNavigate,
-} from '@tanstack/react-router'
-import { useCallback, useEffect, useMemo, useRef } from 'react'
+import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import { useEffect, useMemo } from 'react'
 import { useCodemirrorEvent } from '@/editor/line-editor'
-import { EditorLayout } from '@/layout/EditorLayout'
-import { Panel } from '@/panel/Panel'
-import { TitleBar } from '@/editor/TitleBar'
-import { StatusBar } from '@/editor/StatusBar'
+import { EditorShell } from '@/layout/EditorShell'
 import { setMainTitle } from '@/lib/title'
-import { useEventListener } from '@/hooks/useEventListener'
-import { useInterval } from 'usehooks-ts'
 import { useCreateDoc } from '@/hooks/useCreateDoc'
-import { CommandPaletteProvider } from '@/commands/CommandPaletteProvider'
-
-const DOC_SAVE_INTERVAL = 5000
 
 export const Route = createFileRoute('/n/$title')({
   component: RouteComponent,
 })
 
 /**
- * This is the main editor route. It handles some synchronization between
- * Jotai state and TRPC, loading a document based on a title and updating the document
- * when it changes on an interval
+ * The main editor route: a per-document Jotai store synchronized with the
+ * server by useDocumentSync, rendered through the shared EditorShell.
  */
 function RouteComponent() {
   const title = Route.useParams({
     select: (p) => p.title,
   })
   const navigate = useNavigate()
-
-  const docLastSaved = useRef<Date>(new Date())
-  const docDirty = useRef<boolean>(false)
-  const docRevision = useRef<number>(0)
   const utils = trpc.useUtils()
-  // TODO: this whole thing needs a bit of cleanup
 
   useEffect(() => {
     setMainTitle(title)
   }, [title])
 
-  const updateDocMutation = trpc.doc.updateDoc.useMutation({
-    onSuccess: () => {
-      utils.analysis.aggregateData.invalidate()
-    },
-    onError: (e) => {
-      console.error(e)
-      toast.error(
-        `Error while updating document ${truncate(e.toString(), { length: 100 })}`
-      )
-    },
-  })
-
   // Set up Jotai store
   const store = useMemo(() => {
-    const store = createStore()
-    return store
+    return createStore()
   }, [])
 
-  // The navigation blocker below normally prevents leaving with a timer
-  // running, but if this route unmounts anyway the interval and the title
-  // marker must not outlive the store.
+  // The navigation blocker in useDocumentSync normally prevents leaving with
+  // a timer running, but if this route unmounts anyway the interval and the
+  // title marker must not outlive the store.
   useEffect(() => {
     return () => releaseTimer(store)
   }, [store])
 
-  const loadDocQuery = trpc.doc.loadDoc.useQuery(
-    { name: title },
-    {
-      enabled: () => !docDirty.current,
-      retry: (_fc, error) => {
-        if (error?.data?.code === 'NOT_FOUND') {
-          return false
-        }
-        return true
-      },
-    }
-  )
+  const { loadDocQuery, saveDocument } = useDocumentSync(title, store)
+
+  // Side effect to cause query to fire
+  useAtom(allTagsAtom)
 
   const createDocMutation = useCreateDoc()
 
@@ -116,150 +72,6 @@ function RouteComponent() {
     }
   }, [loadDocQuery.error, navigate, title, createDocMutation, utils])
 
-  // Document saving functionality
-  // On an interval, if the document has changed this will send an updateDoc mutation
-
-  // It tries not to do anything if (1) less than 5 seconds have elapsed since last updateDoc
-  // or (2) doc has not changed
-
-  // It also uses beforeunload to try to prevent user from navigating away if
-
-  const saveDocument = useCallback(
-    async (chainOnSuccess?: () => void) => {
-      if (loadDocQuery.isLoading) {
-        return
-      }
-
-      // Doc hasn't changed, don't do anything
-      if (store.get(docAtom) === loadDocQuery.data?.doc) {
-        if (chainOnSuccess) chainOnSuccess()
-        return
-      }
-
-      try {
-        const { revision } = await updateDocMutation.mutateAsync({
-          name: title,
-          doc: store.get(docAtom),
-          expectedRevision: docRevision.current,
-        })
-        docRevision.current = revision
-        docDirty.current = false
-        docLastSaved.current = new Date()
-
-        if (chainOnSuccess) {
-          chainOnSuccess()
-        }
-      } catch (e) {
-        if (e instanceof TRPCClientError && e.data?.code === 'CONFLICT') {
-          // The document changed underneath us (e.g. a tag rename rewrote
-          // it). Drop local changes and reload rather than clobbering.
-          docDirty.current = false
-          await utils.doc.loadDoc.invalidate({ name: title })
-          toast.warning('Document was updated elsewhere — reloaded')
-          return
-        }
-        console.error('Error saving document', e)
-        toast.error(
-          `Error while updating document ${truncate(String(e), { length: 100 })}`
-        )
-      }
-    },
-    [
-      title,
-      store,
-      updateDocMutation,
-      loadDocQuery.isLoading,
-      loadDocQuery.data,
-      utils,
-    ]
-  )
-
-  // Try to save document if user navigates away while a change is present
-  // We don't use "enableBeforeUnload" right now because it always registers
-  // a beforeunload handler, which is a little overzealous in prompting;
-  // this could probably be used better
-
-  // Side effect to cause query to fire
-  useAtom(allTagsAtom)
-
-  useBlocker({
-    shouldBlockFn: async () => {
-      await saveDocument()
-      if (store.get(globalTimerAtom).isActive) {
-        toast.info(
-          'There is a timer active -- end the timer before navigating away'
-        )
-        return true
-      }
-      return false
-    },
-    enableBeforeUnload: false,
-  })
-
-  useEventListener('beforeunload', (event: BeforeUnloadEvent) => {
-    // For browser navigation (close tab, refresh), we still save but can't await
-    if (docDirty.current) {
-      saveDocument()
-    }
-    // Only show browser confirmation if timer is active
-    if (store.get(globalTimerAtom).isActive) {
-      event.preventDefault()
-      event.returnValue =
-        'You have a timer running. Are you sure you want to leave?'
-    }
-  })
-
-  useInterval(() => {
-    if (!docDirty.current) {
-      return
-    }
-    if (
-      new Date().getTime() - docLastSaved.current.getTime() <
-      DOC_SAVE_INTERVAL
-    ) {
-      return
-    }
-    saveDocument()
-  }, 1000)
-
-  useEffect(() => {
-    if (loadDocQuery.isLoading) {
-      return
-    }
-    const unsub = store.sub(docAtom, () => {
-      // Document changed, mark dirty
-      if (store.get(docAtom) === loadDocQuery.data?.doc) {
-        return
-      }
-      docDirty.current = true
-    })
-
-    return () => {
-      return unsub()
-    }
-  }, [
-    title,
-    loadDocQuery.isLoading,
-    store,
-    updateDocMutation,
-    loadDocQuery.data,
-  ])
-
-  useEffect(() => {
-    if (!loadDocQuery.isLoading && loadDocQuery.data) {
-      store.set(docAtom, loadDocQuery.data.doc)
-      docRevision.current = loadDocQuery.data.revision
-      resetUndoHistory(store)
-    }
-  }, [loadDocQuery.data, store, loadDocQuery.isLoading])
-
-  // Allows components outside this route (e.g. the tag rename dialog in the
-  // side panel) to flush any pending editor changes before a server-side
-  // rewrite of documents.
-  useEventListener('tekne:request-save', (event) => {
-    saveDocument(event.detail?.onComplete)
-  })
-
   useCodemirrorEvent('internalLinkClick', (event) => {
     saveDocument(() => {
       navigate({
@@ -272,19 +84,13 @@ function RouteComponent() {
   })
 
   return (
-    <Provider store={store}>
-      <CommandPaletteProvider>
-        <EditorLayout
-          editor={
-            <>
-              <TitleBar title={title} allowTitleEdit={true} />
-              <StatusBar isLoading={loadDocQuery.isLoading} />
-              {!loadDocQuery.isLoading && <TEditor />}
-            </>
-          }
-          sidepanel={<Panel />}
-        />
-      </CommandPaletteProvider>
-    </Provider>
+    <EditorShell
+      store={store}
+      title={title}
+      allowTitleEdit={true}
+      isLoading={loadDocQuery.isLoading}
+    >
+      {!loadDocQuery.isLoading && <TEditor />}
+    </EditorShell>
   )
 }

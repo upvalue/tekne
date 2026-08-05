@@ -1,4 +1,4 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, notFound } from '@tanstack/react-router'
 import { FeatureFlags } from '@/dev/FeatureFlags'
 
 // Deliberately not '/dev': the development deployment is mounted at a /dev
@@ -7,6 +7,12 @@ import { FeatureFlags } from '@/dev/FeatureFlags'
 // index route. See src/lib/app-path.ts.
 export const Route = createFileRoute('/dev-settings')({
   component: DevRoute,
+  // Dev-only tooling; production builds 404 this route.
+  beforeLoad: () => {
+    if (import.meta.env.PROD) {
+      throw notFound()
+    }
+  },
 })
 
 function DevRoute() {

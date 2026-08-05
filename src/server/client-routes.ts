@@ -11,8 +11,6 @@ export const STATIC_ROUTES = [
   '/demo',
   '/dev-settings',
   '/lab',
-  '/scratch',
-  '/trpc-test',
 ] as const
 
 // Dynamic routes (with parameters)
@@ -47,7 +45,7 @@ export function registerClientRoutes(app: Express, distPath: string) {
  */
 export function isValidClientRoute(pathname: string): boolean {
   // Check static routes
-  if (STATIC_ROUTES.includes(pathname as any)) {
+  if ((STATIC_ROUTES as readonly string[]).includes(pathname)) {
     return true
   }
 

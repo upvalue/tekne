@@ -2,11 +2,9 @@ import { TEditor } from '@/editor/TEditor'
 import { createFileRoute } from '@tanstack/react-router'
 import { docAtom } from '@/editor/state'
 import { docMake, lineMake } from '@/docs/schema'
-import { Provider } from 'jotai'
-import { useHydrateAtoms } from 'jotai/utils'
-import { EditorLayout } from '@/layout/EditorLayout'
-import { Panel } from '@/panel/Panel'
-import { TitleBar } from '@/editor/TitleBar'
+import { createStore } from 'jotai'
+import { useMemo } from 'react'
+import { EditorShell } from '@/layout/EditorShell'
 import { useCodemirrorEvent } from '@/editor/line-editor'
 import { toast } from 'sonner'
 
@@ -14,21 +12,11 @@ export const Route = createFileRoute('/lab')({
   component: RouteComponent,
 })
 
-const ExampleDoc = ({ children }: { children: React.ReactNode }) => {
-  useHydrateAtoms([
-    [
-      docAtom,
-      docMake([
-        {
-          ...lineMake(0, '_italic_ **bold** ~~strikethrough~~ '),
-        },
-      ]),
-    ],
-  ])
-
-  return children
-}
-
+/**
+ * Standalone document editor for testing in isolation from the rest of the
+ * app. Renders through the same EditorShell as the real editor route, so
+ * what happens here is what happens there — minus the server sync.
+ */
 function RouteComponent() {
   useCodemirrorEvent('internalLinkClick', (data) => {
     toast.info(`Clicked internal link ${data.link}`)
@@ -38,19 +26,18 @@ function RouteComponent() {
     toast.info(`Clicked tag ${data.name}`)
   })
 
+  const store = useMemo(() => {
+    const store = createStore()
+    store.set(
+      docAtom,
+      docMake([lineMake(0, '_italic_ **bold** ~~strikethrough~~ ')])
+    )
+    return store
+  }, [])
+
   return (
-    <Provider>
-      <ExampleDoc>
-        <EditorLayout
-          editor={
-            <>
-              <TitleBar title="Lab" allowTitleEdit={false} />
-              <TEditor />
-            </>
-          }
-          sidepanel={<Panel />}
-        />
-      </ExampleDoc>
-    </Provider>
+    <EditorShell store={store} title="Lab">
+      <TEditor />
+    </EditorShell>
   )
 }
