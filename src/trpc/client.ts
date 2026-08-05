@@ -9,10 +9,18 @@ import {
   type TRPCLink,
 } from '@trpc/client'
 import { observable, type Unsubscribable } from '@trpc/server/observable'
+import type { inferRouterOutputs } from '@trpc/server'
 
 import type { AppRouter } from './router'
 
 export const trpc = createTRPCReact<AppRouter>()
+
+/**
+ * Inferred output types of every procedure, e.g.
+ * RouterOutputs['search']['searchLines']['items'][number]. Use these instead
+ * of hand-declaring response shapes that can drift from the server.
+ */
+export type RouterOutputs = inferRouterOutputs<AppRouter>
 
 /**
  * The in-memory link, where the real router runs in the browser against a

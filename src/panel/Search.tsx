@@ -1,37 +1,34 @@
 // Search panel - sidebar-friendly search interface
 
-import { useState, useCallback, useMemo, useRef, useEffect } from 'react'
+import { useState, useCallback, useMemo } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { useDebouncedValue } from '@/hooks/useDebouncedValue'
-import { trpc } from '@/trpc/client'
+import { trpc, type RouterOutputs } from '@/trpc/client'
 import { parseQuery } from '@/search/query-parser'
-import type { SearchOperator, SearchViewMode } from '@/search/types'
+import type { SearchViewMode } from '@/search/types'
 import { ResultCardGrid } from './AggregateComponents'
 import { ReadOnlyLine } from '@/editor/ReadOnlyLine'
+import { SavedSearches } from './SavedSearches'
 import {
   MagnifyingGlassIcon,
   Bars3BottomLeftIcon,
   ChartBarIcon,
-  BookmarkIcon,
-  TrashIcon,
-  PlusIcon,
-  ChevronDownIcon,
 } from '@heroicons/react/24/outline'
 import { cn } from '@/lib/utils'
 
-// Search result item from backend
-interface SearchResultItem {
-  note_title: string
-  line_idx: number
-  content: string
-  time_created: Date | string
-  tags: string[]
-  indent: number
-  datum_task_status: 'complete' | 'incomplete' | 'unset' | null
-  datum_time_seconds: number | null
-  datum_pinned_at: string | null
-  child_count: number
-}
+type SearchResultItem = RouterOutputs['search']['searchLines']['items'][number]
+
+const OPERATOR_HELP: Array<{ operator: string; description: string }> = [
+  { operator: '#tag', description: 'Filter by tag (prefix match)' },
+  { operator: 'age:90d', description: 'Last N days/weeks/months' },
+  { operator: 'status:', description: 'complete / incomplete / unset' },
+  { operator: 'has:', description: 'timer / task / pin' },
+  { operator: 'doc:', description: 'Document name pattern' },
+]
+
+const PanelEmptyState = ({ children }: { children: React.ReactNode }) => (
+  <div className="text-center text-zinc-400 text-sm py-8">{children}</div>
+)
 
 // Search result card - shows document title and ReadOnlyLine
 const SearchResultCard = ({
@@ -74,172 +71,100 @@ const SearchResultCard = ({
   )
 }
 
-// Saved searches dropdown component
-const SavedSearchesDropdown = ({
-  currentQuery,
-  onSelectSearch,
+const LinesResults = ({
+  isLoading,
+  errorMessage,
+  data,
+  onNavigate,
 }: {
-  currentQuery: string
-  onSelectSearch: (query: string) => void
+  isLoading: boolean
+  errorMessage?: string
+  data?: RouterOutputs['search']['searchLines']
+  onNavigate: (noteTitle: string) => void
 }) => {
-  const [isOpen, setIsOpen] = useState(false)
-  const [isAdding, setIsAdding] = useState(false)
-  const [newName, setNewName] = useState('')
-  const dropdownRef = useRef<HTMLDivElement>(null)
-
-  const utils = trpc.useUtils()
-  const { data: savedSearches } = trpc.search.getSavedSearches.useQuery()
-
-  const saveMutation = trpc.search.saveSearch.useMutation({
-    onSuccess: () => {
-      utils.search.getSavedSearches.invalidate()
-      setIsAdding(false)
-      setNewName('')
-    },
-  })
-
-  const deleteMutation = trpc.search.deleteSavedSearch.useMutation({
-    onSuccess: () => {
-      utils.search.getSavedSearches.invalidate()
-    },
-  })
-
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(e.target as Node)
-      ) {
-        setIsOpen(false)
-        setIsAdding(false)
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [])
-
-  const handleSave = () => {
-    if (newName.trim() && currentQuery.trim()) {
-      saveMutation.mutate({ name: newName.trim(), query: currentQuery })
-    }
+  if (isLoading) {
+    return <PanelEmptyState>Searching...</PanelEmptyState>
+  }
+  if (errorMessage) {
+    return <PanelEmptyState>{errorMessage}</PanelEmptyState>
   }
 
-  const handleSelectAndClose = (query: string) => {
-    onSelectSearch(query)
-    setIsOpen(false)
+  const items = data?.items ?? []
+  if (items.length === 0) {
+    return <PanelEmptyState>No results found</PanelEmptyState>
   }
-
-  const count = savedSearches?.length || 0
 
   return (
-    <div className="relative" ref={dropdownRef}>
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className={cn(
-          'flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg transition-all w-full',
-          isOpen
-            ? 'bg-zinc-700 text-zinc-100'
-            : 'text-zinc-300 hover:text-zinc-100 hover:bg-zinc-800'
-        )}
-      >
-        <BookmarkIcon className="size-4" />
-        <span className="flex-1 text-left">
-          {count > 0 ? `Saved Searches (${count})` : 'Saved Searches'}
-        </span>
-        <ChevronDownIcon
-          className={cn(
-            'size-4 transition-transform text-zinc-400',
-            isOpen && 'rotate-180'
-          )}
-        />
-      </button>
-
-      {isOpen && (
-        <div className="absolute top-full left-0 right-0 mt-2 bg-zinc-800 border border-zinc-600 rounded-xl shadow-xl z-10 max-h-72 overflow-auto">
-          {/* Save current search option */}
-          {currentQuery.trim() && !isAdding && (
-            <button
-              onClick={() => setIsAdding(true)}
-              className="w-full px-4 py-3 text-sm text-left text-zinc-300 hover:text-zinc-100 hover:bg-zinc-700 flex items-center gap-2 border-b border-zinc-700"
-            >
-              <PlusIcon className="size-4" />
-              Save current search
-            </button>
-          )}
-
-          {/* Save form */}
-          {isAdding && (
-            <div className="p-3 border-b border-zinc-700 space-y-3">
-              <input
-                type="text"
-                value={newName}
-                onChange={(e) => setNewName(e.target.value)}
-                placeholder="Search name..."
-                autoFocus
-                className="w-full px-3 py-2 text-sm bg-zinc-900 border border-zinc-600 rounded-lg text-zinc-100 placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') handleSave()
-                  if (e.key === 'Escape') setIsAdding(false)
-                }}
-              />
-              <div className="flex gap-2">
-                <button
-                  onClick={handleSave}
-                  disabled={!newName.trim() || saveMutation.isPending}
-                  className="flex-1 px-3 py-2 text-sm font-medium bg-blue-600 hover:bg-blue-500 disabled:opacity-50 rounded-lg text-white transition-colors"
-                >
-                  Save
-                </button>
-                <button
-                  onClick={() => setIsAdding(false)}
-                  className="px-3 py-2 text-sm text-zinc-300 hover:text-zinc-100 hover:bg-zinc-700 rounded-lg transition-colors"
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* Saved searches list */}
-          {savedSearches && savedSearches.length > 0 ? (
-            <div className="py-1">
-              {savedSearches.map((search) => (
-                <div
-                  key={search.id}
-                  className="flex items-center justify-between px-4 py-3 hover:bg-zinc-700 cursor-pointer group transition-colors"
-                  onClick={() => handleSelectAndClose(search.query)}
-                >
-                  <div className="flex-1 min-w-0">
-                    <div className="text-sm font-medium text-zinc-100 truncate">
-                      {search.name}
-                    </div>
-                    <div className="text-xs text-zinc-400 truncate mt-0.5">
-                      {search.query}
-                    </div>
-                  </div>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      deleteMutation.mutate({ id: search.id })
-                    }}
-                    className="p-1.5 text-zinc-500 hover:text-red-400 opacity-0 group-hover:opacity-100 shrink-0 transition-opacity"
-                  >
-                    <TrashIcon className="size-4" />
-                  </button>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="px-4 py-6 text-sm text-zinc-500 text-center">
-              No saved searches yet
-            </div>
-          )}
+    <>
+      <div className="text-xs text-zinc-500 px-1 mb-3">
+        {items.length} result{items.length !== 1 ? 's' : ''}
+      </div>
+      <div className="space-y-3">
+        {items.map((item, idx) => (
+          <SearchResultCard
+            key={`${item.note_title}-${item.line_idx}-${idx}`}
+            item={item}
+            onNavigate={() => onNavigate(item.note_title)}
+          />
+        ))}
+      </div>
+      {data?.nextCursor && (
+        <div className="text-center text-zinc-500 text-sm py-3">
+          More results available...
         </div>
       )}
-    </div>
+    </>
   )
 }
+
+const AggregateResults = ({
+  isLoading,
+  errorMessage,
+  data,
+}: {
+  isLoading: boolean
+  errorMessage?: string
+  data?: RouterOutputs['search']['searchAggregate']
+}) => {
+  if (isLoading) {
+    return <PanelEmptyState>Loading...</PanelEmptyState>
+  }
+  if (errorMessage) {
+    return <PanelEmptyState>{errorMessage}</PanelEmptyState>
+  }
+
+  const rows = data ?? []
+  if (rows.length === 0) {
+    return <PanelEmptyState>No matching tags</PanelEmptyState>
+  }
+
+  return (
+    <>
+      <div className="text-xs text-zinc-500 mb-4">
+        {rows.length} tag{rows.length !== 1 ? 's' : ''}
+      </div>
+      <ResultCardGrid data={rows} />
+    </>
+  )
+}
+
+const SearchHelp = () => (
+  <div className="p-4 space-y-4">
+    <p className="text-sm text-zinc-300 font-medium">
+      Search across all documents
+    </p>
+    <div className="space-y-2">
+      {OPERATOR_HELP.map(({ operator, description }) => (
+        <div key={operator} className="flex items-start gap-3 text-sm">
+          <code className="bg-zinc-800 text-zinc-200 px-2 py-1 rounded font-mono text-xs shrink-0">
+            {operator}
+          </code>
+          <span className="text-zinc-400">{description}</span>
+        </div>
+      ))}
+    </div>
+  </div>
+)
 
 export const Search = () => {
   const [query, setQuery] = useState('')
@@ -264,18 +189,14 @@ export const Search = () => {
 
   // Search queries use debounced value
   const linesQuery = trpc.search.searchLines.useQuery(
-    { operators: debouncedParsedQuery.operators as SearchOperator[] },
+    { operators: debouncedParsedQuery.operators },
     { enabled: hasDebouncedValidQuery && viewMode === 'text' }
   )
 
   const aggregateQuery = trpc.search.searchAggregate.useQuery(
-    { operators: debouncedParsedQuery.operators as SearchOperator[] },
+    { operators: debouncedParsedQuery.operators },
     { enabled: hasDebouncedValidQuery && viewMode === 'aggregate' }
   )
-
-  const handleSelectSearch = useCallback((savedQuery: string) => {
-    setQuery(savedQuery)
-  }, [])
 
   const handleNavigateToResult = useCallback(
     (noteTitle: string) => {
@@ -284,17 +205,11 @@ export const Search = () => {
     [navigate]
   )
 
-  const items = (linesQuery.data?.items || []) as SearchResultItem[]
-
   return (
     <div className="flex flex-col h-full">
       {/* Search header */}
       <div className="p-4 space-y-3 border-b border-zinc-800">
-        {/* Saved searches dropdown */}
-        <SavedSearchesDropdown
-          currentQuery={query}
-          onSelectSearch={handleSelectSearch}
-        />
+        <SavedSearches currentQuery={query} onSelectSearch={setQuery} />
 
         {/* Search input */}
         <div className="relative">
@@ -349,107 +264,28 @@ export const Search = () => {
 
       {/* Results */}
       <div className="flex-1 overflow-auto">
-        {hasValidQuery ? (
-          viewMode === 'text' ? (
-            <div className="p-3 space-y-2">
-              {linesQuery.isLoading ? (
-                <div className="text-center text-zinc-400 text-sm py-8">
-                  Searching...
-                </div>
-              ) : items.length > 0 ? (
-                <>
-                  <div className="text-xs text-zinc-500 px-1 mb-3">
-                    {items.length} result{items.length !== 1 ? 's' : ''}
-                  </div>
-                  <div className="space-y-3">
-                    {items.map((item, idx) => (
-                      <SearchResultCard
-                        key={`${item.note_title}-${item.line_idx}-${idx}`}
-                        item={item}
-                        onNavigate={() =>
-                          handleNavigateToResult(item.note_title)
-                        }
-                      />
-                    ))}
-                  </div>
-                  {linesQuery.data?.nextCursor && (
-                    <div className="text-center text-zinc-500 text-sm py-3">
-                      More results available...
-                    </div>
-                  )}
-                </>
-              ) : (
-                <div className="text-center text-zinc-400 text-sm py-8">
-                  No results found
-                </div>
-              )}
-            </div>
+        {!hasValidQuery ? (
+          query.trim() ? (
+            <PanelEmptyState>Fix the errors above to search</PanelEmptyState>
           ) : (
-            <div className="p-4">
-              {aggregateQuery.isLoading ? (
-                <div className="text-center text-zinc-400 text-sm py-8">
-                  Loading...
-                </div>
-              ) : aggregateQuery.data && aggregateQuery.data.length > 0 ? (
-                <>
-                  <div className="text-xs text-zinc-500 mb-4">
-                    {aggregateQuery.data.length} tag
-                    {aggregateQuery.data.length !== 1 ? 's' : ''}
-                  </div>
-                  <ResultCardGrid data={aggregateQuery.data} />
-                </>
-              ) : (
-                <div className="text-center text-zinc-400 text-sm py-8">
-                  No matching tags
-                </div>
-              )}
-            </div>
+            <SearchHelp />
           )
-        ) : query.trim() ? (
-          <div className="text-center text-zinc-400 text-sm py-8 px-4">
-            Fix the errors above to search
+        ) : viewMode === 'text' ? (
+          <div className="p-3 space-y-2">
+            <LinesResults
+              isLoading={linesQuery.isLoading}
+              errorMessage={linesQuery.error?.message}
+              data={linesQuery.data}
+              onNavigate={handleNavigateToResult}
+            />
           </div>
         ) : (
-          <div className="p-4 space-y-4">
-            <p className="text-sm text-zinc-300 font-medium">
-              Search across all documents
-            </p>
-            <div className="space-y-2">
-              <div className="flex items-start gap-3 text-sm">
-                <code className="bg-zinc-800 text-zinc-200 px-2 py-1 rounded font-mono text-xs shrink-0">
-                  #tag
-                </code>
-                <span className="text-zinc-400">
-                  Filter by tag (prefix match)
-                </span>
-              </div>
-              <div className="flex items-start gap-3 text-sm">
-                <code className="bg-zinc-800 text-zinc-200 px-2 py-1 rounded font-mono text-xs shrink-0">
-                  age:90d
-                </code>
-                <span className="text-zinc-400">Last N days/weeks/months</span>
-              </div>
-              <div className="flex items-start gap-3 text-sm">
-                <code className="bg-zinc-800 text-zinc-200 px-2 py-1 rounded font-mono text-xs shrink-0">
-                  status:
-                </code>
-                <span className="text-zinc-400">
-                  complete / incomplete / unset
-                </span>
-              </div>
-              <div className="flex items-start gap-3 text-sm">
-                <code className="bg-zinc-800 text-zinc-200 px-2 py-1 rounded font-mono text-xs shrink-0">
-                  has:
-                </code>
-                <span className="text-zinc-400">timer / task / pin</span>
-              </div>
-              <div className="flex items-start gap-3 text-sm">
-                <code className="bg-zinc-800 text-zinc-200 px-2 py-1 rounded font-mono text-xs shrink-0">
-                  doc:
-                </code>
-                <span className="text-zinc-400">Document name pattern</span>
-              </div>
-            </div>
+          <div className="p-4">
+            <AggregateResults
+              isLoading={aggregateQuery.isLoading}
+              errorMessage={aggregateQuery.error?.message}
+              data={aggregateQuery.data}
+            />
           </div>
         )}
       </div>
