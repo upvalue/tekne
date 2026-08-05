@@ -61,16 +61,35 @@ interface CommandPaletteProps {
   view: EditorView | null
 }
 
+/**
+ * The palette is always in exactly one of three modes; each mode derives one
+ * flat item list, which both keyboard navigation and rendering share — so
+ * there is no per-mode index arithmetic.
+ */
+type PaletteMode =
+  | { kind: 'main' }
+  | { kind: 'search' }
+  | { kind: 'sub'; command: Command }
+
+type PaletteItem = {
+  itemKey: string
+  name: string
+  description: string
+  shortcut?: string
+  hasSubcommands: boolean
+  showShortcut: boolean
+  run: () => void
+}
+
 export const CommandPalette: React.FC<CommandPaletteProps> = ({
   isOpen,
   onClose,
   lineIdx,
   view,
 }) => {
-  const [searchMode, setSearchMode] = useState(false)
+  const [mode, setMode] = useState<PaletteMode>({ kind: 'main' })
   const [query, setQuery] = useState('')
   const [activeIndex, setActiveIndex] = useState(0)
-  const [pendingCommand, setPendingCommand] = useState<Command | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const store = useStore()
 
@@ -91,35 +110,122 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
     }
   }, [view])
 
-  const filteredCommands = useMemo(() => {
-    if (!searchMode || !query) return availableCommands
-    return searchCommands(query).filter((cmd) =>
-      availableCommands.includes(cmd)
-    )
-  }, [searchMode, query, availableCommands])
+  const enterSearchMode = React.useCallback(() => {
+    setMode({ kind: 'search' })
+    setQuery('')
+    setActiveIndex(0)
+    setTimeout(() => inputRef.current?.focus(), 0)
+  }, [])
+
+  const runCommand = React.useCallback(
+    (command: Command) => {
+      if (command.subcommands?.length) {
+        setMode({ kind: 'sub', command })
+        setActiveIndex(0)
+      } else {
+        command.execute(context)
+        onClose()
+      }
+    },
+    [context, onClose]
+  )
+
+  const items: PaletteItem[] = useMemo(() => {
+    switch (mode.kind) {
+      case 'sub':
+        return (mode.command.subcommands ?? []).map((sub) => ({
+          itemKey: sub.key,
+          name: sub.name,
+          description: sub.description,
+          shortcut: sub.displayKey || sub.key.toUpperCase(),
+          hasSubcommands: false,
+          showShortcut: true,
+          run: () => {
+            sub.execute(context)
+            onClose()
+          },
+        }))
+      case 'search': {
+        const filtered = query
+          ? searchCommands(query).filter((cmd) =>
+              availableCommands.includes(cmd)
+            )
+          : availableCommands
+        return filtered.map((cmd) => ({
+          itemKey: cmd.id,
+          name: cmd.name,
+          description: cmd.description,
+          shortcut: cmd.displayShortcut,
+          hasSubcommands: !!cmd.subcommands?.length,
+          showShortcut: false,
+          run: () => runCommand(cmd),
+        }))
+      }
+      case 'main':
+        return [
+          {
+            itemKey: '__search',
+            name: 'Search commands',
+            description: 'Search for commands by name and description',
+            shortcut: 'S',
+            hasSubcommands: false,
+            showShortcut: true,
+            run: enterSearchMode,
+          },
+          ...availableCommands.map((cmd) => ({
+            itemKey: cmd.id,
+            name: cmd.name,
+            description: cmd.description,
+            shortcut: cmd.displayShortcut,
+            hasSubcommands: !!cmd.subcommands?.length,
+            showShortcut: true,
+            run: () => runCommand(cmd),
+          })),
+        ]
+    }
+  }, [
+    mode,
+    query,
+    availableCommands,
+    context,
+    onClose,
+    runCommand,
+    enterSearchMode,
+  ])
 
   // Reset state when opening
   useEffect(() => {
     if (isOpen) {
-      setSearchMode(false)
+      setMode({ kind: 'main' })
       setQuery('')
       setActiveIndex(0)
-      setPendingCommand(null)
     }
   }, [isOpen])
 
-  // Keyboard navigation and shortcuts
+  // The keydown listener stays attached for the whole time the palette is
+  // open; it reads the current state through a ref instead of re-binding on
+  // every keystroke and index change.
+  const keyStateRef = useRef({ mode, items, activeIndex, availableCommands })
+  keyStateRef.current = { mode, items, activeIndex, availableCommands }
+  const callbacksRef = useRef({ onClose, runCommand, enterSearchMode, context })
+  callbacksRef.current = { onClose, runCommand, enterSearchMode, context }
+
   useEffect(() => {
     if (!isOpen) return
 
     const handleKeyDown = (e: KeyboardEvent) => {
+      const { mode, items, activeIndex, availableCommands } =
+        keyStateRef.current
+      const { onClose, runCommand, enterSearchMode, context } =
+        callbacksRef.current
+
       // Allow system shortcuts (copy/paste/etc) to pass through
       if (e.metaKey || e.ctrlKey) {
         return
       }
 
       // In search mode, let typing keys reach the input field
-      if (searchMode && !pendingCommand) {
+      if (mode.kind === 'search') {
         const isTypingKey = e.key.length === 1 && !e.altKey
         const isEditKey = e.key === 'Backspace' || e.key === 'Delete'
         if (isTypingKey || isEditKey) {
@@ -131,19 +237,8 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
       e.preventDefault()
       e.stopPropagation()
 
-      // Arrow key navigation (works in all modes)
-      // In main mode: index 0 = Search, index 1+ = commands
       if (e.key === 'ArrowDown') {
-        if (pendingCommand?.subcommands) {
-          setActiveIndex((i) =>
-            Math.min(i + 1, pendingCommand.subcommands!.length - 1)
-          )
-        } else if (searchMode) {
-          setActiveIndex((i) => Math.min(i + 1, filteredCommands.length - 1))
-        } else {
-          // +1 for the "Search commands" item at index 0
-          setActiveIndex((i) => Math.min(i + 1, filteredCommands.length))
-        }
+        setActiveIndex((i) => Math.min(i + 1, items.length - 1))
         return
       }
 
@@ -152,66 +247,29 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
         return
       }
 
-      // Enter to execute selected command/subcommand
       if (e.key === 'Enter') {
-        if (pendingCommand?.subcommands) {
-          const subcommand = pendingCommand.subcommands[activeIndex]
-          if (subcommand) {
-            subcommand.execute(context)
-            onClose()
-          }
-        } else if (searchMode) {
-          const command = filteredCommands[activeIndex]
-          if (command) {
-            command.execute(context)
-            onClose()
-          }
-        } else {
-          // Index 0 = Search commands
-          if (activeIndex === 0) {
-            setSearchMode(true)
-            setTimeout(() => inputRef.current?.focus(), 0)
-          } else {
-            const command = filteredCommands[activeIndex - 1]
-            if (command) {
-              if (command.subcommands?.length) {
-                setPendingCommand(command)
-                setActiveIndex(0)
-              } else {
-                command.execute(context)
-                onClose()
-              }
-            }
-          }
-        }
+        items[activeIndex]?.run()
         return
       }
 
-      // Escape behavior depends on mode
+      // Escape steps back one mode; from main it closes
       if (e.key === 'Escape') {
-        if (pendingCommand) {
-          // Exit subcommand mode back to main
-          setPendingCommand(null)
-          setActiveIndex(0)
-        } else if (searchMode) {
-          // Exit search mode back to shortcut mode
-          setSearchMode(false)
+        if (mode.kind === 'main') {
+          onClose()
+        } else {
+          setMode({ kind: 'main' })
           setQuery('')
           setActiveIndex(0)
-        } else {
-          // Close palette
-          onClose()
         }
         return
       }
 
-      // Single-key behavior depends on mode
+      // Single-key shortcuts (not in search mode, where keys type)
       if (!e.altKey && e.key.length === 1) {
         const key = e.key.toLowerCase()
 
-        if (pendingCommand?.subcommands) {
-          // In subcommand mode: find and execute matching subcommand
-          const subcommand = pendingCommand.subcommands.find(
+        if (mode.kind === 'sub') {
+          const subcommand = mode.command.subcommands?.find(
             (sub) => sub.key.toLowerCase() === key
           )
           if (subcommand) {
@@ -221,43 +279,24 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
           return
         }
 
-        if (!searchMode) {
-          // Shortcut mode: execute commands or enter search/subcommand mode
+        if (mode.kind === 'main') {
           if (key === 's') {
-            setSearchMode(true)
-            setTimeout(() => inputRef.current?.focus(), 0)
+            enterSearchMode()
             return
           }
 
           const command = getCommandByShortcut(e.key)
           if (command && availableCommands.includes(command)) {
-            if (command.subcommands?.length) {
-              // Enter subcommand mode
-              setPendingCommand(command)
-              setActiveIndex(0)
-            } else {
-              command.execute(context)
-              onClose()
-            }
+            runCommand(command)
           }
         }
-        // In search mode, typing is handled by the input field
       }
     }
 
     window.addEventListener('keydown', handleKeyDown, { capture: true })
     return () =>
       window.removeEventListener('keydown', handleKeyDown, { capture: true })
-  }, [
-    isOpen,
-    searchMode,
-    activeIndex,
-    filteredCommands,
-    availableCommands,
-    pendingCommand,
-    context,
-    onClose,
-  ])
+  }, [isOpen])
 
   if (!isOpen) return null
 
@@ -278,10 +317,10 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
         }}
       >
         {/* Subcommand mode header */}
-        {pendingCommand && (
+        {mode.kind === 'sub' && (
           <div className="px-4 py-3 border-b border-gray-700 flex items-center gap-2">
             <div className="text-xs text-gray-400 font-mono bg-zinc-800 px-2 py-1 rounded border border-gray-700">
-              {pendingCommand.displayShortcut || pendingCommand.shortcut}
+              {mode.command.displayShortcut || mode.command.shortcut}
             </div>
             <span className="text-gray-400">+</span>
             <span className="text-gray-400 text-sm">...</span>
@@ -290,7 +329,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
             </span>
           </div>
         )}
-        {searchMode && (
+        {mode.kind === 'search' && (
           <input
             ref={inputRef}
             type="text"
@@ -304,61 +343,19 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
           />
         )}
         <div className="max-h-[50vh] overflow-y-auto">
-          {/* Subcommand list */}
-          {pendingCommand?.subcommands?.map((sub, idx) => (
+          {items.map((item, idx) => (
             <CommandItem
-              key={sub.key}
-              name={sub.name}
-              description={sub.description}
-              shortcut={sub.displayKey || sub.key.toUpperCase()}
+              key={item.itemKey}
+              name={item.name}
+              description={item.description}
+              shortcut={item.shortcut}
+              hasSubcommands={item.hasSubcommands}
               isActive={idx === activeIndex}
-              onClick={() => {
-                sub.execute(context)
-                onClose()
-              }}
+              showShortcut={item.showShortcut}
+              onClick={item.run}
               onMouseEnter={() => setActiveIndex(idx)}
             />
           ))}
-          {/* Search commands option (index 0 in main mode) */}
-          {!pendingCommand && !searchMode && (
-            <CommandItem
-              name="Search commands"
-              description="Search for commands by name and description"
-              shortcut="S"
-              isActive={activeIndex === 0}
-              onClick={() => {
-                setSearchMode(true)
-                setTimeout(() => inputRef.current?.focus(), 0)
-              }}
-              onMouseEnter={() => setActiveIndex(0)}
-            />
-          )}
-          {/* Command list (index 1+ in main mode, index 0+ in search mode) */}
-          {!pendingCommand &&
-            filteredCommands.map((cmd, idx) => {
-              const itemIndex = searchMode ? idx : idx + 1
-              return (
-                <CommandItem
-                  key={cmd.id}
-                  name={cmd.name}
-                  description={cmd.description}
-                  shortcut={cmd.displayShortcut}
-                  hasSubcommands={!!cmd.subcommands?.length}
-                  isActive={itemIndex === activeIndex}
-                  showShortcut={!searchMode}
-                  onClick={() => {
-                    if (cmd.subcommands?.length) {
-                      setPendingCommand(cmd)
-                      setActiveIndex(0)
-                    } else {
-                      cmd.execute(context)
-                      onClose()
-                    }
-                  }}
-                  onMouseEnter={() => setActiveIndex(itemIndex)}
-                />
-              )
-            })}
         </div>
       </div>
     </div>,
