@@ -4,7 +4,8 @@
   "type": "module",
   "packageManager": "pnpm@11.9.0",
   "scripts": {
-    "check": "tsc --noEmit && eslint . && prettier --check .",
+    "check": "tsc --noEmit && eslint . && prettier --check . && depcruise src",
+    "depcruise": "depcruise src",
     "types": "tsc --noEmit",
     "dev:client-only": "TEKNE_BASE_PATH=/dev/ vite --port 3000 --host 0.0.0.0",
     "dev:client-for-server": "TEKNE_TRPC_URL=http://localhost:3005/api/trpc vite --port 3000 --host 0.0.0.0",
@@ -98,6 +99,7 @@
     "@typescript-eslint/parser": "^8.37.0",
     "@vitejs/plugin-react": "^4.3.4",
     "concurrently": "^9.2.0",
+    "dependency-cruiser": "^18.1.0",
     "esbuild": "^0.25.6",
     "eslint": "^9.31.0",
     "eslint-config-prettier": "^10.1.5",

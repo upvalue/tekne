@@ -22,6 +22,18 @@ The resultant file should be filled out, and `src/db/migrations.ts` will need to
 - Tests should be placed in the same directory as the file they test, not in a
   separate tests folder.
 
+# Package layers
+
+The top-level directories in `src/` are ordered into layers, declared in
+`LAYER_ORDER` in `.dependency-cruiser.cjs` and enforced by `pnpm depcruise`
+(part of `pnpm check`): a package may only import from packages earlier in
+that list (e.g. `db` may import from `docs` but never from `editor`), and
+file-level dependency cycles are forbidden. When adding a new top-level
+directory, add it to `LAYER_ORDER` at the right position. If an import you want to write would
+point upward, the code is probably in the wrong package — move the shared
+piece down (see `editor/command-registry.ts` for the pattern: the mechanism
+lives low, the definitions register into it from above in `src/commands`).
+
 # CodeMirror Editor
 
 The synchronization between Codemirror (which has its own DOM rendering and management
