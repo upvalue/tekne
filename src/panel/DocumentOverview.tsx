@@ -65,7 +65,6 @@ export const DocumentOverviewSection = ({
       >
         <ChevronDownIcon
           className={`w-4 h-4 ${collapsed ? 'rotate-180' : ''}`}
-          onClick={() => setCollapsed(!collapsed)}
         />
         <h2 className="text-lg font-bold">{label}</h2>
       </div>

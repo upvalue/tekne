@@ -42,9 +42,7 @@ export const TaskStatusDisplay = ({
   className,
 }: TaskStatusDisplayProps) => {
   const hasTasks =
-    (unset && unset > 0) ||
-    (complete && complete > 0) ||
-    (incomplete && incomplete > 0)
+    (unset ?? 0) > 0 || (complete ?? 0) > 0 || (incomplete ?? 0) > 0
 
   if (!hasTasks) {
     return null
@@ -52,27 +50,27 @@ export const TaskStatusDisplay = ({
 
   return (
     <div className={`flex space-x-4 items-center ${className || ''}`}>
-      {complete && complete > 0 ? (
+      {complete !== undefined && complete > 0 && (
         <TaskStatusItem
           icon={CheckCircleIcon}
           count={complete}
           className="text-green-400"
         />
-      ) : null}
-      {incomplete && incomplete > 0 ? (
+      )}
+      {incomplete !== undefined && incomplete > 0 && (
         <TaskStatusItem
           icon={XCircleIcon}
           count={incomplete}
           className="text-zinc-400"
         />
-      ) : null}
-      {unset && unset > 0 ? (
+      )}
+      {unset !== undefined && unset > 0 && (
         <TaskStatusItem
           icon={EllipsisHorizontalIcon}
-          count={unset || 0}
+          count={unset}
           className="text-zinc-400"
         />
-      ) : null}
+      )}
     </div>
   )
 }
@@ -98,39 +96,37 @@ const PageContribution = ({
   pageTime?: number
 }) => {
   const hasTaskContribution =
-    (pageComplete && pageComplete > 0) ||
-    (pageIncomplete && pageIncomplete > 0) ||
-    (pageUnset && pageUnset > 0)
+    (pageComplete ?? 0) > 0 || (pageIncomplete ?? 0) > 0 || (pageUnset ?? 0) > 0
   const hasTimerContribution = pageTime !== undefined && pageTime > 0
   if (!hasTaskContribution && !hasTimerContribution) return null
 
   return (
     <div className="flex items-center space-x-1.5 text-sm text-zinc-500">
       <PlusIcon className="size-3.5" />
-      {pageComplete && pageComplete > 0 ? (
+      {pageComplete !== undefined && pageComplete > 0 && (
         <div className="flex items-center space-x-1 text-green-400">
           <CheckCircleIcon className="size-3.5" />
           <span>{pageComplete}</span>
         </div>
-      ) : null}
-      {pageIncomplete && pageIncomplete > 0 ? (
+      )}
+      {pageIncomplete !== undefined && pageIncomplete > 0 && (
         <div className="flex items-center space-x-1 text-red-400">
           <XCircleIcon className="size-3.5" />
           <span>{pageIncomplete}</span>
         </div>
-      ) : null}
-      {pageUnset && pageUnset > 0 ? (
+      )}
+      {pageUnset !== undefined && pageUnset > 0 && (
         <div className="flex items-center space-x-1 text-zinc-400">
           <EllipsisHorizontalIcon className="size-3.5" />
           <span>{pageUnset}</span>
         </div>
-      ) : null}
-      {hasTimerContribution ? (
+      )}
+      {pageTime !== undefined && pageTime > 0 && (
         <div className="flex items-center space-x-1 text-zinc-400">
           <ClockIcon className="size-3.5" />
-          <span>{renderTime(pageTime!)}</span>
+          <span>{renderTime(pageTime)}</span>
         </div>
-      ) : null}
+      )}
     </div>
   )
 }
@@ -170,8 +166,8 @@ export const ResultCard = ({ tagData }: { tagData: ResultCardData }) => {
             pageTime={tagData.page_time_seconds}
           />
         </div>
-        {tagData.pinned_at && (
-          <PinnedDisplay pinnedDesc={tagData.pinned_desc!} />
+        {tagData.pinned_at && tagData.pinned_desc && (
+          <PinnedDisplay pinnedDesc={tagData.pinned_desc} />
         )}
         <TaskStatusDisplay
           complete={tagData.complete_tasks}

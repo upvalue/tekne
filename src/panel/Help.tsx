@@ -11,7 +11,21 @@ import { Button } from '@/components/vendor/Button'
 import { Version } from '@/documentation/Version'
 import manifest from '@/documentation/manifest.json'
 import { ExternalLink } from '@/components/ExternalLink'
+import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { getAllCommands } from '@/editor/command-registry'
+
+// One lazy component per generated doc page, created once at module scope —
+// calling React.lazy during render would remount (and refetch) the chunk on
+// every render.
+const DOC_COMPONENTS: Record<
+  string,
+  React.LazyExoticComponent<React.ComponentType>
+> = Object.fromEntries(
+  manifest.files.map((file) => {
+    const id = file.outputFile.split('/').pop()?.replace('.tsx', '') || ''
+    return [id, React.lazy(() => import(`@/documentation/${id}.tsx`))]
+  })
+)
 
 const Keybindings = () => {
   const allKeybindings = getAllKeybindings()
@@ -215,20 +229,19 @@ export const Help = React.memo(() => {
     }
 
     // Render doc component
-    try {
-      const DocComponent = React.lazy(
-        () => import(`@/documentation/${selectedPage}.tsx`)
-      )
-      return (
+    const DocComponent = DOC_COMPONENTS[selectedPage]
+    if (!DocComponent) {
+      return <div className="p-4 text-red-400">Unknown page</div>
+    }
+    return (
+      <ErrorBoundary title="Error loading documentation">
         <React.Suspense fallback={<div className="p-4">Loading...</div>}>
           <DocsWrapper>
             <DocComponent />
           </DocsWrapper>
         </React.Suspense>
-      )
-    } catch {
-      return <div className="p-4 text-red-400">Error loading documentation</div>
-    }
+      </ErrorBoundary>
+    )
   }, [selectedPage])
 
   return (

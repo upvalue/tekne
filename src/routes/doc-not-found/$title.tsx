@@ -7,7 +7,7 @@ import { setMainTitle } from '@/lib/title'
 import { useEffect } from 'react'
 import { useCreateDoc } from '@/hooks/useCreateDoc'
 import { StatusBar } from '@/editor/StatusBar'
-import NonEditorLayout from '@/layout/NonEditorLayout'
+import { NonEditorLayout } from '@/layout/NonEditorLayout'
 import { CommandPaletteProvider } from '@/commands/CommandPaletteProvider'
 
 export const Route = createFileRoute('/doc-not-found/$title')({
