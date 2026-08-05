@@ -1,14 +1,11 @@
 // @vitest-environment node
 import { beforeAll, afterAll, beforeEach, describe, test, expect } from 'vitest'
-import { PGlite } from '@electric-sql/pglite'
-import { Kysely } from 'kysely'
-import { PGliteDialect } from 'kysely-pglite-dialect'
+import type { Kysely } from 'kysely'
 import type { Database } from '@/db/types'
-import { migrateToLatest } from '@/db/migrations'
+import { makeTestDb } from '@/db/testing'
 import { docMake } from '@/docs/schema'
 import { aggregateTagData, hasAggregateData } from './tag-aggregates'
 
-let pg: PGlite
 let db: Kysely<Database>
 
 /** Inserts a note_data row, defaulting the columns a given test doesn't care about. */
@@ -45,9 +42,7 @@ const note = (title: string) =>
     .execute()
 
 beforeAll(async () => {
-  pg = new PGlite()
-  db = new Kysely<Database>({ dialect: new PGliteDialect(pg) })
-  await migrateToLatest(db)
+  ;({ db } = await makeTestDb())
 }, 60_000)
 
 afterAll(async () => {

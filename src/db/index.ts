@@ -1,4 +1,5 @@
 import { PGlite } from '@electric-sql/pglite'
+import { pg_trgm } from '@electric-sql/pglite/contrib/pg_trgm'
 import { Kysely, PostgresDialect } from 'kysely'
 import { PGliteDialect } from 'kysely-pglite-dialect'
 import type { Database } from './types'
@@ -33,7 +34,8 @@ export const dbMemory = async () => {
   // Ensure path is in idb:// format for PGlite
   const formattedPath = `idb://${dbPath}`
   console.log('Loading PGlite from', formattedPath)
-  const handle = new PGlite(formattedPath)
+  // pg_trgm backs the trigram index the search-indexes migration creates
+  const handle = new PGlite(formattedPath, { extensions: { pg_trgm } })
 
   window.dbHandle = handle
 

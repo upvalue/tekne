@@ -1,16 +1,13 @@
 // @vitest-environment node
 import { beforeAll, afterAll, beforeEach, describe, test, expect } from 'vitest'
-import { PGlite } from '@electric-sql/pglite'
-import { Kysely } from 'kysely'
-import { PGliteDialect } from 'kysely-pglite-dialect'
+import type { Kysely } from 'kysely'
 import type { Database } from '@/db/types'
-import { migrateToLatest } from '@/db/migrations'
+import { makeTestDb } from '@/db/testing'
 import { docMake, lineMake, type ZLine } from '@/docs/schema'
 import { t } from '../init'
 import { upsertNoteInTx } from './doc'
 import { searchRouter } from './search'
 
-let pg: PGlite
 let db: Kysely<Database>
 let caller: ReturnType<typeof createCaller>
 
@@ -31,9 +28,7 @@ const contentsOf = (result: { items: Array<{ content: string }> }) =>
   result.items.map((i) => i.content)
 
 beforeAll(async () => {
-  pg = new PGlite()
-  db = new Kysely<Database>({ dialect: new PGliteDialect(pg) })
-  await migrateToLatest(db)
+  ;({ db } = await makeTestDb())
   caller = createCaller({ db })
 }, 60_000)
 
