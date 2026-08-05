@@ -1,12 +1,13 @@
-// Command registry - all command definitions and utility functions
+// Command definitions. Importing this module registers every command with the
+// registry in @/editor/command-registry; the app root does that import.
 
-import type { Command } from './types'
+import { registerCommands, type Command } from '@/editor/command-registry'
 import { emitCodemirrorEvent } from '@/editor/line-editor/cm-events'
 import { deleteLine } from '@/editor/line-editor/line-operations'
 import { formatDate, getDocTitle } from '@/lib/utils'
 import { trpcClient } from '@/trpc/client'
 import { getDefaultStore } from 'jotai'
-import { panelVisibleAtom } from '@/panel/state'
+import { panelVisibleAtom } from '@/hooks/panel-state'
 import { appPath, stripAppBasePath } from '@/lib/app-path'
 
 /** Check if a string is a valid YYYY-MM-DD date */
@@ -319,27 +320,4 @@ const navigationCommands: Command[] = [
   },
 ]
 
-// ============================================================================
-// Registry
-// ============================================================================
-
-/** All available commands */
-export const allCommands: Command[] = [...editorCommands, ...navigationCommands]
-
-/** Find a command by its shortcut key */
-export const getCommandByShortcut = (key: string): Command | undefined => {
-  return allCommands.find((cmd) => cmd.shortcut === key)
-}
-
-/** Search commands by query string */
-export const searchCommands = (query: string): Command[] => {
-  const q = query.toLowerCase()
-  return allCommands.filter((cmd) => {
-    const matchesName = cmd.name.toLowerCase().includes(q)
-    const matchesDescription = cmd.description.toLowerCase().includes(q)
-    const matchesKeywords = cmd.keywords?.some((k) =>
-      k.toLowerCase().includes(q)
-    )
-    return matchesName || matchesDescription || matchesKeywords
-  })
-}
+registerCommands([...editorCommands, ...navigationCommands])

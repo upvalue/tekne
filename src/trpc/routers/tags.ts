@@ -2,7 +2,7 @@ import { z } from 'zod'
 import type { Kysely } from 'kysely'
 import { t } from '../init'
 import type { Database } from '@/db'
-import { tagNameSchema } from '@/lib/validation'
+import { tagNameSchema } from '@/docs/validation'
 import {
   computeRenamePairs,
   findChildTags,

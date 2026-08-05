@@ -18,7 +18,7 @@ import {
   type CSSProperties,
   type MouseEvent as ReactMouseEvent,
 } from 'react'
-import { CommandPalette } from '@/commands/CommandPalette'
+import { CommandPalette } from './CommandPalette'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import type { DropEdge } from './line-reorder'

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import { trpc } from '@/trpc/client'
-import { tagNameSchema } from '@/lib/validation'
+import { tagNameSchema } from '@/docs/validation'
 import {
   Dialog,
   DialogFooter,

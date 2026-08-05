@@ -1,6 +1,5 @@
 import { atom, useAtom, useStore } from 'jotai'
-import { withImmer } from 'jotai-immer'
-import { lineMake, type ZDoc, type ZLine } from '@/docs/schema'
+import { type ZDoc, type ZLine } from '@/docs/schema'
 import { ensureUniqueLineTimeCreateds } from '@/docs/line-identity'
 import { useCallback } from 'react'
 import { atomWithQuery } from 'jotai-tanstack-query'
@@ -8,15 +7,16 @@ import { trpcClient } from '@/trpc/client'
 import { noop } from 'lodash-es'
 import { produce, type Draft } from 'immer'
 import { captureUndoEntry, suppressUndoCaptureAtom } from './undo'
+import { rawDocAtom } from './doc-atoms'
 
 export const DEFAULT_COUNTDOWN_SECONDS = 30 * 60
 
-export const rawDocAtom = withImmer(
-  atom<ZDoc>({
-    type: 'doc',
-    children: [lineMake(0, '')],
-  } as ZDoc)
-)
+export {
+  rawDocAtom,
+  focusedLineAtom,
+  focusedPosAtom,
+  requestFocusLineAtom,
+} from './doc-atoms'
 
 export const docAtom = atom(
   (get) => get(rawDocAtom),
@@ -33,23 +33,9 @@ export const docAtom = atom(
   }
 )
 
-export const focusedLineAtom = atom<number | null>(null)
-
-/**
- * Cursor column within the focused line, synced from CodeMirror selection
- * changes. Captured into undo entries so restores can return the cursor
- * to where it was, not just the line.
- */
-export const focusedPosAtom = atom<number>(0)
-
 export const dragSelectedLineIdsAtom = atom<string[]>([])
 
 export const dragSelectionAnchorIdAtom = atom<string | null>(null)
-
-export const requestFocusLineAtom = atom({
-  lineIdx: -1,
-  pos: 0,
-})
 
 /**
  * Tracks whether the command palette is open

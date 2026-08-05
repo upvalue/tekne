@@ -8,17 +8,17 @@ import {
 import { t } from '../init'
 import type { Database } from '@/db'
 import { sql, type Kysely } from 'kysely'
-import { documentNameSchema } from '@/lib/validation'
-import { makeTutorial } from '@/lib/tutorial'
+import { documentNameSchema } from '@/docs/validation'
+import { makeTutorial } from '@/docs/tutorial'
 import {
   docMigrator,
   migrateDocWithReport,
   validateDocumentWithMigrationCheck,
 } from '@/docs/doc-migrator'
-import { deriveNoteRows, recomputeAllDocumentData } from '@/server/lib/docs'
+import { deriveNoteRows, recomputeAllDocumentData } from '@/trpc/lib/docs'
 import { applyTemplateDirectives } from '@/docs/template-directives'
 import { produce } from 'immer'
-import { TEKNE_MD_PARSER, visitMdTree } from '@/editor/parser'
+import { TEKNE_MD_PARSER, visitMdTree } from '@/docs/parser'
 import type { SyntaxNode } from '@lezer/common'
 import MagicString from 'magic-string'
 import { TRPCError } from '@trpc/server'

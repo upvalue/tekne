@@ -1,5 +1,5 @@
 import z from 'zod'
-import { TagNameExactRegex } from '@/editor/regex'
+import { TagNameExactRegex } from './regex'
 
 export const documentNameSchema = z
   .string()

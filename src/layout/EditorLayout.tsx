@@ -1,5 +1,5 @@
 import { useAtom } from 'jotai'
-import { panelVisibleAtom } from '@/panel/state'
+import { panelVisibleAtom } from '@/hooks/panel-state'
 import { Bars3Icon, XMarkIcon } from '@heroicons/react/24/solid'
 
 interface EditorLayoutProps {

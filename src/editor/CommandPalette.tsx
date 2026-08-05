@@ -5,8 +5,12 @@ import { createPortal } from 'react-dom'
 import type { EditorView } from '@codemirror/view'
 import { useStore } from 'jotai'
 import { cn } from '@/lib/utils'
-import { allCommands, searchCommands, getCommandByShortcut } from './registry'
-import type { Command, CommandContext } from './types'
+import {
+  getAllCommands,
+  searchCommands,
+  getCommandByShortcut,
+} from './command-registry'
+import type { Command, CommandContext } from './command-registry'
 
 /** Shared component for rendering a command/subcommand item */
 export const CommandItem: React.FC<{
@@ -80,10 +84,10 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
   const availableCommands = useMemo(() => {
     if (view) {
       // Editor context available - show all commands
-      return allCommands
+      return getAllCommands()
     } else {
       // No editor context - only show global commands
-      return allCommands.filter((cmd) => !cmd.requiresEditor)
+      return getAllCommands().filter((cmd) => !cmd.requiresEditor)
     }
   }, [view])
 

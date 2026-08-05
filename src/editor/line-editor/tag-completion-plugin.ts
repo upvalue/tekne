@@ -1,6 +1,6 @@
 import { useStore } from 'jotai'
 import { allTagsAtom } from '../state'
-import { TagRegexMatchBefore } from '../regex'
+import { TagRegexMatchBefore } from '@/docs/regex'
 import { CompletionContext } from '@codemirror/autocomplete'
 import { EditorView } from '@codemirror/view'
 import type { Completion } from '@codemirror/autocomplete'

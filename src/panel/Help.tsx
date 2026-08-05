@@ -11,11 +11,11 @@ import { Button } from '@/components/vendor/Button'
 import { Version } from '@/documentation/Version'
 import manifest from '@/documentation/manifest.json'
 import { ExternalLink } from '@/components/ExternalLink'
-import { allCommands } from '@/commands/registry'
+import { getAllCommands } from '@/editor/command-registry'
 
 const Keybindings = () => {
   const allKeybindings = getAllKeybindings()
-  const commandShortcuts = allCommands.filter((cmd) => cmd.shortcut)
+  const commandShortcuts = getAllCommands().filter((cmd) => cmd.shortcut)
 
   return (
     <div>

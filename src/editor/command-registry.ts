@@ -1,4 +1,4 @@
-// Command system types
+// Command system types and registry mechanism
 
 import type { EditorView } from '@codemirror/view'
 import type { useStore } from 'jotai'
@@ -58,4 +58,44 @@ export interface Command {
 
   /** Execute the command (not called if subcommands exist) */
   execute: (context: CommandContext) => void | Promise<void>
+}
+
+// ============================================================================
+// Registry
+// ============================================================================
+
+// Command definitions live in @/commands and register themselves here; the
+// editor UI (palette, slash-command plugin) and the panel's Help tab read from
+// the registry without depending on the definitions.
+
+const commands: Command[] = []
+
+/** Register commands. Re-registering an id replaces the previous definition. */
+export const registerCommands = (cmds: Command[]) => {
+  for (const cmd of cmds) {
+    const idx = commands.findIndex((c) => c.id === cmd.id)
+    if (idx >= 0) commands[idx] = cmd
+    else commands.push(cmd)
+  }
+}
+
+/** All registered commands */
+export const getAllCommands = (): readonly Command[] => commands
+
+/** Find a command by its shortcut key */
+export const getCommandByShortcut = (key: string): Command | undefined => {
+  return commands.find((cmd) => cmd.shortcut === key)
+}
+
+/** Search commands by query string */
+export const searchCommands = (query: string): Command[] => {
+  const q = query.toLowerCase()
+  return commands.filter((cmd) => {
+    const matchesName = cmd.name.toLowerCase().includes(q)
+    const matchesDescription = cmd.description.toLowerCase().includes(q)
+    const matchesKeywords = cmd.keywords?.some((k) =>
+      k.toLowerCase().includes(q)
+    )
+    return matchesName || matchesDescription || matchesKeywords
+  })
 }

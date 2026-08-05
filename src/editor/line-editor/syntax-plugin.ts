@@ -10,7 +10,7 @@ import {
 } from '@codemirror/view'
 import { RangeSetBuilder } from '@codemirror/state'
 import { emitCodemirrorEvent } from './cm-events'
-import { TEKNE_MD_PARSER, visitMdTree } from '../parser'
+import { TEKNE_MD_PARSER, visitMdTree } from '@/docs/parser'
 
 class InternalLinkWidget extends WidgetType {
   constructor(readonly linkText: string) {

@@ -1,7 +1,7 @@
 import { EditorView } from '@codemirror/view'
 import { type Completion, CompletionContext } from '@codemirror/autocomplete'
 import type { useStore } from 'jotai'
-import { allCommands } from '@/commands/registry'
+import { getAllCommands } from '../command-registry'
 
 const SLASH_COMMAND_REGEX = /\/\w*/
 
@@ -24,7 +24,7 @@ export const slashCommandsPlugin = (
     if (slashText.length <= 1) return null
 
     // Generate completions from command registry
-    const editorCommands = allCommands.filter((cmd) => cmd.requiresEditor)
+    const editorCommands = getAllCommands().filter((cmd) => cmd.requiresEditor)
 
     const options: Completion[] = editorCommands.map((cmd) => ({
       label: `/${cmd.id.replace(/-/g, '')}: ${cmd.name}`,

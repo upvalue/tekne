@@ -7,7 +7,7 @@ import {
   requestFocusLineAtom,
   focusedLineAtom,
   focusedPosAtom,
-} from './state'
+} from './doc-atoms'
 import { ensureUniqueLineTimeCreateds } from '@/docs/line-identity'
 
 export type UndoEntry = {

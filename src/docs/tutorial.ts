@@ -1,5 +1,5 @@
-import { lineMake } from '@/docs/schema'
-import { modName } from './keys'
+import { lineMake } from './schema'
+import { modName } from '@/lib/keys'
 
 export const makeTutorial = () => {
   let i = 0

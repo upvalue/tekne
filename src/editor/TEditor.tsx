@@ -38,7 +38,7 @@ import {
   activePanelTabAtom,
   panelVisibleAtom,
   tagManagerTargetAtom,
-} from '@/panel/state'
+} from '@/hooks/panel-state'
 import { generateGutterTimestamps } from '@/docs/gutters'
 import { generateCollapse } from '@/docs/collapse'
 import { ELine } from './ELine'

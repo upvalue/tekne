@@ -1,5 +1,5 @@
 import type { ZDoc } from '@/docs/schema'
-import type { ParsedMdNode } from '@/editor/parser'
+import type { ParsedMdNode } from '@/docs/parser'
 import type { ColumnType } from 'kysely'
 
 // Custom column type that handles Zod validation

@@ -1,7 +1,7 @@
 // doc-analysis.ts - tree structure conversion and data analysis functions
 import { z } from 'zod'
 import { zline, zdoc, type ZDoc, type ZLine } from './schema'
-import { TEKNE_MD_PARSER, visitMdTree } from '@/editor/parser'
+import { TEKNE_MD_PARSER, visitMdTree } from './parser'
 
 export type ZTreeLine = ZLine & {
   children: ZTreeLine[]

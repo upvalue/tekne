@@ -3,7 +3,7 @@
 import React from 'react'
 import { useAtom, useAtomValue } from 'jotai'
 import { focusedLineAtom, commandPaletteOpenAtom } from '@/editor/state'
-import { CommandPalette } from './CommandPalette'
+import { CommandPalette } from '@/editor/CommandPalette'
 import { useGlobalKeybinding } from '@/hooks/useGlobalKeybinding'
 
 export const CommandPaletteProvider: React.FC<{

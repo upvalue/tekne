@@ -7,7 +7,7 @@
 import MagicString from 'magic-string'
 import { produce } from 'immer'
 import type { SyntaxNode } from '@lezer/common'
-import { TEKNE_MD_PARSER, visitMdTree } from '@/editor/parser'
+import { TEKNE_MD_PARSER, visitMdTree } from './parser'
 import type { ZDoc } from '@/docs/schema'
 
 /**

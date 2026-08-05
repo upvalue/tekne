@@ -5,7 +5,9 @@ import { trpc } from '@/trpc/client'
 import { Toaster } from '@/components/vendor/Sonner'
 import { DocumentSearch } from '@/controls/DocumentSearch'
 import { TemplateDialog } from '@/controls/TemplateDialog'
-import { activePanelTabAtom, panelVisibleAtom } from '@/panel/state'
+import { activePanelTabAtom, panelVisibleAtom } from '@/hooks/panel-state'
+// Registers all commands with the editor's command registry.
+import '@/commands/definitions'
 
 export type RouterAppContext = {
   trpc: typeof trpc

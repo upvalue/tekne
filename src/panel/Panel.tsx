@@ -20,7 +20,11 @@ import { useAtom, useSetAtom } from 'jotai'
 import { useEffect } from 'react'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { DocumentOverview } from './DocumentOverview'
-import { activePanelTabAtom, panelVisibleAtom, type PanelTab } from './state'
+import {
+  activePanelTabAtom,
+  panelVisibleAtom,
+  type PanelTab,
+} from '@/hooks/panel-state'
 
 export function Panel() {
   const [activeTab, setActiveTab] = useAtom(activePanelTabAtom)
