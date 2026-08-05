@@ -9,31 +9,15 @@ import {
   type ZDoc,
   type ZLine,
 } from './schema'
-import { ZodError } from 'zod'
+import { ZodError, type ZodObject, type ZodRawShape } from 'zod'
 
 /**
- * Extract allowed field names from a Zod object schema
+ * Field names a Zod object schema allows. Uses the public .shape — the old
+ * version reached into _def and silently returned an empty set when Zod's
+ * internals shifted, which made every extra-field check pass vacuously.
  */
-const getZodObjectKeys = (zodSchema: any): Set<string> => {
-  try {
-    // For ZodObject, we can access the shape property
-    if (zodSchema._def && zodSchema._def.shape) {
-      return new Set(Object.keys(zodSchema._def.shape))
-    }
-
-    // Fallback: try to parse an empty object to get validation errors
-    // This will tell us what fields are required
-    const shape = zodSchema.shape || zodSchema._def.shape
-    if (shape) {
-      return new Set(Object.keys(shape))
-    }
-
-    return new Set()
-  } catch (error) {
-    console.warn('Could not extract keys from Zod schema:', error)
-    return new Set()
-  }
-}
+const getZodObjectKeys = (zodSchema: ZodObject<ZodRawShape>): Set<string> =>
+  new Set(Object.keys(zodSchema.shape))
 
 export interface MigrationOperation {
   type: 'rename' | 'delete' | 'add' | 'update'

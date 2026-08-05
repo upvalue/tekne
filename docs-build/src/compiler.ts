@@ -131,8 +131,6 @@ export async function processFile(
     outputFile: path.relative(process.cwd(), outputPath),
     metadata: result.metadata,
     sourceHash,
-    buildTimestamp: buildStart,
-    lastModified: stats.mtime.getTime(),
     size: stats.size,
   }
 

@@ -65,10 +65,8 @@ async function buildAll(options: CompilerOptions): Promise<void> {
     // Generate build manifest
     const buildDuration = Date.now() - startTime;
     const buildManifest: BuildManifest = {
-      buildTimestamp: startTime,
       files: fileManifests,
-      totalFiles: fileManifests.length,
-      buildDuration
+      totalFiles: fileManifests.length
     };
     
     await generateManifest(options.outputDir, buildManifest);
@@ -120,12 +118,10 @@ async function updateSingleFile(filePath: string, options: CompilerOptions): Pro
   }
   
   const buildManifest: BuildManifest = {
-    buildTimestamp: Date.now(),
     files: fileManifests,
-    totalFiles: fileManifests.length,
-    buildDuration: 0 // Incremental update, no meaningful duration
+    totalFiles: fileManifests.length
   };
-  
+
   await generateManifest(options.outputDir, buildManifest);
 }
 

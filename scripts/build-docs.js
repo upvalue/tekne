@@ -17,7 +17,12 @@ async function buildDocs() {
     execSync('pnpm build', { stdio: 'inherit' })
 
     // Step 2: Create src/docs directory
-    const srcDocsDir = path.join(projectRoot, 'src', 'documentation')
+    const srcDocsDir = path.join(
+      projectRoot,
+      'src',
+      'documentation',
+      'generated'
+    )
     console.log('\n📁 Creating src/documentation directory...')
     await fs.mkdir(srcDocsDir, { recursive: true })
 

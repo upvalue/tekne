@@ -9,7 +9,7 @@ import { displayKey, getAllKeybindings, keybindings } from '@/lib/keys'
 import { DocsWrapper } from '@/documentation/DocsWrapper'
 import { Button } from '@/components/vendor/Button'
 import { Version } from '@/documentation/Version'
-import manifest from '@/documentation/manifest.json'
+import manifest from '@/documentation/generated/manifest.json'
 import { ExternalLink } from '@/components/ExternalLink'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { getAllCommands } from '@/editor/command-registry'
@@ -23,7 +23,7 @@ const DOC_COMPONENTS: Record<
 > = Object.fromEntries(
   manifest.files.map((file) => {
     const id = file.outputFile.split('/').pop()?.replace('.tsx', '') || ''
-    return [id, React.lazy(() => import(`@/documentation/${id}.tsx`))]
+    return [id, React.lazy(() => import(`@/documentation/generated/${id}.tsx`))]
   })
 )
 

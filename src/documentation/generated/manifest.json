@@ -1,0 +1,23 @@
+{
+  "files": [
+    {
+      "sourceFile": "../docs/development.mdx",
+      "outputFile": "generated/development.tsx",
+      "metadata": {
+        "title": "Development"
+      },
+      "sourceHash": "e72d14c538abfbde37d5b3f599b39c8d48da0dd284a8073c9526459743f20309",
+      "size": 1384
+    },
+    {
+      "sourceFile": "../docs/getting-started.mdx",
+      "outputFile": "generated/getting-started.tsx",
+      "metadata": {
+        "title": "Getting Started"
+      },
+      "sourceHash": "e1dfaa702bac88a2304a5521a397805902867ce08980673f02ac4022c2a01793",
+      "size": 889
+    }
+  ],
+  "totalFiles": 2
+}

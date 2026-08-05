@@ -6,7 +6,8 @@ import tseslint from 'typescript-eslint'
 import react from 'eslint-plugin-react'
 
 export default tseslint.config(
-  { ignores: ['dist', 'docs-build/**'] },
+  // src/documentation/generated is MDX compiler output (see scripts/build-docs.js)
+  { ignores: ['dist', 'docs-build/**', 'src/documentation/generated/**'] },
   {
     extends: [js.configs.recommended, ...tseslint.configs.recommended],
     files: ['**/*.{ts,tsx}'],

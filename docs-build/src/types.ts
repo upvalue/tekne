@@ -23,14 +23,12 @@ export interface FileManifest {
   outputFile: string;
   metadata: DocumentMetadata;
   sourceHash: string;
-  buildTimestamp: number;
-  lastModified: number;
   size: number;
 }
 
+// Deliberately timestamp-free: the manifest is committed, so its content
+// must be deterministic for identical sources.
 export interface BuildManifest {
-  buildTimestamp: number;
   files: FileManifest[];
   totalFiles: number;
-  buildDuration: number;
 }
