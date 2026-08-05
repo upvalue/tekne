@@ -112,9 +112,6 @@ export const searchRouter = t.router({
         ['tag', 'status', 'has'].includes(op.type)
       )
 
-      // Determine if we have text search
-      const hasTextSearch = operators.some((op) => op.type === 'text')
-
       // Base query starts from note_lines (has all lines)
       let query = db
         .selectFrom('note_lines')

@@ -8,7 +8,6 @@ import { appRouter } from '@/trpc/router'
 import { dbServer } from '@/db'
 import { sql } from 'kysely'
 import path from 'node:path'
-import { fileURLToPath } from 'node:url'
 import { registerClientRoutes } from './client-routes.js'
 
 import dotenv from 'dotenv'
@@ -22,7 +21,6 @@ if (process.env.NODE_ENV === 'production') {
 const app = express()
 const PORT = process.env.PORT || 3005
 const NODE_ENV = process.env.NODE_ENV || 'development'
-const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const DIST_PATH =
   process.env.TEKNE_DIST_PATH || path.resolve(process.cwd(), 'dist')
 

@@ -28,16 +28,6 @@ type DayOfWeek = 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat' | 'sun'
 
 const ALL_DAYS: DayOfWeek[] = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']
 
-const DAY_INDEX: Record<DayOfWeek, number> = {
-  sun: 0,
-  mon: 1,
-  tue: 2,
-  wed: 3,
-  thu: 4,
-  fri: 5,
-  sat: 6,
-}
-
 const JS_DAY_TO_DOW: Record<number, DayOfWeek> = {
   0: 'sun',
   1: 'mon',

@@ -1,5 +1,5 @@
 import { useAtomValue, useSetAtom, useAtom } from 'jotai'
-import { useEffect, useCallback, useRef, useMemo, useState } from 'react'
+import { useEffect, useRef, useMemo, useState } from 'react'
 import { docAtom, focusedLineAtom } from './state'
 import {
   errorMessageAtom,
@@ -17,9 +17,6 @@ import {
   ListBulletIcon,
   ClockIcon,
 } from '@heroicons/react/16/solid'
-import { trpc } from '@/trpc/client'
-import { setDetailTitle } from '@/lib/title'
-import { noop } from 'lodash-es'
 import { TimerInfo } from './TimerInfo'
 import { useGlobalKeybinding } from '@/hooks/useGlobalKeybinding'
 
@@ -112,7 +109,6 @@ export const StatusBar = ({ isLoading }: { isLoading: boolean }) => {
   const setErrorMessage = useSetAtom(errorMessageAtom)
   const globalTimer = useAtomValue(globalTimerAtom)
   const { stopTimer } = globalTimer
-  const execHook = trpc.execHook.useMutation()
   const focusedLine = useAtomValue(focusedLineAtom)
   const [goToLineOpen, setGoToLineOpen] = useAtom(goToLineOpenAtom)
 

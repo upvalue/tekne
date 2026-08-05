@@ -10,7 +10,6 @@ interface TimerInfoProps {
     isActive: boolean
   }
   isThisTimer: boolean
-  format?: 'compact' | 'full'
   className?: string
 }
 
@@ -22,7 +21,6 @@ export const TimerInfo = ({
   baseTime,
   globalTimer,
   isThisTimer,
-  format = 'compact',
   className = '',
 }: TimerInfoProps) => {
   // If this timer is not active, just show the base time

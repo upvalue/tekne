@@ -1,6 +1,8 @@
 // Search feature type definitions
 
 import type { NoteDataStatus, NoteDataType } from '@/db/types'
+// Result row types are not declared here — derive them from the router
+// outputs (e.g. RouterOutputs['search']['searchLines']) so they can't drift.
 
 // Operator types for the search query language
 export type TagOperator = { type: 'tag'; value: string }
@@ -10,11 +12,10 @@ export type AgeOperator = { type: 'age'; value: number } // days
 export type StatusOperator = { type: 'status'; value: NoteDataStatus }
 export type HasOperator = { type: 'has'; value: Exclude<NoteDataType, 'tag'> }
 export type DocOperator = { type: 'doc'; value: string } // glob pattern
-export type TextWildcard = 'none' | 'prefix' | 'suffix' | 'exact'
 export type TextOperator = {
   type: 'text'
   value: string
-  wildcard: TextWildcard
+  wildcard: 'none' | 'prefix' | 'suffix' | 'exact'
 }
 
 export type SearchOperator =
@@ -36,37 +37,6 @@ export interface ParseError {
   position: number
   message: string
   token: string
-}
-
-// Result types for search queries
-export interface SearchLineResult {
-  note_title: string
-  line_idx: number
-  content: string
-  time_created: Date
-  tags: string[]
-  has_timer: boolean
-  has_task: boolean
-  task_status: NoteDataStatus | null
-}
-
-export interface SearchAggregateResult {
-  tag: string
-  complete_tasks: number
-  incomplete_tasks: number
-  unset_tasks: number
-  total_time_seconds: number
-  pinned_at: Date | null
-  pinned_desc: string | null
-}
-
-// Saved search types
-export interface SavedSearch {
-  id: number
-  name: string
-  query: string
-  created_at: Date
-  updated_at: Date
 }
 
 // View mode for search results

@@ -224,8 +224,6 @@ function RouteComponent() {
         return
       }
       docDirty.current = true
-      // Don't try to save if less than five seconds have elapsed
-      // saveDocument();
     })
 
     return () => {

@@ -11,7 +11,7 @@ import {
   type Extension,
 } from '@codemirror/state'
 import { type ZLine } from '@/docs/schema'
-import { useAtom, useAtomValue, useSetAtom, useStore } from 'jotai'
+import { useAtom, useSetAtom, useStore } from 'jotai'
 import {
   docAtom,
   focusedLineAtom,
@@ -148,7 +148,7 @@ export const useCodeMirror = (lineInfo: LineWithIdx) => {
         const idx = getLineIdx()
         const line = store.get(docAtom).children[idx]
         if (!line) return ''
-        if (line.collapsed) return ' + collasped lines'
+        if (line.collapsed) return ' + collapsed lines'
         return 'The world is your canvas'
       },
       (view) => {

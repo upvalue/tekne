@@ -170,7 +170,6 @@ export const ELine = (lineInfo: ELineProps) => {
     return `editor-line-${color}`
   }
 
-  // Disabled for now, experiment
   const lineIsHeader =
     line.mdContent.startsWith('### ') ||
     line.mdContent.startsWith('## ') ||

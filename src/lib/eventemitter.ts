@@ -1,4 +1,4 @@
-import { useEffect, useRef, useMemo } from 'react'
+import { useEffect, useRef } from 'react'
 
 export class TypedEventEmitter<TEvents extends Record<string, any>> {
   private listeners = new Map<keyof TEvents, Set<(data: any) => void>>()
@@ -52,45 +52,10 @@ export class TypedEventEmitter<TEvents extends Record<string, any>> {
     }
   }
 
-  once<K extends keyof TEvents>(
-    event: K,
-    listener: TEvents[K] extends undefined
-      ? () => void
-      : (data: TEvents[K]) => void
-  ): () => void {
-    const wrapper = (data: any) => {
-      this.off(event, wrapper as any)
-      ;(listener as any)(data)
-    }
-
-    return this.on(event, wrapper as any)
-  }
-
-  removeAllListeners(event?: keyof TEvents): void {
-    if (event) {
-      this.listeners.delete(event)
-    } else {
-      this.listeners.clear()
-    }
-  }
-
   listenerCount(event: keyof TEvents): number {
     const listenersSet = this.listeners.get(event)
     return listenersSet ? listenersSet.size : 0
   }
-}
-
-// Hook: useEventEmitter
-export function useEventEmitter<
-  TEvents extends Record<string, any>,
->(): TypedEventEmitter<TEvents> {
-  const emitterRef = useRef<TypedEventEmitter<TEvents> | null>(null)
-
-  if (!emitterRef.current) {
-    emitterRef.current = new TypedEventEmitter<TEvents>()
-  }
-
-  return emitterRef.current
 }
 
 // Hook: useEventListener
@@ -120,24 +85,5 @@ export function useEmitterEventListener<
     const unsubscribe = emitter.on(event, wrapper as any)
 
     return unsubscribe
-  }, [emitter, event])
-}
-
-// Hook: useEventCustom (emit helper)
-export function useEvent<
-  TEvents extends Record<string, any>,
-  K extends keyof TEvents,
->(
-  emitter: TypedEventEmitter<TEvents>,
-  event: K
-): TEvents[K] extends undefined ? () => void : (data: TEvents[K]) => void {
-  return useMemo(() => {
-    return ((data?: any) => {
-      if (data !== undefined) {
-        ;(emitter.emit as any)(event, data)
-      } else {
-        ;(emitter.emit as any)(event)
-      }
-    }) as any
   }, [emitter, event])
 }

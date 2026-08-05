@@ -13,7 +13,7 @@ const DocumentSearchContent = () => {
   const kbarState = useKBar((state) => state)
   const query = kbarState.searchQuery || ''
   const [debouncedQuery, setDebouncedQuery] = useState('')
-  const createDocMutation = useCreateDoc({
+  const { mutate: createDoc } = useCreateDoc({
     onSuccess: (name) => {
       navigate({ to: docRoute(name) })
     },
@@ -67,14 +67,14 @@ const DocumentSearchContent = () => {
         name: `Create document titled ${query}`,
         subtitle: 'Create a new document',
         perform: () => {
-          createDocMutation.mutate({ name: query })
+          createDoc({ name: query })
         },
         keywords: `create ${query}`,
       })
     }
 
     return actions
-  }, [searchDocs.data, navigate, query])
+  }, [searchDocs.data, navigate, query, createDoc])
 
   useRegisterActions(actions, [actions])
 

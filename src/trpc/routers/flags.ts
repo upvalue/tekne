@@ -1,5 +1,4 @@
 import { z } from 'zod'
-import { sql } from 'kysely'
 import { t } from '../init'
 
 export const flagsRouter = t.router({
