@@ -20,6 +20,7 @@ import {
 } from './state'
 import { autocompletion } from '@codemirror/autocomplete'
 import { useLineEvent } from './line-editor/cm-events'
+import { baseLineThemeSpec } from './line-visuals'
 import { slashCommandsPlugin } from './line-editor/slash-commands-plugin'
 import { placeholder } from './line-editor/placeholder-plugin'
 import { makeKeymap, toggleCollapse } from './line-editor/line-operations'
@@ -38,14 +39,9 @@ const theme = EditorView.theme(
   // but due to the css-in-js approach in some cases
   // it's challenging
   {
+    ...baseLineThemeSpec,
     '.cm-completionIcon': {
       display: 'none',
-    },
-    '.cm-line': {
-      padding: '0',
-    },
-    '.cm-focused': {
-      outline: 'none',
     },
   },
   { dark: true }

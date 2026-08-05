@@ -1,12 +1,24 @@
-// line-operations.ts - line operations and key bindings
+// line-operations.ts - line operations and key bindings.
+// The document transformations themselves live in line-mutations.ts; this
+// file is the CodeMirror keymap layer that reads editor state, applies a
+// mutation, and requests focus.
 import { keymap, EditorView } from '@codemirror/view'
 import { docAtom, requestFocusLineAtom } from '../state'
 import { undo, redo } from '../undo'
-import { lineMake, type ZDoc } from '@/docs/schema'
+import { type ZDoc } from '@/docs/schema'
 import { codeMirrorKey } from '@/lib/keys'
 import type { useStore } from 'jotai'
 import { getDefaultStore } from 'jotai'
 import { Transaction } from '@codemirror/state'
+import {
+  canIndentLine,
+  dropFirstLine,
+  indentLine,
+  mergeIntoPreviousLine,
+  outdentLine,
+  removeLine,
+  splitLine,
+} from './line-mutations'
 
 /** Delete an entire line by index, moving focus to the previous line.
  *  If it's the last remaining line, clears its content instead. */
@@ -15,24 +27,12 @@ export const deleteLine = (
   store?: ReturnType<typeof useStore>
 ) => {
   const s = store ?? getDefaultStore()
-  const doc = s.get(docAtom)
+  const { doc, focus } = removeLine(s.get(docAtom), lineIdx)
 
-  if (doc.children.length === 1) {
-    s.set(docAtom, (draft: ZDoc) => {
-      draft.children[lineIdx].mdContent = ''
-    })
-    return
+  if (focus) {
+    s.set(requestFocusLineAtom, focus)
   }
-
-  const focusIdx = lineIdx > 0 ? lineIdx - 1 : 0
-  s.set(requestFocusLineAtom, {
-    lineIdx: focusIdx,
-    pos: doc.children[focusIdx]?.mdContent.length ?? 0,
-  })
-
-  s.set(docAtom, (draft: ZDoc) => {
-    draft.children.splice(lineIdx, 1)
-  })
+  s.set(docAtom, doc)
 }
 
 export const toggleCollapse = (
@@ -73,7 +73,6 @@ export const makeKeymap = (
 
   const setRequestFocusLine = (value: { lineIdx: number; pos: number }) =>
     store.set(requestFocusLineAtom, value)
-  const setDoc = (updater: (draft: ZDoc) => void) => store.set(docAtom, updater)
 
   const deleteLineIfEmpty = (view: EditorView) => {
     const doc = getDoc()
@@ -88,37 +87,23 @@ export const makeKeymap = (
 
     if (r.from === 0 && r.to === 0) {
       if (lineIdx === 0) {
-        if (doc.children.length === 1) {
+        const next = dropFirstLine(doc)
+        if (next === null) {
           return false
         }
 
-        setRequestFocusLine({
-          lineIdx: lineIdx,
-          pos: 0,
-        })
-
-        setDoc((draft: ZDoc) => {
-          draft.children = draft.children.slice(1)
-        })
+        setRequestFocusLine({ lineIdx: 0, pos: 0 })
+        store.set(docAtom, next)
         return true
       }
 
-      const prevLine = doc.children[lineIdx - 1]
-
-      const endOfPrevLine = prevLine.mdContent.length
-
-      setRequestFocusLine({
-        lineIdx: lineIdx - 1,
-        pos: endOfPrevLine,
-      })
-
-      setDoc((draft: ZDoc) => {
-        draft.children[lineIdx - 1].mdContent = prevLine.mdContent.concat(
-          state.doc.slice(0, state.doc.length).toString()
-        )
-
-        draft.children.splice(lineIdx, 1)
-      })
+      const merged = mergeIntoPreviousLine(
+        doc,
+        lineIdx,
+        state.doc.slice(0, state.doc.length).toString()
+      )
+      setRequestFocusLine(merged.focus)
+      store.set(docAtom, merged.doc)
       return true
     }
 
@@ -131,19 +116,9 @@ export const makeKeymap = (
       run: () => {
         const doc = getDoc()
         const lineIdx = getLineIdx()
-        if (lineIdx === 0) return false
+        if (!canIndentLine(doc, lineIdx)) return false
 
-        if (
-          lineIdx > 0 &&
-          doc.children[lineIdx].indent > doc.children[lineIdx - 1].indent
-        ) {
-          return false
-        }
-
-        setDoc((draft: ZDoc) => {
-          draft.children[lineIdx].indent += 1
-          draft.children[lineIdx].timeUpdated = new Date().toISOString()
-        })
+        store.set(docAtom, indentLine(doc, lineIdx))
         return true
       },
     },
@@ -158,60 +133,39 @@ export const makeKeymap = (
         const docEnd = state.doc.length
         const currentLineContent = state.doc.toString()
 
+        // Enter on an empty indented line outdents it instead of splitting
         if (
           currentLineContent.trim() === '' &&
           doc.children[lineIdx].indent > 0
         ) {
-          setDoc((draft: ZDoc) => {
-            draft.children[lineIdx].indent = Math.max(
-              0,
-              doc.children[lineIdx].indent - 1
-            )
-          })
+          const outdented = outdentLine(doc, lineIdx)
+          if (outdented) {
+            store.set(docAtom, outdented)
+          }
           return true
         }
 
-        let newLine = ''
+        // The text after the cursor (or after the selection) moves to the
+        // new line; a selection is deleted with the split.
+        const from = selection.main.empty
+          ? selection.main.anchor
+          : selection.main.from
+        const to = selection.main.empty ? from : selection.main.to
+        const remainder = state.doc.slice(to, docEnd).toString()
 
-        if (!selection.main.empty) {
-          const { from, to } = selection.main
-
-          newLine = state.doc.slice(to, docEnd).toString()
-
-          view.dispatch({
-            changes: {
-              from,
-              to: docEnd,
-              insert: '',
-            },
-          })
-        } else {
-          const from = selection.main.anchor
-          newLine = state.doc.slice(from, docEnd).toString()
-
-          view.dispatch({
-            changes: {
-              from,
-              to: docEnd,
-              insert: '',
-            },
-          })
-        }
+        view.dispatch({
+          changes: {
+            from,
+            to: docEnd,
+            insert: '',
+          },
+        })
 
         setRequestFocusLine({
           lineIdx: lineIdx + 1,
           pos: 0,
         })
-        setDoc((draft: ZDoc) => {
-          const newLineObj = {
-            ...lineMake(doc.children[lineIdx].indent),
-            mdContent: newLine,
-          }
-          if (draft.children[lineIdx].collapsed) {
-            delete draft.children[lineIdx].collapsed
-          }
-          draft.children.splice(lineIdx + 1, 0, newLineObj)
-        })
+        store.set(docAtom, splitLine(doc, lineIdx, remainder))
 
         return true
       },
@@ -219,14 +173,11 @@ export const makeKeymap = (
     {
       key: 'Shift-Tab',
       run: () => {
-        const doc = getDoc()
-        const lineIdx = getLineIdx()
-        if (doc.children[lineIdx].indent === 0) {
+        const next = outdentLine(getDoc(), getLineIdx())
+        if (next === null) {
           return false
         }
-        setDoc((draft: ZDoc) => {
-          draft.children[lineIdx].indent -= 1
-        })
+        store.set(docAtom, next)
         return true
       },
     },

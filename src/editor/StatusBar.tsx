@@ -18,6 +18,7 @@ import {
   ClockIcon,
 } from '@heroicons/react/16/solid'
 import { TimerInfo } from './TimerInfo'
+import { formatTimeDisplay } from '@/lib/time'
 import { stopAndSaveTimer } from './timer/timer-controller'
 import { useGlobalKeybinding } from '@/hooks/useGlobalKeybinding'
 
@@ -34,17 +35,6 @@ const LoadingDots = () => {
   }, [])
 
   return <div className="text-sm text-zinc-400">Loading{'.'.repeat(dots)}</div>
-}
-
-const formatTimeDisplay = (seconds: number): string => {
-  const hours = Math.floor(seconds / 3600)
-  const minutes = Math.floor((seconds % 3600) / 60)
-  const secs = seconds % 60
-
-  if (hours > 0) {
-    return `${hours}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
-  }
-  return `${minutes}:${secs.toString().padStart(2, '0')}`
 }
 
 const GoToLineInput = ({

@@ -5,26 +5,24 @@ import { useEffect, useRef } from 'react'
 import { EditorView } from '@codemirror/view'
 import { EditorState } from '@codemirror/state'
 import { syntaxPlugin } from './line-editor/syntax-plugin'
-import { Circle, Pin } from 'lucide-react'
 import { Checkbox } from '@/components/vendor/Checkbox'
 import { ClockIcon } from '@heroicons/react/16/solid'
 import { BadgeButton } from '@/components/vendor/Badge'
 import { formatTimeDisplay } from '@/lib/time'
 import { cn } from '@/lib/utils'
+import {
+  baseLineThemeSpec,
+  checkboxStateProps,
+  INDENT_WIDTH_PIXELS,
+} from './line-visuals'
+import { LineGlyph } from './LineGlyph'
 
-const INDENT_WIDTH_PIXELS = 24
-
-// Minimal theme matching the editor
+// The editor's base line theme plus read-only-specific rules
 const readOnlyTheme = EditorView.theme(
   {
-    '.cm-line': {
-      padding: '0',
-    },
+    ...baseLineThemeSpec,
     '.cm-content': {
       padding: '0',
-    },
-    '&.cm-focused': {
-      outline: 'none',
     },
   },
   { dark: true }
@@ -78,17 +76,11 @@ const ReadOnlyCheckbox = ({
 }: {
   status: 'complete' | 'incomplete' | 'unset'
 }) => {
-  const props = {
-    complete: { checked: true, indeterminate: false },
-    incomplete: { checked: true, indeterminate: true },
-    unset: { checked: false, indeterminate: false },
-  }[status]
-
   return (
     <Checkbox
       className="ml-2 pointer-events-none"
       tabIndex={-1}
-      {...props}
+      {...checkboxStateProps(status)}
       onChange={() => {}}
     />
   )
@@ -109,13 +101,6 @@ const ReadOnlyTimerBadge = ({ time }: { time: number }) => {
       </BadgeButton>
     </div>
   )
-}
-
-const LineIcon = ({ isPinned }: { isPinned: boolean }) => {
-  if (isPinned) {
-    return <Pin width={8} height={8} className="text-zinc-500 shrink-0" />
-  }
-  return <Circle width={8} height={8} className="text-zinc-500 shrink-0" />
 }
 
 export interface ReadOnlyLineProps {
@@ -163,7 +148,10 @@ export const ReadOnlyLine = ({
 
       {/* Line icon (bullet/pin) */}
       <div className="ELine-leading">
-        <LineIcon isPinned={!!datumPinnedAt} />
+        <LineGlyph
+          pinned={!!datumPinnedAt}
+          className="text-zinc-500 shrink-0"
+        />
       </div>
 
       {/* Task checkbox */}

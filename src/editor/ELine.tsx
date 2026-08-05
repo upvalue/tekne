@@ -6,13 +6,14 @@ import {
   showLineNumbersAtom,
 } from './state'
 import { Checkbox } from '@/components/vendor/Checkbox'
-import { Circle, CircleDot, GripVertical, Pin } from 'lucide-react'
+import { GripVertical } from 'lucide-react'
 import { useCodeMirror, type LineWithIdx } from './line-editor'
 import { TimerBadge } from './TimerBadge'
 import { cn } from '@/lib/utils'
 import type { CollapseState } from '@/docs/collapse'
-import type { ZLine } from '@/docs/schema'
 import type { GutterTimestamp } from '@/docs/gutters'
+import { checkboxStateProps, INDENT_WIDTH_PIXELS } from './line-visuals'
+import { LineGlyph } from './LineGlyph'
 import {
   memo,
   useState,
@@ -38,8 +39,6 @@ type ELineProps = LineWithIdx & {
   onEditorInteract: () => void
 }
 
-const INDENT_WIDTH_PIXELS = 24
-
 const cycleCheckboxStatus = (status: 'complete' | 'incomplete' | 'unset') => {
   switch (status) {
     case 'complete':
@@ -49,42 +48,6 @@ const cycleCheckboxStatus = (status: 'complete' | 'incomplete' | 'unset') => {
     case 'unset':
       return 'complete'
   }
-}
-
-const checkboxStatus = (status: 'complete' | 'incomplete' | 'unset') => {
-  switch (status) {
-    case 'complete':
-      return {
-        checked: true,
-        indeterminate: false,
-      }
-    case 'incomplete':
-      return {
-        checked: true,
-        indeterminate: true,
-      }
-    case 'unset':
-      return {
-        checked: false,
-        indeterminate: false,
-      }
-  }
-}
-
-const LineIcon = ({
-  line,
-  collapseState,
-}: {
-  line: ZLine
-  collapseState: CollapseState
-}) => {
-  if (line.datumPinnedAt) {
-    return <Pin width={8} height={8} />
-  }
-  if (collapseState === 'collapse-start') {
-    return <CircleDot width={8} height={8} />
-  }
-  return <Circle width={8} height={8} />
 }
 
 export const Gutter = ({
@@ -235,7 +198,10 @@ const ELineImpl = (lineInfo: ELineProps) => {
       />
       {!lineIsHeader && (
         <div className="ELine-leading">
-          <LineIcon line={line} collapseState={collapseState} />
+          <LineGlyph
+            pinned={!!line.datumPinnedAt}
+            collapseStart={collapseState === 'collapse-start'}
+          />
         </div>
       )}
       {line.datumTaskStatus && (
@@ -243,7 +209,7 @@ const ELineImpl = (lineInfo: ELineProps) => {
           <Checkbox
             className="ml-2"
             tabIndex={-1}
-            {...checkboxStatus(line.datumTaskStatus)}
+            {...checkboxStateProps(line.datumTaskStatus)}
             onChange={() => {
               // TOOD: This pattern repeats itself and could be turned into a hook
               setDoc((draft) => {
