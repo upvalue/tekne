@@ -67,16 +67,16 @@ export const makeKeymap = (
   store: ReturnType<typeof useStore>,
   getLineIdx: () => number
 ) => {
-  let doc = store.get(docAtom)
-  const unsubscribe = store.sub(docAtom, () => {
-    doc = store.get(docAtom)
-  })
+  // Read the document lazily per keystroke instead of mirroring it into a
+  // local via a per-line store subscription.
+  const getDoc = () => store.get(docAtom)
 
   const setRequestFocusLine = (value: { lineIdx: number; pos: number }) =>
     store.set(requestFocusLineAtom, value)
   const setDoc = (updater: (draft: ZDoc) => void) => store.set(docAtom, updater)
 
   const deleteLineIfEmpty = (view: EditorView) => {
+    const doc = getDoc()
     const lineIdx = getLineIdx()
     const { state } = view
     const { selection } = state
@@ -129,6 +129,7 @@ export const makeKeymap = (
     {
       key: 'Tab',
       run: () => {
+        const doc = getDoc()
         const lineIdx = getLineIdx()
         if (lineIdx === 0) return false
 
@@ -149,6 +150,7 @@ export const makeKeymap = (
     {
       key: 'Enter',
       run: (view) => {
+        const doc = getDoc()
         const lineIdx = getLineIdx()
         const { state } = view
         const { selection } = state
@@ -217,6 +219,7 @@ export const makeKeymap = (
     {
       key: 'Shift-Tab',
       run: () => {
+        const doc = getDoc()
         const lineIdx = getLineIdx()
         if (doc.children[lineIdx].indent === 0) {
           return false
@@ -234,6 +237,7 @@ export const makeKeymap = (
     {
       key: 'ArrowUp',
       run: (view) => {
+        const doc = getDoc()
         const lineIdx = getLineIdx()
         const cursorPos = view.state.selection.main.head
 
@@ -252,6 +256,7 @@ export const makeKeymap = (
     {
       key: 'ArrowDown',
       run: (view) => {
+        const doc = getDoc()
         const lineIdx = getLineIdx()
         const cursorPos = view.state.selection.main.head
 
@@ -315,6 +320,5 @@ export const makeKeymap = (
   return {
     keymap: keymapExtension,
     undoRedoHandler,
-    cleanup: unsubscribe,
   }
 }

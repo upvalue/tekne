@@ -44,16 +44,6 @@ type CodemirrorEvents = {
 
 const codemirrorEmitter = new TypedEventEmitter<CodemirrorEvents>()
 
-declare global {
-  interface Window {
-    __codemirrorEmitter: TypedEventEmitter<CodemirrorEvents>
-  }
-}
-
-if (typeof window !== 'undefined') {
-  window.__codemirrorEmitter = codemirrorEmitter
-}
-
 export const useCodemirrorEvent = <K extends keyof CodemirrorEvents>(
   event: K,
   handler: CodemirrorEvents[K] extends undefined

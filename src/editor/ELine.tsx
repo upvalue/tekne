@@ -14,6 +14,7 @@ import type { CollapseState } from '@/docs/collapse'
 import type { ZLine } from '@/docs/schema'
 import type { GutterTimestamp } from '@/docs/gutters'
 import {
+  memo,
   useState,
   type CSSProperties,
   type MouseEvent as ReactMouseEvent,
@@ -136,7 +137,7 @@ export const Gutter = ({
  * components and other functionality that doesn't need to live in
  * the codemirror layer
  */
-export const ELine = (lineInfo: ELineProps) => {
+const ELineImpl = (lineInfo: ELineProps) => {
   const { cmRef, cmView } = useCodeMirror(lineInfo)
   const {
     attributes,
@@ -284,3 +285,11 @@ export const ELine = (lineInfo: ELineProps) => {
     </div>
   )
 }
+
+/**
+ * Memoized so a keystroke in one line doesn't re-render every other line.
+ * Plain shallow comparison: every prop is either a scalar, a stable
+ * callback, or kept referentially stable by the parent (lines via Immer's
+ * structural sharing, timestamps via useStableGutterTimestamps).
+ */
+export const ELine = memo(ELineImpl)

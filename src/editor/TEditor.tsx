@@ -39,7 +39,9 @@ import {
   useSetPanelVisible,
   useSetTagManagerTarget,
 } from '@/hooks/panel-state'
-import { generateGutterTimestamps } from '@/docs/gutters'
+import { useDocumentLineEvents } from './useDocumentLineEvents'
+import { generateGutterTimestamps, type GutterTimestamp } from '@/docs/gutters'
+import type { ZLine } from '@/docs/schema'
 import { generateCollapse } from '@/docs/collapse'
 import { ELine } from './ELine'
 import {
@@ -80,6 +82,28 @@ const getDropEdge = (event: DragOverEvent | DragEndEvent): DropEdge | null => {
 }
 
 const noLineDisplacementStrategy: SortingStrategy = () => null
+
+/**
+ * generateGutterTimestamps rebuilds every timestamp object on each document
+ * change; reuse the previous render's object when the values are unchanged so
+ * ELine's shallow memo sees a stable prop.
+ */
+const useStableGutterTimestamps = (lines: ZLine[]) => {
+  const prevRef = useRef<GutterTimestamp[]>([])
+  return useMemo(() => {
+    const prev = prevRef.current
+    const next = generateGutterTimestamps(lines).map((t, i) => {
+      const p = prev[i]
+      return p &&
+        p.defaultString === t.defaultString &&
+        p.fullString === t.fullString
+        ? p
+        : t
+    })
+    prevRef.current = next
+    return next
+  }, [lines])
+}
 
 const resolveDropTarget = (
   overId: string | null,
@@ -140,6 +164,8 @@ export const TEditor = () => {
   const setPanelVisible = useSetPanelVisible()
   const containerRef = useRef<HTMLDivElement>(null)
   const dragSelectedLineIdsRef = useRef(dragSelectedLineIds)
+
+  useDocumentLineEvents()
   const [activeDragLineId, setActiveDragLineId] = useState<string | null>(null)
   const [dropIntent, setDropIntent] = useState<DropIntent | null>(null)
   const [isLineDragActive, setIsLineDragActive] = useState(false)
@@ -164,9 +190,7 @@ export const TEditor = () => {
   // so that we're not alloc'ing and looping unnecessarily.
   // But for now perf is fine.
 
-  const gutterTimestamps = useMemo(() => {
-    return generateGutterTimestamps(doc.children)
-  }, [doc.children])
+  const gutterTimestamps = useStableGutterTimestamps(doc.children)
 
   const collapsedStates = useMemo(() => {
     return generateCollapse(doc.children)

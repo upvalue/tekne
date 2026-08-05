@@ -16,13 +16,10 @@ import {
   docAtom,
   focusedLineAtom,
   focusedPosAtom,
-  globalTimerAtom,
   requestFocusLineAtom,
-  timerDialogRequestAtom,
 } from './state'
 import { autocompletion } from '@codemirror/autocomplete'
 import { useLineEvent } from './line-editor/cm-events'
-import { cancelTimer } from './timer/timer-controller'
 import { slashCommandsPlugin } from './line-editor/slash-commands-plugin'
 import { placeholder } from './line-editor/placeholder-plugin'
 import { makeKeymap, toggleCollapse } from './line-editor/line-operations'
@@ -89,7 +86,9 @@ export type LineWithIdx = {
 export const useCodeMirror = (lineInfo: LineWithIdx) => {
   const cmRef = useRef<HTMLDivElement>(null)
   const cmView = useRef<EditorView | null>(null)
-  const [, setDoc] = useAtom(docAtom)
+  // useSetAtom: a setter only — subscribing every line to the whole document
+  // here would re-render all N lines on each keystroke.
+  const setDoc = useSetAtom(docAtom)
   const [requestFocusLine, setRequestFocusLine] = useAtom(requestFocusLineAtom)
   const setFocusedLine = useSetAtom(focusedLineAtom)
   const store = useStore()
@@ -102,11 +101,12 @@ export const useCodeMirror = (lineInfo: LineWithIdx) => {
 
   //
   const makeEditor = () => {
-    const {
-      keymap: customKeymap,
-      undoRedoHandler,
-      cleanup: cleanupKeymap,
-    } = makeKeymap(store, getLineIdx)
+    if (!cmRef.current) return
+
+    const { keymap: customKeymap, undoRedoHandler } = makeKeymap(
+      store,
+      getLineIdx
+    )
 
     const updateListener = EditorView.updateListener.of((update) => {
       if (!update.docChanged) {
@@ -200,40 +200,44 @@ export const useCodeMirror = (lineInfo: LineWithIdx) => {
 
     const view = new EditorView({
       state,
-      parent: cmRef.current!,
+      parent: cmRef.current,
     })
 
     cmView.current = view
 
     return () => {
-      cleanupKeymap()
       view.destroy()
+      // Null the ref so nothing (e.g. the focus-request effect) mistakes a
+      // destroyed view for a live one across StrictMode's remount cycle.
+      if (cmView.current === view) {
+        cmView.current = null
+      }
     }
   }
 
   // This handles taking external updates, which might happen if e.g.
   // a user deletes a line, the remaining text is appending to the previous
-  // updates. In this case I've found it best to just destroy and recreate
-  // codemirror.
+  // updates. Depending on the content string (not the props object, whose
+  // identity changes every parent render) means the comparison below only
+  // runs when this line's content actually changed.
+  const mdContent = lineInfo.line.mdContent
   useEffect(() => {
-    if (!cmView.current) return
-    const { line } = lineInfo
-
     const v = cmView.current
+    if (!v) return
 
     // When the document itself is updated, we need to synchronize
     // React state with Codemirror state
-    if (v.state.doc.toString() !== line.mdContent) {
+    if (v.state.doc.toString() !== mdContent) {
       v.dispatch({
         changes: {
           from: 0,
           to: v.state.doc.length,
-          insert: line.mdContent,
+          insert: mdContent,
         },
         annotations: [externalSyncAnnotation.of(true)],
       })
     }
-  }, [lineInfo])
+  }, [mdContent])
 
   /**
    * Focus management.
@@ -242,18 +246,22 @@ export const useCodeMirror = (lineInfo: LineWithIdx) => {
    * line editing operations. This effect determines when that's happened,
    * loops until Codemirror is ready to handle it, and then does so
    */
+  const lineIdx = lineInfo.lineIdx
   useEffect(() => {
-    const { lineIdx } = lineInfo
-
     if (requestFocusLine.lineIdx !== lineIdx) {
       return
     }
+
+    // CodeMirror may not be mounted yet (the editor-creation effect runs
+    // after this one on mount), so retry until it is — and cancel the retry
+    // loop if the line unmounts first.
+    let retry: ReturnType<typeof setTimeout> | null = null
 
     const obtainFocus = () => {
       const view = cmView.current
 
       if (!view) {
-        setTimeout(obtainFocus, 10)
+        retry = setTimeout(obtainFocus, 10)
         return
       }
 
@@ -271,96 +279,25 @@ export const useCodeMirror = (lineInfo: LineWithIdx) => {
     }
 
     obtainFocus()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [requestFocusLine, lineInfo, cmView.current])
+
+    return () => {
+      if (retry !== null) clearTimeout(retry)
+    }
+  }, [requestFocusLine, lineIdx, setRequestFocusLine])
 
   // Sets up new editor on mount
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(makeEditor, [])
 
-  // Line specific events, emitted by the event
-  // emitter. Could probably be moved one level up.
-  useLineEvent('lineTimerToggle', lineInfo.lineIdx, (event) => {
-    const line = store.get(docAtom).children[event.lineIdx]
-    if (!line) return
-
-    if (line.datumTimeSeconds === undefined) {
-      setDoc((draft) => {
-        draft.children[event.lineIdx].datumTimeSeconds = 0
-      })
-      return
-    }
-
-    // Removing an existing timer: confirm when it has recorded data, and
-    // discard (not save) a running timer on this line. The prompt and the
-    // timer transition happen before the state update — never inside the
-    // Immer recipe.
-    if (
-      line.datumTimeSeconds > 0 &&
-      !confirm('Timer has data, do you want to remove it?')
-    ) {
-      return
-    }
-    if (store.get(globalTimerAtom).lineTimeCreated === line.timeCreated) {
-      cancelTimer(store)
-    }
-    setDoc((draft) => {
-      delete draft.children[event.lineIdx].datumTimeSeconds
-    })
-  })
-
-  useLineEvent('lineTimerOpen', lineInfo.lineIdx, (event) => {
-    // Ensure timer exists on the line
-    setDoc((draft) => {
-      if (draft.children[event.lineIdx].datumTimeSeconds === undefined) {
-        draft.children[event.lineIdx].datumTimeSeconds = 0
-      }
-    })
-    // Request opening the timer dialog with the specified mode
-    store.set(timerDialogRequestAtom, {
-      lineIdx: event.lineIdx,
-      mode: event.mode,
-    })
-  })
-
-  useLineEvent('linePinToggle', lineInfo.lineIdx, (event) => {
-    setDoc((draft) => {
-      if (draft.children[event.lineIdx].datumPinnedAt) {
-        delete draft.children[event.lineIdx].datumPinnedAt
-      } else {
-        draft.children[event.lineIdx].datumPinnedAt = new Date().toISOString()
-      }
-    })
-  })
-
-  useLineEvent('lineTaskToggle', lineInfo.lineIdx, (event) => {
-    setDoc((draft) => {
-      if (draft.children[event.lineIdx].datumTaskStatus) {
-        delete draft.children[event.lineIdx].datumTaskStatus
-      } else {
-        draft.children[event.lineIdx].datumTaskStatus = 'unset'
-      }
-    })
-  })
-
-  // Line collapse toggle -- note that this only handles
-  // the slash command, there is also a separate
-  // key binding
+  // Most line events are handled once at document level (see
+  // useDocumentLineEvents); collapse stays here because it needs this
+  // line's CodeMirror view. Note that this only handles the slash
+  // command — there is also a separate key binding.
   useLineEvent('lineCollapseToggle', lineInfo.lineIdx, () => {
     const view = cmView.current
     if (view) {
       toggleCollapse(view, store, lineInfo.lineIdx)
     }
-  })
-
-  useLineEvent('lineColorChange', lineInfo.lineIdx, (event) => {
-    setDoc((draft) => {
-      if (event.color === null) {
-        delete draft.children[event.lineIdx].color
-      } else {
-        draft.children[event.lineIdx].color = event.color
-      }
-    })
   })
 
   return {
