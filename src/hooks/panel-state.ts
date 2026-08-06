@@ -8,6 +8,7 @@
 // consumer to `uiStore`; use them instead of useAtom on the raw atoms.
 
 import { atom, getDefaultStore, useAtom, useSetAtom } from 'jotai'
+import { atomWithStorage } from 'jotai/utils'
 
 /** The single store backing app-level UI atoms, usable outside React too. */
 export const uiStore = getDefaultStore()
@@ -26,6 +27,20 @@ const getDefaultPanelVisible = () =>
 
 export const panelVisibleAtom = atom<boolean>(getDefaultPanelVisible())
 
+/** Narrowest the desktop panel can be dragged (px). */
+export const PANEL_MIN_WIDTH = 320
+
+/** Desktop panel width in px, persisted across sessions. Defaults to the pre-resize 40% split. */
+const getDefaultPanelWidth = () =>
+  typeof window !== 'undefined' ? Math.round(window.innerWidth * 0.4) : 480
+
+export const panelWidthAtom = atomWithStorage<number>(
+  'tekne.panelWidth',
+  getDefaultPanelWidth(),
+  undefined,
+  { getOnInit: true }
+)
+
 /**
  * Tag (without '#') that tag management in the Tools tab should highlight,
  * e.g. after clicking a tag in the editor. Cleared once handled.
@@ -34,6 +49,7 @@ export const tagManagerTargetAtom = atom<string | null>(null)
 
 export const usePanelVisible = () =>
   useAtom(panelVisibleAtom, { store: uiStore })
+export const usePanelWidth = () => useAtom(panelWidthAtom, { store: uiStore })
 export const useSetPanelVisible = () =>
   useSetAtom(panelVisibleAtom, { store: uiStore })
 export const useActivePanelTab = () =>

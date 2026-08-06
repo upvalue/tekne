@@ -2,76 +2,71 @@ import { DevTools } from '@/dev/DevTools'
 import { Help } from './Help'
 import { Search } from './Search'
 import { Tools } from './Tools'
-import {
-  Navbar,
-  NavbarSection,
-  NavbarItem,
-  NavbarLabel,
-} from '@/components/vendor/Navbar'
 import { Wrench, CircleHelp, Database, SearchIcon, Zap, X } from 'lucide-react'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { DocumentOverview } from './DocumentOverview'
-import { useActivePanelTab, useSetPanelVisible } from '@/hooks/panel-state'
+import {
+  useActivePanelTab,
+  useSetPanelVisible,
+  type PanelTab,
+} from '@/hooks/panel-state'
+import { cn } from '@/lib/utils'
+
+const TABS: Array<{
+  id: PanelTab
+  label: string
+  icon: typeof Database
+}> = [
+  { id: 'document', label: 'Document', icon: Database },
+  { id: 'search', label: 'Search', icon: SearchIcon },
+  { id: 'tools', label: 'Tools', icon: Zap },
+  { id: 'devtools', label: 'Dev tools', icon: Wrench },
+  { id: 'help', label: 'Help', icon: CircleHelp },
+]
+
+function RailButton({
+  icon: Icon,
+  label,
+  current,
+  onClick,
+}: {
+  icon: typeof Database
+  label: string
+  current?: boolean
+  onClick: () => void
+}) {
+  return (
+    <div className="relative group">
+      <button
+        onClick={onClick}
+        aria-label={label}
+        aria-current={current ? 'true' : undefined}
+        className={cn(
+          'p-2 rounded transition-colors',
+          current
+            ? 'bg-zinc-700 text-zinc-100'
+            : 'text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200'
+        )}
+      >
+        <Icon className="w-5 h-5" />
+      </button>
+      <div
+        role="tooltip"
+        className="absolute right-full top-1/2 -translate-y-1/2 mr-2 px-2 py-1 rounded bg-zinc-800 text-zinc-100 text-xs whitespace-nowrap shadow-md pointer-events-none opacity-0 transition-opacity delay-150 group-hover:opacity-100 group-focus-within:opacity-100 z-20"
+      >
+        {label}
+      </div>
+    </div>
+  )
+}
 
 export function Panel() {
   const [activeTab, setActiveTab] = useActivePanelTab()
   const setPanelVisible = useSetPanelVisible()
 
   return (
-    <div className="flex flex-col h-[100vh]">
-      <div className="flex items-center border-b border-zinc-800 px-2 py-1 flex-shrink-0">
-        <Navbar className="bg-transparent p-0 h-auto gap-1 flex-1">
-          <NavbarSection>
-            <NavbarItem
-              current={activeTab === 'document'}
-              onClick={() => setActiveTab('document')}
-            >
-              <Database className="w-4 h-4" data-slot="icon" />
-              <NavbarLabel>Document</NavbarLabel>
-            </NavbarItem>
-
-            <NavbarItem
-              current={activeTab === 'search'}
-              onClick={() => setActiveTab('search')}
-            >
-              <SearchIcon className="w-4 h-4" data-slot="icon" />
-              <NavbarLabel>Search</NavbarLabel>
-            </NavbarItem>
-
-            <NavbarItem
-              current={activeTab === 'tools'}
-              onClick={() => setActiveTab('tools')}
-            >
-              <Zap className="w-4 h-4" data-slot="icon" />
-              <NavbarLabel>Tools</NavbarLabel>
-            </NavbarItem>
-
-            <NavbarItem
-              current={activeTab === 'help'}
-              onClick={() => setActiveTab('help')}
-            >
-              <CircleHelp className="w-4 h-4" data-slot="icon" />
-              <NavbarLabel>Help</NavbarLabel>
-            </NavbarItem>
-
-            <NavbarItem
-              current={activeTab === 'devtools'}
-              onClick={() => setActiveTab('devtools')}
-            >
-              <Wrench className="w-4 h-4" data-slot="icon" />
-              <NavbarLabel>Dev</NavbarLabel>
-            </NavbarItem>
-          </NavbarSection>
-        </Navbar>
-        <button
-          onClick={() => setPanelVisible(false)}
-          className="lg:hidden p-1.5 rounded hover:bg-zinc-700 text-zinc-400 hover:text-zinc-200 transition-colors"
-          aria-label="Close panel"
-        >
-          <X className="w-5 h-5" />
-        </button>
-      </div>
-      <div className="flex-1 overflow-auto min-h-0">
+    <div className="flex h-[100vh]">
+      <div className="flex-1 overflow-auto min-w-0">
         <ErrorBoundary title="Panel crashed">
           {activeTab === 'document' && <DocumentOverview />}
           {activeTab === 'search' && <Search />}
@@ -84,6 +79,26 @@ export function Panel() {
           )}
         </ErrorBoundary>
       </div>
+      <nav
+        aria-label="Panel sections"
+        className="flex flex-col items-center gap-1 border-l border-zinc-800 px-1.5 py-2 flex-shrink-0"
+      >
+        <RailButton
+          icon={X}
+          label="Hide panel"
+          onClick={() => setPanelVisible(false)}
+        />
+        <div className="w-5 border-b border-zinc-800 my-1" />
+        {TABS.map(({ id, label, icon }) => (
+          <RailButton
+            key={id}
+            icon={icon}
+            label={label}
+            current={activeTab === id}
+            onClick={() => setActiveTab(id)}
+          />
+        ))}
+      </nav>
     </div>
   )
 }
