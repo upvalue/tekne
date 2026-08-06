@@ -9,5 +9,8 @@ beginning work.
 
 ## Conventions
 
+- docs/ are hand-written human docs, don't alter them
+- agentic docs can go into wiki/
+- `ticket --help` can be used to view and manage tickets
 - Code is grouped by feature (`src/editor`, `src/db`, …) and directionally layered
 - Tests live next to the file they test, not in a separate tests folder.

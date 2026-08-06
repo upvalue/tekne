@@ -24,3 +24,4 @@ count.txt
 /hooks/*
 /.pnpm-ignore
 .agents/skills/playwright-cli/.playwright-cli/
+/AGENTS.local.md
