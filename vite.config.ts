@@ -1,4 +1,5 @@
 import { defineConfig, type Plugin } from 'vite'
+import { configDefaults } from 'vitest/config'
 import viteReact from '@vitejs/plugin-react'
 import { TanStackRouterVite } from '@tanstack/router-plugin/vite'
 import tailwindcss from '@tailwindcss/vite'
@@ -88,8 +89,34 @@ export default defineConfig({
     exclude: ['@electric-sql/pglite'],
   },
   test: {
-    environment: 'jsdom',
-    setupFiles: [],
-    globals: true,
+    projects: [
+      {
+        extends: true,
+        test: {
+          name: 'unit',
+          environment: 'jsdom',
+          setupFiles: [],
+          globals: true,
+          exclude: [...configDefaults.exclude, '**/*.browser.test.*'],
+        },
+      },
+      {
+        // Real-browser tests for things jsdom cannot do, chiefly layout
+        // geometry. Named *.browser.test.tsx, still next to their subject.
+        extends: true,
+        test: {
+          name: 'browser',
+          globals: true,
+          include: ['src/**/*.browser.test.{ts,tsx}'],
+          browser: {
+            enabled: true,
+            provider: 'playwright',
+            headless: true,
+            screenshotFailures: false,
+            instances: [{ browser: 'chromium' }],
+          },
+        },
+      },
+    ],
   },
 })

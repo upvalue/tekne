@@ -20,6 +20,17 @@
   font-family: var(--font-editor);
 }
 
+/*
+  Registered so 1.4em computes against the line element's font size and
+  inherits as a length; descendants with a different font size (the 14px
+  gutter) still see the text line's height, not 1.4 of their own.
+*/
+@property --eline-first-line-height {
+  syntax: '<length>';
+  inherits: true;
+  initial-value: 0px;
+}
+
 .ELine,
 .ReadOnlyLine {
   /*
@@ -56,9 +67,9 @@
   position: relative;
   display: block;
   min-width: 0;
-  min-height: 24px;
+  min-height: var(--eline-first-line-height);
   overflow: visible;
-  line-height: 24px;
+  line-height: var(--eline-first-line-height);
   text-align: right;
   white-space: nowrap;
 }
@@ -128,7 +139,7 @@
   @apply inline-flex items-center justify-center text-zinc-600 hover:text-zinc-300;
   align-self: center;
   width: 24px;
-  min-height: 24px;
+  min-height: var(--eline-first-line-height);
   opacity: 0;
   pointer-events: none;
   cursor: grab;

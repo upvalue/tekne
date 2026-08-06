@@ -89,7 +89,7 @@ const ReadOnlyCheckbox = ({
 // Display-only timer badge - shows time without dialog
 const ReadOnlyTimerBadge = ({ time }: { time: number }) => {
   return (
-    <div className="ml-1">
+    <div className="ml-1 flex">
       <BadgeButton
         className="whitespace-nowrap pointer-events-none"
         badgeClassName="px-[4px] py-[1px]"

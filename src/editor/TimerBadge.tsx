@@ -131,7 +131,9 @@ export const TimerBadge = ({
       }}
     >
       <DialogTrigger asChild>
-        <div className="ml-1">
+        {/* flex, not block: a block wrapper gains a line-height strut taller
+            than the badge, which breaks first-line centering */}
+        <div className="ml-1 flex">
           <BadgeButton
             className="cursor-pointer whitespace-nowrap"
             badgeClassName="px-[4px] py-[1px]"
