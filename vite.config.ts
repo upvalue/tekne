@@ -119,7 +119,11 @@ export default defineConfig({
             provider: 'playwright',
             headless: true,
             screenshotFailures: false,
-            instances: [{ browser: 'chromium' }],
+            // Desktop-size viewport: the default 414px is below the md
+            // breakpoint, where the gutter under test is hidden entirely.
+            instances: [
+              { browser: 'chromium', viewport: { width: 1280, height: 800 } },
+            ],
           },
         },
       },

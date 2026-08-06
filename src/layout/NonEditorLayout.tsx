@@ -1,9 +1,7 @@
-import { GUTTER_WIDTH_PIXELS } from '@/editor/constants'
-
 /**
  * Pads a non editor page (like the not found document) to look like the
- * editor. The gutter padding is an inline style because Tailwind's static
- * extractor can't see a class name built at runtime.
+ * editor. 162px matches GUTTER_WIDTH_PIXELS in editor/constants.ts; it's a
+ * literal here so Tailwind's static extractor can see the class.
  */
 export const NonEditorLayout = ({
   children,
@@ -11,10 +9,7 @@ export const NonEditorLayout = ({
   children: React.ReactNode
 }) => {
   return (
-    <div
-      className="flex flex-col h-full space-y-4 py-4"
-      style={{ paddingInline: GUTTER_WIDTH_PIXELS }}
-    >
+    <div className="flex flex-col h-full space-y-4 py-4 px-4 md:px-[162px]">
       {children}
     </div>
   )

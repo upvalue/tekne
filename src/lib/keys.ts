@@ -1,6 +1,6 @@
 // keys.ts -- Key bindings
 
-import { isMac, modSymbol } from './platform'
+import { isApple, modSymbol } from './platform'
 
 export interface Keybinding {
   /**
@@ -21,7 +21,7 @@ export interface Keybinding {
 }
 
 /** Modifier key name for use in prose/tutorial text (e.g., 'Cmd' on Mac, 'Ctrl' on others) */
-export const modName = isMac ? 'Cmd' : 'Ctrl'
+export const modName = isApple ? 'Cmd' : 'Ctrl'
 
 export const keybindings = {
   documentSearch: {
@@ -86,7 +86,7 @@ export const displayKey = (binding: Keybinding): string =>
         case 'shift':
           return 'Shift'
         case 'alt':
-          return isMac ? '⌥' : 'Alt'
+          return isApple ? '⌥' : 'Alt'
         default:
           return part.length === 1 ? part.toUpperCase() : part
       }
@@ -133,8 +133,8 @@ export const matchesKeybinding = (
 
   return (
     e.key.toLowerCase() === finalKey &&
-    e.metaKey === (usesMod && isMac) &&
-    e.ctrlKey === (mods.has('ctrl') || (usesMod && !isMac)) &&
+    e.metaKey === (usesMod && isApple) &&
+    e.ctrlKey === (mods.has('ctrl') || (usesMod && !isApple)) &&
     e.shiftKey === mods.has('shift') &&
     e.altKey === mods.has('alt')
   )

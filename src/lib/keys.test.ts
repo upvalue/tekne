@@ -7,13 +7,13 @@ import {
   keybindings,
   matchesKeybinding,
 } from './keys'
-import { isMac, modSymbol } from './platform'
+import { isApple, modSymbol } from './platform'
 
 /** A keydown carrying whichever modifier 'mod' means on this platform. */
 const modDown = (key: string, rest: KeyboardEventInit = {}) =>
   new KeyboardEvent('keydown', {
     key,
-    ...(isMac ? { metaKey: true } : { ctrlKey: true }),
+    ...(isApple ? { metaKey: true } : { ctrlKey: true }),
     ...rest,
   })
 

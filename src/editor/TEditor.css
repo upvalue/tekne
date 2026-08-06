@@ -63,6 +63,13 @@
   @apply pr-2;
 }
 
+/* The timestamp/drag-handle gutter assumes a wide viewport; drop it on phones. */
+@media (max-width: 767px) {
+  .ELine-gutter {
+    display: none;
+  }
+}
+
 .ELine-gutter-text {
   position: relative;
   display: block;
@@ -101,6 +108,23 @@
 
 .ELine-focused {
   background-color: color-mix(in srgb, var(--color-sky-400) 12%, transparent);
+}
+
+/* Touch mode: the tap target covering a line; selection without CM focus. */
+.ELine-touch-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  background: transparent;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.ELine-touch-selected {
+  background-color: color-mix(
+    in srgb,
+    var(--color-emerald-400) 14%,
+    transparent
+  );
 }
 
 .ELine-drag-selected {
@@ -156,6 +180,14 @@
 
 .ELine-drag-handle:active {
   cursor: grabbing;
+}
+
+/* No hover on touch devices, so the handle has to be always visible. */
+@media (pointer: coarse) {
+  .ELine-drag-handle {
+    opacity: 1;
+    pointer-events: auto;
+  }
 }
 
 .ELine-drag-handle-selected {

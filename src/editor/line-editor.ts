@@ -26,6 +26,11 @@ import { placeholder } from './line-editor/placeholder-plugin'
 import { makeKeymap, toggleCollapse } from './line-editor/line-operations'
 import { syntaxPlugin } from './line-editor/syntax-plugin'
 import { tagCompletionPlugin } from './line-editor/tag-completion-plugin'
+import { getDisplayMode } from '@/hooks/display-mode'
+import {
+  touchEditingLineIdAtom,
+  touchSelectedLineIdAtom,
+} from './touch/touch-atoms'
 
 /**
  * Annotation used to mark CodeMirror transactions that come from
@@ -254,6 +259,25 @@ export const useCodeMirror = (lineInfo: LineWithIdx) => {
     let retry: ReturnType<typeof setTimeout> | null = null
 
     const obtainFocus = () => {
+      // In touch mode, focusing CodeMirror would raise the software
+      // keyboard, so with no editing session active a focus request from an
+      // operation (delete, undo, drag) is downgraded to a selection update.
+      // During an editing session the request goes through and the session
+      // follows it, so Enter-splits and joins keep the keyboard flowing
+      // across lines like on desktop.
+      if (getDisplayMode() === 'touch') {
+        const line = store.get(docAtom).children[lineIdx]
+        if (line) {
+          if (store.get(touchEditingLineIdAtom) === null) {
+            store.set(touchSelectedLineIdAtom, line.timeCreated)
+            setRequestFocusLine({ lineIdx: -1, pos: 0 })
+            return
+          }
+          store.set(touchEditingLineIdAtom, line.timeCreated)
+          store.set(touchSelectedLineIdAtom, line.timeCreated)
+        }
+      }
+
       const view = cmView.current
 
       if (!view) {

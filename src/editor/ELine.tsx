@@ -1,10 +1,10 @@
-import { useAtomValue, useSetAtom } from 'jotai'
+import { useAtomValue, useSetAtom, useStore } from 'jotai'
 import {
-  docAtom,
   focusedLineAtom,
   commandPaletteOpenAtom,
   showLineNumbersAtom,
 } from './state'
+import { cycleTaskStatus } from './line-ops'
 import { Checkbox } from '@/components/vendor/Checkbox'
 import { GripVertical } from 'lucide-react'
 import { useCodeMirror, type LineWithIdx } from './line-editor'
@@ -37,17 +37,12 @@ type ELineProps = LineWithIdx & {
     lineIdx: number
   ) => void
   onEditorInteract: () => void
-}
-
-const cycleCheckboxStatus = (status: 'complete' | 'incomplete' | 'unset') => {
-  switch (status) {
-    case 'complete':
-      return 'incomplete'
-    case 'incomplete':
-      return 'unset'
-    case 'unset':
-      return 'complete'
-  }
+  /** Touch mode: taps select lines instead of focusing CodeMirror. */
+  touchMode: boolean
+  isTouchSelected: boolean
+  /** No overlay while this line is text-edited, so CodeMirror gets taps. */
+  isTouchEditing: boolean
+  onTouchSelect: (lineIdx: number) => void
 }
 
 export const Gutter = ({
@@ -121,7 +116,7 @@ const ELineImpl = (lineInfo: ELineProps) => {
 
   const { line, timestamp, collapseState } = lineInfo
 
-  const setDoc = useSetAtom(docAtom)
+  const store = useStore()
   const setPaletteOpen = useSetAtom(commandPaletteOpenAtom)
 
   const isFocused = useAtomValue(focusedLineAtom) === lineInfo.lineIdx
@@ -155,9 +150,10 @@ const ELineImpl = (lineInfo: ELineProps) => {
       ref={setNodeRef}
       style={style}
       className={cn(
-        'ELine w-full py-1 flex items-start',
+        'ELine relative w-full py-1 flex items-start',
         collapseState === 'collapsed' && 'hidden',
         isFocused && 'ELine-focused',
+        lineInfo.isTouchSelected && 'ELine-touch-selected',
         lineInfo.isDragSelected && 'ELine-drag-selected',
         lineInfo.isActiveDragLine && 'ELine-active-drag-line',
         isDragging && 'ELine-dragging',
@@ -210,15 +206,7 @@ const ELineImpl = (lineInfo: ELineProps) => {
             className="ml-2"
             tabIndex={-1}
             {...checkboxStateProps(line.datumTaskStatus)}
-            onChange={() => {
-              // TOOD: This pattern repeats itself and could be turned into a hook
-              setDoc((draft) => {
-                draft.children[lineInfo.lineIdx].datumTaskStatus =
-                  cycleCheckboxStatus(
-                    draft.children[lineInfo.lineIdx].datumTaskStatus || 'unset'
-                  )
-              })
-            }}
+            onChange={() => cycleTaskStatus(store, lineInfo.lineIdx)}
           />
         </div>
       )}
@@ -231,7 +219,7 @@ const ELineImpl = (lineInfo: ELineProps) => {
 
       <div
         className={cn(
-          'cm-editor-container w-full ml-2 pr-[138px]',
+          'cm-editor-container w-full ml-2 pr-2 md:pr-[138px]',
           lineIsHeader && `ELine-header-${headerLevel}`
         )}
         ref={cmRef}
@@ -239,6 +227,15 @@ const ELineImpl = (lineInfo: ELineProps) => {
         onPointerDown={lineInfo.onEditorInteract}
         onFocus={lineInfo.onEditorInteract}
       />
+
+      {lineInfo.touchMode && !lineInfo.isTouchEditing && (
+        <button
+          type="button"
+          className="ELine-touch-overlay"
+          aria-label={`Select line ${lineInfo.lineIdx + 1}`}
+          onClick={() => lineInfo.onTouchSelect(lineInfo.lineIdx)}
+        />
+      )}
 
       {shouldRenderPalette && cmView.current && (
         <CommandPalette

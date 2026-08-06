@@ -5,6 +5,8 @@ import { EditorLayout } from './EditorLayout'
 import { TitleBar } from '@/editor/TitleBar'
 import { StatusBar } from '@/editor/StatusBar'
 import { Panel } from '@/panel/Panel'
+import { TouchBar } from '@/editor/touch/TouchBar'
+import { useSyncDisplayMode } from '@/hooks/display-mode'
 
 /**
  * The editor page shell: a (per-document) Jotai store, command palette
@@ -26,19 +28,24 @@ export const EditorShell = ({
   isLoading?: boolean
   /** Editor content rendered below the title and status bars. */
   children?: React.ReactNode
-}) => (
-  <Provider store={store}>
-    <CommandPaletteProvider>
-      <EditorLayout
-        editor={
-          <>
-            <TitleBar title={title} allowTitleEdit={allowTitleEdit} />
-            <StatusBar isLoading={isLoading} />
-            {children}
-          </>
-        }
-        sidepanel={<Panel />}
-      />
-    </CommandPaletteProvider>
-  </Provider>
-)
+}) => {
+  useSyncDisplayMode()
+
+  return (
+    <Provider store={store}>
+      <CommandPaletteProvider>
+        <EditorLayout
+          editor={
+            <>
+              <TitleBar title={title} allowTitleEdit={allowTitleEdit} />
+              <StatusBar isLoading={isLoading} />
+              {children}
+              <TouchBar />
+            </>
+          }
+          sidepanel={<Panel />}
+        />
+      </CommandPaletteProvider>
+    </Provider>
+  )
+}

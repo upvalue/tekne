@@ -25,7 +25,7 @@ import {
   sortableKeyboardCoordinates,
   type SortingStrategy,
 } from '@dnd-kit/sortable'
-import { useAtom, useSetAtom } from 'jotai'
+import { useAtom, useAtomValue, useSetAtom, useStore } from 'jotai'
 
 import { useCodemirrorEvent } from './line-editor'
 import {
@@ -53,6 +53,11 @@ import {
   toggleOutlineBlockSelection,
 } from './outline-selection'
 import { moveSelectedLines, type DropEdge } from './line-reorder'
+import { useDisplayMode } from '@/hooks/display-mode'
+import {
+  touchEditingLineIdAtom,
+  touchSelectedLineIdAtom,
+} from './touch/touch-atoms'
 
 type DropIntent = {
   targetId: string
@@ -166,6 +171,10 @@ export const TEditor = () => {
   const dragSelectedLineIdsRef = useRef(dragSelectedLineIds)
 
   useDocumentLineEvents()
+  const store = useStore()
+  const touchMode = useDisplayMode() === 'touch'
+  const touchSelectedLineId = useAtomValue(touchSelectedLineIdAtom)
+  const touchEditingLineId = useAtomValue(touchEditingLineIdAtom)
   const [activeDragLineId, setActiveDragLineId] = useState<string | null>(null)
   const [dropIntent, setDropIntent] = useState<DropIntent | null>(null)
   const [isLineDragActive, setIsLineDragActive] = useState(false)
@@ -206,6 +215,33 @@ export const TEditor = () => {
     setActivePanelTab('tools')
     setPanelVisible(true)
   })
+
+  const handleTouchSelect = useCallback(
+    (lineIdx: number) => {
+      const line = store.get(docAtom).children[lineIdx]
+      if (!line) return
+
+      // Second tap on the selected line starts editing it; a tap on any
+      // other line moves the selection and ends any editing session.
+      if (store.get(touchSelectedLineIdAtom) === line.timeCreated) {
+        store.set(touchEditingLineIdAtom, line.timeCreated)
+        store.set(requestFocusLineAtom, {
+          lineIdx,
+          pos: line.mdContent.length,
+        })
+        return
+      }
+
+      if (store.get(touchEditingLineIdAtom) !== null) {
+        store.set(touchEditingLineIdAtom, null)
+        if (document.activeElement instanceof HTMLElement) {
+          document.activeElement.blur()
+        }
+      }
+      store.set(touchSelectedLineIdAtom, line.timeCreated)
+    },
+    [store]
+  )
 
   const clearDragSelection = useCallback(() => {
     dragSelectedLineIdsRef.current = []
@@ -390,7 +426,7 @@ export const TEditor = () => {
       >
         <div
           ref={containerRef}
-          className={`max-h-[88vh] overflow-y-auto pb-32 ${
+          className={`max-h-[88dvh] overflow-y-auto pb-32 ${
             dragSelectedLineIds.length > 0 ? 'TEditor-has-drag-selection' : ''
           }`}
         >
@@ -413,6 +449,12 @@ export const TEditor = () => {
               disableTimestampHover={isLineDragActive}
               onDragHandleClick={handleDragHandleClick}
               onEditorInteract={clearDragSelection}
+              touchMode={touchMode}
+              isTouchSelected={
+                touchMode && touchSelectedLineId === l.timeCreated
+              }
+              isTouchEditing={touchMode && touchEditingLineId === l.timeCreated}
+              onTouchSelect={handleTouchSelect}
             />
           ))}
           <EditorBoundaryDropZone

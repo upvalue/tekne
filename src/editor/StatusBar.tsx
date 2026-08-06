@@ -124,7 +124,7 @@ export const StatusBar = ({ isLoading }: { isLoading: boolean }) => {
   }, [errorMessage, setErrorMessage])
 
   return (
-    <div className="StatusBar font-mono w-full h-10 bg-zinc-800 px-[138px] flex items-center justify-between">
+    <div className="StatusBar font-mono w-full h-10 bg-zinc-800 px-4 md:px-[138px] flex items-center justify-between">
       <div className="flex items-center gap-4">
         {isLoading && <LoadingDots />}
         {errorMessage && (

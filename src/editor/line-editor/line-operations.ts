@@ -5,56 +5,28 @@
 import { keymap, EditorView } from '@codemirror/view'
 import { docAtom, requestFocusLineAtom } from '../state'
 import { undo, redo } from '../undo'
-import { type ZDoc } from '@/docs/schema'
 import { codeMirrorKey } from '@/lib/keys'
 import type { useStore } from 'jotai'
-import { getDefaultStore } from 'jotai'
 import { Transaction } from '@codemirror/state'
 import {
-  canIndentLine,
   dropFirstLine,
-  indentLine,
   mergeIntoPreviousLine,
   outdentLine,
-  removeLine,
   splitLine,
 } from './line-mutations'
-
-/** Delete an entire line by index, moving focus to the previous line.
- *  If it's the last remaining line, clears its content instead. */
-export const deleteLine = (
-  lineIdx: number,
-  store?: ReturnType<typeof useStore>
-) => {
-  const s = store ?? getDefaultStore()
-  const { doc, focus } = removeLine(s.get(docAtom), lineIdx)
-
-  if (focus) {
-    s.set(requestFocusLineAtom, focus)
-  }
-  s.set(docAtom, doc)
-}
+import {
+  deleteLine,
+  indentLine as indentLineOp,
+  outdentLine as outdentLineOp,
+  toggleCollapse as toggleCollapseOp,
+} from '../line-ops'
 
 export const toggleCollapse = (
   view: EditorView,
   store: ReturnType<typeof useStore>,
   lineIdx: number
 ) => {
-  const setDoc = (updater: (draft: ZDoc) => void) => store.set(docAtom, updater)
-  const doc = store.get(docAtom)
-
-  const nextLine = doc.children[lineIdx + 1]
-  if (!nextLine || nextLine.indent <= doc.children[lineIdx].indent) {
-    return false
-  }
-
-  setDoc((draft: ZDoc) => {
-    if (draft.children[lineIdx].collapsed) {
-      delete draft.children[lineIdx].collapsed
-    } else {
-      draft.children[lineIdx].collapsed = true
-    }
-  })
+  if (!toggleCollapseOp(store, lineIdx)) return false
 
   view.dispatch({
     annotations: [Transaction.userEvent.of('tekne-lineCollapseToggle')],
@@ -113,14 +85,7 @@ export const makeKeymap = (
   const keymapExtension = keymap.of([
     {
       key: 'Tab',
-      run: () => {
-        const doc = getDoc()
-        const lineIdx = getLineIdx()
-        if (!canIndentLine(doc, lineIdx)) return false
-
-        store.set(docAtom, indentLine(doc, lineIdx))
-        return true
-      },
+      run: () => indentLineOp(store, getLineIdx()),
     },
     {
       key: 'Enter',
@@ -172,14 +137,7 @@ export const makeKeymap = (
     },
     {
       key: 'Shift-Tab',
-      run: () => {
-        const next = outdentLine(getDoc(), getLineIdx())
-        if (next === null) {
-          return false
-        }
-        store.set(docAtom, next)
-        return true
-      },
+      run: () => outdentLineOp(store, getLineIdx()),
     },
     {
       key: 'Backspace',
@@ -238,7 +196,7 @@ export const makeKeymap = (
     {
       key: codeMirrorKey('deleteLine'),
       run: () => {
-        deleteLine(getLineIdx(), store)
+        deleteLine(store, getLineIdx())
         return true
       },
     },

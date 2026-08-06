@@ -3,10 +3,11 @@
 
 import { registerCommands, type Command } from '@/editor/command-registry'
 import { emitCodemirrorEvent } from '@/editor/line-editor/cm-events'
-import { deleteLine } from '@/editor/line-editor/line-operations'
+import { deleteLine } from '@/editor/line-ops'
 import { formatDate, getDocTitle } from '@/lib/utils'
 import { trpcClient } from '@/trpc/client'
 import { openPanelTab, panelVisibleAtom, uiStore } from '@/hooks/panel-state'
+import { setDisplayModeOverride } from '@/hooks/display-mode'
 import { appPath, stripAppBasePath } from '@/lib/app-path'
 
 /** Check if a string is a valid YYYY-MM-DD date */
@@ -164,7 +165,7 @@ const editorCommands: Command[] = [
         description: 'Delete the entire current line',
         execute: ({ lineIdx, store }) => {
           if (lineIdx === null) return
-          deleteLine(lineIdx, store)
+          deleteLine(store, lineIdx)
         },
       },
     ],
@@ -323,6 +324,39 @@ const navigationCommands: Command[] = [
     requiresEditor: false,
     execute: () => {
       uiStore.set(panelVisibleAtom, (v) => !v)
+    },
+  },
+  {
+    id: 'display-mode',
+    name: 'Display mode',
+    description: 'Switch between desktop and touch mode',
+    keywords: ['display', 'touch', 'mobile', 'desktop', 'mode'],
+    requiresEditor: false,
+    subcommands: [
+      {
+        key: 'a',
+        displayKey: 'A',
+        name: 'Auto',
+        description: 'Pick from screen size and pointer type',
+        execute: () => setDisplayModeOverride('auto'),
+      },
+      {
+        key: 'd',
+        displayKey: 'D',
+        name: 'Desktop',
+        description: 'Always use the keyboard-first editor',
+        execute: () => setDisplayModeOverride('desktop'),
+      },
+      {
+        key: 't',
+        displayKey: 'T',
+        name: 'Touch',
+        description: 'Always use touch controls',
+        execute: () => setDisplayModeOverride('touch'),
+      },
+    ],
+    execute: () => {
+      // Parent command doesn't execute directly when subcommands exist
     },
   },
 ]

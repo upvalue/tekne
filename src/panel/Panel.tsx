@@ -75,7 +75,7 @@ export function Panel() {
   const setPanelVisible = useSetPanelVisible()
 
   return (
-    <div className="flex h-[100vh]">
+    <div className="flex h-dvh">
       <div className="flex-1 overflow-auto min-w-0">
         <ErrorBoundary title="Panel crashed">
           {activeTab === 'document' && <DocumentOverview />}
