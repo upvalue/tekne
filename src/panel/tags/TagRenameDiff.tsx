@@ -1,12 +1,30 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import type { RouterOutputs } from '@/trpc/types'
-import { ReadOnlyLine } from '@/editor/ReadOnlyLine'
+import type { ProposedLineChange } from '@/docs/doc-diff'
+import { ChangeRows } from '@/panel/diff/ChangeRows'
 
 type Proposal = RouterOutputs['tags']['renamePropose']
 
-/** Each ReadOnlyLine is a CodeMirror instance -- cap the initial render */
-const INITIAL_LINES_PER_DOC = 30
+/** A tag rename only ever rewrites lines in place -- every row is 'changed'. */
+const toChanges = (doc: Proposal['docs'][number]): ProposedLineChange[] =>
+  doc.lines.map((line) => ({
+    kind: 'changed',
+    before: {
+      mdContent: line.before,
+      indent: line.indent,
+      datumTaskStatus: line.datumTaskStatus,
+      datumTimeSeconds: line.datumTimeSeconds,
+      datumPinnedAt: line.datumPinnedAt,
+    },
+    after: {
+      mdContent: line.after,
+      indent: line.indent,
+      datumTaskStatus: line.datumTaskStatus,
+      datumTimeSeconds: line.datumTimeSeconds,
+      datumPinnedAt: line.datumPinnedAt,
+    },
+  }))
 
 /**
  * Before/after preview of the lines a tag rename/merge would change, one
@@ -15,30 +33,22 @@ const INITIAL_LINES_PER_DOC = 30
  */
 export const TagRenameDiff = ({ proposal }: { proposal: Proposal }) => {
   const [docIdx, setDocIdx] = useState(0)
-  const [showAll, setShowAll] = useState(false)
   const docs = proposal.docs
 
   // A new proposal (name/checkbox change) invalidates the current position
   useEffect(() => {
     setDocIdx(0)
-    setShowAll(false)
   }, [docs])
 
-  if (docs.length === 0) {
+  const doc = docs.length > 0 ? docs[Math.min(docIdx, docs.length - 1)] : null
+  const changes = useMemo(() => (doc ? toChanges(doc) : []), [doc])
+
+  if (!doc) {
     return (
       <div className="flex h-full items-center justify-center rounded-lg border border-zinc-800 text-sm text-zinc-500">
         No occurrences to rewrite
       </div>
     )
-  }
-
-  const doc = docs[Math.min(docIdx, docs.length - 1)]
-  const lines = showAll ? doc.lines : doc.lines.slice(0, INITIAL_LINES_PER_DOC)
-  const hiddenCount = doc.lines.length - lines.length
-
-  const selectDoc = (idx: number) => {
-    setDocIdx(idx)
-    setShowAll(false)
   }
 
   return (
@@ -49,7 +59,7 @@ export const TagRenameDiff = ({ proposal }: { proposal: Proposal }) => {
           title="Previous document"
           className="rounded p-1 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200 disabled:opacity-30 disabled:hover:bg-transparent"
           disabled={docIdx === 0}
-          onClick={() => selectDoc(docIdx - 1)}
+          onClick={() => setDocIdx(docIdx - 1)}
         >
           <ChevronLeft className="size-4" />
         </button>
@@ -70,41 +80,13 @@ export const TagRenameDiff = ({ proposal }: { proposal: Proposal }) => {
           title="Next document"
           className="rounded p-1 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200 disabled:opacity-30 disabled:hover:bg-transparent"
           disabled={docIdx >= docs.length - 1}
-          onClick={() => selectDoc(docIdx + 1)}
+          onClick={() => setDocIdx(docIdx + 1)}
         >
           <ChevronRight className="size-4" />
         </button>
       </div>
-      <div className="flex-1 divide-y divide-zinc-800/60 overflow-y-auto">
-        {lines.map((line) => (
-          <div key={line.lineIdx} className="px-2 py-1">
-            <ReadOnlyLine
-              content={line.before}
-              indent={line.indent}
-              datumTaskStatus={line.datumTaskStatus}
-              datumTimeSeconds={line.datumTimeSeconds}
-              datumPinnedAt={line.datumPinnedAt}
-              className="border-l-2 border-red-500/50 bg-red-950/20"
-            />
-            <ReadOnlyLine
-              content={line.after}
-              indent={line.indent}
-              datumTaskStatus={line.datumTaskStatus}
-              datumTimeSeconds={line.datumTimeSeconds}
-              datumPinnedAt={line.datumPinnedAt}
-              className="border-l-2 border-green-500/50 bg-green-950/20"
-            />
-          </div>
-        ))}
-        {hiddenCount > 0 && (
-          <button
-            type="button"
-            className="w-full px-3 py-1.5 text-xs text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200"
-            onClick={() => setShowAll(true)}
-          >
-            Show {hiddenCount} more line{hiddenCount === 1 ? '' : 's'}
-          </button>
-        )}
+      <div className="flex-1 overflow-y-auto">
+        <ChangeRows changes={changes} />
       </div>
     </div>
   )

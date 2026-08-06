@@ -97,7 +97,13 @@ export default defineConfig({
           environment: 'jsdom',
           setupFiles: [],
           globals: true,
-          exclude: [...configDefaults.exclude, '**/*.browser.test.*'],
+          exclude: [
+            ...configDefaults.exclude,
+            '**/*.browser.test.*',
+            // Agent worktrees and the pnpm store carry copies of the repo
+            '.claude/**',
+            '.pnpm-store/**',
+          ],
         },
       },
       {

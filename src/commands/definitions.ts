@@ -192,6 +192,18 @@ const navigationCommands: Command[] = [
     },
   },
   {
+    id: 'agent',
+    name: 'Agent',
+    description: 'Propose document edits with the agent',
+    shortcut: 'a',
+    displayShortcut: 'A',
+    keywords: ['agent', 'ai', 'edit', 'assistant', 'llm', 'propose'],
+    requiresEditor: false,
+    execute: () => {
+      openPanelTab('agent')
+    },
+  },
+  {
     id: 'go',
     name: 'Go to',
     description: 'Navigation commands',

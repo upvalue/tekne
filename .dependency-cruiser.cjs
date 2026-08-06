@@ -14,6 +14,10 @@ const LAYER_ORDER = [
   // code (table of contents, tag renames, validation, the tutorial doc).
   'docs',
 
+  // The document-edit agent: edit operations, prompt building, and the pi
+  // agent session. Pure of UI; the server relay lives in src/server.
+  'agent',
+
   // Data: database setup, migrations, and row types; the search query parser.
   'db',
   'search',

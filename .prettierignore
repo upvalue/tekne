@@ -20,4 +20,7 @@ src/documentation/manifest.json
 # Vendored agent skills
 .agents
 
+# Agent session state and worktrees
+.claude
+
 pnpm-lock.yaml

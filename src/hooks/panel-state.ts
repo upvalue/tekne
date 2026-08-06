@@ -13,7 +13,13 @@ import { atomWithStorage } from 'jotai/utils'
 /** The single store backing app-level UI atoms, usable outside React too. */
 export const uiStore = getDefaultStore()
 
-export type PanelTab = 'document' | 'search' | 'tools' | 'help' | 'devtools'
+export type PanelTab =
+  | 'document'
+  | 'search'
+  | 'tools'
+  | 'agent'
+  | 'help'
+  | 'devtools'
 
 export const activePanelTabAtom = atom<PanelTab>('document')
 

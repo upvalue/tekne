@@ -9,6 +9,7 @@ import { dbServer } from '@/db'
 import { sql } from 'kysely'
 import path from 'node:path'
 import { registerClientRoutes } from './client-routes.js'
+import { registerAgentRoutes } from './agent-stream.js'
 
 import dotenv from 'dotenv'
 
@@ -38,6 +39,11 @@ app.use(
 )
 app.use(cors())
 app.use(compression())
+
+// Before the app-wide json parser: the agent stream route parses its own
+// body with a larger limit (documents can exceed the 100 KB default).
+registerAgentRoutes(app)
+
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 
