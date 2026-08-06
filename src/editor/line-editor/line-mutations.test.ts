@@ -1,4 +1,4 @@
-import { describe, test, expect } from 'vitest'
+import { afterEach, describe, test, expect, vi } from 'vitest'
 import { docMake, lineMake } from '@/docs/schema'
 import {
   canIndentLine,
@@ -16,6 +16,10 @@ const doc = (...lines: Array<[indent: number, content: string]>) =>
 const shape = (d: ReturnType<typeof doc>) =>
   d.children.map((l) => [l.indent, l.mdContent])
 
+afterEach(() => {
+  vi.useRealTimers()
+})
+
 describe('indent', () => {
   test('a line can indent at most one level past its predecessor', () => {
     const d = doc([0, 'first'], [0, 'second'], [1, 'child'])
@@ -26,6 +30,8 @@ describe('indent', () => {
 
   test('indentLine bumps indent and timeUpdated', () => {
     const d = doc([0, 'a'], [0, 'b'])
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date(Date.parse(d.children[1].timeUpdated) + 1))
     const next = indentLine(d, 1)
     expect(shape(next)).toEqual([
       [0, 'a'],
