@@ -17,6 +17,17 @@ describe('diffDocs', () => {
     expect(diffDocs(doc, doc)).toEqual([])
   })
 
+  it('returns nothing for identical docs with duplicate creation timestamps', () => {
+    const sharedTimeCreated = iso(0)
+    const doc = docMake([
+      testLine('A', sharedTimeCreated),
+      testLine('B', sharedTimeCreated),
+      testLine('C', sharedTimeCreated),
+    ])
+
+    expect(diffDocs(doc, doc)).toEqual([])
+  })
+
   it('classifies content and indent changes as changed', () => {
     const base = docMake([testLine('A', iso(0)), testLine('B', iso(1))])
     const draft = docMake([
@@ -85,6 +96,58 @@ describe('diffDocs', () => {
 
     expect(diffDocs(base, draft)).toMatchObject([
       { kind: 'changed', after: { datumTaskStatus: 'complete' } },
+    ])
+  })
+
+  it('aligns lines that share a creation timestamp before comparing them', () => {
+    const sharedTimeCreated = iso(0)
+    const base = docMake([
+      testLine('changed task', sharedTimeCreated, {
+        datumTaskStatus: 'unset',
+      }),
+      testLine('untouched note', sharedTimeCreated),
+      testLine('another untouched note', sharedTimeCreated),
+    ])
+    const draft = docMake([
+      testLine('changed task', sharedTimeCreated, {
+        datumTaskStatus: 'incomplete',
+      }),
+      testLine('untouched note', sharedTimeCreated),
+      testLine('another untouched note', sharedTimeCreated),
+    ])
+
+    expect(diffDocs(base, draft)).toEqual([
+      {
+        kind: 'changed',
+        before: expect.objectContaining({
+          mdContent: 'changed task',
+          datumTaskStatus: 'unset',
+        }),
+        after: expect.objectContaining({
+          mdContent: 'changed task',
+          datumTaskStatus: 'incomplete',
+        }),
+      },
+    ])
+  })
+
+  it('detects a deletion among lines that share a creation timestamp', () => {
+    const sharedTimeCreated = iso(0)
+    const base = docMake([
+      testLine('kept first', sharedTimeCreated),
+      testLine('deleted', sharedTimeCreated),
+      testLine('kept last', sharedTimeCreated),
+    ])
+    const draft = docMake([
+      testLine('kept first', sharedTimeCreated),
+      testLine('kept last', sharedTimeCreated),
+    ])
+
+    expect(diffDocs(base, draft)).toEqual([
+      {
+        kind: 'deleted',
+        before: expect.objectContaining({ mdContent: 'deleted' }),
+      },
     ])
   })
 

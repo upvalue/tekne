@@ -2,7 +2,7 @@ import { docAtom } from '@/editor/state'
 import { treeifyDoc, type ZTreeLine } from '@/docs/doc-analysis'
 import type { ZDoc } from '@/docs/schema'
 import { useAtomValue } from 'jotai'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { trpc } from '@/trpc/client'
 import { useTagManagerTarget } from '@/hooks/panel-state'
 import { TagCard } from './tags/TagCard'
@@ -10,6 +10,13 @@ import { TagRenameDialog } from './tags/TagRenameDialog'
 import { Input } from '@/components/vendor/Input'
 import { ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { CancelStaleTasks } from './tasks/CancelStaleTasks'
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from '@/components/vendor/Tabs'
 
 type ActiveTag = {
   tag: string
@@ -80,8 +87,15 @@ export const Tools = () => {
   const [renameTarget, setRenameTarget] = useState<string | null>(null)
   const [filter, setFilter] = useState('')
   const [highlightTarget, setHighlightTarget] = useTagManagerTarget()
+  const [activeToolTab, setActiveToolTab] = useState<'tasks' | 'tags'>(() =>
+    highlightTarget ? 'tags' : 'tasks'
+  )
 
   const [showArchived, setShowArchived] = useState(false)
+
+  useEffect(() => {
+    if (highlightTarget) setActiveToolTab('tags')
+  }, [highlightTarget])
 
   const tagsList = trpc.tags.list.useQuery()
   const meta = useMemo(() => {
@@ -142,86 +156,106 @@ export const Tools = () => {
   )
 
   return (
-    <div className="space-y-6 p-4">
-      <ToolsSection title="Document Tags">
-        {activeTags.length === 0 ? (
-          <div className="rounded-lg border border-zinc-800 p-4 text-sm text-zinc-500">
-            No active tags in this document
-          </div>
-        ) : (
-          <div className="space-y-2">
-            {activeTags.map((tag) => {
-              // Active-tag names include the leading '#'
-              const name = tag.tag.slice(1)
-              return (
-                <TagCard
-                  key={name}
-                  name={name}
-                  description={meta.get(name)?.description ?? null}
-                  archived={meta.get(name)?.archived}
-                  highlighted={highlightTarget === name}
-                  onRename={(n) => {
-                    setHighlightTarget(null)
-                    setRenameTarget(n)
-                  }}
-                  stats={
-                    <>
-                      <span>{tag.lineCount} lines</span>
-                      {tag.taskCount > 0 && <span>{tag.taskCount} tasks</span>}
-                      {tag.uncheckedTaskCount > 0 && (
-                        <span className="text-amber-300">
-                          {tag.uncheckedTaskCount} unchecked
-                        </span>
-                      )}
-                    </>
-                  }
-                />
-              )
-            })}
-          </div>
-        )}
-      </ToolsSection>
+    <div className="p-4">
+      <Tabs
+        value={activeToolTab}
+        onValueChange={(value) => {
+          if (value === 'tasks' || value === 'tags') setActiveToolTab(value)
+        }}
+      >
+        <TabsList aria-label="Management tools" className="w-full">
+          <TabsTrigger value="tasks">Task Management</TabsTrigger>
+          <TabsTrigger value="tags">Tag Management</TabsTrigger>
+        </TabsList>
 
-      <ToolsSection title="All Tags">
-        <Input
-          aria-label="Filter tags"
-          placeholder="Filter tags…"
-          value={filter}
-          onChange={(e) => setFilter(e.target.value)}
-        />
-        {tagsList.isLoading ? (
-          <div className="rounded-lg border border-zinc-800 p-4 text-sm text-zinc-500">
-            Loading tags…
-          </div>
-        ) : liveTags.length === 0 ? (
-          <div className="rounded-lg border border-zinc-800 p-4 text-sm text-zinc-500">
-            {filter ? 'No tags match the filter' : 'No tags yet'}
-          </div>
-        ) : (
-          <div className="space-y-2">{liveTags.map(renderTag)}</div>
-        )}
+        <TabsContent value="tasks" className="pt-4">
+          <CancelStaleTasks />
+        </TabsContent>
 
-        {archivedTags.length > 0 && (
-          <div className="space-y-2">
-            <button
-              type="button"
-              className="flex w-full items-center gap-1.5 text-xs text-zinc-500 hover:text-zinc-300"
-              onClick={() => setShowArchived((v) => !v)}
-            >
-              <ChevronRight
-                className={cn(
-                  'size-3.5 transition-transform',
-                  showArchived && 'rotate-90'
-                )}
-              />
-              {archivedTags.length} archived
-            </button>
-            {showArchived && (
-              <div className="space-y-2">{archivedTags.map(renderTag)}</div>
+        <TabsContent value="tags" className="space-y-6 pt-4">
+          <ToolsSection title="Document Tags">
+            {activeTags.length === 0 ? (
+              <div className="rounded-lg border border-zinc-800 p-4 text-sm text-zinc-500">
+                No active tags in this document
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {activeTags.map((tag) => {
+                  // Active-tag names include the leading '#'
+                  const name = tag.tag.slice(1)
+                  return (
+                    <TagCard
+                      key={name}
+                      name={name}
+                      description={meta.get(name)?.description ?? null}
+                      archived={meta.get(name)?.archived}
+                      highlighted={highlightTarget === name}
+                      onRename={(n) => {
+                        setHighlightTarget(null)
+                        setRenameTarget(n)
+                      }}
+                      stats={
+                        <>
+                          <span>{tag.lineCount} lines</span>
+                          {tag.taskCount > 0 && (
+                            <span>{tag.taskCount} tasks</span>
+                          )}
+                          {tag.uncheckedTaskCount > 0 && (
+                            <span className="text-amber-300">
+                              {tag.uncheckedTaskCount} unchecked
+                            </span>
+                          )}
+                        </>
+                      }
+                    />
+                  )
+                })}
+              </div>
             )}
-          </div>
-        )}
-      </ToolsSection>
+          </ToolsSection>
+
+          <ToolsSection title="All Tags">
+            <Input
+              aria-label="Filter tags"
+              placeholder="Filter tags…"
+              value={filter}
+              onChange={(e) => setFilter(e.target.value)}
+            />
+            {tagsList.isLoading ? (
+              <div className="rounded-lg border border-zinc-800 p-4 text-sm text-zinc-500">
+                Loading tags…
+              </div>
+            ) : liveTags.length === 0 ? (
+              <div className="rounded-lg border border-zinc-800 p-4 text-sm text-zinc-500">
+                {filter ? 'No tags match the filter' : 'No tags yet'}
+              </div>
+            ) : (
+              <div className="space-y-2">{liveTags.map(renderTag)}</div>
+            )}
+
+            {archivedTags.length > 0 && (
+              <div className="space-y-2">
+                <button
+                  type="button"
+                  className="flex w-full items-center gap-1.5 text-xs text-zinc-500 hover:text-zinc-300"
+                  onClick={() => setShowArchived((v) => !v)}
+                >
+                  <ChevronRight
+                    className={cn(
+                      'size-3.5 transition-transform',
+                      showArchived && 'rotate-90'
+                    )}
+                  />
+                  {archivedTags.length} archived
+                </button>
+                {showArchived && (
+                  <div className="space-y-2">{archivedTags.map(renderTag)}</div>
+                )}
+              </div>
+            )}
+          </ToolsSection>
+        </TabsContent>
+      </Tabs>
 
       <TagRenameDialog
         tag={renameTarget}

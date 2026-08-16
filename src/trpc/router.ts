@@ -6,6 +6,7 @@ import { analysisRouter } from './routers/analysis'
 import { searchRouter } from './routers/search'
 import { flagsRouter } from './routers/flags'
 import { tagsRouter } from './routers/tags'
+import { tasksRouter } from './routers/tasks'
 
 import fs from 'fs'
 import child_process from 'child_process'
@@ -17,6 +18,7 @@ export const appRouter = router({
   search: searchRouter,
   flags: flagsRouter,
   tags: tagsRouter,
+  tasks: tasksRouter,
 
   execHook: proc
     .input(
