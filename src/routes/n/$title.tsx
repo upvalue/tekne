@@ -5,7 +5,7 @@ import { useDocumentSync } from '@/editor/useDocumentSync'
 import { createStore, useAtom } from 'jotai'
 import { trpc } from '@/trpc/client'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
-import { useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import { useCodemirrorEvent } from '@/editor/line-editor'
 import { EditorShell } from '@/layout/EditorShell'
 import { setMainTitle } from '@/lib/title'
@@ -48,8 +48,14 @@ function RouteComponent() {
   useAtom(allTagsAtom)
 
   const createDocMutation = useCreateDoc()
+  const notFoundRedirectedTitle = useRef<string | null>(null)
 
   useEffect(() => {
+    if (!loadDocQuery.error) {
+      notFoundRedirectedTitle.current = null
+      return
+    }
+
     if (loadDocQuery.error && loadDocQuery.error.data?.code === 'NOT_FOUND') {
       // Special case tutorial - auto-create it
       if (title === 'Tutorial') {
@@ -64,6 +70,10 @@ function RouteComponent() {
         return
       }
       // For non-tutorial documents
+      if (notFoundRedirectedTitle.current === title) {
+        return
+      }
+      notFoundRedirectedTitle.current = title
       navigate({
         to: '/doc-not-found/$title',
         params: { title: title },

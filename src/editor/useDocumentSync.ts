@@ -55,7 +55,11 @@ export const useDocumentSync = (
 
   const saveDocument = useCallback(
     async (chainOnSuccess?: () => void) => {
-      if (loadDocQuery.isLoading) {
+      // A failed load leaves the store holding its initial placeholder. There
+      // is no server document to save in that case (most commonly a new daily
+      // note), so let navigation continue without sending the placeholder.
+      if (loadDocQuery.isLoading || !loadDocQuery.data) {
+        if (chainOnSuccess) chainOnSuccess()
         return
       }
 
