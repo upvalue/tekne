@@ -98,6 +98,15 @@
   height: 10px;
 }
 
+.TEditor-scroll-touch {
+  padding-bottom: calc(
+    2.75rem + env(safe-area-inset-bottom) + var(--touch-keyboard-inset, 0px)
+  );
+  scroll-padding-bottom: calc(
+    2.75rem + env(safe-area-inset-bottom) + var(--touch-keyboard-inset, 0px)
+  );
+}
+
 .TEditor-boundary-drop-zone-active {
   height: 18px;
 }

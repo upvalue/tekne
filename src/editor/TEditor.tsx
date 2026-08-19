@@ -426,7 +426,9 @@ export const TEditor = () => {
       >
         <div
           ref={containerRef}
-          className={`max-h-[88dvh] overflow-y-auto pb-32 ${
+          className={`TEditor-scroll h-[calc(100dvh-6.5rem)] overflow-y-auto ${
+            touchMode ? 'TEditor-scroll-touch' : 'pb-4'
+          } ${
             dragSelectedLineIds.length > 0 ? 'TEditor-has-drag-selection' : ''
           }`}
         >

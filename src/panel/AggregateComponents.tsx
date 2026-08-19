@@ -178,14 +178,10 @@ export const ResultCard = ({ tagData }: { tagData: ResultCardData }) => {
 
 export const ResultCardGrid = ({ data }: { data: ResultCardData[] }) => {
   return (
-    <div className="space-y-6">
-      <div className="columns-2 gap-4 space-y-4">
-        {data.map((d) => (
-          <div key={`card-${d.tag}`} className="break-inside-avoid mb-4">
-            <ResultCard tagData={d} />
-          </div>
-        ))}
-      </div>
+    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+      {data.map((d) => (
+        <ResultCard key={`card-${d.tag}`} tagData={d} />
+      ))}
     </div>
   )
 }

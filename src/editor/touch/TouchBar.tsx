@@ -56,6 +56,7 @@ import { undo, redo } from '../undo'
 import { scrollToLine } from '../navigation'
 import { touchEditingLineIdAtom, touchSelectedLineIdAtom } from './touch-atoms'
 import { stepVisibleLine } from './touch-nav'
+import { scrollDeltaToReveal } from './touch-viewport'
 
 const LINE_COLORS = ['yellow', 'blue', 'purple', 'red', 'green'] as const
 
@@ -64,24 +65,76 @@ const LINE_COLORS = ['yellow', 'blue', 'purple', 'red', 'green'] as const
  * Fixed-bottom elements sit at the layout viewport's bottom, which the
  * keyboard covers; translating by this keeps the bar visible above it.
  */
-const useKeyboardInset = () => {
-  const [inset, setInset] = useState(0)
+const useVisualViewport = () => {
+  const [viewport, setViewport] = useState({
+    keyboardInset: 0,
+    height: 0,
+    offsetTop: 0,
+  })
 
   useEffect(() => {
     const vv = window.visualViewport
     if (!vv) return
-    const update = () =>
-      setInset(Math.max(0, window.innerHeight - vv.height - vv.offsetTop))
+    const update = () => {
+      const keyboardInset = Math.max(
+        0,
+        window.innerHeight - vv.height - vv.offsetTop
+      )
+      document.documentElement.style.setProperty(
+        '--touch-keyboard-inset',
+        `${keyboardInset}px`
+      )
+      setViewport({
+        keyboardInset,
+        height: vv.height,
+        offsetTop: vv.offsetTop,
+      })
+    }
     update()
     vv.addEventListener('resize', update)
     vv.addEventListener('scroll', update)
     return () => {
       vv.removeEventListener('resize', update)
       vv.removeEventListener('scroll', update)
+      document.documentElement.style.removeProperty('--touch-keyboard-inset')
     }
   }, [])
 
-  return inset
+  return viewport
+}
+
+const useKeepEditingLineVisible = (
+  editingLineIdx: number,
+  viewport: ReturnType<typeof useVisualViewport>
+) => {
+  useEffect(() => {
+    if (editingLineIdx === -1 || viewport.height === 0) return
+
+    const animationFrame = requestAnimationFrame(() => {
+      const editor = document.querySelector<HTMLElement>('.TEditor-scroll')
+      const lineEditor = document.querySelector<HTMLElement>(
+        `.cm-editor-container[data-line-idx="${editingLineIdx}"]`
+      )
+      const line = lineEditor?.closest<HTMLElement>('.ELine')
+      if (!editor || !line) return
+
+      const editorRect = editor.getBoundingClientRect()
+      const lineRect = line.getBoundingClientRect()
+      const editingBar = document.querySelector<HTMLElement>('.TouchBar')
+      const visible = {
+        top: Math.max(editorRect.top, viewport.offsetTop),
+        bottom: Math.min(
+          editorRect.bottom,
+          editingBar?.getBoundingClientRect().top ??
+            viewport.offsetTop + viewport.height
+        ),
+      }
+      const delta = scrollDeltaToReveal(lineRect, visible)
+      if (delta !== 0) editor.scrollBy({ top: delta })
+    })
+
+    return () => cancelAnimationFrame(animationFrame)
+  }, [editingLineIdx, viewport])
 }
 
 export const TouchButton = ({
@@ -168,7 +221,10 @@ export const TouchBar = () => {
   const selectedId = useAtomValue(touchSelectedLineIdAtom)
   const editingId = useAtomValue(touchEditingLineIdAtom)
   const [sheetOpen, setSheetOpen] = useState(false)
-  const keyboardInset = useKeyboardInset()
+  const viewport = useVisualViewport()
+  const editingLineIdx =
+    editingId === null ? -1 : findLineIndexById(doc.children, editingId)
+  useKeepEditingLineVisible(editingLineIdx, viewport)
 
   if (mode !== 'touch') {
     // Desktop mode on a touch-first device still needs a way back that
@@ -260,7 +316,7 @@ export const TouchBar = () => {
     return (
       <div
         className="TouchBar fixed left-0 right-0 z-40 flex items-center gap-0.5 px-1 bg-zinc-800/95 backdrop-blur border-t border-zinc-700"
-        style={{ bottom: keyboardInset }}
+        style={{ bottom: viewport.keyboardInset }}
       >
         <TouchButton label="Undo" onPress={() => undo(store)}>
           <Undo2 width={20} height={20} />
