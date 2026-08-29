@@ -130,7 +130,11 @@ export const makeKeymap = (
           lineIdx: lineIdx + 1,
           pos: 0,
         })
-        store.set(docAtom, splitLine(doc, lineIdx, remainder))
+        // The dispatch above synchronously updates docAtom through
+        // CodeMirror's update listener. Split that updated document rather
+        // than the snapshot from before dispatch, whose current line still
+        // contains the remainder.
+        store.set(docAtom, splitLine(getDoc(), lineIdx, remainder))
 
         return true
       },
