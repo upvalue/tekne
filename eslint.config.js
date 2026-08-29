@@ -51,7 +51,7 @@ export default tseslint.config(
         {
           patterns: [
             {
-              group: ['@headlessui/react', '@radix-ui/*'],
+              group: ['@headlessui/react', '@base-ui/*'],
               message:
                 'Import UI primitives from @/components/vendor, not the kit directly.',
             },

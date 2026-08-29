@@ -1,4 +1,4 @@
-import * as Headless from '@headlessui/react'
+import { Checkbox as CheckboxPrimitive } from '@base-ui/react/checkbox'
 import clsx from 'clsx'
 import type React from 'react'
 
@@ -24,9 +24,9 @@ export function CheckboxGroup({
 export function CheckboxField({
   className,
   ...props
-}: { className?: string } & Omit<Headless.FieldProps, 'as' | 'className'>) {
+}: React.ComponentPropsWithoutRef<'div'>) {
   return (
-    <Headless.Field
+    <div
       data-slot="field"
       {...props}
       className={clsx(
@@ -58,13 +58,13 @@ const base = [
   // Background color applied to control in dark mode
   'dark:bg-white/5 dark:group-data-checked:bg-(--checkbox-checked-bg)',
   // Border
-  'border border-zinc-950/15 group-data-checked:border-transparent group-data-hover:group-data-checked:border-transparent group-data-hover:border-zinc-950/30 group-data-checked:bg-(--checkbox-checked-border)',
-  'dark:border-white/15 dark:group-data-checked:border-white/5 dark:group-data-hover:group-data-checked:border-white/5 dark:group-data-hover:border-white/30',
+  'border border-zinc-950/15 group-data-checked:border-transparent group-hover:group-data-checked:border-transparent group-hover:border-zinc-950/30 group-data-checked:bg-(--checkbox-checked-border)',
+  'dark:border-white/15 dark:group-data-checked:border-white/5 dark:group-hover:group-data-checked:border-white/5 dark:group-hover:border-white/30',
   // Inner highlight shadow
   'after:absolute after:inset-0 after:rounded-[calc(0.3125rem-1px)] after:shadow-[inset_0_1px_--theme(--color-white/15%)]',
   'dark:after:-inset-px dark:after:hidden dark:after:rounded-[0.3125rem] dark:group-data-checked:after:block',
   // Focus ring
-  'group-data-focus:outline-2 group-data-focus:outline-offset-2 group-data-focus:outline-blue-500',
+  'group-focus-visible:outline-2 group-focus-visible:outline-offset-2 group-focus-visible:outline-blue-500',
   // Disabled state
   'group-data-disabled:opacity-50',
   'group-data-disabled:border-zinc-950/25 group-data-disabled:bg-zinc-950/5 group-data-disabled:[--checkbox-check:var(--color-zinc-950)]/50 group-data-disabled:before:bg-transparent',
@@ -124,9 +124,9 @@ export function Checkbox({
 }: {
   color?: Color
   className?: string
-} & Omit<Headless.CheckboxProps, 'as' | 'className'>) {
+} & Omit<CheckboxPrimitive.Root.Props, 'className'>) {
   return (
-    <Headless.Checkbox
+    <CheckboxPrimitive.Root
       data-slot="control"
       {...props}
       className={clsx(className, 'group inline-flex focus:outline-hidden')}
@@ -155,6 +155,6 @@ export function Checkbox({
           />
         </svg>
       </span>
-    </Headless.Checkbox>
+    </CheckboxPrimitive.Root>
   )
 }

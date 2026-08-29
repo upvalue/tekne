@@ -1,4 +1,4 @@
-import * as Headless from '@headlessui/react'
+import { Input as InputPrimitive } from '@base-ui/react/input'
 import clsx from 'clsx'
 import React, { forwardRef } from 'react'
 
@@ -39,7 +39,7 @@ export const Input = forwardRef(function Input(
       | 'text'
       | 'url'
       | DateType
-  } & Omit<Headless.InputProps, 'as' | 'className'>,
+  } & Omit<InputPrimitive.Props, 'className'>,
   ref: React.ForwardedRef<HTMLInputElement>
 ) {
   return (
@@ -59,7 +59,7 @@ export const Input = forwardRef(function Input(
         'has-data-disabled:opacity-50 has-data-disabled:before:bg-zinc-950/5 has-data-disabled:before:shadow-none',
       ])}
     >
-      <Headless.Input
+      <InputPrimitive
         ref={ref}
         {...props}
         className={clsx([
@@ -84,15 +84,15 @@ export const Input = forwardRef(function Input(
           // Typography
           'text-base/6 text-zinc-950 placeholder:text-zinc-500 sm:text-sm/6 dark:text-white',
           // Border
-          'border border-zinc-950/10 data-hover:border-zinc-950/20 dark:border-white/10 dark:data-hover:border-white/20',
+          'border border-zinc-950/10 hover:border-zinc-950/20 dark:border-white/10 dark:hover:border-white/20',
           // Background color
           'bg-transparent dark:bg-white/5',
           // Hide default focus styles
           'focus:outline-hidden',
           // Invalid state
-          'data-invalid:border-red-500 data-invalid:data-hover:border-red-500 dark:data-invalid:border-red-600 dark:data-invalid:data-hover:border-red-600',
+          'data-invalid:border-red-500 data-invalid:hover:border-red-500 dark:data-invalid:border-red-600 dark:data-invalid:hover:border-red-600',
           // Disabled state
-          'data-disabled:border-zinc-950/20 dark:data-disabled:border-white/15 dark:data-disabled:bg-white/2.5 dark:data-hover:data-disabled:border-white/15',
+          'data-disabled:border-zinc-950/20 dark:data-disabled:border-white/15 dark:data-disabled:bg-white/2.5 dark:hover:data-disabled:border-white/15',
           // System icons
           'dark:scheme-dark',
         ])}

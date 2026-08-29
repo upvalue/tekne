@@ -252,9 +252,7 @@ export const PgliteDevtools = () => {
             </code>
           </div>
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button outline>Manage Databases</Button>
-            </DialogTrigger>
+            <DialogTrigger render={<Button outline>Manage Databases</Button>} />
             <DialogContent className="max-w-2xl">
               <DialogHeader>
                 <DialogTitle>Database Management</DialogTitle>
@@ -380,11 +378,13 @@ export const PgliteDevtools = () => {
               </div>
 
               <DialogFooter>
-                <DialogClose asChild>
-                  <Button outline disabled={isLoading}>
-                    Close
-                  </Button>
-                </DialogClose>
+                <DialogClose
+                  render={
+                    <Button outline disabled={isLoading}>
+                      Close
+                    </Button>
+                  }
+                />
                 <Button onClick={loadDatabases} disabled={isLoading}>
                   {isLoading ? 'Loading...' : 'Refresh'}
                 </Button>

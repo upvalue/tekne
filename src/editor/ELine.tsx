@@ -206,7 +206,7 @@ const ELineImpl = (lineInfo: ELineProps) => {
             className="ml-2"
             tabIndex={-1}
             {...checkboxStateProps(line.datumTaskStatus)}
-            onChange={() => cycleTaskStatus(store, lineInfo.lineIdx)}
+            onCheckedChange={() => cycleTaskStatus(store, lineInfo.lineIdx)}
           />
         </div>
       )}

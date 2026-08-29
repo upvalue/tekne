@@ -93,7 +93,9 @@ export const DocumentEditsReview = ({
                   <Checkbox
                     aria-label={`Include ${document.title}`}
                     checked={selected}
-                    onChange={(checked) => setSelected(document.title, checked)}
+                    onCheckedChange={(checked) =>
+                      setSelected(document.title, checked)
+                    }
                   />
                 )}
                 <button

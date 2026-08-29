@@ -95,7 +95,7 @@ export default defineConfig({
         test: {
           name: 'unit',
           environment: 'jsdom',
-          setupFiles: [],
+          setupFiles: ['./src/test-setup.ts'],
           globals: true,
           exclude: [
             ...configDefaults.exclude,

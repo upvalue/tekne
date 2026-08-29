@@ -4,13 +4,7 @@
 import * as React from 'react'
 import { BadgeButton } from '@/components/vendor/Badge'
 
-import {
-  Dialog,
-  DialogHeader,
-  DialogTrigger,
-  DialogOverlay,
-  DialogTitle,
-} from '@/components/vendor/Dialog'
+import { Dialog, DialogHeader, DialogTitle } from '@/components/vendor/Dialog'
 import type { LineWithIdx } from './line-editor'
 import {
   useDocLine,
@@ -130,154 +124,150 @@ export const TimerBadge = ({
         setOpen(open)
       }}
     >
-      <DialogTrigger asChild>
-        {/* flex, not block: a block wrapper gains a line-height strut taller
-            than the badge, which breaks first-line centering */}
-        <div className="ml-1 flex">
-          <BadgeButton
-            className="cursor-pointer whitespace-nowrap"
-            badgeClassName="px-[4px] py-[1px]"
-            onClick={() => setOpen(true)}
-          >
-            <div className="flex items-center gap-1">
-              <Clock style={{ width: '16px', height: '16px' }} />
-              {(time > 0 || isThisTimerActive) && (
-                <TimerInfo
-                  baseTime={time}
-                  globalTimer={globalTimer}
-                  isThisTimer={isThisTimerActive}
-                  className={isThisTimerActive ? 'text-green-400' : ''}
-                />
-              )}
-              {isThisTimerActive && (
-                <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
-              )}
-            </div>
-          </BadgeButton>
-        </div>
-      </DialogTrigger>
-      <DialogOverlay>
-        <EditorDialogContent className="text-white w-96 h-[500px]">
-          <DialogHeader className="flex flex-col gap-4">
-            <DialogTitle>Timer</DialogTitle>
+      {/* flex, not block: a block wrapper gains a line-height strut taller
+          than the badge, which breaks first-line centering */}
+      <div className="ml-1 flex">
+        <BadgeButton
+          className="cursor-pointer whitespace-nowrap"
+          badgeClassName="px-[4px] py-[1px]"
+          onClick={() => setOpen(true)}
+        >
+          <div className="flex items-center gap-1">
+            <Clock style={{ width: '16px', height: '16px' }} />
+            {(time > 0 || isThisTimerActive) && (
+              <TimerInfo
+                baseTime={time}
+                globalTimer={globalTimer}
+                isThisTimer={isThisTimerActive}
+                className={isThisTimerActive ? 'text-green-400' : ''}
+              />
+            )}
+            {isThisTimerActive && (
+              <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
+            )}
+          </div>
+        </BadgeButton>
+      </div>
+      <EditorDialogContent className="text-white w-96 h-[500px]">
+        <DialogHeader className="flex flex-col gap-4">
+          <DialogTitle>Timer</DialogTitle>
 
-            {/* Mode Selection */}
-            <div className="flex justify-between items-center border-b border-gray-600 pb-2">
-              <div className="flex gap-2">
-                {(['stopwatch', 'countdown', 'manual'] as const).map((mode) => (
-                  <Button
-                    key={mode}
-                    {...(globalTimer.mode === mode
-                      ? { color: 'sky' }
-                      : { outline: true })}
-                    onClick={() => {
-                      handleReset()
-                      setGlobalTimer((prev) => ({ ...prev, mode }))
-                      // Reset countdown input when switching to countdown mode
-                      if (mode === 'countdown') {
-                        setCountdownInput('30m')
-                      }
-                    }}
-                    className="capitalize text-xs px-3 py-1"
-                    disabled={isAnyTimerActive && !isThisTimerActive}
-                  >
-                    {mode}
-                  </Button>
-                ))}
-              </div>
-            </div>
-
-            {/* Time Mode Selection */}
-            <div className="border-b border-gray-600 pb-2">
-              <SwitchField>
-                <div className="flex items-center justify-between">
-                  <div className="flex flex-col">
-                    <span className="text-sm font-medium text-white">
-                      Time Entry Mode
-                    </span>
-                    <span className="text-xs text-gray-400">
-                      {globalTimer.timeMode === 'additive'
-                        ? 'Add to existing time'
-                        : 'Replace existing time'}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <span
-                      className={`text-xs ${globalTimer.timeMode === 'replacement' ? 'text-white' : 'text-gray-400'}`}
-                    >
-                      Replace
-                    </span>
-                    <Switch
-                      checked={globalTimer.timeMode === 'additive'}
-                      onChange={(checked) => {
-                        setGlobalTimer((prev) => ({
-                          ...prev,
-                          timeMode: checked ? 'additive' : 'replacement',
-                        }))
-                      }}
-                      color="sky"
-                    />
-                    <span
-                      className={`text-xs ${globalTimer.timeMode === 'additive' ? 'text-white' : 'text-gray-400'}`}
-                    >
-                      Add
-                    </span>
-                  </div>
-                </div>
-              </SwitchField>
-            </div>
-            <div className="text-lg text-gray-400">{lineContent}</div>
-          </DialogHeader>
-          <div className="text-primary flex flex-col gap-4 h-full overflow-hidden">
-            {/* Timer Content - Fixed height container */}
-            <div className="flex-1 flex flex-col justify-center">
-              {globalTimer.mode === 'stopwatch' && (
-                <TimerModeStopwatch
-                  globalTimer={globalTimer}
-                  isThisTimerActive={isThisTimerActive}
-                  isAnyTimerActive={isAnyTimerActive}
-                  onStart={handleStart}
-                  onStop={handleStop}
-                  onReset={handleReset}
-                />
-              )}
-
-              {globalTimer.mode === 'countdown' && (
-                <TimerModeCountdown
-                  globalTimer={globalTimer}
-                  isThisTimerActive={isThisTimerActive}
-                  isAnyTimerActive={isAnyTimerActive}
-                  countdownInput={countdownInput}
-                  onCountdownInputChange={setCountdownInput}
-                  onStart={handleStart}
-                  onStop={handleStop}
-                  onReset={handleReset}
-                />
-              )}
-
-              {globalTimer.mode === 'manual' && (
-                <TimerModeManual
-                  timeMode={globalTimer.timeMode}
-                  timeInput={timeInput}
-                  onTimeInputChange={setTimeInput}
-                  onSubmit={(duration) => {
-                    setLine((line) => {
-                      if (!line) return
-                      if (globalTimer.timeMode === 'additive') {
-                        line.datumTimeSeconds =
-                          (line.datumTimeSeconds || 0) + duration
-                      } else {
-                        line.datumTimeSeconds = duration
-                      }
-                    })
-                    setOpen(false)
+          {/* Mode Selection */}
+          <div className="flex justify-between items-center border-b border-gray-600 pb-2">
+            <div className="flex gap-2">
+              {(['stopwatch', 'countdown', 'manual'] as const).map((mode) => (
+                <Button
+                  key={mode}
+                  {...(globalTimer.mode === mode
+                    ? { color: 'sky' }
+                    : { outline: true })}
+                  onClick={() => {
+                    handleReset()
+                    setGlobalTimer((prev) => ({ ...prev, mode }))
+                    // Reset countdown input when switching to countdown mode
+                    if (mode === 'countdown') {
+                      setCountdownInput('30m')
+                    }
                   }}
-                />
-              )}
+                  className="capitalize text-xs px-3 py-1"
+                  disabled={isAnyTimerActive && !isThisTimerActive}
+                >
+                  {mode}
+                </Button>
+              ))}
             </div>
           </div>
-        </EditorDialogContent>
-      </DialogOverlay>
+
+          {/* Time Mode Selection */}
+          <div className="border-b border-gray-600 pb-2">
+            <SwitchField>
+              <div className="flex items-center justify-between">
+                <div className="flex flex-col">
+                  <span className="text-sm font-medium text-white">
+                    Time Entry Mode
+                  </span>
+                  <span className="text-xs text-gray-400">
+                    {globalTimer.timeMode === 'additive'
+                      ? 'Add to existing time'
+                      : 'Replace existing time'}
+                  </span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span
+                    className={`text-xs ${globalTimer.timeMode === 'replacement' ? 'text-white' : 'text-gray-400'}`}
+                  >
+                    Replace
+                  </span>
+                  <Switch
+                    checked={globalTimer.timeMode === 'additive'}
+                    onCheckedChange={(checked) => {
+                      setGlobalTimer((prev) => ({
+                        ...prev,
+                        timeMode: checked ? 'additive' : 'replacement',
+                      }))
+                    }}
+                    color="sky"
+                  />
+                  <span
+                    className={`text-xs ${globalTimer.timeMode === 'additive' ? 'text-white' : 'text-gray-400'}`}
+                  >
+                    Add
+                  </span>
+                </div>
+              </div>
+            </SwitchField>
+          </div>
+          <div className="text-lg text-gray-400">{lineContent}</div>
+        </DialogHeader>
+        <div className="text-primary flex flex-col gap-4 h-full overflow-hidden">
+          {/* Timer Content - Fixed height container */}
+          <div className="flex-1 flex flex-col justify-center">
+            {globalTimer.mode === 'stopwatch' && (
+              <TimerModeStopwatch
+                globalTimer={globalTimer}
+                isThisTimerActive={isThisTimerActive}
+                isAnyTimerActive={isAnyTimerActive}
+                onStart={handleStart}
+                onStop={handleStop}
+                onReset={handleReset}
+              />
+            )}
+
+            {globalTimer.mode === 'countdown' && (
+              <TimerModeCountdown
+                globalTimer={globalTimer}
+                isThisTimerActive={isThisTimerActive}
+                isAnyTimerActive={isAnyTimerActive}
+                countdownInput={countdownInput}
+                onCountdownInputChange={setCountdownInput}
+                onStart={handleStart}
+                onStop={handleStop}
+                onReset={handleReset}
+              />
+            )}
+
+            {globalTimer.mode === 'manual' && (
+              <TimerModeManual
+                timeMode={globalTimer.timeMode}
+                timeInput={timeInput}
+                onTimeInputChange={setTimeInput}
+                onSubmit={(duration) => {
+                  setLine((line) => {
+                    if (!line) return
+                    if (globalTimer.timeMode === 'additive') {
+                      line.datumTimeSeconds =
+                        (line.datumTimeSeconds || 0) + duration
+                    } else {
+                      line.datumTimeSeconds = duration
+                    }
+                  })
+                  setOpen(false)
+                }}
+              />
+            )}
+          </div>
+        </div>
+      </EditorDialogContent>
     </Dialog>
   )
 }

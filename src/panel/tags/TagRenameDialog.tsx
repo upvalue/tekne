@@ -124,7 +124,7 @@ export const TagRenameDialog = ({
             <label className="flex items-center gap-2 text-sm text-zinc-300">
               <Checkbox
                 checked={includeChildren}
-                onChange={(checked) => setIncludeChildren(checked)}
+                onCheckedChange={(checked) => setIncludeChildren(checked)}
               />
               Also rename {proposal.childTags.length} child tag
               {proposal.childTags.length === 1 ? '' : 's'} (

@@ -1,4 +1,4 @@
-import * as Headless from '@headlessui/react'
+import { Switch as SwitchPrimitive } from '@base-ui/react/switch'
 import clsx from 'clsx'
 import type React from 'react'
 
@@ -24,9 +24,9 @@ export function SwitchGroup({
 export function SwitchField({
   className,
   ...props
-}: { className?: string } & Omit<Headless.FieldProps, 'as' | 'className'>) {
+}: React.ComponentPropsWithoutRef<'div'>) {
   return (
-    <Headless.Field
+    <div
       data-slot="field"
       {...props}
       className={clsx(
@@ -146,9 +146,9 @@ export function Switch({
 }: {
   color?: Color
   className?: string
-} & Omit<Headless.SwitchProps, 'as' | 'className' | 'children'>) {
+} & Omit<SwitchPrimitive.Root.Props, 'className' | 'children'>) {
   return (
-    <Headless.Switch
+    <SwitchPrimitive.Root
       data-slot="control"
       {...props}
       className={clsx(
@@ -156,7 +156,7 @@ export function Switch({
         // Base styles
         'group relative isolate inline-flex h-6 w-10 cursor-default rounded-full p-[3px] sm:h-5 sm:w-8',
         // Transitions
-        'transition duration-0 ease-in-out data-changing:duration-200',
+        'transition duration-200 ease-in-out',
         // Outline and background color in forced-colors mode so switch is still visible
         'forced-colors:outline forced-colors:[--switch-bg:Highlight] dark:forced-colors:[--switch-bg:Highlight]',
         // Unchecked
@@ -164,10 +164,10 @@ export function Switch({
         // Checked
         'data-checked:bg-(--switch-bg) data-checked:ring-(--switch-bg-ring) dark:data-checked:bg-(--switch-bg) dark:data-checked:ring-(--switch-bg-ring)',
         // Focus
-        'focus:not-data-focus:outline-hidden data-focus:outline-2 data-focus:outline-offset-2 data-focus:outline-blue-500',
+        'focus:not-focus-visible:outline-hidden focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500',
         // Hover
-        'data-hover:ring-black/15 data-hover:data-checked:ring-(--switch-bg-ring)',
-        'dark:data-hover:ring-white/25 dark:data-hover:data-checked:ring-(--switch-bg-ring)',
+        'hover:ring-black/15 hover:data-checked:ring-(--switch-bg-ring)',
+        'dark:hover:ring-white/25 dark:hover:data-checked:ring-(--switch-bg-ring)',
         // Disabled
         'data-disabled:bg-zinc-200 data-disabled:opacity-50 data-disabled:data-checked:bg-zinc-200 data-disabled:data-checked:ring-black/5',
         'dark:data-disabled:bg-white/15 dark:data-disabled:data-checked:bg-white/15 dark:data-disabled:data-checked:ring-white/15',
@@ -193,6 +193,6 @@ export function Switch({
           'group-data-checked:group-data-disabled:bg-white group-data-checked:group-data-disabled:shadow-sm group-data-checked:group-data-disabled:ring-black/5'
         )}
       />
-    </Headless.Switch>
+    </SwitchPrimitive.Root>
   )
 }

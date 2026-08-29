@@ -81,7 +81,7 @@ const ReadOnlyCheckbox = ({
       className="ml-2 pointer-events-none"
       tabIndex={-1}
       {...checkboxStateProps(status)}
-      onChange={() => {}}
+      onCheckedChange={() => {}}
     />
   )
 }

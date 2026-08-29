@@ -45,7 +45,7 @@ export const DocumentDetailsButton = () => {
           <DialogTitle>Document Details</DialogTitle>
         </DialogHeader>
         <DialogDescription>Document details</DialogDescription>
-        <DialogContent>{open && <DocumentDetails />}</DialogContent>
+        {open && <DocumentDetails />}
       </DialogContent>
     </Dialog>
   )
