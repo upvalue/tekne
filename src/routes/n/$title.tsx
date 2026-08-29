@@ -1,4 +1,5 @@
 import { TEditor } from '@/editor/TEditor'
+import { SaveConflictDialog } from '@/editor/SaveConflictDialog'
 import { allTagsAtom } from '@/editor/state'
 import { releaseTimer } from '@/editor/timer/timer-controller'
 import { useDocumentSync } from '@/editor/useDocumentSync'
@@ -42,7 +43,8 @@ function RouteComponent() {
     return () => releaseTimer(store)
   }, [store])
 
-  const { loadDocQuery, saveDocument } = useDocumentSync(title, store)
+  const { loadDocQuery, flushDocument, conflict, resolveConflict } =
+    useDocumentSync(title, store)
 
   // Side effect to cause query to fire
   useAtom(allTagsAtom)
@@ -83,14 +85,17 @@ function RouteComponent() {
   }, [loadDocQuery.error, navigate, title, createDocMutation, utils])
 
   useCodemirrorEvent('internalLinkClick', (event) => {
-    saveDocument(() => {
-      navigate({
-        to: '/open/$title',
-        params: {
-          title: event.link,
-        },
-      })
-    })
+    // A failed flush keeps us on the page; the sync hook already surfaced it
+    flushDocument()
+      .then(() =>
+        navigate({
+          to: '/open/$title',
+          params: {
+            title: event.link,
+          },
+        })
+      )
+      .catch(() => {})
   })
 
   return (
@@ -101,6 +106,10 @@ function RouteComponent() {
       isLoading={loadDocQuery.isLoading}
     >
       {!loadDocQuery.isLoading && <TEditor />}
+      <SaveConflictDialog
+        open={conflict !== null}
+        onResolve={resolveConflict}
+      />
     </EditorShell>
   )
 }

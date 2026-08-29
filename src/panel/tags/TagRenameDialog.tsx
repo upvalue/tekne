@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import { trpc } from '@/trpc/client'
 import { tagNameSchema } from '@/docs/validation'
+import { requestEditorFlush } from '@/lib/app-events'
 import {
   Dialog,
   DialogFooter,
@@ -16,26 +17,6 @@ import { Checkbox } from '@/components/vendor/Checkbox'
 import { TagRenameDiff } from './TagRenameDiff'
 
 const PROPOSE_DEBOUNCE_MS = 400
-
-/**
- * Asks the editor route (if mounted) to flush any unsaved document changes,
- * so a server-side rewrite starts from current content. Resolves via the
- * listener's callback, with a timeout fallback when no editor is mounted.
- */
-const flushPendingSave = () =>
-  new Promise<void>((resolve) => {
-    const fallback = setTimeout(resolve, 1500)
-    window.dispatchEvent(
-      new CustomEvent('tekne:request-save', {
-        detail: {
-          onComplete: () => {
-            clearTimeout(fallback)
-            resolve()
-          },
-        },
-      })
-    )
-  })
 
 /**
  * Rename/merge dialog for a tag. Shows a live diff of every line across all
@@ -93,7 +74,14 @@ export const TagRenameDialog = ({
     if (!inputReady || tag === null) {
       return
     }
-    await flushPendingSave()
+    // The server-side rewrite must start from current content, so a failed
+    // editor save cancels the rename instead of silently proceeding.
+    try {
+      await requestEditorFlush()
+    } catch {
+      toast.error('Could not save the open document — rename cancelled')
+      return
+    }
     try {
       await execute.mutateAsync({ oldName: tag, newName, includeChildren })
       // A full reload is the simplest way to refresh every cache the rename

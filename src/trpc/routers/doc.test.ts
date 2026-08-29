@@ -72,12 +72,12 @@ describe('updateDoc', () => {
   test('bumps the revision and rebuilds derived rows', async () => {
     await noteWith('Doc', ['first'])
 
-    const { revision } = await caller.updateDoc({
+    const result = await caller.updateDoc({
       name: 'Doc',
       doc: docMake([lineMake(0, 'first'), lineMake(1, 'second #tagged')]),
     })
 
-    expect(revision).toBe(1)
+    expect(result).toMatchObject({ status: 'ok', revision: 1 })
     expect(await lineContents('Doc')).toEqual(['first', 'second #tagged'])
     const data = await db
       .selectFrom('note_data')
@@ -87,17 +87,20 @@ describe('updateDoc', () => {
     expect(data).toEqual([{ datum_tag: '#tagged' }])
   })
 
-  test('rejects a stale expectedRevision with CONFLICT', async () => {
+  test('a stale expectedRevision returns the stored document instead of writing', async () => {
     await noteWith('Doc', ['v0'])
     await caller.updateDoc({ name: 'Doc', doc: docMake([lineMake(0, 'v1')]) })
 
-    await expect(
-      caller.updateDoc({
-        name: 'Doc',
-        doc: docMake([lineMake(0, 'stale write')]),
-        expectedRevision: 0,
-      })
-    ).rejects.toMatchObject({ code: 'CONFLICT' })
+    const result = await caller.updateDoc({
+      name: 'Doc',
+      doc: docMake([lineMake(0, 'stale write')]),
+      expectedRevision: 0,
+    })
+
+    expect(result.status).toBe('conflict')
+    if (result.status !== 'conflict') throw new Error('unreachable')
+    expect(result.serverRevision).toBe(1)
+    expect(result.serverDoc.children[0].mdContent).toBe('v1')
 
     const { doc } = await caller.loadDoc({ name: 'Doc' })
     expect(doc.children[0].mdContent).toBe('v1')
@@ -121,11 +124,11 @@ describe('updateDoc', () => {
   })
 
   test('an unconditional write may create the document', async () => {
-    const { revision } = await caller.updateDoc({
+    const result = await caller.updateDoc({
       name: 'New',
       doc: docMake([lineMake(0, 'hello')]),
     })
-    expect(revision).toBe(0)
+    expect(result).toMatchObject({ status: 'ok', revision: 0 })
     expect(await lineContents('New')).toEqual(['hello'])
   })
 })

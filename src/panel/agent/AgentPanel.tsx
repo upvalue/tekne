@@ -25,6 +25,7 @@ import {
   type AgentAvailability,
 } from '@/agent/config'
 import { ChangeRows } from '@/panel/diff/ChangeRows'
+import { requestEditorFlush } from '@/lib/app-events'
 import type { ZDoc } from '@/docs/schema'
 
 /** Above this many serialized bytes, warn that the doc is large (cost). */
@@ -113,7 +114,11 @@ const ActiveSession = ({
       }
     }
     store.set(docAtom, next)
-    window.dispatchEvent(new CustomEvent('tekne:request-save', { detail: {} }))
+    requestEditorFlush().catch(() => {
+      toast.error(
+        'Changes were applied to the editor but could not be saved yet'
+      )
+    })
     onDone()
   }
 

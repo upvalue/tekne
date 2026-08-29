@@ -270,43 +270,52 @@ export const docRouter = t.router({
       z.object({
         name: z.string(),
         doc: zdoc,
-        // When provided, the write is conditional: it fails with CONFLICT if
-        // the stored revision no longer matches (e.g. a bulk rewrite like a
-        // tag rename touched this document since the client last loaded it).
+        // When provided, the write is conditional: if the stored revision no
+        // longer matches (e.g. a bulk rewrite like a tag rename touched this
+        // document since the client last loaded it), nothing is written and
+        // the stored document comes back so the caller can offer resolution.
         expectedRevision: z.number().optional(),
       })
     )
-    .mutation(async ({ input, ctx: { db } }) => {
-      const revision = await db.transaction().execute(async (tx) => {
-        if (input.expectedRevision !== undefined) {
-          // Lock the row so a concurrent conditional write serializes behind
-          // this one instead of both passing the check.
-          const current = await tx
-            .selectFrom('notes')
-            .select('revision')
-            .where('title', '=', input.name)
-            .forUpdate()
-            .executeTakeFirst()
-          if (!current) {
-            // The client expected a specific revision of a document that no
-            // longer exists; recreating it here would resurrect a deletion.
-            throw new TRPCError({
-              code: 'NOT_FOUND',
-              message: `Document "${input.name}" no longer exists (expected revision ${input.expectedRevision})`,
-            })
+    .mutation(
+      async ({
+        input,
+        ctx: { db },
+      }): Promise<
+        | { status: 'ok'; revision: number }
+        | { status: 'conflict'; serverDoc: ZDoc; serverRevision: number }
+      > => {
+        return await db.transaction().execute(async (tx) => {
+          if (input.expectedRevision !== undefined) {
+            // Lock the row so a concurrent conditional write serializes behind
+            // this one instead of both passing the check.
+            const current = await tx
+              .selectFrom('notes')
+              .select(['revision', 'body'])
+              .where('title', '=', input.name)
+              .forUpdate()
+              .executeTakeFirst()
+            if (!current) {
+              // The client expected a specific revision of a document that no
+              // longer exists; recreating it here would resurrect a deletion.
+              throw new TRPCError({
+                code: 'NOT_FOUND',
+                message: `Document "${input.name}" no longer exists (expected revision ${input.expectedRevision})`,
+              })
+            }
+            if (current.revision !== input.expectedRevision) {
+              return {
+                status: 'conflict' as const,
+                serverDoc: current.body,
+                serverRevision: current.revision,
+              }
+            }
           }
-          if (current.revision !== input.expectedRevision) {
-            throw new TRPCError({
-              code: 'CONFLICT',
-              message: `Document "${input.name}" was modified elsewhere (revision ${current.revision}, expected ${input.expectedRevision})`,
-            })
-          }
-        }
-        return await upsertNoteInTx(tx, input.name, input.doc)
-      })
-
-      return { revision }
-    }),
+          const revision = await upsertNoteInTx(tx, input.name, input.doc)
+          return { status: 'ok' as const, revision }
+        })
+      }
+    ),
 
   renameDocPropose: t.procedure
     .input(
