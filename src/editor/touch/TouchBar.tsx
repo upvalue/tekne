@@ -17,6 +17,7 @@ import {
   MoveDown,
   MoveUp,
   Pencil,
+  Pause,
   Pin,
   Play,
   Plus,
@@ -51,7 +52,13 @@ import {
   toggleTask,
   toggleTimer,
 } from '../line-ops'
-import { startTimer, stopAndSaveTimer } from '../timer/timer-controller'
+import {
+  isTimerPaused,
+  pauseTimer,
+  resumeTimer,
+  startTimer,
+  stopAndSaveTimer,
+} from '../timer/timer-controller'
 import { undo, redo } from '../undo'
 import { scrollToLine } from '../navigation'
 import { touchEditingLineIdAtom, touchSelectedLineIdAtom } from './touch-atoms'
@@ -425,7 +432,31 @@ export const TouchBar = () => {
                 }
               }}
             >
-              <Play width={18} height={18} />
+              {timerRunningHere ? (
+                <Square width={18} height={18} />
+              ) : (
+                <Play width={18} height={18} />
+              )}
+            </SheetAction>
+          )}
+          {timerRunningHere && (
+            <SheetAction
+              label={
+                isTimerPaused(globalTimer) ? 'Resume timer' : 'Pause timer'
+              }
+              onPress={() => {
+                if (isTimerPaused(globalTimer)) {
+                  resumeTimer(store)
+                } else {
+                  pauseTimer(store)
+                }
+              }}
+            >
+              {isTimerPaused(globalTimer) ? (
+                <Play width={18} height={18} />
+              ) : (
+                <Pause width={18} height={18} />
+              )}
             </SheetAction>
           )}
           <ColorSwatches

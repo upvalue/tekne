@@ -200,7 +200,7 @@ describe('toggleTimer', () => {
       ...prev,
       isActive: true,
       lineTimeCreated: line.timeCreated,
-      startTime: 12345,
+      runningSince: 12345,
     }))
     toggleTimer(store, 0, () => true)
     expect(store.get(globalTimerAtom).isActive).toBe(false)

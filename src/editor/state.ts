@@ -63,16 +63,21 @@ export type GlobalTimerState = {
   isActive: boolean
   lineTimeCreated: string | null
   lineContent: string | null
+  /** Mode the running timer was started in; meaningless while idle. */
   mode: TimerMode
   timeMode: 'additive' | 'replacement'
-  startTime: number | null
+  /** Elapsed milliseconds from completed run segments (grows on pause). */
+  accumulatedMs: number
+  /** Wall-clock start of the current run segment; null while paused/idle. */
+  runningSince: number | null
   targetDuration: number
 }
 
 /**
  * Global timer state. Deliberately serializable — the interval and the
- * stop/cancel transitions live in timer/timer-controller.ts, and elapsed
- * time derives from startTime rather than a tick counter.
+ * start/pause/stop transitions live in timer/timer-controller.ts, and
+ * elapsed time derives from accumulatedMs + runningSince rather than a
+ * tick counter.
  */
 export const globalTimerAtom = atom<GlobalTimerState>({
   isActive: false,
@@ -80,7 +85,8 @@ export const globalTimerAtom = atom<GlobalTimerState>({
   lineContent: null,
   mode: 'stopwatch',
   timeMode: 'replacement',
-  startTime: null,
+  accumulatedMs: 0,
+  runningSince: null,
   targetDuration: DEFAULT_COUNTDOWN_SECONDS,
 })
 

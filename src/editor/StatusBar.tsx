@@ -9,10 +9,23 @@ import {
   requestFocusLineAtom,
   findLineByTimeCreated,
 } from './state'
-import { X, TriangleAlert, Square, List, Clock } from 'lucide-react'
+import {
+  X,
+  TriangleAlert,
+  Square,
+  List,
+  Clock,
+  Pause,
+  Play,
+} from 'lucide-react'
 import { TimerInfo } from './TimerInfo'
 import { formatTimeDisplay } from '@/lib/time'
-import { stopAndSaveTimer } from './timer/timer-controller'
+import {
+  isTimerPaused,
+  pauseTimer,
+  resumeTimer,
+  stopAndSaveTimer,
+} from './timer/timer-controller'
 import { useGlobalKeybinding } from '@/hooks/useGlobalKeybinding'
 
 const STATUS_BAR_TRUNCATE_LENGTH = 50
@@ -141,14 +154,35 @@ export const StatusBar = ({ isLoading }: { isLoading: boolean }) => {
         )}
         {globalTimer.isActive && (
           <div className="flex items-center gap-2 text-sm">
+            {isTimerPaused(globalTimer) ? (
+              <Play
+                className="w-4 h-4 text-green-400 cursor-pointer hover:text-green-300"
+                onClick={() => resumeTimer(store)}
+              />
+            ) : (
+              <Pause
+                className="w-4 h-4 text-amber-400 cursor-pointer hover:text-amber-300"
+                onClick={() => pauseTimer(store)}
+              />
+            )}
             <Square
               className="w-4 h-4 text-red-400 cursor-pointer hover:text-red-300"
               onClick={() => {
                 stopAndSaveTimer(store)
               }}
             />
-            <div className="flex items-center gap-1 text-green-400">
-              <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
+            <div
+              className={`flex items-center gap-1 ${
+                isTimerPaused(globalTimer) ? 'text-amber-400' : 'text-green-400'
+              }`}
+            >
+              <div
+                className={`w-2 h-2 rounded-full ${
+                  isTimerPaused(globalTimer)
+                    ? 'bg-amber-400'
+                    : 'bg-green-400 animate-pulse'
+                }`}
+              />
               <TimerInfo
                 baseTime={currentLineBaseTime}
                 globalTimer={globalTimer}

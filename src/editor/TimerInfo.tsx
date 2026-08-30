@@ -1,12 +1,22 @@
 import { formatTimeDisplay, renderTime } from '@/lib/time'
 import type { GlobalTimerState } from './state'
+import {
+  isTimerPaused,
+  timerElapsedSeconds,
+  timerRemainingSeconds,
+} from './timer/timer-controller'
 import { useTimerTick } from './timer/useTimerTick'
 
 interface TimerInfoProps {
   baseTime: number
   globalTimer: Pick<
     GlobalTimerState,
-    'startTime' | 'targetDuration' | 'mode' | 'timeMode' | 'isActive'
+    | 'accumulatedMs'
+    | 'runningSince'
+    | 'targetDuration'
+    | 'mode'
+    | 'timeMode'
+    | 'isActive'
   >
   isThisTimer: boolean
   className?: string
@@ -22,8 +32,10 @@ export const TimerInfo = ({
   isThisTimer,
   className = '',
 }: TimerInfoProps) => {
-  // Re-render each second while displaying a running timer
-  useTimerTick(isThisTimer && globalTimer.isActive)
+  // Re-render each second while displaying a running (unpaused) timer
+  useTimerTick(
+    isThisTimer && globalTimer.isActive && !isTimerPaused(globalTimer)
+  )
 
   // If this timer is not active, just show the base time
   if (!isThisTimer) {
@@ -32,16 +44,12 @@ export const TimerInfo = ({
     ) : null
   }
 
-  // Timer is active - calculate current time from startTime
-  let currentSeconds = 0
-  if (globalTimer.startTime) {
-    const elapsed = Math.floor((Date.now() - globalTimer.startTime) / 1000)
-    if (globalTimer.mode === 'stopwatch') {
-      currentSeconds = elapsed
-    } else if (globalTimer.mode === 'countdown') {
-      currentSeconds = Math.max(0, globalTimer.targetDuration - elapsed)
-    }
-  }
+  // Timer is active - current time derives from the controller's math, so
+  // pause is honored here for free
+  const currentSeconds =
+    globalTimer.mode === 'countdown'
+      ? timerRemainingSeconds(globalTimer)
+      : timerElapsedSeconds(globalTimer)
 
   const currentTime = formatTimeDisplay(currentSeconds)
 

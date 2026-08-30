@@ -11,6 +11,7 @@ import {
   globalTimerAtom,
   notificationPermissionAtom,
   timerDialogRequestAtom,
+  type TimerMode,
 } from './state'
 import { Button } from '@/components/vendor/Button'
 import { Switch, SwitchField } from '@/components/vendor/Switch'
@@ -21,6 +22,8 @@ import { EditorDialogContent } from '@/components/EditorDialogContent'
 import { TimerInfo } from './TimerInfo'
 import {
   cancelTimer,
+  pauseTimer,
+  resumeTimer,
   startTimer,
   stopAndSaveTimer,
 } from './timer/timer-controller'
@@ -44,6 +47,10 @@ export const TimerBadge = ({
   const store = useStore()
   const [, setLine] = useDocLine(lineInfo.lineIdx)
   const [globalTimer, setGlobalTimer] = useAtom(globalTimerAtom)
+  // Which tab the dialog shows. Pure view state, deliberately separate from
+  // globalTimer.mode (the running timer's mode): browsing tabs must never
+  // touch the engine, so switching tabs can't reset an active timer.
+  const [viewMode, setViewMode] = React.useState<TimerMode>('stopwatch')
   const [notificationPermission, setNotificationPermission] = useAtom(
     notificationPermissionAtom
   )
@@ -62,18 +69,13 @@ export const TimerBadge = ({
   // Handle programmatic dialog open requests (from command palette)
   React.useEffect(() => {
     if (timerDialogRequest && timerDialogRequest.lineIdx === lineInfo.lineIdx) {
-      // Set the mode and open the dialog
-      setGlobalTimer((prev) => ({ ...prev, mode: timerDialogRequest.mode }))
+      // Select the tab and open the dialog
+      setViewMode(timerDialogRequest.mode)
       setOpen(true)
       // Clear the request
       setTimerDialogRequest(null)
     }
-  }, [
-    timerDialogRequest,
-    lineInfo.lineIdx,
-    setGlobalTimer,
-    setTimerDialogRequest,
-  ])
+  }, [timerDialogRequest, lineInfo.lineIdx, setTimerDialogRequest])
 
   const requestNotificationPermission = React.useCallback(async () => {
     if (notificationPermission === null && 'Notification' in window) {
@@ -83,11 +85,10 @@ export const TimerBadge = ({
   }, [notificationPermission, setNotificationPermission])
 
   const handleStart = React.useCallback(() => {
-    const mode = store.get(globalTimerAtom).mode
-    if (mode === 'manual') return
+    if (viewMode === 'manual') return
 
     let targetDuration = store.get(globalTimerAtom).targetDuration
-    if (mode === 'countdown') {
+    if (viewMode === 'countdown') {
       const parsedDuration = parseTime(countdownInput)
       if (parsedDuration === null) return
       targetDuration = parsedDuration
@@ -95,18 +96,21 @@ export const TimerBadge = ({
 
     startTimer(store, {
       line: lineInfo.line,
-      mode,
+      mode: viewMode,
       timeMode: store.get(globalTimerAtom).timeMode,
       targetDuration,
     })
     setOpen(false)
-  }, [store, countdownInput, lineInfo.line])
+  }, [store, viewMode, countdownInput, lineInfo.line])
 
   const handleStop = React.useCallback(() => {
     stopAndSaveTimer(store)
   }, [store])
 
-  const handleReset = React.useCallback(() => {
+  const handlePause = React.useCallback(() => pauseTimer(store), [store])
+  const handleResume = React.useCallback(() => resumeTimer(store), [store])
+
+  const handleDiscard = React.useCallback(() => {
     if (isThisTimerActive) {
       cancelTimer(store)
     }
@@ -120,6 +124,10 @@ export const TimerBadge = ({
       onOpenChange={(open) => {
         if (open) {
           requestNotificationPermission()
+          // Land on the running timer's tab so its controls are in view
+          if (isThisTimerActive) {
+            setViewMode(globalTimer.mode)
+          }
         }
         setOpen(open)
       }}
@@ -158,19 +166,11 @@ export const TimerBadge = ({
               {(['stopwatch', 'countdown', 'manual'] as const).map((mode) => (
                 <Button
                   key={mode}
-                  {...(globalTimer.mode === mode
+                  {...(viewMode === mode
                     ? { color: 'sky' }
                     : { outline: true })}
-                  onClick={() => {
-                    handleReset()
-                    setGlobalTimer((prev) => ({ ...prev, mode }))
-                    // Reset countdown input when switching to countdown mode
-                    if (mode === 'countdown') {
-                      setCountdownInput('30m')
-                    }
-                  }}
+                  onClick={() => setViewMode(mode)}
                   className="capitalize text-xs px-3 py-1"
-                  disabled={isAnyTimerActive && !isThisTimerActive}
                 >
                   {mode}
                 </Button>
@@ -222,31 +222,39 @@ export const TimerBadge = ({
         <div className="text-primary flex flex-col gap-4 h-full overflow-hidden">
           {/* Timer Content - Fixed height container */}
           <div className="flex-1 flex flex-col justify-center">
-            {globalTimer.mode === 'stopwatch' && (
+            {viewMode === 'stopwatch' && (
               <TimerModeStopwatch
                 globalTimer={globalTimer}
-                isThisTimerActive={isThisTimerActive}
+                isRunningHere={
+                  isThisTimerActive && globalTimer.mode === 'stopwatch'
+                }
                 isAnyTimerActive={isAnyTimerActive}
                 onStart={handleStart}
+                onPause={handlePause}
+                onResume={handleResume}
                 onStop={handleStop}
-                onReset={handleReset}
+                onDiscard={handleDiscard}
               />
             )}
 
-            {globalTimer.mode === 'countdown' && (
+            {viewMode === 'countdown' && (
               <TimerModeCountdown
                 globalTimer={globalTimer}
-                isThisTimerActive={isThisTimerActive}
+                isRunningHere={
+                  isThisTimerActive && globalTimer.mode === 'countdown'
+                }
                 isAnyTimerActive={isAnyTimerActive}
                 countdownInput={countdownInput}
                 onCountdownInputChange={setCountdownInput}
                 onStart={handleStart}
+                onPause={handlePause}
+                onResume={handleResume}
                 onStop={handleStop}
-                onReset={handleReset}
+                onDiscard={handleDiscard}
               />
             )}
 
-            {globalTimer.mode === 'manual' && (
+            {viewMode === 'manual' && (
               <TimerModeManual
                 timeMode={globalTimer.timeMode}
                 timeInput={timeInput}

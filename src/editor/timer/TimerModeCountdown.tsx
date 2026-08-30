@@ -1,32 +1,36 @@
-import { Button } from '@/components/vendor/Button'
 import { Input } from '@/components/vendor/Input'
-import { Play, Square } from 'lucide-react'
-import { formatTimeDisplay } from '@/lib/time'
 import type { GlobalTimerState } from '../state'
-import { timerRemainingSeconds } from './timer-controller'
+import { isTimerPaused, timerRemainingSeconds } from './timer-controller'
 import { parseTime } from './parse-time'
+import { TimerControls, TimerDisplay } from './TimerControls'
 import { useTimerTick } from './useTimerTick'
 
 export const TimerModeCountdown = ({
   globalTimer,
-  isThisTimerActive,
+  isRunningHere,
   isAnyTimerActive,
   countdownInput,
   onCountdownInputChange,
   onStart,
+  onPause,
+  onResume,
   onStop,
-  onReset,
+  onDiscard,
 }: {
   globalTimer: GlobalTimerState
-  isThisTimerActive: boolean
+  /** This line's timer is running in countdown mode. */
+  isRunningHere: boolean
   isAnyTimerActive: boolean
   countdownInput: string
   onCountdownInputChange: (value: string) => void
   onStart: () => void
+  onPause: () => void
+  onResume: () => void
   onStop: () => void
-  onReset: () => void
+  onDiscard: () => void
 }) => {
-  useTimerTick(isThisTimerActive)
+  const isPaused = isRunningHere && isTimerPaused(globalTimer)
+  useTimerTick(isRunningHere && !isPaused)
 
   return (
     <form
@@ -36,19 +40,16 @@ export const TimerModeCountdown = ({
         onStart()
       }}
     >
-      <div className="text-center">
-        <div className="text-4xl font-mono mb-2">
-          {formatTimeDisplay(
-            isThisTimerActive
-              ? timerRemainingSeconds(globalTimer)
-              : parseTime(countdownInput) || globalTimer.targetDuration
-          )}
-        </div>
-        <div className="text-sm text-gray-400">
-          Countdown Mode - Counts down to zero.
-        </div>
-      </div>
-      {!isThisTimerActive && (
+      <TimerDisplay
+        seconds={
+          isRunningHere
+            ? timerRemainingSeconds(globalTimer)
+            : (parseTime(countdownInput) ?? globalTimer.targetDuration)
+        }
+        caption="Countdown Mode - Counts down to zero."
+        isPaused={isPaused}
+      />
+      {!isRunningHere && (
         <div className="space-y-3">
           <label className="text-sm text-gray-400">Set Duration:</label>
           <Input
@@ -67,31 +68,18 @@ export const TimerModeCountdown = ({
           )}
         </div>
       )}
-      <div className="flex gap-2 justify-center">
-        {!isThisTimerActive ? (
-          <Button
-            type="submit"
-            className="flex items-center gap-2"
-            disabled={isAnyTimerActive || parseTime(countdownInput) === null}
-          >
-            <Play className="w-4 h-4" />
-            {isAnyTimerActive ? 'Timer Active Elsewhere' : 'Start'}
-          </Button>
-        ) : (
-          <Button onClick={onStop} className="flex items-center gap-2">
-            <Square className="w-4 h-4" />
-            Stop
-          </Button>
-        )}
-        <Button
-          type="button"
-          onClick={onReset}
-          outline
-          disabled={!isThisTimerActive}
-        >
-          Reset
-        </Button>
-      </div>
+      <TimerControls
+        isRunning={isRunningHere}
+        isPaused={isPaused}
+        startDisabled={isAnyTimerActive || parseTime(countdownInput) === null}
+        startLabel={isAnyTimerActive ? 'Timer Active' : 'Start'}
+        startIsSubmit
+        onStart={onStart}
+        onPause={onPause}
+        onResume={onResume}
+        onStop={onStop}
+        onDiscard={onDiscard}
+      />
     </form>
   )
 }

@@ -1,57 +1,49 @@
-import { Button } from '@/components/vendor/Button'
-import { Play, Square } from 'lucide-react'
-import { formatTimeDisplay } from '@/lib/time'
 import type { GlobalTimerState } from '../state'
-import { timerElapsedSeconds } from './timer-controller'
+import { isTimerPaused, timerElapsedSeconds } from './timer-controller'
+import { TimerControls, TimerDisplay } from './TimerControls'
 import { useTimerTick } from './useTimerTick'
 
 export const TimerModeStopwatch = ({
   globalTimer,
-  isThisTimerActive,
+  isRunningHere,
   isAnyTimerActive,
   onStart,
+  onPause,
+  onResume,
   onStop,
-  onReset,
+  onDiscard,
 }: {
   globalTimer: GlobalTimerState
-  isThisTimerActive: boolean
+  /** This line's timer is running in stopwatch mode. */
+  isRunningHere: boolean
   isAnyTimerActive: boolean
   onStart: () => void
+  onPause: () => void
+  onResume: () => void
   onStop: () => void
-  onReset: () => void
+  onDiscard: () => void
 }) => {
-  useTimerTick(isThisTimerActive)
+  const isPaused = isRunningHere && isTimerPaused(globalTimer)
+  useTimerTick(isRunningHere && !isPaused)
 
   return (
     <div className="space-y-6">
-      <div className="text-center">
-        <div className="text-4xl font-mono mb-2">
-          {formatTimeDisplay(
-            isThisTimerActive ? timerElapsedSeconds(globalTimer) : 0
-          )}
-        </div>
-        <div className="text-sm text-gray-400">Stopwatch Mode - counts up.</div>
-      </div>
-      <div className="flex gap-2 justify-center">
-        {!isThisTimerActive ? (
-          <Button
-            onClick={onStart}
-            className="flex items-center gap-2"
-            disabled={isAnyTimerActive}
-          >
-            <Play className="w-4 h-4" />
-            {isAnyTimerActive ? 'Timer Active Elsewhere' : 'Start'}
-          </Button>
-        ) : (
-          <Button onClick={onStop} className="flex items-center gap-2">
-            <Square className="w-4 h-4" />
-            Stop & Save
-          </Button>
-        )}
-        <Button onClick={onReset} outline disabled={!isThisTimerActive}>
-          Reset
-        </Button>
-      </div>
+      <TimerDisplay
+        seconds={isRunningHere ? timerElapsedSeconds(globalTimer) : 0}
+        caption="Stopwatch Mode - counts up."
+        isPaused={isPaused}
+      />
+      <TimerControls
+        isRunning={isRunningHere}
+        isPaused={isPaused}
+        startDisabled={isAnyTimerActive}
+        startLabel={isAnyTimerActive ? 'Timer Active' : 'Start'}
+        onStart={onStart}
+        onPause={onPause}
+        onResume={onResume}
+        onStop={onStop}
+        onDiscard={onDiscard}
+      />
     </div>
   )
 }

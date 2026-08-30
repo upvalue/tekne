@@ -27,7 +27,8 @@ export const IDLE_TIMER_STATE: GlobalTimerState = {
   lineContent: null,
   mode: 'stopwatch',
   timeMode: 'replacement',
-  startTime: null,
+  accumulatedMs: 0,
+  runningSince: null,
   targetDuration: DEFAULT_COUNTDOWN_SECONDS,
 }
 
@@ -42,17 +43,29 @@ const clearActiveInterval = () => {
   }
 }
 
-/** Seconds elapsed since the timer started. */
+/** Seconds elapsed across all run segments, excluding paused time. */
 export const timerElapsedSeconds = (timer: {
-  startTime: number | null
+  accumulatedMs: number
+  runningSince: number | null
 }): number =>
-  timer.startTime ? Math.floor((Date.now() - timer.startTime) / 1000) : 0
+  Math.floor(
+    (timer.accumulatedMs +
+      (timer.runningSince !== null ? Date.now() - timer.runningSince : 0)) /
+      1000
+  )
 
 /** Seconds remaining on a countdown timer. */
 export const timerRemainingSeconds = (timer: {
-  startTime: number | null
+  accumulatedMs: number
+  runningSince: number | null
   targetDuration: number
 }): number => Math.max(0, timer.targetDuration - timerElapsedSeconds(timer))
+
+/** True while a timer exists but is not accruing time. */
+export const isTimerPaused = (timer: {
+  isActive: boolean
+  runningSince: number | null
+}): boolean => timer.isActive && timer.runningSince === null
 
 const execTimerHook = (
   store: EditorStore,
@@ -114,14 +127,16 @@ export const startTimer = (
     lineContent: args.line.mdContent,
     mode: args.mode,
     timeMode: args.timeMode,
-    startTime: Date.now(),
+    accumulatedMs: 0,
+    runningSince: Date.now(),
     targetDuration: args.targetDuration,
   })
 
   execTimerHook(store, 'timer-start')
 
   // The interval exists only to detect countdown completion; elapsed-time
-  // display derives from startTime and ticks locally in the components.
+  // display derives from accumulatedMs/runningSince and ticks locally in
+  // the components.
   if (args.mode === 'countdown') {
     activeInterval = setInterval(() => {
       const timer = store.get(globalTimerAtom)
@@ -139,6 +154,28 @@ export const startTimer = (
       }
     }, 1000)
   }
+}
+
+/**
+ * Pause the running timer: fold the current run segment into accumulatedMs.
+ * Elapsed time stays derived, so pausing is drift-free and the countdown
+ * completion check simply stops advancing.
+ */
+export const pauseTimer = (store: EditorStore): void => {
+  const timer = store.get(globalTimerAtom)
+  if (!timer.isActive || timer.runningSince === null) return
+  store.set(globalTimerAtom, {
+    ...timer,
+    accumulatedMs: timer.accumulatedMs + (Date.now() - timer.runningSince),
+    runningSince: null,
+  })
+}
+
+/** Resume a paused timer by opening a new run segment. */
+export const resumeTimer = (store: EditorStore): void => {
+  const timer = store.get(globalTimerAtom)
+  if (!timer.isActive || timer.runningSince !== null) return
+  store.set(globalTimerAtom, { ...timer, runningSince: Date.now() })
 }
 
 /** Stop the running timer and write the elapsed time to its line. */
