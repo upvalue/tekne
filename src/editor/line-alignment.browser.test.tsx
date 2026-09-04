@@ -10,6 +10,7 @@ import { TEditor } from './TEditor'
 import { docAtom } from './state'
 import { docMake, lineMake } from '@/docs/schema'
 import { ReadOnlyLine } from './ReadOnlyLine'
+import { Checkbox } from '@/components/vendor/Checkbox'
 import '@/styles/styles.css'
 
 /** Alignment tolerance in px; subpixel rounding is fine, a strut is not. */
@@ -119,5 +120,22 @@ describe('ReadOnlyLine decoration alignment', () => {
     const lines = container.querySelectorAll('.ReadOnlyLine')
     expect(lines.length).toBe(2)
     lines.forEach(expectLineAligned)
+  })
+})
+
+describe('Checkbox state rendering', () => {
+  test('renders the incomplete state', () => {
+    const { getByRole } = mount(
+      <Checkbox checked indeterminate aria-label="Incomplete task" />
+    )
+
+    const checkbox = getByRole('checkbox', { name: 'Incomplete task' })
+    const icon = checkbox.querySelector('svg')!
+    const [checkmark, incomplete] = icon.querySelectorAll('path')
+
+    expect(checkbox.getAttribute('aria-checked')).toBe('mixed')
+    expect(getComputedStyle(icon).opacity).toBe('1')
+    expect(getComputedStyle(checkmark).opacity).toBe('0')
+    expect(getComputedStyle(incomplete).opacity).toBe('1')
   })
 })
