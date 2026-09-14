@@ -4,7 +4,12 @@
 import * as React from 'react'
 import { BadgeButton } from '@/components/vendor/Badge'
 
-import { Dialog, DialogHeader, DialogTitle } from '@/components/vendor/Dialog'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/vendor/Dialog'
 import type { LineWithIdx } from './line-editor'
 import {
   useDocLine,
@@ -18,7 +23,6 @@ import { Switch, SwitchField } from '@/components/vendor/Switch'
 import { Clock } from 'lucide-react'
 import { useAtom, useStore } from 'jotai'
 import { renderTime } from '@/lib/time'
-import { EditorDialogContent } from '@/components/EditorDialogContent'
 import { TimerInfo } from './TimerInfo'
 import {
   cancelTimer,
@@ -31,6 +35,12 @@ import { TimerModeStopwatch } from './timer/TimerModeStopwatch'
 import { TimerModeCountdown } from './timer/TimerModeCountdown'
 import { TimerModeManual } from './timer/TimerModeManual'
 import { parseTime } from './timer/parse-time'
+import { isIOS, isMobile } from '@/lib/platform'
+import {
+  enableTimerNotifications,
+  supportsTimerNotifications,
+} from './timer/timer-notifications'
+import { toast } from 'sonner'
 
 /**
  * Timer badge; shows time spent and allows user to control
@@ -44,6 +54,25 @@ export const TimerBadge = ({
   time: number
 }) => {
   const [open, setOpen] = React.useState(false)
+  const [viewportStyle, setViewportStyle] = React.useState<React.CSSProperties>(
+    {}
+  )
+  React.useEffect(() => {
+    const viewport = window.visualViewport
+    if (!open || !viewport) return
+    const update = () =>
+      setViewportStyle({
+        '--timer-viewport-height': `${viewport.height}px`,
+        '--timer-viewport-bottom': `${Math.max(0, window.innerHeight - viewport.height - viewport.offsetTop)}px`,
+      } as React.CSSProperties)
+    update()
+    viewport.addEventListener('resize', update)
+    viewport.addEventListener('scroll', update)
+    return () => {
+      viewport.removeEventListener('resize', update)
+      viewport.removeEventListener('scroll', update)
+    }
+  }, [open])
   const store = useStore()
   const [, setLine] = useDocLine(lineInfo.lineIdx)
   const [globalTimer, setGlobalTimer] = useAtom(globalTimerAtom)
@@ -54,6 +83,8 @@ export const TimerBadge = ({
   const [notificationPermission, setNotificationPermission] = useAtom(
     notificationPermissionAtom
   )
+  const [enablingNotifications, setEnablingNotifications] =
+    React.useState(false)
 
   const isThisTimerActive =
     globalTimer.isActive &&
@@ -78,9 +109,17 @@ export const TimerBadge = ({
   }, [timerDialogRequest, lineInfo.lineIdx, setTimerDialogRequest])
 
   const requestNotificationPermission = React.useCallback(async () => {
-    if (notificationPermission === null && 'Notification' in window) {
-      const permission = await Notification.requestPermission()
-      setNotificationPermission(permission)
+    try {
+      if (
+        !isMobile &&
+        notificationPermission === null &&
+        'Notification' in window
+      ) {
+        const permission = await Notification.requestPermission()
+        setNotificationPermission(permission)
+      }
+    } catch (error) {
+      console.error('Notification permission failed', error)
     }
   }, [notificationPermission, setNotificationPermission])
 
@@ -93,6 +132,7 @@ export const TimerBadge = ({
       if (parsedDuration === null) return
       targetDuration = parsedDuration
     }
+    void requestNotificationPermission()
 
     startTimer(store, {
       line: lineInfo.line,
@@ -101,7 +141,13 @@ export const TimerBadge = ({
       targetDuration,
     })
     setOpen(false)
-  }, [store, viewMode, countdownInput, lineInfo.line])
+  }, [
+    store,
+    viewMode,
+    countdownInput,
+    lineInfo.line,
+    requestNotificationPermission,
+  ])
 
   const handleStop = React.useCallback(() => {
     stopAndSaveTimer(store)
@@ -123,7 +169,6 @@ export const TimerBadge = ({
       open={open}
       onOpenChange={(open) => {
         if (open) {
-          requestNotificationPermission()
           // Land on the running timer's tab so its controls are in view
           if (isThisTimerActive) {
             setViewMode(globalTimer.mode)
@@ -138,7 +183,10 @@ export const TimerBadge = ({
         <BadgeButton
           className="cursor-pointer whitespace-nowrap"
           badgeClassName="px-[4px] py-[1px]"
-          onClick={() => setOpen(true)}
+          onClick={() => {
+            if (isThisTimerActive) setViewMode(globalTimer.mode)
+            setOpen(true)
+          }}
         >
           <div className="flex items-center gap-1">
             <Clock style={{ width: '16px', height: '16px' }} />
@@ -156,13 +204,16 @@ export const TimerBadge = ({
           </div>
         </BadgeButton>
       </div>
-      <EditorDialogContent className="text-white w-96 h-[500px]">
-        <DialogHeader className="flex flex-col gap-4">
+      <DialogContent
+        style={viewportStyle}
+        className="text-white flex flex-col left-1/2 top-auto bottom-[var(--timer-viewport-bottom,0px)] w-full max-w-full max-h-[calc(var(--timer-viewport-height,100dvh)*0.9)] translate-y-0 rounded-b-none overflow-y-auto overscroll-contain p-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:left-[32%] sm:top-[40%] sm:bottom-auto sm:w-96 sm:max-w-[calc(100%-2rem)] sm:max-h-[80dvh] sm:-translate-y-1/2 sm:rounded-lg sm:p-6"
+      >
+        <DialogHeader className="flex flex-col gap-4 text-left">
           <DialogTitle>Timer</DialogTitle>
 
           {/* Mode Selection */}
           <div className="flex justify-between items-center border-b border-gray-600 pb-2">
-            <div className="flex gap-2">
+            <div className="grid grid-cols-3 gap-2 w-full">
               {(['stopwatch', 'countdown', 'manual'] as const).map((mode) => (
                 <Button
                   key={mode}
@@ -170,7 +221,7 @@ export const TimerBadge = ({
                     ? { color: 'sky' }
                     : { outline: true })}
                   onClick={() => setViewMode(mode)}
-                  className="capitalize text-xs px-3 py-1"
+                  className="capitalize text-xs min-h-11 px-2 py-2"
                 >
                   {mode}
                 </Button>
@@ -181,7 +232,7 @@ export const TimerBadge = ({
           {/* Time Mode Selection */}
           <div className="border-b border-gray-600 pb-2">
             <SwitchField>
-              <div className="flex items-center justify-between">
+              <div className="flex flex-wrap items-center justify-between gap-3">
                 <div className="flex flex-col">
                   <span className="text-sm font-medium text-white">
                     Time Entry Mode
@@ -217,10 +268,11 @@ export const TimerBadge = ({
               </div>
             </SwitchField>
           </div>
-          <div className="text-lg text-gray-400">{lineContent}</div>
+          <div className="text-sm text-gray-400 break-words max-h-24 overflow-y-auto">
+            {lineContent}
+          </div>
         </DialogHeader>
-        <div className="text-primary flex flex-col gap-4 h-full overflow-hidden">
-          {/* Timer Content - Fixed height container */}
+        <div className="text-primary flex flex-col gap-4 py-2">
           <div className="flex-1 flex flex-col justify-center">
             {viewMode === 'stopwatch' && (
               <TimerModeStopwatch
@@ -275,7 +327,56 @@ export const TimerBadge = ({
             )}
           </div>
         </div>
-      </EditorDialogContent>
+        {isMobile && viewMode !== 'manual' && (
+          <div className="border-t border-zinc-700 pt-3 text-sm text-gray-400">
+            {supportsTimerNotifications() ? (
+              (notificationPermission ?? Notification.permission) ===
+              'granted' ? (
+                <p>
+                  One notification when you start a timer. Tap it to return
+                  here.
+                </p>
+              ) : (notificationPermission ?? Notification.permission) ===
+                'denied' ? (
+                <p>
+                  Timer notifications are blocked. You can allow them in your
+                  browser or app settings.
+                </p>
+              ) : (
+                <Button
+                  outline
+                  className="w-full min-h-11"
+                  disabled={enablingNotifications}
+                  onClick={async () => {
+                    setEnablingNotifications(true)
+                    try {
+                      setNotificationPermission(
+                        await enableTimerNotifications()
+                      )
+                    } catch (error) {
+                      console.error('Timer notification setup failed', error)
+                      toast.error(
+                        'Could not enable timer notifications. Try again.'
+                      )
+                    } finally {
+                      setEnablingNotifications(false)
+                    }
+                  }}
+                >
+                  {enablingNotifications
+                    ? 'Enabling notifications…'
+                    : 'Enable timer notifications'}
+                </Button>
+              )
+            ) : isIOS ? (
+              <p>
+                Add Tekne to your Home Screen and open it there to enable timer
+                notifications.
+              </p>
+            ) : null}
+          </div>
+        )}
+      </DialogContent>
     </Dialog>
   )
 }

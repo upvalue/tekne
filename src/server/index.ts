@@ -69,8 +69,11 @@ if (NODE_ENV === 'production') {
       maxAge: '1y',
       etag: true,
       setHeaders: (res, filePath) => {
-        // Cache static assets for 1 year, except HTML files
-        if (filePath.endsWith('.html')) {
+        // HTML and the notification worker must pick up new deployments.
+        if (
+          filePath.endsWith('.html') ||
+          filePath.endsWith('/timer-notifications-sw.js')
+        ) {
           res.setHeader('Cache-Control', 'no-cache')
         }
       },

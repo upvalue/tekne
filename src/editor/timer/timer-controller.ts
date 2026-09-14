@@ -8,12 +8,16 @@ import type { ZLine } from '@/docs/schema'
 import { trpcClient } from '@/trpc/client'
 import { setDetailTitle, setTimerActive } from '@/lib/title'
 import { playTimerCompleteSound } from '@/lib/sound'
+import { isMobile } from '@/lib/platform'
+import {
+  dismissTimerNotification,
+  showTimerStartedNotification,
+} from './timer-notifications'
 import {
   DEFAULT_COUNTDOWN_SECONDS,
   docAtom,
   findLineByTimeCreated,
   globalTimerAtom,
-  notificationPermissionAtom,
   setDocLineDirect,
   type GlobalTimerState,
   type TimerMode,
@@ -87,15 +91,20 @@ const execTimerHook = (
     .catch((error) => console.error(`[hook] ${hook} failed`, error))
 }
 
-const sendCompletionNotification = (store: EditorStore, message: string) => {
+const sendCompletionNotification = (message: string) => {
   if (
-    store.get(notificationPermissionAtom) === 'granted' &&
-    'Notification' in window
+    !isMobile &&
+    'Notification' in window &&
+    Notification.permission === 'granted'
   ) {
-    new Notification('Timer Complete', {
-      body: message,
-      icon: '/favicon/tekne32-sky.png',
-    })
+    try {
+      new Notification('Timer Complete', {
+        body: message,
+        icon: '/favicon/tekne32-sky.png',
+      })
+    } catch (error) {
+      console.error('Timer notification failed', error)
+    }
   }
 }
 
@@ -133,6 +142,10 @@ export const startTimer = (
   })
 
   execTimerHook(store, 'timer-start')
+  showTimerStartedNotification(
+    args.line.mdContent,
+    store.get(globalTimerAtom).runningSince!
+  )
 
   // The interval exists only to detect countdown completion; elapsed-time
   // display derives from accumulatedMs/runningSince and ticks locally in
@@ -145,10 +158,7 @@ export const startTimer = (
         return
       }
       if (timerRemainingSeconds(timer) === 0) {
-        sendCompletionNotification(
-          store,
-          `Timer completed for: ${timer.lineContent}`
-        )
+        sendCompletionNotification(`Timer completed for: ${timer.lineContent}`)
         playTimerCompleteSound()
         stopAndSaveTimer(store)
       }
@@ -164,6 +174,7 @@ export const startTimer = (
 export const pauseTimer = (store: EditorStore): void => {
   const timer = store.get(globalTimerAtom)
   if (!timer.isActive || timer.runningSince === null) return
+  dismissTimerNotification()
   store.set(globalTimerAtom, {
     ...timer,
     accumulatedMs: timer.accumulatedMs + (Date.now() - timer.runningSince),
@@ -216,6 +227,7 @@ export const cancelTimer = (store: EditorStore): void => {
  * route, and the interval must not outlive it.
  */
 export const releaseTimer = (store: EditorStore): void => {
+  dismissTimerNotification()
   clearActiveInterval()
   setDetailTitle(null)
   setTimerActive(false)

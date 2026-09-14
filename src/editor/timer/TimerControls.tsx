@@ -49,7 +49,7 @@ export const TimerControls = ({
   onStop: () => void
   onDiscard: () => void
 }) => (
-  <div className="flex gap-2 justify-center">
+  <div className="flex flex-wrap gap-2 justify-center [&>button]:min-h-11 [&>button]:grow">
     {!isRunning ? (
       <Button
         type={startIsSubmit ? 'submit' : 'button'}

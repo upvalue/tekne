@@ -19,6 +19,10 @@ export const isMac =
  */
 export const isApple = isMac || isIOS
 
+export const isMobile =
+  isIOS ||
+  (typeof navigator !== 'undefined' && /Android/i.test(navigator.userAgent))
+
 /** The primary pointer is a finger (phone or tablet). */
 export const isTouchPrimary =
   typeof window !== 'undefined' &&
