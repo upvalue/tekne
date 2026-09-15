@@ -63,7 +63,7 @@ export const TimerBadge = ({
     const update = () =>
       setViewportStyle({
         '--timer-viewport-height': `${viewport.height}px`,
-        '--timer-viewport-bottom': `${Math.max(0, window.innerHeight - viewport.height - viewport.offsetTop)}px`,
+        '--timer-viewport-top': `${viewport.offsetTop}px`,
       } as React.CSSProperties)
     update()
     viewport.addEventListener('resize', update)
@@ -206,7 +206,7 @@ export const TimerBadge = ({
       </div>
       <DialogContent
         style={viewportStyle}
-        className="text-white flex flex-col left-1/2 top-auto bottom-[var(--timer-viewport-bottom,0px)] w-full max-w-full max-h-[calc(var(--timer-viewport-height,100dvh)*0.9)] translate-y-0 rounded-b-none overflow-y-auto overscroll-contain p-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:left-[32%] sm:top-[40%] sm:bottom-auto sm:w-96 sm:max-w-[calc(100%-2rem)] sm:max-h-[80dvh] sm:-translate-y-1/2 sm:rounded-lg sm:p-6"
+        className="text-white flex flex-col left-1/2 top-[var(--timer-viewport-top,0px)] w-full max-w-full max-h-[calc(var(--timer-viewport-height,100dvh)*0.9)] translate-y-0 rounded-t-none overflow-y-auto overscroll-contain p-4 pt-[max(1rem,env(safe-area-inset-top))] sm:left-[32%] sm:top-[40%] sm:w-96 sm:max-w-[calc(100%-2rem)] sm:max-h-[80dvh] sm:-translate-y-1/2 sm:rounded-lg sm:p-6"
       >
         <DialogHeader className="flex flex-col gap-4 text-left">
           <DialogTitle>Timer</DialogTitle>
@@ -221,7 +221,7 @@ export const TimerBadge = ({
                     ? { color: 'sky' }
                     : { outline: true })}
                   onClick={() => setViewMode(mode)}
-                  className="capitalize text-xs min-h-11 px-2 py-2"
+                  className="capitalize text-xs px-2 py-2 max-sm:py-1 max-sm:text-xs max-sm:leading-5 sm:min-h-11"
                 >
                   {mode}
                 </Button>

@@ -18,7 +18,7 @@ afterEach(async () => {
   await page.viewport(1280, 800)
 })
 
-test('mobile timer stays inside the viewport and opens the active countdown controls', async () => {
+test('mobile timer stays pinned to the top with compact tabs as the viewport shrinks', async () => {
   await page.viewport(320, 568)
   const store = createStore()
   const line = lineMake(0, 'A long task name '.repeat(20))
@@ -43,14 +43,21 @@ test('mobile timer stays inside the viewport and opens the active countdown cont
   const bounds = dialog.getBoundingClientRect()
   expect(bounds.left).toBeGreaterThanOrEqual(0)
   expect(bounds.right).toBeLessThanOrEqual(320)
-  expect(bounds.top).toBeGreaterThanOrEqual(0)
+  expect(bounds.top).toBe(0)
   expect(bounds.bottom).toBeLessThanOrEqual(568)
   expect(dialog.scrollWidth).toBeLessThanOrEqual(dialog.clientWidth)
   expect(resume.getBoundingClientRect().height).toBeGreaterThanOrEqual(44)
+  for (const name of ['stopwatch', 'countdown', 'manual']) {
+    const tab = view.getByRole('button', { name })
+    expect(tab.getBoundingClientRect().height).toBeLessThanOrEqual(32)
+    expect(getComputedStyle(tab).paddingTop).toBe('4px')
+    expect(getComputedStyle(tab).paddingBottom).toBe('4px')
+  }
   await act(() => page.viewport(320, 320))
   await waitFor(() =>
     expect(dialog.getBoundingClientRect().height).toBeLessThanOrEqual(288)
   )
+  expect(dialog.getBoundingClientRect().top).toBe(bounds.top)
   resume.scrollIntoView()
   expect(resume.getBoundingClientRect().bottom).toBeLessThanOrEqual(320)
 })
