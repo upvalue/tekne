@@ -2,16 +2,7 @@ import { DevTools } from '@/dev/DevTools'
 import { Help } from './Help'
 import { Search } from './Search'
 import { Tools } from './Tools'
-import { AgentPanel } from './agent/AgentPanel'
-import {
-  Wrench,
-  CircleHelp,
-  Database,
-  SearchIcon,
-  Sparkles,
-  Zap,
-  X,
-} from 'lucide-react'
+import { Wrench, CircleHelp, Database, SearchIcon, Zap, X } from 'lucide-react'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { DocumentOverview } from './DocumentOverview'
 import {
@@ -29,7 +20,6 @@ const TABS: Array<{
   { id: 'document', label: 'Document', icon: Database },
   { id: 'search', label: 'Search', icon: SearchIcon },
   { id: 'tools', label: 'Tools', icon: Zap },
-  { id: 'agent', label: 'Agent', icon: Sparkles },
   { id: 'devtools', label: 'Dev tools', icon: Wrench },
   { id: 'help', label: 'Help', icon: CircleHelp },
 ]
@@ -81,7 +71,6 @@ export function Panel() {
           {activeTab === 'document' && <DocumentOverview />}
           {activeTab === 'search' && <Search />}
           {activeTab === 'tools' && <Tools />}
-          {activeTab === 'agent' && <AgentPanel />}
           {activeTab === 'help' && <Help />}
           {activeTab === 'devtools' && (
             <div className="p-4 h-full">

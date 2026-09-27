@@ -17,7 +17,6 @@ export type PanelTab =
   | 'document'
   | 'search'
   | 'tools'
-  | 'agent'
   | 'help'
   | 'devtools'
 
