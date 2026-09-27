@@ -58,14 +58,21 @@ export const DocumentOverviewSection = ({
   const [collapsed, setCollapsed] = useState(false)
 
   return (
-    <div className={`flex flex-col gap-4 p-4`}>
-      <div
-        className="flex text-lg items-center gap-2 bg-zinc-800 p-2 rounded-md cursor-pointer"
-        onClick={() => setCollapsed(!collapsed)}
-      >
-        <ChevronDown className={`w-4 h-4 ${collapsed ? 'rotate-180' : ''}`} />
-        <h2 className="text-lg font-bold">{label}</h2>
-      </div>
+    <div className="flex flex-col gap-2 px-4 py-3">
+      <h2>
+        <button
+          type="button"
+          aria-expanded={!collapsed}
+          className="flex w-full items-center gap-1.5 rounded px-2 py-1 text-left text-xs font-medium text-zinc-400 hover:text-zinc-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-400 cursor-pointer"
+          onClick={() => setCollapsed(!collapsed)}
+        >
+          <ChevronDown
+            aria-hidden="true"
+            className={`size-3.5 ${collapsed ? '-rotate-90' : ''}`}
+          />
+          {label}
+        </button>
+      </h2>
       <div className={`${collapsed ? 'hidden' : ''}`}>{children}</div>
     </div>
   )
