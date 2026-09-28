@@ -1,0 +1,23 @@
+{
+  "$schema": "./node_modules/oxfmt/configuration_schema.json",
+  "semi": false,
+  "singleQuote": true,
+  "trailingComma": "es5",
+  "tabWidth": 2,
+  "printWidth": 80,
+  "sortPackageJson": false,
+  "ignorePatterns": [
+    "dist",
+    "dist-ssr",
+    "dist-server",
+    ".vite",
+    "docs-build",
+    ".tickets",
+    ".agents",
+    ".claude",
+    "pnpm-lock.yaml",
+    "docs/**",
+    "src/documentation/generated/**",
+    "src/routeTree.gen.ts"
+  ]
+}

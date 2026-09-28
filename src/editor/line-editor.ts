@@ -303,10 +303,10 @@ export const useCodeMirror = (lineInfo: LineWithIdx) => {
     return () => {
       if (retry !== null) clearTimeout(retry)
     }
-  }, [requestFocusLine, lineIdx, setRequestFocusLine])
+  }, [requestFocusLine, lineIdx, setRequestFocusLine, store])
 
   // Sets up new editor on mount
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+  // oxlint-disable-next-line react-hooks/exhaustive-deps
   useEffect(makeEditor, [])
 
   // Most line events are handled once at document level (see

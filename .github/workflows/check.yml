@@ -33,7 +33,6 @@ jobs:
       - name: Install Playwright browser
         run: pnpm exec playwright install --with-deps chromium
 
-      # tsc --noEmit && eslint . && prettier --check .
       - name: Check types, lint and formatting
         run: pnpm check
 

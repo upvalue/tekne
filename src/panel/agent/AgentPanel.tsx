@@ -91,7 +91,7 @@ const ActiveSession = ({
   const changes = useMemo(
     () => diffDocs(baseDoc, session.getDraft()),
     // draftVersion is the draft's change counter
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // oxlint-disable-next-line react-hooks/exhaustive-deps
     [session, baseDoc, state.draftVersion]
   )
 
