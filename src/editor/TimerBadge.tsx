@@ -206,7 +206,7 @@ export const TimerBadge = ({
       </div>
       <DialogContent
         style={viewportStyle}
-        className="text-white flex flex-col left-1/2 top-[var(--timer-viewport-top,0px)] w-full max-w-full max-h-[calc(var(--timer-viewport-height,100dvh)*0.9)] translate-y-0 rounded-t-none overflow-y-auto overscroll-contain p-4 pt-[max(1rem,env(safe-area-inset-top))] sm:left-[32%] sm:top-[40%] sm:w-96 sm:max-w-[calc(100%-2rem)] sm:max-h-[80dvh] sm:-translate-y-1/2 sm:rounded-lg sm:p-6"
+        className="text-white flex flex-col h-144 [&>div]:shrink-0 [&_button]:items-center left-1/2 top-[var(--timer-viewport-top,0px)] w-full max-w-full max-h-[calc(var(--timer-viewport-height,100dvh)*0.9)] translate-y-0 rounded-t-none overflow-y-auto overscroll-contain p-4 pt-[max(1rem,env(safe-area-inset-top))] sm:left-[32%] sm:top-[40%] sm:w-96 sm:max-w-[calc(100%-2rem)] sm:max-h-[80dvh] sm:-translate-y-1/2 sm:rounded-lg sm:p-6"
       >
         <DialogHeader className="flex flex-col gap-4 text-left">
           <DialogTitle>Timer</DialogTitle>
