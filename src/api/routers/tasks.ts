@@ -1,9 +1,10 @@
-import { TRPCError } from '@trpc/server'
+import { outputs } from '../outputs'
+import { ORPCError } from '@orpc/server'
 import { z } from 'zod'
 import type { Kysely } from 'kysely'
 import { cancelUncheckedTasksBefore } from '@/docs/task-cancel'
 import type { Database } from '@/db'
-import { t } from '../init'
+import { proc } from '../init'
 import { upsertNoteInTx } from './doc'
 
 const cutoffSchema = z.iso.datetime()
@@ -74,21 +75,39 @@ const proposeStaleTaskCancellation = async (
   }
 }
 
-export const tasksRouter = t.router({
-  cancelStalePropose: t.procedure
+export const tasksRouter = {
+  cancelStalePropose: proc
+    .route({
+      method: 'POST',
+      path: '/tasks/cancel-stale/preview',
+      tags: ['tasks'],
+      summary: 'Cancel stale propose',
+      description:
+        'Preview cancelling unchecked tasks created before an ISO UTC cutoff. Templates are excluded. Does not write.',
+    })
+    .output(outputs.tasks.cancelStalePropose)
     .input(z.object({ cutoff: cutoffSchema }))
-    .mutation(async ({ input, ctx: { db } }) =>
+    .handler(async ({ input, context: { db } }) =>
       proposeStaleTaskCancellation(db, new Date(input.cutoff))
     ),
 
-  cancelStaleExecute: t.procedure
+  cancelStaleExecute: proc
+    .route({
+      method: 'POST',
+      path: '/tasks/cancel-stale',
+      tags: ['tasks'],
+      summary: 'Cancel stale execute',
+      description:
+        'Cancel stale tasks in selected documents. Send each preview revision as expectedRevision. A missing document returns 404; a changed revision returns 409 and rolls back the whole operation.',
+    })
+    .output(outputs.tasks.cancelStaleExecute)
     .input(
       z.object({
         cutoff: cutoffSchema,
         documents: selectedDocumentsSchema,
       })
     )
-    .mutation(async ({ input, ctx: { db } }) => {
+    .handler(async ({ input, context: { db } }) => {
       const cutoff = new Date(input.cutoff)
 
       return db.transaction().execute(async (tx) => {
@@ -104,14 +123,12 @@ export const tasksRouter = t.router({
             .executeTakeFirst()
 
           if (!note) {
-            throw new TRPCError({
-              code: 'NOT_FOUND',
+            throw new ORPCError('NOT_FOUND', {
               message: `Document "${selected.title}" no longer exists`,
             })
           }
           if (note.revision !== selected.expectedRevision) {
-            throw new TRPCError({
-              code: 'CONFLICT',
+            throw new ORPCError('CONFLICT', {
               message: `Document "${selected.title}" changed after the preview`,
             })
           }
@@ -127,4 +144,4 @@ export const tasksRouter = t.router({
         return { success: true, tasksUpdated, documentsUpdated }
       })
     }),
-})
+}

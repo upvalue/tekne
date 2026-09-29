@@ -1,7 +1,8 @@
+import { useQueryClient, useQuery, useMutation } from '@tanstack/react-query'
 import { useState } from 'react'
 import { Button } from '@/components/vendor/Button'
-import { trpc } from '@/trpc/client'
-import type { MigrateAllDocsOutput, RecomputeAllDataOutput } from '@/trpc/types'
+import { orpc } from '@/api/client'
+import type { MigrateAllDocsOutput, RecomputeAllDataOutput } from '@/api/types'
 
 /** One value in a summary grid: label over a large monospace number. */
 const Stat = ({
@@ -32,36 +33,43 @@ export const DatabaseMigrations = ({ isActive }: { isActive: boolean }) => {
     RecomputeAllDataOutput | { error: string } | null
   >(null)
 
-  const utils = trpc.useUtils()
+  const utils = useQueryClient()
 
   const {
     data: validationResults,
     isLoading,
     error,
-  } = trpc.doc.validateAllDocs.useQuery(undefined, {
-    enabled: shouldValidate,
-  })
+  } = useQuery(
+    orpc.doc.validateAllDocs.queryOptions({
+      input: undefined,
+      enabled: shouldValidate,
+    })
+  )
 
-  const migrateMutation = trpc.doc.migrateAllDocs.useMutation({
-    onSuccess: (data) => {
-      setMigrationResults(data)
-      // Revalidate against the migrated documents
-      setShouldValidate(true)
-      utils.doc.validateAllDocs.invalidate()
-    },
-    onError: (error) => {
-      setMigrationResults({ error: error.message })
-    },
-  })
+  const migrateMutation = useMutation(
+    orpc.doc.migrateAllDocs.mutationOptions({
+      onSuccess: (data) => {
+        setMigrationResults(data)
+        // Revalidate against the migrated documents
+        setShouldValidate(true)
+        utils.invalidateQueries({ queryKey: orpc.doc.validateAllDocs.key() })
+      },
+      onError: (error) => {
+        setMigrationResults({ error: error.message })
+      },
+    })
+  )
 
-  const recomputeMutation = trpc.doc.recomputeAllData.useMutation({
-    onSuccess: (data) => {
-      setRecomputeResults(data)
-    },
-    onError: (error) => {
-      setRecomputeResults({ error: error.message })
-    },
-  })
+  const recomputeMutation = useMutation(
+    orpc.doc.recomputeAllData.mutationOptions({
+      onSuccess: (data) => {
+        setRecomputeResults(data)
+      },
+      onError: (error) => {
+        setRecomputeResults({ error: error.message })
+      },
+    })
+  )
 
   const runValidation = () => {
     setShouldValidate(true)

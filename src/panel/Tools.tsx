@@ -1,9 +1,10 @@
+import { useQuery } from '@tanstack/react-query'
 import { docAtom } from '@/editor/state'
 import { treeifyDoc, type ZTreeLine } from '@/docs/doc-analysis'
 import type { ZDoc } from '@/docs/schema'
 import { useAtomValue } from 'jotai'
 import { useEffect, useMemo, useState } from 'react'
-import { trpc } from '@/trpc/client'
+import { orpc } from '@/api/client'
 import { useTagManagerTarget } from '@/hooks/panel-state'
 import { TagCard } from './tags/TagCard'
 import { TagRenameDialog } from './tags/TagRenameDialog'
@@ -97,7 +98,7 @@ export const Tools = () => {
     if (highlightTarget) setActiveToolTab('tags')
   }, [highlightTarget])
 
-  const tagsList = trpc.tags.list.useQuery()
+  const tagsList = useQuery(orpc.tags.list.queryOptions({ input: undefined }))
   const meta = useMemo(() => {
     const map = new Map<
       string,

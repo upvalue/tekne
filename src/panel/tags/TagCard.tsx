@@ -1,8 +1,8 @@
+import { useQueryClient, useMutation } from '@tanstack/react-query'
 import { useEffect, useRef, useState } from 'react'
 import { Tag, Pencil, Archive, ArchiveRestore, Replace } from 'lucide-react'
-import { useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { trpc } from '@/trpc/client'
+import { orpc } from '@/api/client'
 import { cn } from '@/lib/utils'
 
 /**
@@ -24,35 +24,38 @@ export const TagCard = ({
   highlighted?: boolean
   onRename: (name: string) => void
 }) => {
-  const utils = trpc.useUtils()
   const queryClient = useQueryClient()
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState('')
   const cardRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
-  const setDescription = trpc.tags.setDescription.useMutation({
-    onSuccess: () => {
-      utils.tags.list.invalidate()
-    },
-    onError: (e) => {
-      toast.error(`Failed to save description: ${e.message}`)
-    },
-  })
+  const setDescription = useMutation(
+    orpc.tags.setDescription.mutationOptions({
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: orpc.tags.list.key() })
+      },
+      onError: (e) => {
+        toast.error(`Failed to save description: ${e.message}`)
+      },
+    })
+  )
 
-  const setArchived = trpc.tags.setArchived.useMutation({
-    onSuccess: (_data, variables) => {
-      utils.tags.list.invalidate()
-      // Autocomplete reads this through its own Jotai-backed query
-      queryClient.invalidateQueries({ queryKey: ['allTags'] })
-      toast.success(
-        variables.archived ? `Archived #${name}` : `Restored #${name}`
-      )
-    },
-    onError: (e) => {
-      toast.error(`Failed to archive tag: ${e.message}`)
-    },
-  })
+  const setArchived = useMutation(
+    orpc.tags.setArchived.mutationOptions({
+      onSuccess: (_data, variables) => {
+        queryClient.invalidateQueries({ queryKey: orpc.tags.list.key() })
+        // Autocomplete reads this through its own Jotai-backed query
+        queryClient.invalidateQueries({ queryKey: ['allTags'] })
+        toast.success(
+          variables.archived ? `Archived #${name}` : `Restored #${name}`
+        )
+      },
+      onError: (e) => {
+        toast.error(`Failed to archive tag: ${e.message}`)
+      },
+    })
+  )
 
   useEffect(() => {
     if (highlighted && cardRef.current) {

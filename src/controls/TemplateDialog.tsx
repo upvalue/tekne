@@ -1,6 +1,7 @@
+import { useQuery, useMutation } from '@tanstack/react-query'
 import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from '@tanstack/react-router'
-import { trpc } from '@/trpc/client'
+import { orpc } from '@/api/client'
 import { docRoute, formatDate } from '@/lib/utils'
 import { toast } from 'sonner'
 import {
@@ -18,19 +19,24 @@ export const TemplateDialog = () => {
   const [docName, setDocName] = useState('')
   const navigate = useNavigate()
 
-  const templatesQuery = trpc.doc.listTemplates.useQuery(undefined, {
-    enabled: open,
-  })
+  const templatesQuery = useQuery(
+    orpc.doc.listTemplates.queryOptions({
+      input: undefined,
+      enabled: open,
+    })
+  )
 
-  const createMutation = trpc.doc.createDocFromTemplate.useMutation({
-    onSuccess: (data) => {
-      setOpen(false)
-      navigate({ to: docRoute(data.name) })
-    },
-    onError: (error) => {
-      toast.error(error.message)
-    },
-  })
+  const createMutation = useMutation(
+    orpc.doc.createDocFromTemplate.mutationOptions({
+      onSuccess: (data) => {
+        setOpen(false)
+        navigate({ to: docRoute(data.name) })
+      },
+      onError: (error) => {
+        toast.error(error.message)
+      },
+    })
+  )
 
   const handleClose = useCallback(() => {
     setOpen(false)

@@ -1,14 +1,17 @@
+import { useQuery } from '@tanstack/react-query'
 import { useDocTitle } from '@/hooks/useDocTitle'
-import { trpc } from '@/trpc/client'
+import { orpc } from '@/api/client'
 import { ResultCardGrid } from './AggregateComponents'
 import { Database } from 'lucide-react'
 
 export const Aggregate = () => {
   const title = useDocTitle()
 
-  const { data } = trpc.analysis.aggregateData.useQuery(
-    { title: title! },
-    { enabled: !!title }
+  const { data } = useQuery(
+    orpc.analysis.aggregateData.queryOptions({
+      input: { title: title! },
+      enabled: !!title,
+    })
   )
 
   return (

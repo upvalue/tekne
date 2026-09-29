@@ -1,3 +1,5 @@
+import { ORPCError } from '@orpc/client'
+import { useQueryClient, useMutation, useQuery } from '@tanstack/react-query'
 // Load/save synchronization between a document's Jotai store and the server.
 //
 // Loads the named document into docAtom, tracks edits with a per-document
@@ -10,7 +12,7 @@ import { useBlocker } from '@tanstack/react-router'
 import { toast } from 'sonner'
 import { truncate } from 'lodash-es'
 import type { useStore } from 'jotai'
-import { trpc } from '@/trpc/client'
+import { orpc } from '@/api/client'
 import type { ZDoc } from '@/docs/schema'
 import { useEventListener } from '@/hooks/useEventListener'
 import { docAtom, globalTimerAtom } from './state'
@@ -21,8 +23,8 @@ export const useDocumentSync = (
   title: string,
   store: ReturnType<typeof useStore>
 ) => {
-  const utils = trpc.useUtils()
-  const updateDocMutation = trpc.doc.updateDoc.useMutation()
+  const utils = useQueryClient()
+  const updateDocMutation = useMutation(orpc.doc.updateDoc.mutationOptions())
   const [conflict, setConflict] = useState<SaveConflict<ZDoc> | null>(null)
 
   // Latest network closures for the queue, which outlives any single render.
@@ -56,11 +58,13 @@ export const useDocumentSync = (
         }),
       onSaved: (snapshot, revision) => {
         serverRevisionRef.current = revision
-        utilsRef.current.doc.loadDoc.setData(
-          { name: title },
+        utilsRef.current.setQueryData(
+          orpc.doc.loadDoc.queryKey({ input: { name: title } }),
           { doc: snapshot, revision }
         )
-        utilsRef.current.analysis.aggregateData.invalidate()
+        utilsRef.current.invalidateQueries({
+          queryKey: orpc.analysis.aggregateData.key(),
+        })
       },
       onConflict: (c) => setConflict(c),
       onSaveError: (error) => {
@@ -81,17 +85,17 @@ export const useDocumentSync = (
     return () => queue.dispose()
   }, [queue])
 
-  const loadDocQuery = trpc.doc.loadDoc.useQuery(
-    { name: title },
-    {
+  const loadDocQuery = useQuery(
+    orpc.doc.loadDoc.queryOptions({
+      input: { name: title },
       enabled: () => !queueRef.current.isDirty(),
       retry: (_fc, error) => {
-        if (error?.data?.code === 'NOT_FOUND') {
+        if (error instanceof ORPCError && error.code === 'NOT_FOUND') {
           return false
         }
         return true
       },
-    }
+    })
   )
 
   // Hydrate the store when genuinely new server content lands. Cache writes
@@ -156,8 +160,8 @@ export const useDocumentSync = (
           hydratingRef.current = false
         }
         queue.resolveTakeServer()
-        utilsRef.current.doc.loadDoc.setData(
-          { name: title },
+        utilsRef.current.setQueryData(
+          orpc.doc.loadDoc.queryKey({ input: { name: title } }),
           { doc: current.serverDoc, revision: current.serverRevision }
         )
         // Undo history survives on purpose: undoing after "take server"
@@ -183,7 +187,12 @@ export const useDocumentSync = (
               label: 'Discard changes',
               onClick: () => {
                 queueRef.current.discardLocal()
-                utilsRef.current.doc.loadDoc.invalidate({ name: title })
+                utilsRef.current.invalidateQueries({
+                  queryKey: orpc.doc.loadDoc.key({
+                    input: { name: title },
+                    type: 'query',
+                  }),
+                })
               },
             },
           })

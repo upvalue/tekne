@@ -1,6 +1,6 @@
 import z from 'zod'
 import { zdoc } from '@/docs/schema'
-import { router, proc } from './init'
+import { proc } from './init'
 import { docRouter } from './routers/doc'
 import { analysisRouter } from './routers/analysis'
 import { searchRouter } from './routers/search'
@@ -12,7 +12,7 @@ import fs from 'fs'
 import child_process from 'child_process'
 import path from 'path'
 
-export const appRouter = router({
+export const appRouter = {
   doc: docRouter,
   analysis: analysisRouter,
   search: searchRouter,
@@ -21,6 +21,15 @@ export const appRouter = router({
   tasks: tasksRouter,
 
   execHook: proc
+    .route({
+      method: 'POST',
+      path: '/hooks/timer',
+      tags: ['hooks'],
+      summary: 'Run a timer hook',
+      description:
+        'Run the configured timer-start or timer-stop hook with document and line context. Returns after dispatch; absent hooks are a no-op.',
+    })
+    .output(z.void())
     .input(
       z.object({
         hook: z.enum(['timer-start', 'timer-stop']),
@@ -31,7 +40,7 @@ export const appRouter = router({
         }),
       })
     )
-    .mutation(async ({ input }) => {
+    .handler(async ({ input }) => {
       const { hook, argument } = input
 
       // If running on server
@@ -77,6 +86,6 @@ export const appRouter = router({
         console.log('[hook] client execHook', hook, argument)
       }
     }),
-})
+}
 
 export type AppRouter = typeof appRouter

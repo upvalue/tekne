@@ -1,3 +1,4 @@
+import { useMutation } from '@tanstack/react-query'
 import { useMemo, useState } from 'react'
 import { CalendarX } from 'lucide-react'
 import { toast } from 'sonner'
@@ -12,15 +13,15 @@ import {
 import { Input } from '@/components/vendor/Input'
 import { EditorDialogContent } from '@/components/EditorDialogContent'
 import { DocumentEditsReview } from '@/panel/diff/DocumentEditsReview'
-import { trpc } from '@/trpc/client'
+import { orpc } from '@/api/client'
 import { localDateCutoff } from './date-cutoff'
 
 export const CancelStaleTasks = () => {
   const [date, setDate] = useState('')
   const [reviewOpen, setReviewOpen] = useState(false)
   const [selectedTitles, setSelectedTitles] = useState<Set<string>>(new Set())
-  const propose = trpc.tasks.cancelStalePropose.useMutation()
-  const execute = trpc.tasks.cancelStaleExecute.useMutation()
+  const propose = useMutation(orpc.tasks.cancelStalePropose.mutationOptions())
+  const execute = useMutation(orpc.tasks.cancelStaleExecute.mutationOptions())
   const cutoff = localDateCutoff(date)
   const proposal = propose.data
 

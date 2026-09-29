@@ -4,14 +4,15 @@ import type { Kysely } from 'kysely'
 import type { Database } from '@/db/types'
 import { makeTestDb } from '@/db/testing'
 import { docMake, lineMake, type ZLine } from '@/docs/schema'
-import { t } from '../init'
+import { createRouterClient } from '@orpc/server'
 import { upsertNoteInTx } from './doc'
 import { searchRouter } from './search'
 
 let db: Kysely<Database>
 let caller: ReturnType<typeof createCaller>
 
-const createCaller = t.createCallerFactory(searchRouter)
+const createCaller = (context: { db: Kysely<Database> }) =>
+  createRouterClient(searchRouter, { context })
 
 const noteWith = (title: string, lines: Array<string | Partial<ZLine>>) =>
   upsertNoteInTx(

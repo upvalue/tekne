@@ -1,8 +1,9 @@
-// search.ts - TRPC router for search functionality
+import { outputs } from '../outputs'
+// search.ts - ORPC router for search functionality
 import { z } from 'zod'
 import { sql } from 'kysely'
-import { TRPCError } from '@trpc/server'
-import { t } from '../init'
+import { ORPCError } from '@orpc/server'
+import { proc } from '../init'
 import type { SearchOperator } from '@/search/types'
 import { TAG_REGEX_MATCH_BEFORE_STR } from '@/docs/regex'
 import { aggregateTagData, type TagAggregateData } from '../lib/tag-aggregates'
@@ -71,11 +72,20 @@ function buildFilterConditions(operators: SearchOperator[]) {
   return conditions
 }
 
-export const searchRouter = t.router({
+export const searchRouter = {
   /**
    * Search for lines matching the query operators
    */
-  searchLines: t.procedure
+  searchLines: proc
+    .route({
+      method: 'POST',
+      path: '/search/lines',
+      tags: ['search'],
+      summary: 'Search lines',
+      description:
+        'Search lines using structured operators. Templates are excluded. limit defaults to 50 (maximum 100); pass nextCursor as cursor for the next page.',
+    })
+    .output(outputs.search.searchLines)
     .input(
       z.object({
         operators: z.array(searchOperatorSchema),
@@ -83,7 +93,7 @@ export const searchRouter = t.router({
         cursor: z.number().optional(),
       })
     )
-    .query(async ({ input, ctx: { db } }) => {
+    .handler(async ({ input, context: { db } }) => {
       const { operators, limit, cursor } = input
 
       // Determine if we need datum filters (tag, status, has)
@@ -257,98 +267,128 @@ export const searchRouter = t.router({
   /**
    * Get aggregate stats for tags matching the query
    */
-  searchAggregate: t.procedure
+  searchAggregate: proc
+    .route({
+      method: 'POST',
+      path: '/search/aggregates',
+      tags: ['search'],
+      summary: 'Search aggregate',
+      description:
+        'Aggregate tags using tag, from, to, age and doc operators. text, status and has filters return 400.',
+    })
+    .output(outputs.search.searchAggregate)
     .input(
       z.object({
         operators: z.array(searchOperatorSchema),
       })
     )
-    .query(async ({ input, ctx: { db } }): Promise<TagAggregateData[]> => {
-      const { operators } = input
+    .handler(
+      async ({ input, context: { db } }): Promise<TagAggregateData[]> => {
+        const { operators } = input
 
-      const unsupported = unsupportedAggregateOperators(
-        operators as SearchOperator[]
-      )
-      if (unsupported.length > 0) {
-        throw new TRPCError({
-          code: 'BAD_REQUEST',
-          message: `The aggregate view cannot filter by ${unsupported
-            .map((op) => `"${op}:"`)
-            .join(', ')} — switch to the text view for those operators`,
+        const unsupported = unsupportedAggregateOperators(
+          operators as SearchOperator[]
+        )
+        if (unsupported.length > 0) {
+          throw new ORPCError('BAD_REQUEST', {
+            message: `The aggregate view cannot filter by ${unsupported
+              .map((op) => `"${op}:"`)
+              .join(', ')} — switch to the text view for those operators`,
+          })
+        }
+
+        const filters = buildFilterConditions(operators as SearchOperator[])
+
+        // First, find all matching tags
+        let tagQuery = db
+          .selectFrom('note_data')
+          .select(['datum_tag as tag'])
+          .where('datum_type', '=', 'tag')
+          // Exclude templates
+          .where('note_title', 'not ilike', '$%')
+          .distinct()
+
+        // Apply tag prefix filter (value already includes # prefix)
+        if (filters.tagPrefix) {
+          tagQuery = tagQuery.where(
+            'datum_tag',
+            'ilike',
+            `${escapeLike(filters.tagPrefix)}%`
+          )
+        }
+
+        // Apply date filters to tag query
+        if (filters.fromDate) {
+          tagQuery = tagQuery.where('time_created', '>=', filters.fromDate)
+        }
+        if (filters.toDate) {
+          tagQuery = tagQuery.where('time_created', '<', filters.toDate)
+        }
+        if (filters.docPattern) {
+          tagQuery = tagQuery.where('note_title', 'ilike', filters.docPattern)
+        }
+
+        const tags = await tagQuery.execute()
+
+        if (tags.length === 0) {
+          return []
+        }
+
+        const tagNames = tags.map((t) => t.tag)
+
+        const aggregates = await aggregateTagData(db, tagNames, {
+          fromDate: filters.fromDate,
+          toDate: filters.toDate,
+          docPattern: filters.docPattern,
+          excludeTemplates: true,
         })
-      }
 
-      const filters = buildFilterConditions(operators as SearchOperator[])
-
-      // First, find all matching tags
-      let tagQuery = db
-        .selectFrom('note_data')
-        .select(['datum_tag as tag'])
-        .where('datum_type', '=', 'tag')
-        // Exclude templates
-        .where('note_title', 'not ilike', '$%')
-        .distinct()
-
-      // Apply tag prefix filter (value already includes # prefix)
-      if (filters.tagPrefix) {
-        tagQuery = tagQuery.where(
-          'datum_tag',
-          'ilike',
-          `${escapeLike(filters.tagPrefix)}%`
+        return [...aggregates.values()].sort((a, b) =>
+          a.tag.localeCompare(b.tag)
         )
       }
-
-      // Apply date filters to tag query
-      if (filters.fromDate) {
-        tagQuery = tagQuery.where('time_created', '>=', filters.fromDate)
-      }
-      if (filters.toDate) {
-        tagQuery = tagQuery.where('time_created', '<', filters.toDate)
-      }
-      if (filters.docPattern) {
-        tagQuery = tagQuery.where('note_title', 'ilike', filters.docPattern)
-      }
-
-      const tags = await tagQuery.execute()
-
-      if (tags.length === 0) {
-        return []
-      }
-
-      const tagNames = tags.map((t) => t.tag)
-
-      const aggregates = await aggregateTagData(db, tagNames, {
-        fromDate: filters.fromDate,
-        toDate: filters.toDate,
-        docPattern: filters.docPattern,
-        excludeTemplates: true,
-      })
-
-      return [...aggregates.values()].sort((a, b) => a.tag.localeCompare(b.tag))
-    }),
+    ),
 
   /**
    * Get all saved searches
    */
-  getSavedSearches: t.procedure.query(async ({ ctx: { db } }) => {
-    return db
-      .selectFrom('saved_searches')
-      .selectAll()
-      .orderBy('updated_at', 'desc')
-      .execute()
-  }),
+  getSavedSearches: proc
+    .route({
+      method: 'GET',
+      path: '/saved-searches',
+      tags: ['search'],
+      summary: 'Get saved searches',
+      description: 'List saved searches, most recently updated first.',
+    })
+    .output(outputs.search.getSavedSearches)
+    .input(z.object({}).optional())
+    .handler(async ({ context: { db } }) => {
+      return db
+        .selectFrom('saved_searches')
+        .selectAll()
+        .orderBy('updated_at', 'desc')
+        .execute()
+    }),
 
   /**
    * Save a new search
    */
-  saveSearch: t.procedure
+  saveSearch: proc
+    .route({
+      method: 'POST',
+      path: '/saved-searches',
+      tags: ['search'],
+      summary: 'Save search',
+      description: 'Save a named search query.',
+    })
+    .output(outputs.search.saveSearch)
     .input(
       z.object({
         name: z.string().min(1),
         query: z.string().min(1),
       })
     )
-    .mutation(async ({ input, ctx: { db } }) => {
+    .handler(async ({ input, context: { db } }) => {
       const result = await db
         .insertInto('saved_searches')
         .values({
@@ -364,11 +404,20 @@ export const searchRouter = t.router({
   /**
    * Delete a saved search
    */
-  deleteSavedSearch: t.procedure
+  deleteSavedSearch: proc
+    .route({
+      method: 'DELETE',
+      path: '/saved-searches',
+      tags: ['search'],
+      summary: 'Delete saved search',
+      description:
+        'Delete a saved search. Send its numeric id in the JSON body.',
+    })
+    .output(outputs.search.deleteSavedSearch)
     .input(z.object({ id: z.number() }))
-    .mutation(async ({ input, ctx: { db } }) => {
+    .handler(async ({ input, context: { db } }) => {
       await db.deleteFrom('saved_searches').where('id', '=', input.id).execute()
 
       return { success: true }
     }),
-})
+}

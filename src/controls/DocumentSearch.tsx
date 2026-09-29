@@ -1,7 +1,8 @@
+import { useQuery } from '@tanstack/react-query'
 import React from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { KBarProvider, useKBar, useRegisterActions, type Action } from 'kbar'
-import { trpc } from '@/trpc/client'
+import { orpc } from '@/api/client'
 import { useMemo, useEffect, useState } from 'react'
 import { KBarModal, KBarSearchInput, KBarResultRenderer } from './KBar'
 import { docRoute } from '@/lib/utils'
@@ -32,14 +33,14 @@ const DocumentSearchContent = () => {
     return () => clearTimeout(timer)
   }, [query])
 
-  const searchDocs = trpc.doc.searchDocs.useQuery(
-    { query: debouncedQuery },
-    {
+  const searchDocs = useQuery(
+    orpc.doc.searchDocs.queryOptions({
+      input: { query: debouncedQuery },
       enabled: true,
       staleTime: 5000,
       // Keep previous results visible while loading new ones (prevents flashing)
       placeholderData: (prev) => prev,
-    }
+    })
   )
 
   const actions = useMemo((): Action[] => {

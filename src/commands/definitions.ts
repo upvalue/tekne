@@ -5,7 +5,7 @@ import { registerCommands, type Command } from '@/editor/command-registry'
 import { emitCodemirrorEvent } from '@/editor/line-editor/cm-events'
 import { deleteLine } from '@/editor/line-ops'
 import { formatDate, getDocTitle } from '@/lib/utils'
-import { trpcClient } from '@/trpc/client'
+import { orpcClient } from '@/api/client'
 import { openPanelTab, panelVisibleAtom, uiStore } from '@/hooks/panel-state'
 import { setDisplayModeOverride } from '@/hooks/display-mode'
 import { appPath, stripAppBasePath } from '@/lib/app-path'
@@ -246,7 +246,7 @@ const navigationCommands: Command[] = [
         execute: async () => {
           try {
             try {
-              await trpcClient.doc.deleteDoc.mutate({ name: 'Tutorial' })
+              await orpcClient.doc.deleteDoc({ name: 'Tutorial' })
             } catch (e: unknown) {
               // Ignore not found error - OK if tutorial doesn't exist
               if (!(e instanceof Error) || !e.message.includes('not found')) {
@@ -281,7 +281,7 @@ const navigationCommands: Command[] = [
       if (!title) return
       if (!confirm(`Delete "${decodeURIComponent(title)}"?`)) return
       try {
-        await trpcClient.doc.deleteDoc.mutate({
+        await orpcClient.doc.deleteDoc({
           name: decodeURIComponent(title),
         })
         window.location.href = appPath('/')

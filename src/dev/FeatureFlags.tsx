@@ -1,19 +1,23 @@
-import { trpc } from '@/trpc/client'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { orpc } from '@/api/client'
 
 const KNOWN_FLAGS: { key: string; label: string; description: string }[] = []
 
 export function FeatureFlags({ isActive }: { isActive: boolean }) {
-  const flagsQuery = trpc.flags.getAll.useQuery(undefined, {
-    enabled: isActive,
-  })
-  const setFlagMutation = trpc.flags.set.useMutation()
-  const utils = trpc.useUtils()
+  const flagsQuery = useQuery(
+    orpc.flags.getAll.queryOptions({
+      input: undefined,
+      enabled: isActive,
+    })
+  )
+  const setFlagMutation = useMutation(orpc.flags.set.mutationOptions())
+  const utils = useQueryClient()
 
   const flags = flagsQuery.data ?? {}
 
   const handleToggle = async (key: string, currentValue: boolean) => {
     await setFlagMutation.mutateAsync({ key, value: !currentValue })
-    utils.flags.getAll.invalidate()
+    utils.invalidateQueries({ queryKey: orpc.flags.getAll.key() })
   }
 
   if (!isActive) {

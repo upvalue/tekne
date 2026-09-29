@@ -4,14 +4,15 @@ import type { Kysely } from 'kysely'
 import type { Database } from '@/db/types'
 import { makeTestDb } from '@/db/testing'
 import { docMake, lineMake } from '@/docs/schema'
-import { t } from '../init'
+import { createRouterClient } from '@orpc/server'
 import { upsertNoteInTx } from './doc'
 import { tagsRouter } from './tags'
 
 let db: Kysely<Database>
 let caller: ReturnType<typeof createCaller>
 
-const createCaller = t.createCallerFactory(tagsRouter)
+const createCaller = (context: { db: Kysely<Database> }) =>
+  createRouterClient(tagsRouter, { context })
 
 /** Writes a note with one line per tag, so note_data is derived as in the app. */
 const noteWithTags = (title: string, tags: string[]) =>

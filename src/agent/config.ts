@@ -1,9 +1,9 @@
 // config.ts - Client-side discovery of the agent relay.
 
 /**
- * Where the agent's stream relay lives. Mirrors how the tRPC client picks
- * its endpoint (src/trpc/client.ts): same origin in production; the
- * TEKNE_TRPC_URL origin when the client is pointed at a separate server;
+ * Where the agent's stream relay lives. Mirrors how the oRPC client picks
+ * its endpoint (src/api/client.ts): same origin in production; the
+ * TEKNE_ORPC_URL origin when the client is pointed at a separate server;
  * unavailable in client-only dev, where no server process exists.
  */
 export const resolveAgentProxy = (): {
@@ -11,9 +11,9 @@ export const resolveAgentProxy = (): {
   baseUrl: string
 } => {
   if (import.meta.env.PROD) return { available: true, baseUrl: '' }
-  const trpcUrl: string | undefined = import.meta.env.TEKNE_TRPC_URL
-  if (trpcUrl) {
-    return { available: true, baseUrl: trpcUrl.replace(/\/api\/trpc\/?$/, '') }
+  const orpcUrl: string | undefined = import.meta.env.TEKNE_ORPC_URL
+  if (orpcUrl) {
+    return { available: true, baseUrl: orpcUrl.replace(/\/api\/rpc\/?$/, '') }
   }
   return { available: false, baseUrl: '' }
 }

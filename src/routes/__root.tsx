@@ -1,6 +1,6 @@
 import { Outlet, createRootRouteWithContext } from '@tanstack/react-router'
 import { useGlobalKeybinding } from '@/hooks/useGlobalKeybinding'
-import { trpc } from '@/trpc/client'
+import { orpc } from '@/api/client'
 import { Toaster } from '@/components/vendor/Sonner'
 import { DocumentSearch } from '@/controls/DocumentSearch'
 import { TemplateDialog } from '@/controls/TemplateDialog'
@@ -9,7 +9,7 @@ import { openPanelTab, useSetPanelVisible } from '@/hooks/panel-state'
 import '@/commands/definitions'
 
 export type RouterAppContext = {
-  trpc: typeof trpc
+  orpc: typeof orpc
 }
 
 const RootComponent = () => {

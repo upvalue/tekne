@@ -40,8 +40,8 @@ client bundle.
 - `pnpm dev:client-only` has no server process, so the panel shows its
   "agent unavailable" state there. Use `pnpm dev:client-and-server` (or
   `dev:all`).
-- The client finds the relay the same way tRPC finds its endpoint: same
-  origin in prod, the `TEKNE_TRPC_URL` origin otherwise.
+- The client finds the relay the same way oRPC finds its endpoint: same
+  origin in prod, the `TEKNE_ORPC_URL` origin otherwise.
 - If the user edits the document while the agent runs, Apply replays the
   recorded ops (addressed by line id) onto the current doc; ops whose target
   line was deleted are skipped with a toast.

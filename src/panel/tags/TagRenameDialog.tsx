@@ -1,6 +1,7 @@
+import { useMutation } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
-import { trpc } from '@/trpc/client'
+import { orpc } from '@/api/client'
 import { tagNameSchema } from '@/docs/validation'
 import { requestEditorFlush } from '@/lib/app-events'
 import {
@@ -35,8 +36,8 @@ export const TagRenameDialog = ({
   const [newName, setNewName] = useState('')
   const [includeChildren, setIncludeChildren] = useState(false)
 
-  const propose = trpc.tags.renamePropose.useMutation()
-  const execute = trpc.tags.renameExecute.useMutation()
+  const propose = useMutation(orpc.tags.renamePropose.mutationOptions())
+  const execute = useMutation(orpc.tags.renameExecute.mutationOptions())
 
   const validation = tagNameSchema.safeParse(newName)
   const nameError =

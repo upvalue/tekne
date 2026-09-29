@@ -8,7 +8,7 @@ import { routeTree } from './routeTree.gen'
 import { NotFound } from './layout/NotFound'
 
 import './styles/styles.css'
-import { trpc, trpcClient } from './trpc/client'
+import { orpc } from './api/client'
 import { appBasePath } from './lib/app-path'
 
 // Create a new router instance
@@ -16,7 +16,7 @@ const router = createRouter({
   routeTree,
   basepath: appBasePath || '/',
   context: {
-    trpc,
+    orpc,
   },
   defaultPreload: 'intent',
   scrollRestoration: true,
@@ -41,11 +41,9 @@ if (rootElement && !rootElement.innerHTML) {
   const root = ReactDOM.createRoot(rootElement)
   root.render(
     <StrictMode>
-      <trpc.Provider client={trpcClient} queryClient={queryClient}>
-        <QueryClientProvider client={queryClient}>
-          <RouterProvider router={router} />
-        </QueryClientProvider>
-      </trpc.Provider>
+      <QueryClientProvider client={queryClient}>
+        <RouterProvider router={router} />
+      </QueryClientProvider>
     </StrictMode>
   )
 }

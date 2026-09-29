@@ -16,7 +16,7 @@ RUN CI=true pnpm install --frozen-lockfile
 
 COPY ./ .
 
-ENV TEKNE_TRPC_URL=/api/trpc
+ENV TEKNE_ORPC_URL=/api/rpc
 ENV GIT_HASH=$GIT_HASH
 ENV GIT_MESSAGE=$GIT_MESSAGE
 

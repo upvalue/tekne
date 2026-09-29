@@ -16,23 +16,24 @@ const mocks = vi.hoisted(() => ({
   blocker: vi.fn(),
 }))
 
-vi.mock('@/trpc/client', () => ({
-  trpc: {
-    useUtils: () => ({
-      analysis: { aggregateData: { invalidate: vi.fn() } },
-      doc: {
-        loadDoc: {
-          invalidate: vi.fn(),
-          setData: mocks.setData,
-        },
-      },
-    }),
+vi.mock('@tanstack/react-query', () => ({
+  useQuery: () => mocks.loadDocQuery,
+  useMutation: () => ({ mutateAsync: mocks.mutateAsync }),
+  useQueryClient: () => ({
+    setQueryData: mocks.setData,
+    invalidateQueries: vi.fn(),
+  }),
+}))
+
+vi.mock('@/api/client', () => ({
+  orpc: {
+    analysis: { aggregateData: { key: () => ['analysis'] } },
     doc: {
-      updateDoc: {
-        useMutation: () => ({ mutateAsync: mocks.mutateAsync }),
-      },
+      updateDoc: { mutationOptions: () => ({}) },
       loadDoc: {
-        useQuery: () => mocks.loadDocQuery,
+        queryOptions: () => ({}),
+        queryKey: ({ input }: { input: unknown }) => ['doc', input],
+        key: () => ['doc'],
       },
     },
   },
@@ -113,7 +114,7 @@ describe('useDocumentSync', () => {
       expectedRevision: 3,
     })
     expect(mocks.setData).toHaveBeenCalledWith(
-      { name: 'Doc' },
+      ['doc', { name: 'Doc' }],
       expect.objectContaining({ revision: 4 })
     )
   })

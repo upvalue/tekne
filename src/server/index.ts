@@ -3,8 +3,7 @@ import morgan from 'morgan'
 import cors from 'cors'
 import helmet from 'helmet'
 import compression from 'compression'
-import * as trpcExpress from '@trpc/server/adapters/express'
-import { appRouter } from '@/trpc/router'
+import { registerApi } from './api'
 import { dbServer } from '@/db'
 import { sql } from 'kysely'
 import path from 'node:path'
@@ -44,9 +43,6 @@ app.use(compression())
 // body with a larger limit (documents can exceed the 100 KB default).
 registerAgentRoutes(app)
 
-app.use(express.json())
-app.use(express.urlencoded({ extended: true }))
-
 // Logging middleware
 if (NODE_ENV === 'production') {
   app.use(morgan('combined'))
@@ -61,6 +57,11 @@ if (NODE_ENV === 'production') {
     })
   )
 }
+
+const db = await dbServer()
+await registerApi(app, db)
+app.use(express.json())
+app.use(express.urlencoded({ extended: true }))
 
 // Serve static assets in production
 if (NODE_ENV === 'production') {
@@ -80,28 +81,6 @@ if (NODE_ENV === 'production') {
     })
   )
 }
-
-const db = await dbServer()
-
-const createContext = async ({ req, res }: { req: Request; res: Response }) => {
-  return { db, req, res }
-}
-
-app.use(
-  '/api/trpc',
-  trpcExpress.createExpressMiddleware({
-    router: appRouter,
-    createContext,
-    onError: ({ error, path, type }) => {
-      console.error(`TRPC Error on ${type} ${path}:`, {
-        message: error.message,
-        code: error.code,
-        cause: error.cause,
-        stack: error.stack,
-      })
-    },
-  })
-)
 
 app.get('/api/healthcheck', async (_req: Request, res: Response) => {
   await db

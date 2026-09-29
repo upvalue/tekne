@@ -25,7 +25,7 @@ function getGitInfo() {
 /**
  * Keeps the development-only backend out of production builds.
  *
- * The in-memory mode runs the tRPC router in the browser against PGlite, and
+ * The in-memory mode runs the oRPC router in the browser against PGlite, and
  * both places that reach for it import it dynamically behind an
  * `import.meta.env.PROD` check. Rollup does drop those branches — but only
  * after loading the modules, by which point Vite has already emitted PGlite's
@@ -44,7 +44,7 @@ function getGitInfo() {
  */
 const stubDevOnlyModules = (): Plugin => {
   const DEV_ONLY = [
-    '/src/trpc/router.ts',
+    '/src/api/router.ts',
     '/src/db/index.ts',
     '/src/dev/PgliteDevtools.tsx',
   ]

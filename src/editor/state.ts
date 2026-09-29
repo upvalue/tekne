@@ -3,7 +3,7 @@ import { type ZDoc, type ZLine } from '@/docs/schema'
 import { ensureUniqueLineTimeCreateds } from '@/docs/line-identity'
 import { useCallback } from 'react'
 import { atomWithQuery } from 'jotai-tanstack-query'
-import { trpcClient } from '@/trpc/client'
+import { orpcClient } from '@/api/client'
 import { produce, type Draft } from 'immer'
 import { captureUndoEntry, suppressUndoCaptureAtom } from './undo'
 import { rawDocAtom } from './doc-atoms'
@@ -97,7 +97,7 @@ export const notificationPermissionAtom = atom<NotificationPermission | null>(
 export const allTagsAtom = atomWithQuery(() => ({
   queryKey: ['allTags'],
   queryFn: () => {
-    return trpcClient.tags.allTags.query()
+    return orpcClient.tags.allTags()
   },
   // every 5 minutes
   refetchInterval: 60 * 5 * 1000,

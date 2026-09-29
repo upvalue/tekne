@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import type { RouterOutputs } from '@/trpc/types'
+import type { RouterOutputs } from '@/api/types'
 import type { ProposedDocumentEdits, ProposedLineChange } from '@/docs/doc-diff'
 import { DocumentEditsReview } from '@/panel/diff/DocumentEditsReview'
 

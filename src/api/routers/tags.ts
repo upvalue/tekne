@@ -1,6 +1,7 @@
+import { outputs } from '../outputs'
 import { z } from 'zod'
 import type { Kysely } from 'kysely'
-import { t } from '../init'
+import { proc } from '../init'
 import type { Database } from '@/db'
 import { tagNameSchema } from '@/docs/validation'
 import {
@@ -232,89 +233,120 @@ const migrateTagMetadata = async (
   }
 }
 
-export const tagsRouter = t.router({
+export const tagsRouter = {
   /**
    * All tags that occur in the whole database plus tags that only have
    * metadata, with usage counts and descriptions.
    */
-  list: t.procedure.query(async ({ ctx: { db } }) => {
-    const usage = await db
-      .selectFrom('note_data')
-      .select((eb) => [
-        'datum_tag',
-        eb.fn.countAll<number>().as('line_count'),
-        eb.fn.count<number>('note_title').distinct().as('doc_count'),
-      ])
-      .where('datum_type', '=', 'tag')
-      .groupBy('datum_tag')
-      .execute()
+  list: proc
+    .route({
+      method: 'GET',
+      path: '/tags',
+      tags: ['tags'],
+      summary: 'List',
+      description:
+        'List tags with descriptions, archive state and usage counts. Names omit the leading #.',
+    })
+    .output(outputs.tags.list)
+    .input(z.object({}).optional())
+    .handler(async ({ context: { db } }) => {
+      const usage = await db
+        .selectFrom('note_data')
+        .select((eb) => [
+          'datum_tag',
+          eb.fn.countAll<number>().as('line_count'),
+          eb.fn.count<number>('note_title').distinct().as('doc_count'),
+        ])
+        .where('datum_type', '=', 'tag')
+        .groupBy('datum_tag')
+        .execute()
 
-    const meta = await db.selectFrom('tags').selectAll().execute()
+      const meta = await db.selectFrom('tags').selectAll().execute()
 
-    const byName = new Map<
-      string,
-      {
-        name: string
-        description: string | null
-        archived: boolean
-        lineCount: number
-        docCount: number
-      }
-    >()
-    for (const row of usage) {
-      const name = row.datum_tag.slice(1)
-      byName.set(name, {
-        name,
-        description: null,
-        archived: false,
-        lineCount: Number(row.line_count),
-        docCount: Number(row.doc_count),
-      })
-    }
-    for (const row of meta) {
-      const existing = byName.get(row.tag_name)
-      if (existing) {
-        existing.description = row.description
-        existing.archived = row.archived_at !== null
-      } else {
-        byName.set(row.tag_name, {
-          name: row.tag_name,
-          description: row.description,
-          archived: row.archived_at !== null,
-          lineCount: 0,
-          docCount: 0,
+      const byName = new Map<
+        string,
+        {
+          name: string
+          description: string | null
+          archived: boolean
+          lineCount: number
+          docCount: number
+        }
+      >()
+      for (const row of usage) {
+        const name = row.datum_tag.slice(1)
+        byName.set(name, {
+          name,
+          description: null,
+          archived: false,
+          lineCount: Number(row.line_count),
+          docCount: Number(row.doc_count),
         })
       }
-    }
+      for (const row of meta) {
+        const existing = byName.get(row.tag_name)
+        if (existing) {
+          existing.description = row.description
+          existing.archived = row.archived_at !== null
+        } else {
+          byName.set(row.tag_name, {
+            name: row.tag_name,
+            description: row.description,
+            archived: row.archived_at !== null,
+            lineCount: 0,
+            docCount: 0,
+          })
+        }
+      }
 
-    return [...byName.values()].sort((a, b) => a.name.localeCompare(b.name))
-  }),
+      return [...byName.values()].sort((a, b) => a.name.localeCompare(b.name))
+    }),
 
   /**
    * Tag names offered for new use (no leading '#') -- feeds autocomplete.
    * Archived tags are left out: they stay valid where they already occur,
    * they just stop being suggested.
    */
-  allTags: t.procedure.query(async ({ ctx: { db } }) => {
-    const [names, archived] = await Promise.all([
-      getAllTagNames(db),
-      getArchivedTagNames(db),
-    ])
-    return names.filter((name) => !archived.has(name))
-  }),
+  allTags: proc
+    .route({
+      method: 'GET',
+      path: '/tags/suggestions',
+      tags: ['tags'],
+      summary: 'All tags',
+      description:
+        'List tag names in use, excluding archived tags. Names omit the leading #.',
+    })
+    .output(outputs.tags.allTags)
+    .input(z.object({}).optional())
+    .handler(async ({ context: { db } }) => {
+      const [names, archived] = await Promise.all([
+        getAllTagNames(db),
+        getArchivedTagNames(db),
+      ])
+      return names.filter((name) => !archived.has(name))
+    }),
 
   /**
    * Archives or restores a tag. This is metadata only -- documents keep every
    * occurrence of the tag, so it is reversible.
    */
-  setArchived: t.procedure
+  setArchived: proc
+    .route({
+      method: 'PUT',
+      path: '/tags/archive',
+      tags: ['tags'],
+      summary: 'Set archived',
+      description:
+        'Archive or restore a tag without changing document content.',
+    })
+    .output(outputs.tags.setArchived)
     .input(
       z.object({
         name: tagNameSchema,
         archived: z.boolean(),
       })
     )
-    .mutation(async ({ input, ctx: { db } }) => {
+    .handler(async ({ input, context: { db } }) => {
       if (!input.archived) {
         // Rows exist only for tags with metadata, so an unarchived tag with no
         // description leaves nothing behind.
@@ -364,14 +396,23 @@ export const tagsRouter = t.router({
       return { success: true }
     }),
 
-  setDescription: t.procedure
+  setDescription: proc
+    .route({
+      method: 'PUT',
+      path: '/tags/description',
+      tags: ['tags'],
+      summary: 'Set description',
+      description:
+        'Set a tag description (maximum 2000 characters). Blank text clears it.',
+    })
+    .output(outputs.tags.setDescription)
     .input(
       z.object({
         name: tagNameSchema,
         description: z.string().max(2000),
       })
     )
-    .mutation(async ({ input, ctx: { db } }) => {
+    .handler(async ({ input, context: { db } }) => {
       const description = input.description.trim()
 
       if (description === '') {
@@ -416,9 +457,18 @@ export const tagsRouter = t.router({
       return { success: true }
     }),
 
-  renamePropose: t.procedure
+  renamePropose: proc
+    .route({
+      method: 'POST',
+      path: '/tags/rename/preview',
+      tags: ['tags'],
+      summary: 'Rename propose',
+      description:
+        'Preview a tag rename or merge. includeChildren also renames descendants. This preview is advisory; execution recomputes it.',
+    })
+    .output(outputs.tags.renamePropose)
     .input(renameInputSchema)
-    .mutation(async ({ input, ctx: { db } }) => {
+    .handler(async ({ input, context: { db } }) => {
       // newDocs (full rewritten bodies) stays server-side; the client only
       // needs the preview
       const proposal = await proposeTagRename(db, input)
@@ -431,9 +481,18 @@ export const tagsRouter = t.router({
       }
     }),
 
-  renameExecute: t.procedure
+  renameExecute: proc
+    .route({
+      method: 'POST',
+      path: '/tags/rename',
+      tags: ['tags'],
+      summary: 'Rename execute',
+      description:
+        'Rename or merge tags, rewrite documents and move tag metadata in one transaction.',
+    })
+    .output(outputs.tags.renameExecute)
     .input(renameInputSchema)
-    .mutation(async ({ input, ctx: { db } }) => {
+    .handler(async ({ input, context: { db } }) => {
       return await db.transaction().execute(async (tx) => {
         const proposal = await proposeTagRename(tx, input)
 
@@ -454,4 +513,4 @@ export const tagsRouter = t.router({
         }
       })
     }),
-})
+}

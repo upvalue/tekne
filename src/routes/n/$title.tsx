@@ -1,10 +1,12 @@
+import { ORPCError } from '@orpc/client'
+import { useQueryClient } from '@tanstack/react-query'
 import { TEditor } from '@/editor/TEditor'
 import { SaveConflictDialog } from '@/editor/SaveConflictDialog'
 import { allTagsAtom } from '@/editor/state'
 import { releaseTimer } from '@/editor/timer/timer-controller'
 import { useDocumentSync } from '@/editor/useDocumentSync'
 import { createStore, useAtom } from 'jotai'
-import { trpc } from '@/trpc/client'
+import { orpc } from '@/api/client'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useEffect, useMemo, useRef } from 'react'
 import { useCodemirrorEvent } from '@/editor/line-editor'
@@ -25,7 +27,7 @@ function RouteComponent() {
     select: (p) => p.title,
   })
   const navigate = useNavigate()
-  const utils = trpc.useUtils()
+  const utils = useQueryClient()
 
   useEffect(() => {
     setMainTitle(title)
@@ -58,7 +60,10 @@ function RouteComponent() {
       return
     }
 
-    if (loadDocQuery.error && loadDocQuery.error.data?.code === 'NOT_FOUND') {
+    if (
+      loadDocQuery.error instanceof ORPCError &&
+      loadDocQuery.error.code === 'NOT_FOUND'
+    ) {
       // Special case tutorial - auto-create it
       if (title === 'Tutorial') {
         // Skip if mutation is already in flight
@@ -67,7 +72,12 @@ function RouteComponent() {
         }
         // Create the tutorial, then invalidate the query to refetch
         createDocMutation.mutateAsync({ name: title }).then(() => {
-          utils.doc.loadDoc.invalidate({ name: title })
+          utils.invalidateQueries({
+            queryKey: orpc.doc.loadDoc.key({
+              input: { name: title },
+              type: 'query',
+            }),
+          })
         })
         return
       }

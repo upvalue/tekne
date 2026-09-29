@@ -5,7 +5,7 @@
 // "stop" made the Reset button silently save).
 import type { useStore } from 'jotai'
 import type { ZLine } from '@/docs/schema'
-import { trpcClient } from '@/trpc/client'
+import { orpcClient } from '@/api/client'
 import { setDetailTitle, setTimerActive } from '@/lib/title'
 import { playTimerCompleteSound } from '@/lib/sound'
 import { isMobile } from '@/lib/platform'
@@ -79,8 +79,8 @@ const execTimerHook = (
   const timer = store.get(globalTimerAtom)
   const found = findLineByTimeCreated(doc, timer.lineTimeCreated)
   if (!found) return
-  trpcClient.execHook
-    .mutate({
+  orpcClient
+    .execHook({
       hook,
       argument: {
         doc,

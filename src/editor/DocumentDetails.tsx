@@ -1,3 +1,4 @@
+import { useQuery } from '@tanstack/react-query'
 import {
   Dialog,
   DialogContent,
@@ -5,26 +6,27 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/vendor/Dialog'
-import { getDocTitle } from '@/lib/utils'
 import { FileText } from 'lucide-react'
 import { useState } from 'react'
-import { trpc } from '@/trpc/client'
+import { orpc } from '@/api/client'
 import { DialogDescription } from '@/components/vendor/Dialog'
 
-const DocumentDetails = () => {
-  const docTitle = getDocTitle()
-
-  const { isLoading, data } = trpc.doc.loadDocDetails.useQuery({
-    name: docTitle || '',
-  })
+const DocumentDetails = ({ title }: { title: string }) => {
+  const { isLoading, data } = useQuery(
+    orpc.doc.loadDocDetails.queryOptions({
+      input: {
+        name: title,
+      },
+    })
+  )
 
   return (
     <div>
       {isLoading && <p>Loading...</p>}
       {!isLoading && (
         <div>
-          <p>Created at: {data?.createdAt}</p>
-          <p>Updated at: {data?.updatedAt}</p>
+          <p>Created at: {data?.createdAt.toISOString()}</p>
+          <p>Updated at: {data?.updatedAt.toISOString()}</p>
           <p>Revision: {data?.revision}</p>
         </div>
       )}
@@ -32,7 +34,7 @@ const DocumentDetails = () => {
   )
 }
 
-export const DocumentDetailsButton = () => {
+export const DocumentDetailsButton = ({ title }: { title: string }) => {
   const [open, setOpen] = useState(false)
 
   return (
@@ -45,7 +47,7 @@ export const DocumentDetailsButton = () => {
           <DialogTitle>Document Details</DialogTitle>
         </DialogHeader>
         <DialogDescription>Document details</DialogDescription>
-        {open && <DocumentDetails />}
+        {open && <DocumentDetails title={title} />}
       </DialogContent>
     </Dialog>
   )

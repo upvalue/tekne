@@ -1,3 +1,4 @@
+import { outputs } from '../outputs'
 import z from 'zod'
 import {
   lineMake,
@@ -5,7 +6,7 @@ import {
   type ZDoc,
   CURRENT_SCHEMA_VERSION,
 } from '@/docs/schema'
-import { t } from '../init'
+import { proc, storedDocumentProc } from '../init'
 import type { Database } from '@/db'
 import { sql, type Kysely } from 'kysely'
 import { documentNameSchema } from '@/docs/validation'
@@ -15,14 +16,14 @@ import {
   migrateDocWithReport,
   validateDocumentWithMigrationCheck,
 } from '@/docs/doc-migrator'
-import { deriveNoteRows, recomputeAllDocumentData } from '@/trpc/lib/docs'
-import { escapeLike } from '@/trpc/lib/search-operators'
+import { deriveNoteRows, recomputeAllDocumentData } from '@/api/lib/docs'
+import { escapeLike } from '@/api/lib/search-operators'
 import { applyTemplateDirectives } from '@/docs/template-directives'
 import { produce } from 'immer'
 import { TEKNE_MD_PARSER, visitMdTree } from '@/docs/parser'
 import type { SyntaxNode } from '@lezer/common'
 import MagicString from 'magic-string'
-import { TRPCError } from '@trpc/server'
+import { ORPCError } from '@orpc/server'
 
 /**
  * Upserts a note and rebuilds its derived data (note_data, note_lines,
@@ -187,14 +188,23 @@ const createNewDocument = async (
   return newDoc
 }
 
-export const docRouter = t.router({
-  searchDocs: t.procedure
+export const docRouter = {
+  searchDocs: proc
+    .route({
+      method: 'GET',
+      path: '/documents',
+      tags: ['doc'],
+      summary: 'Search docs',
+      description:
+        'Find documents by title. Empty query returns all documents.',
+    })
+    .output(outputs.doc.searchDocs)
     .input(
       z.object({
         query: z.string(),
       })
     )
-    .query(async ({ input, ctx: { db } }) => {
+    .handler(async ({ input, context: { db } }) => {
       let query = db.selectFrom('notes').select(['title'])
 
       if (input.query.length > 0) {
@@ -210,16 +220,25 @@ export const docRouter = t.router({
       }))
     }),
 
-  loadDoc: t.procedure
+  loadDoc: storedDocumentProc
+    .route({
+      method: 'GET',
+      path: '/documents/content',
+      tags: ['doc'],
+      summary: 'Load doc',
+      description:
+        'Read a document and its revision. Pass the exact title as name.',
+    })
+    .output(outputs.doc.loadDoc)
     .input(
       z.object({
         name: z.string(),
       })
     )
-    .query(
+    .handler(
       async ({
         input,
-        ctx: { db },
+        context: { db },
       }): Promise<{ doc: ZDoc; revision: number }> => {
         const doc = await db
           .selectFrom('notes')
@@ -228,8 +247,7 @@ export const docRouter = t.router({
           .executeTakeFirst()
 
         if (!doc) {
-          throw new TRPCError({
-            code: 'NOT_FOUND',
+          throw new ORPCError('NOT_FOUND', {
             message: `Document "${input.name}" not found`,
           })
         }
@@ -238,13 +256,21 @@ export const docRouter = t.router({
       }
     ),
 
-  loadDocDetails: t.procedure
+  loadDocDetails: proc
+    .route({
+      method: 'GET',
+      path: '/documents/details',
+      tags: ['doc'],
+      summary: 'Load doc details',
+      description: 'Read creation and update timestamps and revision.',
+    })
+    .output(outputs.doc.loadDocDetails)
     .input(
       z.object({
         name: z.string(),
       })
     )
-    .query(async ({ input, ctx: { db } }) => {
+    .handler(async ({ input, context: { db } }) => {
       const doc = await db
         .selectFrom('notes')
         .selectAll()
@@ -252,8 +278,7 @@ export const docRouter = t.router({
         .executeTakeFirst()
 
       if (!doc) {
-        throw new TRPCError({
-          code: 'NOT_FOUND',
+        throw new ORPCError('NOT_FOUND', {
           message: `Document "${input.name}" not found`,
         })
       }
@@ -265,7 +290,16 @@ export const docRouter = t.router({
       }
     }),
 
-  updateDoc: t.procedure
+  updateDoc: storedDocumentProc
+    .route({
+      method: 'PUT',
+      path: '/documents/content',
+      tags: ['doc'],
+      summary: 'Update doc',
+      description:
+        'Replace a document and rebuild derived data. Supply expectedRevision to detect concurrent edits. A stale revision returns status conflict with the current document; no write occurs. Without expectedRevision this upserts unconditionally.',
+    })
+    .output(outputs.doc.updateDoc)
     .input(
       z.object({
         name: z.string(),
@@ -277,10 +311,10 @@ export const docRouter = t.router({
         expectedRevision: z.number().optional(),
       })
     )
-    .mutation(
+    .handler(
       async ({
         input,
-        ctx: { db },
+        context: { db },
       }): Promise<
         | { status: 'ok'; revision: number }
         | { status: 'conflict'; serverDoc: ZDoc; serverRevision: number }
@@ -298,8 +332,7 @@ export const docRouter = t.router({
             if (!current) {
               // The client expected a specific revision of a document that no
               // longer exists; recreating it here would resurrect a deletion.
-              throw new TRPCError({
-                code: 'NOT_FOUND',
+              throw new ORPCError('NOT_FOUND', {
                 message: `Document "${input.name}" no longer exists (expected revision ${input.expectedRevision})`,
               })
             }
@@ -317,26 +350,44 @@ export const docRouter = t.router({
       }
     ),
 
-  renameDocPropose: t.procedure
+  renameDocPropose: proc
+    .route({
+      method: 'POST',
+      path: '/documents/rename/preview',
+      tags: ['doc'],
+      summary: 'Rename doc propose',
+      description:
+        'Preview a document rename and the incoming links it would rewrite.',
+    })
+    .output(outputs.doc.renameDocPropose)
     .input(
       z.object({
         oldName: z.string(),
         newName: documentNameSchema,
       })
     )
-    .mutation(async ({ input, ctx: { db } }) => {
+    .handler(async ({ input, context: { db } }) => {
       const { oldName, newName } = input
       return await proposeRename(db, oldName, newName)
     }),
 
-  renameDocExecute: t.procedure
+  renameDocExecute: proc
+    .route({
+      method: 'POST',
+      path: '/documents/rename',
+      tags: ['doc'],
+      summary: 'Rename doc execute',
+      description:
+        'Rename a document and rewrite incoming links in one transaction.',
+    })
+    .output(outputs.doc.renameDocExecute)
     .input(
       z.object({
         oldName: z.string(),
         newName: documentNameSchema,
       })
     )
-    .mutation(async ({ input, ctx: { db } }) => {
+    .handler(async ({ input, context: { db } }) => {
       const { oldName, newName } = input
 
       // One transaction covers the existence check, every link rewrite, and
@@ -349,8 +400,7 @@ export const docRouter = t.router({
         )
 
         if (docAlreadyExists) {
-          throw new TRPCError({
-            code: 'CONFLICT',
+          throw new ORPCError('CONFLICT', {
             message: `Document with name "${newName}" already exists`,
           })
         }
@@ -414,18 +464,26 @@ export const docRouter = t.router({
       })
     }),
 
-  createDoc: t.procedure
+  createDoc: proc
+    .route({
+      method: 'POST',
+      path: '/documents',
+      tags: ['doc'],
+      summary: 'Create doc',
+      description:
+        'Create a document. Daily names use $Daily when available; Tutorial uses built-in content. Existing names return 409.',
+    })
+    .output(outputs.doc.createDoc)
     .input(
       z.object({
         name: documentNameSchema,
       })
     )
-    .mutation(async ({ input, ctx: { db } }) => {
+    .handler(async ({ input, context: { db } }) => {
       const { name } = input
 
       if (await docExists(db, name)) {
-        throw new TRPCError({
-          code: 'CONFLICT',
+        throw new ORPCError('CONFLICT', {
           message: `Document with name "${name}" already exists`,
         })
       }
@@ -437,86 +495,127 @@ export const docRouter = t.router({
       return { success: true, name }
     }),
 
-  validateAllDocs: t.procedure.query(async ({ ctx: { db } }) => {
-    const allDocs = await db.selectFrom('notes').selectAll().execute()
-
-    const results = allDocs.map((doc) => {
-      return validateDocumentWithMigrationCheck(doc.title, doc.body)
+  validateAllDocs: proc
+    .route({
+      method: 'GET',
+      path: '/maintenance/documents/validation',
+      tags: ['doc'],
+      summary: 'Validate all docs',
+      description:
+        'Validate all stored documents and report migration options. Does not write.',
     })
+    .output(outputs.doc.validateAllDocs)
+    .input(z.object({}).optional())
+    .handler(async ({ context: { db } }) => {
+      const allDocs = await db.selectFrom('notes').selectAll().execute()
 
-    const validDocs = results.filter((r) => r.valid)
-    const invalidDocs = results.filter((r) => !r.valid)
-    const fixableDocs = invalidDocs.filter((r) => r.canBeFxedByMigration)
-    const unfixableDocs = invalidDocs.filter((r) => !r.canBeFxedByMigration)
+      const results = allDocs.map((doc) => {
+        return validateDocumentWithMigrationCheck(doc.title, doc.body)
+      })
 
-    const summary = {
-      totalDocs: results.length,
-      validDocs: validDocs.length,
-      invalidDocs: invalidDocs.length,
-      fixableByMigration: fixableDocs.length,
-      unfixable: unfixableDocs.length,
-    }
-
-    return {
-      summary,
-      results: invalidDocs, // Return all invalid docs with migration info
-    }
-  }),
-
-  migrateAllDocs: t.procedure.mutation(async ({ ctx: { db } }) => {
-    // One transaction so a failure partway leaves no documents migrated, and
-    // upsertNoteInTx so derived data (note_data, note_lines, parsed_body)
-    // tracks the rewritten bodies and revisions record the change.
-    return await db.transaction().execute(async (tx) => {
-      const allDocs = await tx.selectFrom('notes').selectAll().execute()
-
-      const migrationReports = []
-      let migratedCount = 0
-
-      for (const doc of allDocs) {
-        const { migratedBody, report } = migrateDocWithReport(
-          doc.title,
-          doc.body
-        )
-
-        migrationReports.push(report)
-
-        if (report.migrated) {
-          await upsertNoteInTx(tx, doc.title, migratedBody)
-          migratedCount++
-        }
-      }
+      const validDocs = results.filter((r) => r.valid)
+      const invalidDocs = results.filter((r) => !r.valid)
+      const fixableDocs = invalidDocs.filter((r) => r.canBeFxedByMigration)
+      const unfixableDocs = invalidDocs.filter((r) => !r.canBeFxedByMigration)
 
       const summary = {
-        totalDocs: allDocs.length,
-        migratedDocs: migratedCount,
-        unchangedDocs: allDocs.length - migratedCount,
+        totalDocs: results.length,
+        validDocs: validDocs.length,
+        invalidDocs: invalidDocs.length,
+        fixableByMigration: fixableDocs.length,
+        unfixable: unfixableDocs.length,
       }
 
       return {
         summary,
-        reports: migrationReports.filter((r) => r.migrated), // Only return docs that were actually migrated
+        results: invalidDocs, // Return all invalid docs with migration info
       }
+    }),
+
+  migrateAllDocs: proc
+    .route({
+      method: 'POST',
+      path: '/maintenance/documents/migrate',
+      tags: ['doc'],
+      summary: 'Migrate all docs',
+      description:
+        'Migrate all stored documents to the current schema and rebuild derived data in one transaction.',
     })
-  }),
+    .output(outputs.doc.migrateAllDocs)
+    .input(z.void())
+    .handler(async ({ context: { db } }) => {
+      // One transaction so a failure partway leaves no documents migrated, and
+      // upsertNoteInTx so derived data (note_data, note_lines, parsed_body)
+      // tracks the rewritten bodies and revisions record the change.
+      return await db.transaction().execute(async (tx) => {
+        const allDocs = await tx.selectFrom('notes').selectAll().execute()
 
-  recomputeAllData: t.procedure.mutation(async ({ ctx: { db } }) => {
-    const result = await recomputeAllDocumentData(db)
-    return result
-  }),
+        const migrationReports = []
+        let migratedCount = 0
 
-  deleteDoc: t.procedure
+        for (const doc of allDocs) {
+          const { migratedBody, report } = migrateDocWithReport(
+            doc.title,
+            doc.body
+          )
+
+          migrationReports.push(report)
+
+          if (report.migrated) {
+            await upsertNoteInTx(tx, doc.title, migratedBody)
+            migratedCount++
+          }
+        }
+
+        const summary = {
+          totalDocs: allDocs.length,
+          migratedDocs: migratedCount,
+          unchangedDocs: allDocs.length - migratedCount,
+        }
+
+        return {
+          summary,
+          reports: migrationReports.filter((r) => r.migrated), // Only return docs that were actually migrated
+        }
+      })
+    }),
+
+  recomputeAllData: proc
+    .route({
+      method: 'POST',
+      path: '/maintenance/documents/recompute',
+      tags: ['doc'],
+      summary: 'Recompute all data',
+      description:
+        'Rebuild derived search, tag and aggregate data for every document.',
+    })
+    .output(outputs.doc.recomputeAllData)
+    .input(z.void())
+    .handler(async ({ context: { db } }) => {
+      const result = await recomputeAllDocumentData(db)
+      return result
+    }),
+
+  deleteDoc: proc
+    .route({
+      method: 'DELETE',
+      path: '/documents',
+      tags: ['doc'],
+      summary: 'Delete doc',
+      description:
+        'Delete a document and its derived data. Send name in the JSON body.',
+    })
+    .output(outputs.doc.deleteDoc)
     .input(
       z.object({
         name: documentNameSchema,
       })
     )
-    .mutation(async ({ input, ctx: { db } }) => {
+    .handler(async ({ input, context: { db } }) => {
       const { name } = input
 
       if (!(await docExists(db, name))) {
-        throw new TRPCError({
-          code: 'NOT_FOUND',
+        throw new ORPCError('NOT_FOUND', {
           message: `Document "${name}" not found`,
         })
       }
@@ -527,28 +626,46 @@ export const docRouter = t.router({
       return { success: true, name }
     }),
 
-  listTemplates: t.procedure.query(async ({ ctx: { db } }) => {
-    const templates = await db
-      .selectFrom('notes')
-      .select(['title'])
-      .where('title', 'like', '$%')
-      .execute()
-    return templates.map((t) => t.title)
-  }),
+  listTemplates: proc
+    .route({
+      method: 'GET',
+      path: '/templates',
+      tags: ['doc'],
+      summary: 'List templates',
+      description: 'List document titles beginning with $.',
+    })
+    .output(outputs.doc.listTemplates)
+    .input(z.object({}).optional())
+    .handler(async ({ context: { db } }) => {
+      const templates = await db
+        .selectFrom('notes')
+        .select(['title'])
+        .where('title', 'like', '$%')
+        .execute()
+      return templates.map((t) => t.title)
+    }),
 
-  createDocFromTemplate: t.procedure
+  createDocFromTemplate: proc
+    .route({
+      method: 'POST',
+      path: '/documents/from-template',
+      tags: ['doc'],
+      summary: 'Create doc from template',
+      description:
+        'Create a document from templateName with fresh line timestamps. Daily names apply date directives.',
+    })
+    .output(outputs.doc.createDocFromTemplate)
     .input(
       z.object({
         name: documentNameSchema,
         templateName: z.string(),
       })
     )
-    .mutation(async ({ input, ctx: { db } }) => {
+    .handler(async ({ input, context: { db } }) => {
       const { name, templateName } = input
 
       if (await docExists(db, name)) {
-        throw new TRPCError({
-          code: 'CONFLICT',
+        throw new ORPCError('CONFLICT', {
           message: `Document "${name}" already exists`,
         })
       }
@@ -561,8 +678,7 @@ export const docRouter = t.router({
         .executeTakeFirst()
 
       if (!template) {
-        throw new TRPCError({
-          code: 'NOT_FOUND',
+        throw new ORPCError('NOT_FOUND', {
           message: `Template "${templateName}" not found`,
         })
       }
@@ -585,4 +701,4 @@ export const docRouter = t.router({
 
       return { success: true, name }
     }),
-})
+}

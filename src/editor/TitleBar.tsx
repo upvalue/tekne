@@ -1,6 +1,8 @@
+import { apiErrorMessage } from '@/api/errors'
+import { useMutation } from '@tanstack/react-query'
 import { useState, useRef, useEffect } from 'react'
 import { useAtom } from 'jotai'
-import { trpc } from '@/trpc/client'
+import { orpc } from '@/api/client'
 import { useNavigate } from '@tanstack/react-router'
 import { errorMessageAtom } from './state'
 import { DocumentDetailsButton } from './DocumentDetails'
@@ -42,55 +44,49 @@ export const TitleBar = ({
     }
   }
 
-  const renameDocExecuteMutation = trpc.doc.renameDocExecute.useMutation({
-    onSuccess: () => {
-      toast.success(`Document renamed to "${proposedTitle.trim()}"`)
-      navigate({
-        to: '/n/$title',
-        params: { title: proposedTitle.trim() },
-      })
-    },
-    onError: (error) => {
-      setErrorMessage(error.message)
-      setDisplayedTitle(title)
-    },
-  })
-
-  const renameDocProposeMutation = trpc.doc.renameDocPropose.useMutation({
-    onSuccess: (res) => {
-      setErrorMessage(null)
-
-      if (res.docAlreadyExists) {
-        setErrorMessage(
-          `Document with name "${proposedTitle.trim()}" already exists`
-        )
+  const renameDocExecuteMutation = useMutation(
+    orpc.doc.renameDocExecute.mutationOptions({
+      onSuccess: () => {
+        toast.success(`Document renamed to "${proposedTitle.trim()}"`)
+        navigate({
+          to: '/n/$title',
+          params: { title: proposedTitle.trim() },
+        })
+      },
+      onError: (error) => {
+        setErrorMessage(error.message)
         setDisplayedTitle(title)
-        return
-      }
+      },
+    })
+  )
 
-      // Show confirmation dialog when renaming is possible
-      setShowConfirmDialog({
-        show: true,
-        linksToUpdate: res.linksToUpdate,
-      })
-    },
-    onError: (error) => {
-      // Extract a clean error message from TRPC/Zod validation errors
-      let message = error.message
-      try {
-        const parsed = JSON.parse(message)
-        if (Array.isArray(parsed) && parsed[0]?.message) {
-          message = parsed[0].message
+  const renameDocProposeMutation = useMutation(
+    orpc.doc.renameDocPropose.mutationOptions({
+      onSuccess: (res) => {
+        setErrorMessage(null)
+
+        if (res.docAlreadyExists) {
+          setErrorMessage(
+            `Document with name "${proposedTitle.trim()}" already exists`
+          )
+          setDisplayedTitle(title)
+          return
         }
-      } catch {
-        // If parsing fails, use the original message
-      }
-      setErrorMessage(message)
 
-      // Revert the title to the original
-      setDisplayedTitle(title)
-    },
-  })
+        // Show confirmation dialog when renaming is possible
+        setShowConfirmDialog({
+          show: true,
+          linksToUpdate: res.linksToUpdate,
+        })
+      },
+      onError: (error) => {
+        setErrorMessage(apiErrorMessage(error))
+
+        // Revert the title to the original
+        setDisplayedTitle(title)
+      },
+    })
+  )
 
   useEffect(() => {
     setProposedTitle(title)
@@ -126,8 +122,8 @@ export const TitleBar = ({
   const isDev = import.meta.env.DEV
   const isDemo = import.meta.env.TEKNE_DEMO
   const isDevServer =
-    import.meta.env.TEKNE_TRPC_URL &&
-    import.meta.env.TEKNE_TRPC_URL.includes('localhost')
+    import.meta.env.TEKNE_ORPC_URL &&
+    import.meta.env.TEKNE_ORPC_URL.includes('localhost')
 
   return (
     <div className="flex py-2 px-4 items-center TitleBar">
@@ -156,7 +152,7 @@ export const TitleBar = ({
             />
           </div>
           <div className="flex items-center">
-            <DocumentDetailsButton />
+            <DocumentDetailsButton title={title} />
           </div>
         </div>
       </div>

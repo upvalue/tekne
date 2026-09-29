@@ -1,7 +1,7 @@
-import type { inferRouterOutputs } from '@trpc/server'
-import type { AppRouter } from '@/trpc/router'
+import type { InferRouterOutputs } from '@orpc/server'
+import type { AppRouter } from '@/api/router'
 
-export type RouterOutputs = inferRouterOutputs<AppRouter>
+export type RouterOutputs = InferRouterOutputs<AppRouter>
 
 // Doc router types
 export type ValidateAllDocsOutput = RouterOutputs['doc']['validateAllDocs']

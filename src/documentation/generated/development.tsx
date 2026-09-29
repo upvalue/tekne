@@ -56,7 +56,7 @@ function _createMdxContent(props: any) {
       {'\n'}
       <_components.p>
         {
-          'This will run a frontend-only version with TRPC and postgres (via pglite) in the browser.'
+          'This will run a frontend-only version with ORPC and postgres (via pglite) in the browser.'
         }
       </_components.p>
       {'\n'}

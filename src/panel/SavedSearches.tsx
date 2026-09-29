@@ -1,3 +1,4 @@
+import { useQueryClient, useQuery, useMutation } from '@tanstack/react-query'
 // Saved-searches dropdown for the search panel: list, apply, save the
 // current query, delete. Built on the Base UI popover so outside-click,
 // Escape, and focus handling come from the kit instead of a hand-rolled
@@ -9,7 +10,7 @@ import {
   PopoverPanel,
 } from '@/components/vendor/Popover'
 import { Bookmark, Trash2, Plus, ChevronDown } from 'lucide-react'
-import { trpc } from '@/trpc/client'
+import { orpc } from '@/api/client'
 import { cn } from '@/lib/utils'
 
 export const SavedSearches = ({
@@ -23,22 +24,32 @@ export const SavedSearches = ({
   const [isAdding, setIsAdding] = useState(false)
   const [newName, setNewName] = useState('')
 
-  const utils = trpc.useUtils()
-  const { data: savedSearches } = trpc.search.getSavedSearches.useQuery()
+  const utils = useQueryClient()
+  const { data: savedSearches } = useQuery(
+    orpc.search.getSavedSearches.queryOptions({ input: undefined })
+  )
 
-  const saveMutation = trpc.search.saveSearch.useMutation({
-    onSuccess: () => {
-      utils.search.getSavedSearches.invalidate()
-      setIsAdding(false)
-      setNewName('')
-    },
-  })
+  const saveMutation = useMutation(
+    orpc.search.saveSearch.mutationOptions({
+      onSuccess: () => {
+        utils.invalidateQueries({
+          queryKey: orpc.search.getSavedSearches.key(),
+        })
+        setIsAdding(false)
+        setNewName('')
+      },
+    })
+  )
 
-  const deleteMutation = trpc.search.deleteSavedSearch.useMutation({
-    onSuccess: () => {
-      utils.search.getSavedSearches.invalidate()
-    },
-  })
+  const deleteMutation = useMutation(
+    orpc.search.deleteSavedSearch.mutationOptions({
+      onSuccess: () => {
+        utils.invalidateQueries({
+          queryKey: orpc.search.getSavedSearches.key(),
+        })
+      },
+    })
+  )
 
   const handleSave = () => {
     if (newName.trim() && currentQuery.trim()) {

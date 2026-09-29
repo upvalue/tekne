@@ -4,14 +4,15 @@ import type { Kysely } from 'kysely'
 import type { Database } from '@/db/types'
 import { makeTestDb } from '@/db/testing'
 import { docMake, lineMake, type ZLine } from '@/docs/schema'
-import { t } from '../init'
+import { createRouterClient } from '@orpc/server'
 import { upsertNoteInTx } from './doc'
 import { tasksRouter } from './tasks'
 
 let db: Kysely<Database>
 let caller: ReturnType<typeof createCaller>
 
-const createCaller = t.createCallerFactory(tasksRouter)
+const createCaller = (context: { db: Kysely<Database> }) =>
+  createRouterClient(tasksRouter, { context })
 const cutoff = '2025-02-01T00:00:00.000Z'
 
 const task = (

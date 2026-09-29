@@ -1,9 +1,10 @@
+import { useQuery } from '@tanstack/react-query'
 // Search panel - sidebar-friendly search interface
 
 import { useState, useCallback, useMemo } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { useDebouncedValue } from '@/hooks/useDebouncedValue'
-import { trpc, type RouterOutputs } from '@/trpc/client'
+import { orpc, type RouterOutputs } from '@/api/client'
 import { parseQuery } from '@/search/query-parser'
 import type { SearchViewMode } from '@/search/types'
 import { ResultCardGrid } from './AggregateComponents'
@@ -184,14 +185,18 @@ export const Search = () => {
     debouncedParsedQuery.errors.length === 0
 
   // Search queries use debounced value
-  const linesQuery = trpc.search.searchLines.useQuery(
-    { operators: debouncedParsedQuery.operators },
-    { enabled: hasDebouncedValidQuery && viewMode === 'text' }
+  const linesQuery = useQuery(
+    orpc.search.searchLines.queryOptions({
+      input: { operators: debouncedParsedQuery.operators },
+      enabled: hasDebouncedValidQuery && viewMode === 'text',
+    })
   )
 
-  const aggregateQuery = trpc.search.searchAggregate.useQuery(
-    { operators: debouncedParsedQuery.operators },
-    { enabled: hasDebouncedValidQuery && viewMode === 'aggregate' }
+  const aggregateQuery = useQuery(
+    orpc.search.searchAggregate.queryOptions({
+      input: { operators: debouncedParsedQuery.operators },
+      enabled: hasDebouncedValidQuery && viewMode === 'aggregate',
+    })
   )
 
   const handleNavigateToResult = useCallback(

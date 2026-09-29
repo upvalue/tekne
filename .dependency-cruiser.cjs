@@ -22,8 +22,8 @@ const LAYER_ORDER = [
   'db',
   'search',
 
-  // API: tRPC routers (server side), derived-row logic, and the client.
-  'trpc',
+  // API: oRPC routers (server side), derived-row logic, and the client.
+  'api',
 
   // Backend entry point: the express server. Nothing may import it (see the
   // no-import-of-entry-points rule below).

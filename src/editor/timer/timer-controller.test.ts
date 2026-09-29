@@ -14,8 +14,8 @@ import {
 } from './timer-controller'
 import { playTimerCompleteSound } from '@/lib/sound'
 
-vi.mock('@/trpc/client', () => ({
-  trpcClient: { execHook: { mutate: vi.fn().mockResolvedValue(undefined) } },
+vi.mock('@/api/client', () => ({
+  orpcClient: { execHook: vi.fn().mockResolvedValue(undefined) },
 }))
 vi.mock('@/lib/sound', () => ({ playTimerCompleteSound: vi.fn() }))
 
