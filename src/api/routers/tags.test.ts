@@ -42,6 +42,12 @@ describe('archiving', () => {
     await noteWithTags('Doc', ['#old', '#new'])
 
     await caller.setArchived({ name: 'old', archived: true })
+    const metadata = await db
+      .selectFrom('tags')
+      .selectAll()
+      .where('tag_name', '=', 'old')
+      .executeTakeFirstOrThrow()
+    expect(metadata.updated_at).toEqual(metadata.archived_at)
 
     expect(await caller.allTags()).toEqual(['new'])
     expect(await caller.list()).toMatchObject([
@@ -75,6 +81,32 @@ describe('archiving', () => {
     ])
   })
 
+  test('metadata fields stay independent, and clearing the last one removes the row', async () => {
+    await caller.setArchived({ name: 'old', archived: true })
+    await caller.setDescription({ name: 'old', description: '  retained  ' })
+    expect(await caller.list()).toMatchObject([
+      { name: 'old', description: 'retained', archived: true },
+    ])
+
+    await caller.setArchived({ name: 'old', archived: false })
+    expect(await caller.list()).toMatchObject([
+      { name: 'old', description: 'retained', archived: false },
+    ])
+
+    await caller.setDescription({ name: 'old', description: '  ' })
+    expect(await db.selectFrom('tags').selectAll().execute()).toEqual([])
+  })
+
+  test('clearing missing metadata succeeds without creating a row', async () => {
+    expect(
+      await caller.setArchived({ name: 'missing', archived: false })
+    ).toEqual({ success: true })
+    expect(
+      await caller.setDescription({ name: 'missing', description: '' })
+    ).toEqual({ success: true })
+    expect(await caller.list()).toEqual([])
+  })
+
   test('a tag can be archived before it is ever used', async () => {
     await caller.setArchived({ name: 'planned', archived: true })
 
@@ -98,6 +130,25 @@ describe('rename carries archived state', () => {
 
     expect(await caller.list()).toMatchObject([
       { name: 'fresh', archived: true },
+    ])
+  })
+
+  test('a merge retains the target description and archived state', async () => {
+    await noteWithTags('Doc', ['#old', '#target'])
+    await caller.setDescription({ name: 'old', description: 'source' })
+    await caller.setDescription({ name: 'target', description: 'target' })
+    await caller.setArchived({ name: 'target', archived: true })
+
+    await caller.renameExecute({ oldName: 'old', newName: 'target' })
+
+    expect(await caller.list()).toEqual([
+      {
+        name: 'target',
+        description: 'target',
+        archived: true,
+        lineCount: 2,
+        docCount: 1,
+      },
     ])
   })
 

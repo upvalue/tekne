@@ -1,10 +1,9 @@
 import { type Extension } from '@codemirror/state'
 import {
   Decoration,
-  EditorView,
+  type EditorView,
   ViewPlugin,
   WidgetType,
-  type DecorationSet,
 } from '@codemirror/view'
 import { clientRectsFor, flattenRect } from './vendor/dom'
 
@@ -52,39 +51,23 @@ class Placeholder extends WidgetType {
 /// to show when the editor is empty.
 export function placeholder(
   content: ContentFn,
-  // lineNumber: number,
   showPlaceholder: (view: EditorView) => boolean = () => true
 ): Extension {
-  const plugin = ViewPlugin.fromClass(
+  return ViewPlugin.fromClass(
     class {
-      placeholder: DecorationSet
+      placeholder = Decoration.none
 
       constructor(readonly view: EditorView) {
-        const { doc } = view.state
-        const docEnd = doc.length
-
-        this.placeholder = content
-          ? Decoration.set([
-              Decoration.widget({
-                widget: new Placeholder(content),
-                side: 1,
-              }).range(docEnd),
-            ])
-          : Decoration.none
+        this.update()
       }
 
       update() {
-        const { doc } = this.view.state
-        const docEnd = doc.length
-
-        this.placeholder = content
-          ? Decoration.set([
-              Decoration.widget({
-                widget: new Placeholder(content),
-                side: 1,
-              }).range(docEnd),
-            ])
-          : Decoration.none
+        this.placeholder = Decoration.set([
+          Decoration.widget({
+            widget: new Placeholder(content),
+            side: 1,
+          }).range(this.view.state.doc.length),
+        ])
       }
 
       get decorations() {
@@ -93,7 +76,4 @@ export function placeholder(
     },
     { decorations: (v) => v.decorations }
   )
-  return typeof content == 'string'
-    ? [plugin, EditorView.contentAttributes.of({ 'aria-placeholder': content })]
-    : plugin
 }

@@ -23,5 +23,3 @@ export const tagNameSchema = z
 export const validateDocumentName = (name: string) => {
   return documentNameSchema.safeParse(name)
 }
-
-export type DocumentNameValidation = ReturnType<typeof validateDocumentName>

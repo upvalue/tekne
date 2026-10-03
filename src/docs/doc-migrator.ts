@@ -9,15 +9,24 @@ import {
   type ZDoc,
   type ZLine,
 } from './schema'
-import { ZodError, type ZodObject, type ZodRawShape } from 'zod'
+import { ZodError } from 'zod'
 
-/**
- * Field names a Zod object schema allows. Uses the public .shape — the old
- * version reached into _def and silently returned an empty set when Zod's
- * internals shifted, which made every extra-field check pass vacuously.
- */
-const getZodObjectKeys = (zodSchema: ZodObject<ZodRawShape>): Set<string> =>
-  new Set(Object.keys(zodSchema.shape))
+/** Extra fields are checked on the original input, before Zod strips them. */
+const getDocumentExtraFields = (body: ZDoc): string[] => {
+  const extraFields = (value: object, allowed: Set<string>, path: string) =>
+    Object.keys(value)
+      .filter((field) => !allowed.has(field))
+      .map((field) => `${path}.${field}`)
+  const allowedDocFields = new Set(Object.keys(zdoc.shape))
+  const allowedLineFields = new Set(Object.keys(zline.shape))
+
+  return [
+    ...extraFields(body, allowedDocFields, 'doc'),
+    ...body.children.flatMap((child, index) =>
+      extraFields(child, allowedLineFields, `children[${index}]`)
+    ),
+  ]
+}
 
 export interface MigrationOperation {
   type: 'rename' | 'delete' | 'add' | 'update'
@@ -209,36 +218,8 @@ export const validateDocumentWithMigrationCheck = (
   try {
     zdoc.parse(body)
 
-    // Check for extra fields in document body
-    if (typeof body === 'object' && body !== null) {
-      const allowedDocFields = getZodObjectKeys(zdoc)
-      const actualDocFields = new Set(Object.keys(body))
-
-      for (const field of actualDocFields) {
-        if (!allowedDocFields.has(field)) {
-          validationResult.extraFields.push(`doc.${field}`)
-          validationResult.valid = false
-        }
-      }
-
-      // Check children for extra fields
-      if (Array.isArray(body.children)) {
-        const allowedLineFields = getZodObjectKeys(zline)
-
-        body.children.forEach((child: ZLine, idx: number) => {
-          if (typeof child === 'object' && child !== null) {
-            const actualLineFields = new Set(Object.keys(child))
-
-            for (const field of actualLineFields) {
-              if (!allowedLineFields.has(field)) {
-                validationResult.extraFields.push(`children[${idx}].${field}`)
-                validationResult.valid = false
-              }
-            }
-          }
-        })
-      }
-    }
+    validationResult.extraFields = getDocumentExtraFields(body)
+    validationResult.valid = validationResult.extraFields.length === 0
   } catch (error) {
     validationResult.valid = false
     if (error instanceof ZodError) {
@@ -260,54 +241,11 @@ export const validateDocumentWithMigrationCheck = (
     const { migratedBody, report } = migrateDocWithReport(title, body)
     validationResult.migrationReport = report
 
-    // Now validate the migrated document
-    try {
-      zdoc.parse(migratedBody)
-
-      // Check for extra fields in migrated document
-      let migratedIsValid = true
-      const migratedExtraFields: string[] = []
-
-      if (typeof migratedBody === 'object' && migratedBody !== null) {
-        const allowedDocFields = getZodObjectKeys(zdoc)
-        const actualDocFields = new Set(Object.keys(migratedBody))
-
-        for (const field of actualDocFields) {
-          if (!allowedDocFields.has(field)) {
-            migratedExtraFields.push(`doc.${field}`)
-            migratedIsValid = false
-          }
-        }
-
-        // Check children for extra fields
-        if (Array.isArray(migratedBody.children)) {
-          const allowedLineFields = getZodObjectKeys(zline)
-
-          migratedBody.children.forEach((child: ZLine, idx: number) => {
-            if (typeof child === 'object' && child !== null) {
-              const actualLineFields = new Set(Object.keys(child))
-
-              for (const field of actualLineFields) {
-                if (!allowedLineFields.has(field)) {
-                  migratedExtraFields.push(`children[${idx}].${field}`)
-                  migratedIsValid = false
-                }
-              }
-            }
-          })
-        }
-      }
-
-      // If migrated version is valid, then migration can fix this document
-      if (migratedIsValid) {
-        validationResult.canBeFxedByMigration = true
-      }
-    } catch {
-      // Migration couldn't fix the validation errors
-      validationResult.canBeFxedByMigration = false
-    }
+    zdoc.parse(migratedBody)
+    validationResult.canBeFxedByMigration =
+      getDocumentExtraFields(migratedBody).length === 0
   } catch {
-    // Migration itself failed
+    // Migration or validation failed; the document still needs a manual fix.
     validationResult.canBeFxedByMigration = false
   }
 

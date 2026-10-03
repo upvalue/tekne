@@ -1,5 +1,5 @@
 import { Migrator } from 'kysely'
-import type { Kysely, Migration, MigrationProvider } from 'kysely'
+import type { Kysely, Migration } from 'kysely'
 
 import { tmigration as initMigration } from './migrations/1752986809444_init'
 import { tmigration as addDocDatesMigration } from './migrations/1756085936353_add-doc-dates.ts'
@@ -46,31 +46,26 @@ export const MIGRATIONS: Record<string, Migration> = {
  * as using the FileMigrationProvider and probable that can be
  * re-implemented with some Vite/frontend awareness
  */
-class TekneMigrationProvider implements MigrationProvider {
-  async getMigrations(): Promise<Record<string, Migration>> {
-    return MIGRATIONS
-  }
-}
-
-const getMigrator = (db: Kysely<Database>) =>
-  new Migrator({
+const runMigration = async (
+  db: Kysely<Database>,
+  direction: 'migrateToLatest' | 'migrateDown'
+) => {
+  const migrator = new Migrator({
     db,
-    provider: new TekneMigrationProvider(),
+    provider: { getMigrations: async () => MIGRATIONS },
   })
-
-// Export utilities for running migrations
-export async function migrateToLatest(db: Kysely<Database>) {
-  const migrator = getMigrator(db)
-
-  const { error, results } = await migrator.migrateToLatest()
+  const { error, results } = await migrator[direction]()
+  const reverting = direction === 'migrateDown'
 
   results?.forEach((it) => {
     if (it.status === 'Success') {
       console.log(
-        `[db] Migration "${it.migrationName}" was executed successfully`
+        `[db] Migration "${it.migrationName}" was ${reverting ? 'reverted' : 'executed'} successfully`
       )
     } else if (it.status === 'Error') {
-      console.error(`[db] Failed to execute migration "${it.migrationName}"`)
+      console.error(
+        `[db] Failed to ${reverting ? 'revert' : 'execute'} migration "${it.migrationName}"`
+      )
     }
   })
 
@@ -81,24 +76,8 @@ export async function migrateToLatest(db: Kysely<Database>) {
   }
 }
 
-export async function migrateDown(db: Kysely<Database>) {
-  const migrator = getMigrator(db)
+export const migrateToLatest = (db: Kysely<Database>) =>
+  runMigration(db, 'migrateToLatest')
 
-  const { error, results } = await migrator.migrateDown()
-
-  results?.forEach((it) => {
-    if (it.status === 'Success') {
-      console.log(
-        `[db] Migration "${it.migrationName}" was reverted successfully`
-      )
-    } else if (it.status === 'Error') {
-      console.error(`[db] Failed to revert migration "${it.migrationName}"`)
-    }
-  })
-
-  if (error) {
-    console.error('[db] Failed to migrate')
-    console.error(error)
-    process.exit(1)
-  }
-}
+export const migrateDown = (db: Kysely<Database>) =>
+  runMigration(db, 'migrateDown')

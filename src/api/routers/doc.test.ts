@@ -62,11 +62,38 @@ describe('loadDoc / loadDocDetails', () => {
   test('missing documents surface NOT_FOUND', async () => {
     await expect(caller.loadDoc({ name: 'Nope' })).rejects.toMatchObject({
       code: 'NOT_FOUND',
+      message: 'Document "Nope" not found',
     })
     await expect(caller.loadDocDetails({ name: 'Nope' })).rejects.toMatchObject(
-      { code: 'NOT_FOUND' }
+      { code: 'NOT_FOUND', message: 'Document "Nope" not found' }
     )
   })
+})
+
+describe('createDocFromTemplate', () => {
+  test('missing templates keep their distinct NOT_FOUND message', async () => {
+    await expect(
+      caller.createDocFromTemplate({ name: 'New', templateName: '$Missing' })
+    ).rejects.toMatchObject({
+      code: 'NOT_FOUND',
+      message: 'Template "$Missing" not found',
+    })
+  })
+
+  test.each([{ contents: [] }, { contents: ['template #tag'] }])(
+    'creates content from $contents',
+    async ({ contents }) => {
+      await noteWith('$Template', contents)
+      await caller.createDocFromTemplate({
+        name: 'New',
+        templateName: '$Template',
+      })
+      expect(await lineContents('New')).toEqual(
+        contents.length ? contents : ['']
+      )
+      expect((await caller.loadDoc({ name: 'New' })).revision).toBe(0)
+    }
+  )
 })
 
 describe('updateDoc', () => {
