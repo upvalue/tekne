@@ -297,7 +297,7 @@ export const docRouter = {
       tags: ['doc'],
       summary: 'Update doc',
       description:
-        'Replace a document and rebuild derived data. Supply expectedRevision to detect concurrent edits. A stale revision returns status conflict with the current document; no write occurs. Without expectedRevision this upserts unconditionally.',
+        'Replace the complete document and rebuild derived data. Supply expectedRevision from the latest read. A stale revision returns HTTP 200 with status "conflict" and the current document; nothing is saved. Reconcile before retrying. Without expectedRevision this upserts unconditionally.',
     })
     .output(outputs.doc.updateDoc)
     .input(

@@ -1,3 +1,5 @@
+import { apiOperations, type ApiSpecification } from './api-operations'
+
 const escapeHtml = (value: string) =>
   value.replace(
     /[&<>"']/g,
@@ -11,28 +13,25 @@ const escapeHtml = (value: string) =>
       })[character]!
   )
 
-export const apiReference = (spec: { paths?: Record<string, unknown> }) => {
-  const operations = Object.entries(spec.paths ?? {})
-    .flatMap(([path, methods]) =>
-      Object.entries(
-        methods as Record<string, { summary?: string; description?: string }>
-      ).map(
-        ([method, operation]) => `
+export const apiReference = (spec: ApiSpecification) => {
+  const operations = apiOperations(spec)
+    .map(
+      ({ path, method, operation }) => `
       <section id="${escapeHtml(method + path)}">
         <h2><code>${escapeHtml(method.toUpperCase() + ' /api/v1' + path)}</code></h2>
         <p>${escapeHtml(operation.description ?? operation.summary ?? '')}</p>
         <details><summary>Request and response schemas</summary><pre>${escapeHtml(JSON.stringify(operation, null, 2))}</pre></details>
       </section>`
-      )
     )
     .join('')
   return `<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Tekne API</title><style>
+<title>Tekne API</title><link rel="alternate" type="text/plain" href="/api/llms.txt" title="Tekne API agent guide"><style>
 body{font:16px/1.6 system-ui,sans-serif;max-width:960px;margin:48px auto;padding:0 24px;color:#202020}
 pre{background:#f4f4f5;padding:16px;overflow:auto}code{font-size:.9em}section{border-top:1px solid #ddd;margin-top:32px}a{color:#3158aa}summary{cursor:pointer}
 </style></head><body>
 <h1>Tekne API</h1>
+<p>For agents and command-line clients: <a href="/api/llms.txt">read the plaintext API guide</a> (also available at <a href="/llms.txt">/llms.txt</a>).</p>
 <p>Base URL: <code>/api/v1</code>. <a href="/api/openapi.json">Download the OpenAPI 3.1 specification</a> for client generation or import it into an API explorer.</p>
 <p>Use the same host and trusted network as the app. Tekne has no separate API token or per-user authorization. Anyone with access to this server can read and change its data.</p>
 <p>Requests and responses use plain JSON. GET inputs use query parameters; POST, PUT and DELETE inputs use JSON bodies. Set <code>Content-Type: application/json</code>. The body limit is 10 MiB. Dates use ISO 8601 strings. Document names go in parameters or JSON so spaces and slashes work without path encoding. Creation and deletion retain the app's name rules: ASCII letters, digits and supported punctuation; $ may appear only at the beginning of template names.</p>
