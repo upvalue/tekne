@@ -1,6 +1,7 @@
 // Shared aggregate display components for use in Aggregate panel and Search
 
 import { renderTime } from '@/lib/time'
+import { cn } from '@/lib/utils'
 import { CircleCheck, CircleX, Ellipsis, Clock, Plus } from 'lucide-react'
 
 interface TaskStatusItemProps {
@@ -43,7 +44,7 @@ export const TaskStatusDisplay = ({
   }
 
   return (
-    <div className={`flex space-x-4 items-center ${className || ''}`}>
+    <div className={cn('flex space-x-4 items-center', className)}>
       {complete !== undefined && complete > 0 && (
         <TaskStatusItem
           icon={CircleCheck}
@@ -69,9 +70,15 @@ export const TaskStatusDisplay = ({
   )
 }
 
-export const TimerDisplay = ({ time }: { time: number }) => {
+export const TimerDisplay = ({
+  time,
+  className,
+}: {
+  time: number
+  className?: string
+}) => {
   return (
-    <div className="flex items-center text-zinc-200 space-x-1">
+    <div className={cn('flex items-center text-zinc-200 space-x-1', className)}>
       <Clock className="size-4" />
       <span className="text-lg font-medium">{renderTime(time)}</span>
     </div>
@@ -83,11 +90,13 @@ const PageContribution = ({
   pageIncomplete,
   pageUnset,
   pageTime,
+  className,
 }: {
   pageComplete?: number
   pageIncomplete?: number
   pageUnset?: number
   pageTime?: number
+  className?: string
 }) => {
   const hasTaskContribution =
     (pageComplete ?? 0) > 0 || (pageIncomplete ?? 0) > 0 || (pageUnset ?? 0) > 0
@@ -95,7 +104,12 @@ const PageContribution = ({
   if (!hasTaskContribution && !hasTimerContribution) return null
 
   return (
-    <div className="flex items-center space-x-1.5 text-sm text-zinc-500">
+    <div
+      className={cn(
+        'flex items-center space-x-1.5 text-sm text-zinc-500',
+        className
+      )}
+    >
       <Plus className="size-3.5" />
       {pageComplete !== undefined && pageComplete > 0 && (
         <div className="flex items-center space-x-1 text-green-400">
@@ -145,6 +159,62 @@ export interface ResultCardData {
   page_incomplete_tasks?: number
   page_unset_tasks?: number
   page_time_seconds?: number
+}
+
+/** One inset per row, independent of the viewport or resizable panel width. */
+export const AggregateList = ({ data }: { data: ResultCardData[] }) => {
+  return (
+    <ul aria-label="Tag aggregates">
+      {data.map((tagData) => {
+        const hasMetrics =
+          (tagData.complete_tasks ?? 0) > 0 ||
+          (tagData.incomplete_tasks ?? 0) > 0 ||
+          (tagData.unset_tasks ?? 0) > 0 ||
+          (tagData.total_time_seconds ?? 0) > 0
+
+        return (
+          <li
+            key={tagData.tag}
+            className="min-w-0 space-y-1 px-3 py-2.5 odd:bg-zinc-800/40"
+          >
+            <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
+              <span className="min-w-0 text-sm font-medium text-zinc-200 [overflow-wrap:anywhere]">
+                {tagData.tag}
+              </span>
+              <PageContribution
+                pageComplete={tagData.page_complete_tasks}
+                pageIncomplete={tagData.page_incomplete_tasks}
+                pageUnset={tagData.page_unset_tasks}
+                pageTime={tagData.page_time_seconds}
+                className="flex-wrap gap-x-1.5 gap-y-1 space-x-0 [&>div]:shrink-0 [&_svg]:shrink-0"
+              />
+            </div>
+            {hasMetrics && (
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+                <TaskStatusDisplay
+                  complete={tagData.complete_tasks}
+                  incomplete={tagData.incomplete_tasks}
+                  unset={tagData.unset_tasks}
+                  className="flex-wrap gap-x-3 gap-y-1 space-x-0 [&>div]:shrink-0"
+                />
+                {tagData.total_time_seconds ? (
+                  <TimerDisplay
+                    time={tagData.total_time_seconds}
+                    className="whitespace-nowrap [&_svg]:shrink-0"
+                  />
+                ) : null}
+              </div>
+            )}
+            {tagData.pinned_at && tagData.pinned_desc && (
+              <p className="text-sm text-zinc-400 [overflow-wrap:anywhere]">
+                {tagData.pinned_desc}
+              </p>
+            )}
+          </li>
+        )
+      })}
+    </ul>
+  )
 }
 
 export const ResultCard = ({ tagData }: { tagData: ResultCardData }) => {
