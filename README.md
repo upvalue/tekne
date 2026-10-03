@@ -14,8 +14,10 @@ document schema.
 ## API
 
 See the [HTTP API guide](wiki/api.md) for curl and Python examples. Each server
-serves its endpoint reference at `/api` and OpenAPI specification at
-`/api/openapi.json`.
+serves a plaintext agent guide at `/llms.txt` (also `/api/llms.txt`), its
+endpoint reference at `/api`, and the OpenAPI specification at
+`/api/openapi.json`. Give an agent your server's origin and the guide URL;
+it needs the same trusted-network access as the app.
 
 ## Credits
 

@@ -1,10 +1,17 @@
 # Tekne HTTP API
 
 Tekne exposes all 30 document, search, tag, task, flag and hook operations as
-plain JSON at `/api/v1`. Open `/api` on your Tekne host for the endpoint
-reference and request/response schemas. Download `/api/openapi.json` for an
-OpenAPI 3.1 specification suitable for client generators in other languages.
-Both are generated from the running oRPC router.
+plain JSON at `/api/v1`. Start at `/llms.txt` (also `/api/llms.txt`) on your
+Tekne host for a concise plaintext agent guide with access and safety notes
+and a generated endpoint index. Open `/api` for the HTML
+reference and request/response schemas. Download `/api/openapi.json` for the
+authoritative OpenAPI 3.1 specification, suitable for client generators in
+other languages. The live endpoint indexes and schemas use the running oRPC router.
+
+Give agents your server's origin and the guide URL. They can fetch both the
+guide and specification directly; neither requires JavaScript or a browser.
+These routes require a server-backed instance. Client-only/browser PGlite mode
+does not expose an HTTP server.
 
 The API uses the app's existing network access. There is no separate API key
 or per-user authorization. A caller who can reach the server can read and
@@ -198,7 +205,7 @@ the local router and PGlite assets.
 The response schemas live in `src/api/outputs.ts`; routes and descriptions are
 attached to their procedures in `src/api/routers/`. Add both when introducing
 an operation. `src/server/api.test.ts` checks the HTTP boundary, OpenAPI
-coverage and interoperability with the browser RPC transport. Router tests
+coverage, plaintext guide discovery and interoperability with the browser RPC transport. Router tests
 exercise the existing database behavior through oRPC's local client.
 
 Implementation references: [oRPC HTTP handler](https://v1.orpc.dev/docs/openapi/openapi-handler),

@@ -7,6 +7,7 @@ import { ZodToJsonSchemaConverter } from '@orpc/zod/zod4'
 import type { Kysely } from 'kysely'
 import type { Database } from '@/db'
 import { apiReference } from './api-reference'
+import { apiGuide } from './api-guide'
 import { appRouter } from '@/api/router'
 
 export const generateOpenAPI = () =>
@@ -17,7 +18,7 @@ export const generateOpenAPI = () =>
       title: 'Tekne API',
       version: '1.0.0',
       description:
-        'Plain JSON API for documents, tags, searches, tasks and maintenance. Access uses the same trusted network as the app; there is no separate API token. Dates are ISO 8601 strings. See /api for curl examples and usage notes.',
+        'Plain JSON API for documents, tags, searches, tasks and maintenance. Access uses the same trusted network as the app; there is no separate API token. Dates are ISO 8601 strings. Start at /api/llms.txt for the plaintext agent guide or /api for the HTML reference.',
     },
     servers: [{ url: '/api/v1' }],
   })
@@ -25,6 +26,10 @@ export const generateOpenAPI = () =>
 export const registerApi = async (app: Express, db: Kysely<Database>) => {
   const spec = await generateOpenAPI()
   const reference = apiReference(spec)
+  const guide = apiGuide(spec)
+  app.get(['/llms.txt', '/api/llms.txt'], (_req, res) =>
+    res.type('text/plain').send(guide)
+  )
   app.get(['/api', '/api/'], (_req, res) => res.type('html').send(reference))
   app.get('/api/openapi.json', (_req, res) => res.json(spec))
   const options = () => ({
