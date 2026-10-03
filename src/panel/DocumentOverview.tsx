@@ -51,15 +51,17 @@ export const TableOfContents = ({ toc }: { toc: TableOfContentsItem[] }) => {
 export const DocumentOverviewSection = ({
   label,
   children,
+  flush = false,
 }: {
   label: string
   children: React.ReactNode
+  flush?: boolean
 }) => {
   const [collapsed, setCollapsed] = useState(false)
 
   return (
-    <div className="flex flex-col gap-2 px-4 py-3">
-      <h2>
+    <div className={cn('flex flex-col gap-2 py-3', !flush && 'px-4')}>
+      <h2 className={flush ? 'px-3' : undefined}>
         <button
           type="button"
           aria-expanded={!collapsed}
@@ -89,7 +91,7 @@ export const DocumentOverview = () => {
           <TableOfContents toc={toc} />
         </DocumentOverviewSection>
       )}
-      <DocumentOverviewSection label="Aggregate">
+      <DocumentOverviewSection label="Aggregate" flush>
         <Aggregate />
       </DocumentOverviewSection>
     </div>
