@@ -10,6 +10,7 @@ export const resolveAgentProxy = (): {
   available: boolean
   baseUrl: string
 } => {
+  if (import.meta.env.TEKNE_DEMO) return { available: false, baseUrl: '' }
   if (import.meta.env.PROD) return { available: true, baseUrl: '' }
   const orpcUrl: string | undefined = import.meta.env.TEKNE_ORPC_URL
   if (orpcUrl) {

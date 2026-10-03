@@ -1,4 +1,4 @@
-import { defineConfig, type Plugin } from 'vite'
+import { defineConfig, loadEnv, type Plugin } from 'vite'
 import { configDefaults } from 'vitest/config'
 import viteReact from '@vitejs/plugin-react'
 import { TanStackRouterVite } from '@tanstack/router-plugin/vite'
@@ -22,39 +22,24 @@ function getGitInfo() {
   }
 }
 
-/**
- * Keeps the development-only backend out of production builds.
- *
- * The in-memory mode runs the oRPC router in the browser against PGlite, and
- * both places that reach for it import it dynamically behind an
- * `import.meta.env.PROD` check. Rollup does drop those branches — but only
- * after loading the modules, by which point Vite has already emitted PGlite's
- * ~14MB of wasm and data into dist/assets as orphans nothing ever fetches.
- * Resolving the imports to an empty stub keeps them out of the module graph in
- * the first place.
- *
- * Stubbing happens at load rather than resolve so it survives Vite's alias
- * plugin, and the stub can be empty because the only production-reachable
- * imports of these modules are `import type`, which is erased before Rollup
- * sees it. The `import.meta.env.PROD` guards are still what stops the runtime
- * from reaching an empty module.
- *
- * Scoped to production mode, the same condition the branches are compiled out
- * under, so the dev server is untouched.
- */
+// Server-backed builds omit the browser backend before Vite emits its assets.
+// The static demo needs that backend even though it is a production build.
 const stubDevOnlyModules = (): Plugin => {
-  const DEV_ONLY = [
-    '/src/api/router.ts',
-    '/src/db/index.ts',
-    '/src/dev/PgliteDevtools.tsx',
-  ]
+  let demo = false
+  const DEV_ONLY = ['/src/api/router.ts', '/src/db/index.ts']
 
   return {
     name: 'tekne:stub-dev-only-modules',
     enforce: 'pre',
     apply: (_config, { mode }) => mode === 'production',
+    configResolved(config) {
+      demo = !!loadEnv(config.mode, config.envDir, 'TEKNE_').TEKNE_DEMO
+    },
     load(id) {
-      return DEV_ONLY.some((path) => id.endsWith(path)) ? 'export {}\n' : null
+      const stub =
+        id.endsWith('/src/dev/PgliteDevtools.tsx') ||
+        (!demo && DEV_ONLY.some((path) => id.endsWith(path)))
+      return stub ? 'export {}\n' : null
     },
   }
 }

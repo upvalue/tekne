@@ -6,8 +6,8 @@ import type { AppRouter } from './router'
 
 export type { RouterOutputs } from './types'
 
-// The local router and PGlite are loaded only when a development client has
-// no backend URL. Production builds omit this branch and its imports.
+// The demo and clients without a backend use the local router and PGlite.
+// Server-backed production builds omit this branch and its imports.
 const localLink = (): ClientLink<Record<string, never>> => {
   let pending: Promise<RouterClient<AppRouter>> | undefined
   return {
@@ -31,7 +31,8 @@ const localLink = (): ClientLink<Record<string, never>> => {
 }
 
 export const orpcClient: RouterClient<AppRouter> = createORPCClient(
-  import.meta.env.PROD || import.meta.env.TEKNE_ORPC_URL
+  !import.meta.env.TEKNE_DEMO &&
+    (import.meta.env.PROD || import.meta.env.TEKNE_ORPC_URL)
     ? new RPCLink({
         url: () =>
           new URL(
