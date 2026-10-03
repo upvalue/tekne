@@ -10,7 +10,8 @@ import '@/styles/styles.css'
 const fixture = vi.hoisted(() => ({ data: [] as ResultCardData[] }))
 
 vi.mock('@/hooks/useDocTitle', () => ({ useDocTitle: () => 'mobile-layout' }))
-vi.mock('@/api/client', () => ({
+vi.mock('@/api/client', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/api/client')>()),
   orpc: {
     analysis: {
       aggregateData: {
@@ -47,7 +48,7 @@ test.each([
         total_time_seconds: 5400,
       },
       {
-        tag: 'unbroken-tag-'.repeat(15),
+        tag: 'unbrokentag'.repeat(20),
         complete_tasks: 123456,
         incomplete_tasks: 234567,
         unset_tasks: 345678,
@@ -57,7 +58,7 @@ test.each([
         page_unset_tasks: 678901,
         page_time_seconds: 720000,
         pinned_at: '2026-10-03',
-        pinned_desc: 'unbroken-description-'.repeat(20),
+        pinned_desc: 'unbrokendescription'.repeat(20),
       },
       { tag: 'tag-only' },
     ]
