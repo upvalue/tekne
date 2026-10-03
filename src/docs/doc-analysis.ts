@@ -1,6 +1,5 @@
 // doc-analysis.ts - tree structure conversion and data analysis functions
-import { z } from 'zod'
-import { zline, zdoc, type ZDoc, type ZLine } from './schema'
+import type { ZDoc, ZLine } from './schema'
 import { TEKNE_MD_PARSER, visitMdTree } from './parser'
 
 export type ZTreeLine = ZLine & {
@@ -13,18 +12,7 @@ export type ZTreeLine = ZLine & {
  * For analysis purpose -- lines are converted into a tree struct
  * and information from mdContent is pulled out
  */
-const ztreeLine: z.ZodType<ZTreeLine> = zline.extend({
-  children: z.array(z.lazy(() => ztreeLine)),
-  tags: z.array(z.string()),
-  // Index of the line in the original document
-  arrayIdx: z.number(),
-})
-
-export const zdocTree = zdoc.extend({
-  children: z.array(ztreeLine),
-})
-
-export type ZDocTree = z.infer<typeof zdocTree>
+export type ZDocTree = Omit<ZDoc, 'children'> & { children: ZTreeLine[] }
 
 /**
  * Converts document into a real tree structure
@@ -75,23 +63,19 @@ export const treeifyDoc = (doc: ZDoc): ZDocTree => {
   return root
 }
 
-const zdocDatumType = z.enum(['task', 'timer', 'tag', 'pin'])
+type ZDocDatumType = 'task' | 'timer' | 'tag' | 'pin'
 
-type ZDocDatumType = z.infer<typeof zdocDatumType>
-
-export const zdocDatum = z.object({
-  lineIdx: z.number(),
-  timeCreated: z.string().datetime(),
-  timeUpdated: z.string().datetime(),
-  datumTag: z.string(),
-  datumStatus: z.optional(z.enum(['complete', 'incomplete', 'unset'])),
-  datumTimeSeconds: z.optional(z.number()),
-  datumPinnedAt: z.optional(z.string().datetime()),
-  datumPinnedContent: z.optional(z.string()),
-  datumType: zdocDatumType,
-})
-
-type ZDocDatum = z.infer<typeof zdocDatum>
+type ZDocDatum = {
+  lineIdx: number
+  timeCreated: string
+  timeUpdated: string
+  datumTag: string
+  datumStatus?: ZLine['datumTaskStatus']
+  datumTimeSeconds?: number
+  datumPinnedAt?: string
+  datumPinnedContent?: string
+  datumType: ZDocDatumType
+}
 const makeDatum = (
   tag: string,
   tline: ZTreeLine,
@@ -106,13 +90,9 @@ const makeDatum = (
   }
 }
 
-const extractDocDataImpl = (
-  ln: ZTreeLine,
-  accum: Array<ZDocDatum>,
-  allTagsSeen: Set<string>
-) => {
+const extractDocDataImpl = (ln: ZTreeLine, accum: Array<ZDocDatum>) => {
   for (const child of ln.children) {
-    extractDocDataImpl(child, accum, allTagsSeen)
+    extractDocDataImpl(child, accum)
   }
 
   for (const tag of ln.tags) {
@@ -146,9 +126,8 @@ const extractDocDataImpl = (
  */
 export const extractDocData = (lines: Array<ZTreeLine>): Array<ZDocDatum> => {
   const ret: Array<ZDocDatum> = []
-  const tags = new Set<string>()
   for (const line of lines) {
-    extractDocDataImpl(line, ret, tags)
+    extractDocDataImpl(line, ret)
   }
   return ret
 }

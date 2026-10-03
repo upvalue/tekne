@@ -2,10 +2,9 @@
 // display-mode, which is app-level): the selected line belongs to a document.
 //
 // Selection is kept as a line id (timeCreated) rather than an index so it
-// survives inserts, deletes and block moves; the index view is derived.
+// survives inserts, deletes and block moves.
 import { atom } from 'jotai'
-import { docAtom } from '../state'
-import { findLineIndexById, type LineId } from '../outline-selection'
+import type { LineId } from '../outline-selection'
 
 export const touchSelectedLineIdAtom = atom<LineId | null>(null)
 
@@ -15,11 +14,3 @@ export const touchSelectedLineIdAtom = atom<LineId | null>(null)
  * other line a focus request is downgraded to a selection update.
  */
 export const touchEditingLineIdAtom = atom<LineId | null>(null)
-
-/** The selected line's index, or null when nothing valid is selected. */
-export const touchSelectedLineIdxAtom = atom((get) => {
-  const id = get(touchSelectedLineIdAtom)
-  if (id === null) return null
-  const idx = findLineIndexById(get(docAtom).children, id)
-  return idx === -1 ? null : idx
-})

@@ -93,3 +93,75 @@ describe('validateDocumentWithMigrationCheck', () => {
     expect(result.canBeFxedByMigration).toBe(false)
   })
 })
+
+describe('extra-field validation before and after migration', () => {
+  test('reports document and line extras in stable order without stripping input', () => {
+    const doc = {
+      ...docMake([
+        { ...lineMake(0, 'first'), firstExtra: true } as never,
+        { ...lineMake(0, 'second'), secondExtra: 2 } as never,
+      ]),
+      documentExtra: 'retained',
+    }
+    const before = JSON.stringify(doc)
+    const result = validateDocumentWithMigrationCheck('Extra fields', doc)
+
+    expect(result).toMatchObject({
+      valid: false,
+      errors: [],
+      extraFields: [
+        'doc.documentExtra',
+        'children[0].firstExtra',
+        'children[1].secondExtra',
+      ],
+      canBeFxedByMigration: false,
+    })
+    expect(JSON.stringify(doc)).toBe(before)
+  })
+
+  test('an otherwise repairable legacy document stays unfixable with unknown fields', () => {
+    const result = validateDocumentWithMigrationCheck('Legacy extra', {
+      ...legacyDoc,
+      unknown: true,
+    } as ZDoc)
+
+    expect(result.valid).toBe(false)
+    expect(result.errors.length).toBeGreaterThan(0)
+    // Schema errors are reported first; extra fields are inspected only after parsing.
+    expect(result.extraFields).toEqual([])
+    expect(result.migrationReport?.migrated).toBe(true)
+    expect(result.canBeFxedByMigration).toBe(false)
+  })
+
+  test('retains the migration report when the migrated schema is still invalid', () => {
+    const result = validateDocumentWithMigrationCheck('Invalid content', {
+      ...legacyDoc,
+      children: [{ ...legacyLine, mdContent: 42 }],
+    } as unknown as ZDoc)
+
+    expect(result.valid).toBe(false)
+    expect(result.migrationReport?.operations).toHaveLength(4)
+    expect(result.canBeFxedByMigration).toBe(false)
+  })
+
+  test('reports a failed migration without claiming that it can repair the document', () => {
+    const result = validateDocumentWithMigrationCheck('Invalid children', {
+      type: 'doc',
+      children: {},
+    } as unknown as ZDoc)
+
+    expect(result.valid).toBe(false)
+    expect(result.errors.length).toBeGreaterThan(0)
+    expect(result.migrationReport).toBeUndefined()
+    expect(result.canBeFxedByMigration).toBe(false)
+  })
+
+  test('repairs a missing document body', () => {
+    const result = validateDocumentWithMigrationCheck('Missing', null as never)
+    expect(result).toMatchObject({
+      valid: false,
+      canBeFxedByMigration: true,
+      migrationReport: { migrated: true },
+    })
+  })
+})

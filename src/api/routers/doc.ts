@@ -1,11 +1,6 @@
 import { outputs } from '../outputs'
 import z from 'zod'
-import {
-  lineMake,
-  zdoc,
-  type ZDoc,
-  CURRENT_SCHEMA_VERSION,
-} from '@/docs/schema'
+import { lineMake, zdoc, type ZDoc, docMake } from '@/docs/schema'
 import { proc, storedDocumentProc } from '../init'
 import type { Database } from '@/db'
 import { sql, type Kysely } from 'kysely'
@@ -91,6 +86,24 @@ const docExists = async (
   return row !== undefined
 }
 
+const loadNote = async (
+  db: Kysely<Database>,
+  name: string,
+  kind = 'Document'
+) => {
+  const note = await db
+    .selectFrom('notes')
+    .selectAll()
+    .where('title', '=', name)
+    .executeTakeFirst()
+  if (!note) {
+    throw new ORPCError('NOT_FOUND', {
+      message: `${kind} "${name}" not found`,
+    })
+  }
+  return note
+}
+
 const isDailyDocument = (name: string): boolean => {
   return /^\d{4}-\d{2}-\d{2}$/.test(name)
 }
@@ -103,15 +116,7 @@ const proposeRename = async (
   docAlreadyExists: boolean
   linksToUpdate: Array<{ title: string }>
 }> => {
-  let docAlreadyExists = false
-
-  const existingDoc = await db
-    .selectFrom('notes')
-    .select(['title'])
-    .where('title', '=', newName)
-    .executeTakeFirst()
-
-  docAlreadyExists = existingDoc !== undefined
+  const docAlreadyExists = await docExists(db, newName)
 
   const referencesToDoc = await db
     .selectFrom('notes')
@@ -158,11 +163,7 @@ const createNewDocument = async (
   db: Kysely<Database>,
   name: string
 ): Promise<ZDoc> => {
-  let newDoc: ZDoc = {
-    type: 'doc',
-    schemaVersion: CURRENT_SCHEMA_VERSION,
-    children: [lineMake(0, '')],
-  }
+  let newDoc = docMake([lineMake(0, '')])
 
   if (name === 'Tutorial') {
     newDoc.children = makeTutorial()
@@ -240,17 +241,7 @@ export const docRouter = {
         input,
         context: { db },
       }): Promise<{ doc: ZDoc; revision: number }> => {
-        const doc = await db
-          .selectFrom('notes')
-          .selectAll()
-          .where('title', '=', input.name)
-          .executeTakeFirst()
-
-        if (!doc) {
-          throw new ORPCError('NOT_FOUND', {
-            message: `Document "${input.name}" not found`,
-          })
-        }
+        const doc = await loadNote(db, input.name)
 
         return { doc: doc.body, revision: doc.revision }
       }
@@ -271,17 +262,7 @@ export const docRouter = {
       })
     )
     .handler(async ({ input, context: { db } }) => {
-      const doc = await db
-        .selectFrom('notes')
-        .selectAll()
-        .where('title', '=', input.name)
-        .executeTakeFirst()
-
-      if (!doc) {
-        throw new ORPCError('NOT_FOUND', {
-          message: `Document "${input.name}" not found`,
-        })
-      }
+      const doc = await loadNote(db, input.name)
 
       return {
         createdAt: doc.createdAt,
@@ -670,32 +651,18 @@ export const docRouter = {
         })
       }
 
-      // Load template
-      const template = await db
-        .selectFrom('notes')
-        .selectAll()
-        .where('title', '=', templateName)
-        .executeTakeFirst()
-
-      if (!template) {
-        throw new ORPCError('NOT_FOUND', {
-          message: `Template "${templateName}" not found`,
-        })
-      }
-
+      const template = await loadNote(db, templateName, 'Template')
       const migratedBody = docMigrator(template.title, template.body)
-
-      let newDoc: ZDoc = {
-        type: 'doc',
-        schemaVersion: CURRENT_SCHEMA_VERSION,
-        children: [lineMake(0, '')],
-      }
 
       const targetDate = isDailyDocument(name)
         ? new Date(name + 'T00:00:00')
         : undefined
 
-      newDoc = createFromTemplate(newDoc, migratedBody, targetDate)
+      const newDoc = createFromTemplate(
+        docMake([lineMake(0, '')]),
+        migratedBody,
+        targetDate
+      )
 
       await upsertNote(db, name, newDoc)
 

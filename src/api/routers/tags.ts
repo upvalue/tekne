@@ -161,6 +161,44 @@ const proposeTagRename = async (
   }
 }
 
+/** Update metadata independently, dropping a row only when none remains. */
+const setTagMetadata = async (
+  db: Kysely<Database>,
+  name: string,
+  metadata: { description?: string | null; archived_at?: Date | null },
+  updated_at = new Date()
+) => {
+  const update = { ...metadata, updated_at }
+
+  if (Object.values(metadata).every((value) => value === null)) {
+    const existing = await db
+      .selectFrom('tags')
+      .select(['description', 'archived_at'])
+      .where('tag_name', '=', name)
+      .executeTakeFirst()
+    if (!existing) return { success: true }
+
+    const remaining = { ...existing, ...metadata }
+    if (remaining.description === null && remaining.archived_at === null) {
+      await db.deleteFrom('tags').where('tag_name', '=', name).execute()
+    } else {
+      await db
+        .updateTable('tags')
+        .set(update)
+        .where('tag_name', '=', name)
+        .execute()
+    }
+  } else {
+    await db
+      .insertInto('tags')
+      .values({ tag_name: name, description: null, ...update })
+      .onConflict((oc) => oc.column('tag_name').doUpdateSet(update))
+      .execute()
+  }
+
+  return { success: true }
+}
+
 /**
  * Moves tag metadata along with a rename. On merge, the target's existing
  * metadata wins; the source's fills a blank. Archived state only follows a
@@ -206,22 +244,7 @@ const migrateTagMetadata = async (
         : null
 
     if (description !== null || archived_at !== null) {
-      await db
-        .insertInto('tags')
-        .values({
-          tag_name: to,
-          description,
-          archived_at,
-          updated_at: new Date(),
-        })
-        .onConflict((oc) =>
-          oc.column('tag_name').doUpdateSet({
-            description,
-            archived_at,
-            updated_at: new Date(),
-          })
-        )
-        .execute()
+      await setTagMetadata(db, to, { description, archived_at })
     }
   }
 
@@ -284,19 +307,14 @@ export const tagsRouter = {
         })
       }
       for (const row of meta) {
-        const existing = byName.get(row.tag_name)
-        if (existing) {
-          existing.description = row.description
-          existing.archived = row.archived_at !== null
-        } else {
-          byName.set(row.tag_name, {
-            name: row.tag_name,
-            description: row.description,
-            archived: row.archived_at !== null,
-            lineCount: 0,
-            docCount: 0,
-          })
-        }
+        byName.set(row.tag_name, {
+          name: row.tag_name,
+          lineCount: 0,
+          docCount: 0,
+          ...byName.get(row.tag_name),
+          description: row.description,
+          archived: row.archived_at !== null,
+        })
       }
 
       return [...byName.values()].sort((a, b) => a.name.localeCompare(b.name))
@@ -346,54 +364,14 @@ export const tagsRouter = {
         archived: z.boolean(),
       })
     )
-    .handler(async ({ input, context: { db } }) => {
-      if (!input.archived) {
-        // Rows exist only for tags with metadata, so an unarchived tag with no
-        // description leaves nothing behind.
-        const existing = await db
-          .selectFrom('tags')
-          .select(['description'])
-          .where('tag_name', '=', input.name)
-          .executeTakeFirst()
-
-        if (!existing) {
-          return { success: true }
-        }
-
-        if (existing.description === null) {
-          await db
-            .deleteFrom('tags')
-            .where('tag_name', '=', input.name)
-            .execute()
-        } else {
-          await db
-            .updateTable('tags')
-            .set({ archived_at: null, updated_at: new Date() })
-            .where('tag_name', '=', input.name)
-            .execute()
-        }
-
-        return { success: true }
-      }
-
-      const archived_at = new Date()
-      await db
-        .insertInto('tags')
-        .values({
-          tag_name: input.name,
-          description: null,
-          archived_at,
-          updated_at: archived_at,
-        })
-        .onConflict((oc) =>
-          oc.column('tag_name').doUpdateSet({
-            archived_at,
-            updated_at: archived_at,
-          })
-        )
-        .execute()
-
-      return { success: true }
+    .handler(({ input, context: { db } }) => {
+      const archived_at = input.archived ? new Date() : null
+      return setTagMetadata(
+        db,
+        input.name,
+        { archived_at },
+        archived_at ?? undefined
+      )
     }),
 
   setDescription: proc
@@ -412,50 +390,11 @@ export const tagsRouter = {
         description: z.string().max(2000),
       })
     )
-    .handler(async ({ input, context: { db } }) => {
-      const description = input.description.trim()
-
-      if (description === '') {
-        // Clearing the description only drops the row if nothing else lives on
-        // it -- an archived tag keeps its row.
-        const existing = await db
-          .selectFrom('tags')
-          .select(['archived_at'])
-          .where('tag_name', '=', input.name)
-          .executeTakeFirst()
-
-        if (existing?.archived_at) {
-          await db
-            .updateTable('tags')
-            .set({ description: null, updated_at: new Date() })
-            .where('tag_name', '=', input.name)
-            .execute()
-        } else {
-          await db
-            .deleteFrom('tags')
-            .where('tag_name', '=', input.name)
-            .execute()
-        }
-        return { success: true }
-      }
-
-      await db
-        .insertInto('tags')
-        .values({
-          tag_name: input.name,
-          description,
-          updated_at: new Date(),
-        })
-        .onConflict((oc) =>
-          oc.column('tag_name').doUpdateSet({
-            description,
-            updated_at: new Date(),
-          })
-        )
-        .execute()
-
-      return { success: true }
-    }),
+    .handler(({ input, context: { db } }) =>
+      setTagMetadata(db, input.name, {
+        description: input.description.trim() || null,
+      })
+    ),
 
   renamePropose: proc
     .route({

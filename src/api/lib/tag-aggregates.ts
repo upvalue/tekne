@@ -1,6 +1,8 @@
 import { sql, type ExpressionBuilder, type Kysely } from 'kysely'
 import type { Database } from '@/db'
 import type { NoteDataType } from '@/db/types'
+import type { z } from 'zod'
+import type { outputs } from '../outputs'
 
 /**
  * Per-tag totals over note_data.
@@ -8,19 +10,9 @@ import type { NoteDataType } from '@/db/types'
  * The page_* fields are the same figures narrowed to the document being
  * viewed; only the page-scoped aggregate fills them in.
  */
-export type TagAggregateData = {
-  tag: string
-  complete_tasks: number
-  incomplete_tasks: number
-  unset_tasks: number
-  total_time_seconds: number
-  pinned_at: Date | null
-  pinned_desc: string | null
-  page_complete_tasks?: number
-  page_incomplete_tasks?: number
-  page_unset_tasks?: number
-  page_time_seconds?: number
-}
+export type TagAggregateData = z.infer<
+  typeof outputs.analysis.aggregateData
+>[number]
 
 export type TagAggregateFilters = {
   fromDate?: Date
@@ -154,8 +146,8 @@ export const aggregateTagData = async (
           .selectFrom('note_data')
           .select([
             'datum_tag as tag',
-            'datum_pinned_at',
-            'datum_pinned_content',
+            'datum_pinned_at as pinned_at',
+            'datum_pinned_content as pinned_desc',
           ])
           .where((eb) => matching(eb, 'pin', tags, filters))
           // An unpinned row would sort first under DESC, so drop those rather
@@ -168,25 +160,9 @@ export const aggregateTagData = async (
       : Promise.resolve([]),
   ])
 
-  for (const row of taskRows) {
+  for (const row of [...taskRows, ...timerRows, ...pinRows]) {
     const aggregate = results.get(row.tag)
-    if (!aggregate) continue
-    aggregate.complete_tasks = row.complete_tasks
-    aggregate.incomplete_tasks = row.incomplete_tasks
-    aggregate.unset_tasks = row.unset_tasks
-  }
-
-  for (const row of timerRows) {
-    const aggregate = results.get(row.tag)
-    if (!aggregate) continue
-    aggregate.total_time_seconds = row.total_time_seconds
-  }
-
-  for (const row of pinRows) {
-    const aggregate = results.get(row.tag)
-    if (!aggregate) continue
-    aggregate.pinned_at = row.datum_pinned_at
-    aggregate.pinned_desc = row.datum_pinned_content
+    if (aggregate) Object.assign(aggregate, row)
   }
 
   return results
