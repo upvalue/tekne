@@ -148,22 +148,6 @@ export const cycleTaskStatus = (store: EditorStore, lineIdx: number): void => {
   })
 }
 
-export const setLineColor = (
-  store: EditorStore,
-  lineIdx: number,
-  color: ZLine['color'] | null
-): void => {
-  store.set(docAtom, (draft) => {
-    const line = draft.children[lineIdx]
-    if (!line) return
-    if (color === null) {
-      delete line.color
-    } else {
-      line.color = color
-    }
-  })
-}
-
 /**
  * Add a timer datum, or remove an existing one. Removal confirms when the
  * timer has recorded data and discards (not saves) a timer running on this

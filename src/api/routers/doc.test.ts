@@ -345,3 +345,23 @@ describe('line identity writes', () => {
     expect((await caller.loadDoc({ name: '$Template' })).doc).toEqual(template)
   })
 })
+
+test('saving legacy input cannot restore line colors', async () => {
+  const { db } = await makeTestDb()
+  try {
+    const line = lineMake(0, 'Legacy line')
+    await upsertNoteInTx(
+      db,
+      'Work',
+      docMake([{ ...line, ...{ color: 'blue' } }])
+    )
+    const saved = await db
+      .selectFrom('notes')
+      .select('body')
+      .where('title', '=', 'Work')
+      .executeTakeFirstOrThrow()
+    expect(saved.body).toEqual(docMake([line]))
+  } finally {
+    await db.destroy()
+  }
+}, 60_000)

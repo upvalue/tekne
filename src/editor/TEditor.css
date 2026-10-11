@@ -278,31 +278,3 @@
 .cm-editor.cm-focused .cm-inline-code {
   @apply bg-sky-900;
 }
-
-.editor-line-blue {
-  background-color: color-mix(in srgb, var(--color-blue-500) 10%, transparent);
-}
-
-.editor-line-yellow {
-  background-color: color-mix(
-    in srgb,
-    var(--color-yellow-500) 10%,
-    transparent
-  );
-}
-
-.editor-line-purple {
-  background-color: color-mix(
-    in srgb,
-    var(--color-purple-500) 10%,
-    transparent
-  );
-}
-
-.editor-line-red {
-  background-color: color-mix(in srgb, var(--color-red-500) 10%, transparent);
-}
-
-.editor-line-green {
-  background-color: color-mix(in srgb, var(--color-green-500) 10%, transparent);
-}

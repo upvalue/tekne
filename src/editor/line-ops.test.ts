@@ -15,7 +15,6 @@ import {
   moveBlockUp,
   openTimerDialog,
   outdentLine,
-  setLineColor,
   toggleCollapse,
   togglePin,
   toggleTask,
@@ -167,13 +166,6 @@ describe('line data toggles', () => {
     expect(store.get(docAtom).children[0].datumTaskStatus).toBe('incomplete')
     cycleTaskStatus(store, 0)
     expect(store.get(docAtom).children[0].datumTaskStatus).toBe('unset')
-  })
-
-  test('color set and clear', () => {
-    setLineColor(store, 0, 'blue')
-    expect(store.get(docAtom).children[0].color).toBe('blue')
-    setLineColor(store, 0, null)
-    expect(store.get(docAtom).children[0].color).toBeUndefined()
   })
 })
 

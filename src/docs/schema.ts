@@ -2,8 +2,6 @@
 import { z } from 'zod'
 import { lineIdMake, LINE_ID_PATTERN } from './line-identity'
 
-const colorEnum = z.enum(['yellow', 'blue', 'purple', 'red', 'green'])
-
 const zline = z.object({
   type: z.literal('line'),
   id: z.string().regex(LINE_ID_PATTERN),
@@ -27,11 +25,6 @@ const zline = z.object({
    * If a line was pinned, when
    */
   datumPinnedAt: z.optional(z.iso.datetime()),
-
-  /**
-   * Line background color
-   */
-  color: z.optional(colorEnum),
 })
 
 type ZLine = z.infer<typeof zline>
@@ -88,8 +81,6 @@ export {
   type ZLine,
   type ZDoc,
 }
-
-export type LineColor = z.infer<typeof colorEnum>
 
 /** Copy content into new lines; identity and creation dates belong to the copy. */
 export const copyLines = (lines: ZLine[]): ZLine[] => {

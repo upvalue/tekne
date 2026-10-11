@@ -31,7 +31,7 @@ export const upsertNoteInTx = async (
   name: string,
   body: ZDoc
 ): Promise<number> => {
-  zdoc.parse(body)
+  body = zdoc.parse(body)
   const { parsedBody, noteData, noteLines } = deriveNoteRows(name, body)
   if (body.children.length) {
     const existing = await tx

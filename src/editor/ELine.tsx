@@ -127,10 +127,6 @@ const ELineImpl = (lineInfo: ELineProps) => {
   // This line renders the palette if it's focused and palette is open
   const shouldRenderPalette = isFocused && paletteOpen
 
-  const getColorClass = (color?: string) => {
-    return `editor-line-${color}`
-  }
-
   const lineIsHeader =
     line.mdContent.startsWith('### ') ||
     line.mdContent.startsWith('## ') ||
@@ -160,8 +156,7 @@ const ELineImpl = (lineInfo: ELineProps) => {
         lineInfo.isActiveDragLine && 'ELine-active-drag-line',
         isDragging && 'ELine-dragging',
         lineInfo.dropEdge === 'before' && 'ELine-drop-before',
-        lineInfo.dropEdge === 'after' && 'ELine-drop-after',
-        getColorClass(line.color)
+        lineInfo.dropEdge === 'after' && 'ELine-drop-after'
       )}
     >
       <Gutter

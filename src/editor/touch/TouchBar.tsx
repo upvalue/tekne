@@ -29,10 +29,8 @@ import {
   Undo2,
 } from 'lucide-react'
 import { generateCollapse } from '@/docs/collapse'
-import type { ZLine } from '@/docs/schema'
 import { setDisplayModeOverride, useDisplayMode } from '@/hooks/display-mode'
 import { isTouchPrimary } from '@/lib/platform'
-import { cn } from '@/lib/utils'
 import { docAtom, globalTimerAtom, requestFocusLineAtom } from '../state'
 import { findLineIndexById, getVisibleLineIds } from '../outline-selection'
 import { canIndentLine } from '../line-editor/line-mutations'
@@ -46,7 +44,6 @@ import {
   moveBlockDown,
   moveBlockUp,
   outdentLine,
-  setLineColor,
   toggleCollapse,
   togglePin,
   toggleTask,
@@ -64,8 +61,6 @@ import { scrollToLine } from '../navigation'
 import { touchEditingLineIdAtom, touchSelectedLineIdAtom } from './touch-atoms'
 import { stepVisibleLine } from './touch-nav'
 import { scrollDeltaToReveal } from './touch-viewport'
-
-const LINE_COLORS = ['yellow', 'blue', 'purple', 'red', 'green'] as const
 
 /**
  * Height of the software keyboard covering the layout viewport, in px.
@@ -186,38 +181,6 @@ const SheetAction = ({
     {children}
     {label}
   </button>
-)
-
-const ColorSwatches = ({
-  line,
-  onPick,
-}: {
-  line: ZLine
-  onPick: (color: ZLine['color'] | null) => void
-}) => (
-  <div className="flex items-center gap-2 px-3 min-h-11">
-    {LINE_COLORS.map((color) => (
-      <button
-        key={color}
-        type="button"
-        aria-label={`Color line ${color}`}
-        onClick={() => onPick(color)}
-        className={cn(
-          'w-8 h-8 rounded-full border-2',
-          line.color === color ? 'border-white' : 'border-transparent'
-        )}
-        style={{ backgroundColor: `var(--color-${color}-500)` }}
-      />
-    ))}
-    <button
-      type="button"
-      aria-label="Clear line color"
-      onClick={() => onPick(null)}
-      className="w-8 h-8 rounded-full border-2 border-zinc-600 text-zinc-400 text-xs"
-    >
-      ✕
-    </button>
-  </div>
 )
 
 export const TouchBar = () => {
@@ -457,10 +420,6 @@ export const TouchBar = () => {
               )}
             </SheetAction>
           )}
-          <ColorSwatches
-            line={line}
-            onPick={(color) => setLineColor(store, lineIdx, color)}
-          />
           <SheetAction label="Delete line" onPress={handleDelete}>
             <Trash2 width={18} height={18} />
           </SheetAction>

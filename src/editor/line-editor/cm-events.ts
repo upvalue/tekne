@@ -1,5 +1,4 @@
 import { TypedEventEmitter, useEmitterEventListener } from '@/lib/eventemitter'
-import type { LineColor } from '@/docs/schema'
 
 export type TagClickEventDetail = {
   name: string
@@ -26,11 +25,6 @@ export type LineCollapseToggleEvent = {
   lineIdx: number
 }
 
-export type LineColorChangeEvent = {
-  lineIdx: number
-  color: LineColor | null
-}
-
 type CodemirrorEvents = {
   tagClick: TagClickEventDetail
   internalLinkClick: InternalLinkClickEventDetail
@@ -39,7 +33,6 @@ type CodemirrorEvents = {
   linePinToggle: LineStatusEvent
   lineTaskToggle: LineStatusEvent
   lineCollapseToggle: LineCollapseToggleEvent
-  lineColorChange: LineColorChangeEvent
 }
 
 const codemirrorEmitter = new TypedEventEmitter<CodemirrorEvents>()
