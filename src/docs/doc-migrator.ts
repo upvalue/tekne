@@ -9,6 +9,7 @@ import {
   type ZDoc,
   type ZLine,
 } from './schema'
+import { lineIdMake } from './line-identity'
 import { ZodError } from 'zod'
 
 /** Extra fields are checked on the original input, before Zod strips them. */
@@ -109,6 +110,16 @@ export const migrateDocWithReport = (
       datumTime?: number
     }
     const mod: ZLine = { ...legacyChild }
+    if ((body.schemaVersion ?? 0) < 2 && !mod.id) {
+      mod.id = lineIdMake()
+      report.operations.push({
+        type: 'add',
+        path: `children[${index}].id`,
+        newValue: mod.id,
+        description: 'Assigned a line ID',
+      })
+      report.migrated = true
+    }
 
     // Migrate createdAt -> timeCreated
     if (legacyChild.createdAt) {

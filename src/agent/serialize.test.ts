@@ -5,9 +5,9 @@ import { serializeDocForPrompt } from './serialize'
 describe('serializeDocForPrompt', () => {
   it('renders one id|indent|text row per line', () => {
     const doc = docMake([
-      lineMake(0, 'first', { timeCreated: '2024-01-01T00:00:00.000Z' }),
+      lineMake(0, 'first', { id: '2024-01-01T00:00:00.000Z' }),
       lineMake(2, 'child with #tag and [[Link]]', {
-        timeCreated: '2024-01-01T00:00:00.001Z',
+        id: '2024-01-01T00:00:00.001Z',
       }),
     ])
 
@@ -23,7 +23,7 @@ describe('serializeDocForPrompt', () => {
 
   it('keeps pipes in content unambiguous (id and indent columns are fixed)', () => {
     const doc = docMake([
-      lineMake(1, 'a | b', { timeCreated: '2024-01-01T00:00:00.000Z' }),
+      lineMake(1, 'a | b', { id: '2024-01-01T00:00:00.000Z' }),
     ])
     const row = serializeDocForPrompt(doc)
     const [id, indent, ...restParts] = row.split('|')

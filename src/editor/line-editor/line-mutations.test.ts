@@ -73,7 +73,7 @@ describe('splitLine', () => {
   test('the new line gets a fresh identity', () => {
     const d = doc([0, 'a'])
     const next = splitLine(d, 0, '')
-    expect(next.children[1].timeCreated).not.toBe(d.children[0].timeCreated)
+    expect(next.children[1].id).not.toBe(d.children[0].id)
   })
 })
 

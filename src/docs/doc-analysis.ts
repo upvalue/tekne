@@ -66,6 +66,7 @@ export const treeifyDoc = (doc: ZDoc): ZDocTree => {
 type ZDocDatumType = 'task' | 'timer' | 'tag' | 'pin'
 
 type ZDocDatum = {
+  lineId: string
   lineIdx: number
   timeCreated: string
   timeUpdated: string
@@ -82,6 +83,7 @@ const makeDatum = (
   datumType: ZDocDatumType
 ): ZDocDatum => {
   return {
+    lineId: tline.id,
     lineIdx: tline.arrayIdx,
     timeCreated: tline.timeCreated,
     timeUpdated: tline.timeUpdated,

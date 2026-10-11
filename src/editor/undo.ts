@@ -8,7 +8,6 @@ import {
   focusedLineAtom,
   focusedPosAtom,
 } from './doc-atoms'
-import { ensureUniqueLineTimeCreateds } from '@/docs/line-identity'
 
 export type UndoEntry = {
   doc: ZDoc
@@ -110,7 +109,7 @@ const snapshotCurrent = (store: ReturnType<typeof useStore>): UndoEntry => ({
 const restoreEntry = (store: ReturnType<typeof useStore>, entry: UndoEntry) => {
   // Restore without capturing undo
   store.set(suppressUndoCaptureAtom, true)
-  store.set(rawDocAtom, ensureUniqueLineTimeCreateds(entry.doc))
+  store.set(rawDocAtom, entry.doc)
   store.set(suppressUndoCaptureAtom, false)
   store.set(lastCaptureAtom, null)
 

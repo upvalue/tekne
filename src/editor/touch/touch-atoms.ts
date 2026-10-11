@@ -1,7 +1,7 @@
 // Touch-mode selection state. Lives on the per-document route store (unlike
 // display-mode, which is app-level): the selected line belongs to a document.
 //
-// Selection is kept as a line id (timeCreated) rather than an index so it
+// Selection is kept as a line id rather than an index so it
 // survives inserts, deletes and block moves.
 import { atom } from 'jotai'
 import type { LineId } from '../outline-selection'

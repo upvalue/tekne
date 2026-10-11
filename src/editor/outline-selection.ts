@@ -8,7 +8,7 @@ export type IndexRange = {
   end: number
 }
 
-export const getLineId = (line: ZLine): LineId => line.timeCreated
+export const getLineId = (line: ZLine): LineId => line.id
 
 export const findLineIndexById = (lines: ZLine[], lineId: LineId) =>
   lines.findIndex((line) => getLineId(line) === lineId)

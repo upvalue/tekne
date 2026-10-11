@@ -8,6 +8,7 @@ const movedAt = '2024-02-01T00:00:00.000Z'
 
 const testLine = (mdContent: string, indent: number, index: number): ZLine =>
   lineMake(indent, mdContent, {
+    id: iso(index),
     timeCreated: iso(index),
     timeUpdated: iso(index),
   })
@@ -152,7 +153,7 @@ describe('moveSelectedLines', () => {
       now: movedAt,
     })
 
-    expect(result.lines.map((line) => line.timeCreated)).toEqual([
+    expect(result.lines.map((line) => line.id)).toEqual([
       iso(2),
       iso(0),
       iso(1),

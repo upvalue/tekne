@@ -1,72 +1,48 @@
-import { describe, expect, it } from 'vitest'
-import { docMake, lineMake, type ZLine } from './schema'
-import { ensureUniqueLineTimeCreateds } from './line-identity'
+import { expect, test, vi } from 'vitest'
+import { lineIdMake, LINE_ID_PATTERN } from './line-identity'
+import { docMake, lineMake, zdoc } from './schema'
 
-const iso = (ms: number) =>
-  `2024-01-01T00:00:00.${String(ms).padStart(3, '0')}Z`
+test('IDs are compact and independent of creation timestamps', () => {
+  vi.useFakeTimers()
+  try {
+    const lines = Array.from({ length: 1000 }, () => lineMake(0))
+    expect(new Set(lines.map((line) => line.id)).size).toBe(lines.length)
+    expect(new Set(lines.map((line) => line.timeCreated)).size).toBe(1)
+    expect(
+      lines.every(
+        (line) => LINE_ID_PATTERN.test(line.id) && line.id.length === 24
+      )
+    ).toBe(true)
+  } finally {
+    vi.useRealTimers()
+  }
+})
 
-const testLine = (
-  mdContent: string,
-  timeCreated: string,
-  rest: Partial<ZLine> = {}
-) =>
-  lineMake(0, mdContent, {
-    timeCreated,
-    timeUpdated: '2024-01-02T00:00:00.000Z',
-    ...rest,
-  })
+test('document validation rejects missing, malformed, and duplicate IDs', () => {
+  const line = lineMake(0)
+  expect(zdoc.safeParse(docMake([line, { ...line }])).success).toBe(false)
+  expect(zdoc.safeParse(docMake([{ ...line, id: 'bad' }])).success).toBe(false)
+  expect(
+    zdoc.safeParse({
+      ...docMake([line]),
+      children: [{ ...line, id: undefined }],
+    }).success
+  ).toBe(false)
+  expect(
+    zdoc.safeParse(docMake([line, { ...line, id: lineIdMake() }])).success
+  ).toBe(true)
+})
 
-describe('ensureUniqueLineTimeCreateds', () => {
-  it('returns the original doc when timestamps are already unique', () => {
-    const doc = docMake([testLine('A', iso(0)), testLine('B', iso(1))])
-
-    expect(ensureUniqueLineTimeCreateds(doc)).toBe(doc)
-  })
-
-  it('repairs later duplicate timestamps while preserving the first occurrence', () => {
-    const doc = docMake([
-      testLine('A', iso(0)),
-      testLine('B', iso(0)),
-      testLine('C', iso(0)),
-    ])
-
-    const result = ensureUniqueLineTimeCreateds(doc)
-
-    expect(result.children.map((line) => line.timeCreated)).toEqual([
-      iso(0),
-      iso(1),
-      iso(2),
-    ])
-  })
-
-  it('skips over collision chains when repairing duplicates', () => {
-    const doc = docMake([
-      testLine('A', iso(0)),
-      testLine('B', iso(1)),
-      testLine('C', iso(0)),
-    ])
-
-    const result = ensureUniqueLineTimeCreateds(doc)
-
-    expect(result.children.map((line) => line.timeCreated)).toEqual([
-      iso(0),
-      iso(1),
-      iso(2),
-    ])
-  })
-
-  it('preserves order and timeUpdated', () => {
-    const doc = docMake([
-      testLine('A', iso(0), { timeUpdated: '2024-02-01T00:00:00.000Z' }),
-      testLine('B', iso(0), { timeUpdated: '2024-03-01T00:00:00.000Z' }),
-    ])
-
-    const result = ensureUniqueLineTimeCreateds(doc)
-
-    expect(result.children.map((line) => line.mdContent)).toEqual(['A', 'B'])
-    expect(result.children.map((line) => line.timeUpdated)).toEqual([
-      '2024-02-01T00:00:00.000Z',
-      '2024-03-01T00:00:00.000Z',
-    ])
-  })
+test('copies get new IDs, while edits and undo snapshots can retain the originals', async () => {
+  const { copyLines } = await import('./schema')
+  const original = [lineMake(0, 'parent'), lineMake(1, 'child')]
+  const copied = copyLines(original)
+  expect(
+    copied
+      .map((line) => line.id)
+      .some((id) => original.some((line) => line.id === id))
+  ).toBe(false)
+  expect(copied.map((line) => line.mdContent)).toEqual(['parent', 'child'])
+  expect(copied.map((line) => line.indent)).toEqual([0, 1])
+  expect(zdoc.safeParse(docMake([...original, ...copied])).success).toBe(true)
 })

@@ -49,10 +49,14 @@ const makeMockLlm = () => {
     if (requests === 1) {
       const args = JSON.stringify({
         ops: [
-          { op: 'replace', id: iso(0), mdContent: 'alpha reworded' },
+          {
+            op: 'replace',
+            id: 'l_000000000000000000000A',
+            mdContent: 'alpha reworded',
+          },
           {
             op: 'insert_after',
-            id: iso(1),
+            id: 'l_000000000000000000001A',
             lines: [{ mdContent: 'appended by agent', indent: 1 }],
           },
         ],
@@ -131,8 +135,14 @@ describe('agent relay end-to-end', () => {
 
   it('runs the edit tool loop through the relay', async () => {
     const baseDoc = docMake([
-      lineMake(0, 'alpha', { timeCreated: iso(0) }),
-      lineMake(0, 'beta', { timeCreated: iso(1) }),
+      lineMake(0, 'alpha', {
+        id: 'l_000000000000000000000A',
+        timeCreated: iso(0),
+      }),
+      lineMake(0, 'beta', {
+        id: 'l_000000000000000000001A',
+        timeCreated: iso(1),
+      }),
     ])
     const session = createAgentSession({
       baseDoc,

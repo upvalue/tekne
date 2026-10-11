@@ -26,6 +26,7 @@ export type NoteDataStatus = 'complete' | 'incomplete' | 'unset'
 export type NoteDataType = 'task' | 'timer' | 'tag' | 'pin'
 
 export type DBNoteData = {
+  line_id: string
   note_title: string
   line_idx: number
   time_created: ColumnType<Date, Date, Date>
@@ -47,6 +48,7 @@ export type DBSavedSearch = {
 }
 
 export type DBNoteLine = {
+  line_id: string
   note_title: string
   line_idx: number
   content: string

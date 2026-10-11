@@ -1,11 +1,11 @@
 // edit-ops.ts - The agent's edit operations against an outline document.
 //
-// Operations address lines by their stable id (`timeCreated`) and apply
+// Operations address lines by their stable id (`id`) and apply
 // sequentially to a draft copy of the document. Failures are per-op results
 // (fed back to the model as tool output), never exceptions.
 
 import { Type, type Static } from '@earendil-works/pi-ai'
-import { lineMake, lineTimestampMake, type ZDoc } from '@/docs/schema'
+import { lineMake, type ZDoc } from '@/docs/schema'
 
 const insertedLine = Type.Object({
   mdContent: Type.String({ description: 'Markdown text for the new line' }),
@@ -53,7 +53,7 @@ export type EditOp = Static<typeof EditToolParams>['ops'][number]
 export type OpResult = { ok: true } | { ok: false; error: string }
 
 const findLine = (doc: ZDoc, id: string): number =>
-  doc.children.findIndex((line) => line.timeCreated === id)
+  doc.children.findIndex((line) => line.id === id)
 
 /**
  * Applies `ops` in order to a copy of `doc`. Each op sees the result of the
@@ -97,13 +97,13 @@ export const applyEditOps = (
       children[idx] = {
         ...children[idx],
         mdContent: op.mdContent,
-        timeUpdated: lineTimestampMake(),
+        timeUpdated: new Date().toISOString(),
       }
     } else if (op.op === 'set_indent') {
       children[idx] = {
         ...children[idx],
         indent: op.indent,
-        timeUpdated: lineTimestampMake(),
+        timeUpdated: new Date().toISOString(),
       }
     } else {
       children.splice(idx, 1)

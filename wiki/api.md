@@ -83,13 +83,12 @@ for line in page["items"]:
 ## Documents and revisions
 
 `GET /documents/content?name=...` returns `{doc, revision}`. A current document
-has `type: "doc"`, `schemaVersion: 1` and a `children` array. Each line has
-`type: "line"`, `mdContent`, numeric `indent`, and ISO UTC `timeCreated` and
+has `type: "doc"`, `schemaVersion: 2` and a `children` array. Each line has
+`type: "line"`, immutable `id`, `mdContent`, numeric `indent`, and ISO UTC `timeCreated` and
 `timeUpdated`. Optional fields include `collapsed`, `datumTimeSeconds`,
 `datumTaskStatus` (`complete`, `incomplete`, `unset`), `datumPinnedAt`, and
 `color` (`yellow`, `blue`, `purple`, `red`, `green`). Time is in seconds.
-Reads and conflict responses preserve legacy fields so older documents can
-still be migrated. The reference describes the current document shape;
+Line IDs are `l_` plus 22 base64url characters encoding 16 random bytes. Preserve IDs when editing; generate fresh IDs when copying or creating lines. IDs must be unique across documents. Old clients must reload before saving. The reference describes the current document shape;
 `GET /maintenance/documents/validation` reports stored documents that differ.
 
 PUT the complete `{name, doc, expectedRevision}` to `/documents/content`.
@@ -186,7 +185,7 @@ complete input and output schema for each operation.
 | `tags.renameExecute`        | POST   | `/tags/rename`                      |
 | `tasks.cancelStalePropose`  | POST   | `/tasks/cancel-stale/preview`       |
 | `tasks.cancelStaleExecute`  | POST   | `/tasks/cancel-stale`               |
-| `execHook`                  | POST   | `/hooks/timer`                      |
+| `timers.status`             | GET    | `/timers/status`                    |
 
 ## Client and deployment migration
 
@@ -211,3 +210,26 @@ exercise the existing database behavior through oRPC's local client.
 Implementation references: [oRPC HTTP handler](https://v1.orpc.dev/docs/openapi/openapi-handler),
 [OpenAPI generation](https://v1.orpc.dev/docs/openapi/openapi-specification),
 and [TanStack Query integration](https://v1.orpc.dev/docs/integrations/tanstack-query).
+
+The persisted timer procedures also expose `POST /timers/list`,
+`POST /timers/start`, and `POST /timers/change`; their schemas are in OpenAPI.
+
+## Timer status
+
+Wisp polls `GET /api/v1/timers/status` for xbar. Tekne owns timer state;
+there is no Dash mirror or timer hook. The read does not advance, complete,
+pause, or save timers.
+
+The response is `{ timers: [...] }` (an empty array when none are persisted).
+Each timer has `id`, `noteTitle`, `lineContent`, `context`, `mode`
+(`stopwatch` or `countdown`), `accumulatedMs`, `runningSince` (epoch
+milliseconds or null), `targetDuration` (seconds), and `revision`.
+Readers can add the elapsed milliseconds since `runningSince` to
+`accumulatedMs` for display.
+
+Context contains the title and current outline line, with up to five lines
+on either side and two spaces per indentation level. Missing lines or notes
+fall back to the line content saved with the timer. Timers and context are
+read in a single query. Running timers sort first by newest start timestamp,
+then ID ascending; paused timers sort by ID. The existing persistence layer
+currently limits creation to one timer and cascades note deletions to timers.

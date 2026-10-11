@@ -13,6 +13,7 @@ const iso = (ms: number) =>
 
 const testLine = (mdContent: string, indent: number, index: number): ZLine =>
   lineMake(indent, mdContent, {
+    id: iso(index),
     timeCreated: iso(index),
     timeUpdated: iso(index),
   })
@@ -27,7 +28,7 @@ const lines = [
 ]
 
 const contentsFor = (ids: string[]) =>
-  ids.map((id) => lines.find((line) => line.timeCreated === id)?.mdContent)
+  ids.map((id) => lines.find((line) => line.id === id)?.mdContent)
 
 describe('outline selection', () => {
   it('selects a parent line and its descendants', () => {

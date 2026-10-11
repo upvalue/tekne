@@ -3,14 +3,9 @@
 
 import { atom } from 'jotai'
 import { withImmer } from 'jotai-immer'
-import { lineMake, type ZDoc } from '@/docs/schema'
+import { docMake, lineMake, type ZDoc } from '@/docs/schema'
 
-export const rawDocAtom = withImmer(
-  atom<ZDoc>({
-    type: 'doc',
-    children: [lineMake(0, '')],
-  } as ZDoc)
-)
+export const rawDocAtom = withImmer(atom<ZDoc>(docMake([lineMake(0, '')])))
 
 export const focusedLineAtom = atom<number | null>(null)
 

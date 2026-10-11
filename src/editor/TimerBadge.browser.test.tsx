@@ -27,7 +27,7 @@ test('mobile timer stays pinned to the top with compact tabs as the viewport shr
     ...store.get(globalTimerAtom),
     isActive: true,
     mode: 'countdown',
-    lineTimeCreated: line.timeCreated,
+    lineId: line.id,
     runningSince: null,
   })
   const view = render(

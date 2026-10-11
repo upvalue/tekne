@@ -1,16 +1,9 @@
-import z from 'zod'
-import { zdoc } from '@/docs/schema'
-import { proc } from './init'
 import { docRouter } from './routers/doc'
 import { analysisRouter } from './routers/analysis'
 import { searchRouter } from './routers/search'
 import { flagsRouter } from './routers/flags'
 import { tagsRouter } from './routers/tags'
 import { tasksRouter } from './routers/tasks'
-
-import fs from 'fs'
-import child_process from 'child_process'
-import path from 'path'
 
 export const appRouter = {
   doc: docRouter,
@@ -19,73 +12,6 @@ export const appRouter = {
   flags: flagsRouter,
   tags: tagsRouter,
   tasks: tasksRouter,
-
-  execHook: proc
-    .route({
-      method: 'POST',
-      path: '/hooks/timer',
-      tags: ['hooks'],
-      summary: 'Run a timer hook',
-      description:
-        'Run the configured timer-start or timer-stop hook with document and line context. Returns after dispatch; absent hooks are a no-op.',
-    })
-    .output(z.void())
-    .input(
-      z.object({
-        hook: z.enum(['timer-start', 'timer-stop']),
-        argument: z.object({
-          doc: zdoc,
-          line: z.string(),
-          lineIdx: z.number().int().nonnegative(),
-        }),
-      })
-    )
-    .handler(async ({ input }) => {
-      const { hook, argument } = input
-
-      // If running on server
-      if (typeof process !== 'undefined') {
-        if (hook === 'timer-start' || hook === 'timer-stop') {
-          const { line, lineIdx, doc } = argument
-
-          const hookPath = path.resolve('hooks', hook)
-
-          if (fs.existsSync(hookPath)) {
-            const child = child_process.spawn(hookPath, [], {
-              stdio: ['pipe', 'ignore', 'pipe'],
-            })
-
-            const timeout = setTimeout(() => {
-              child.kill('SIGKILL')
-            }, 5_000)
-
-            child.on('close', () => {
-              clearTimeout(timeout)
-            })
-
-            child.stderr.on('data', (chunk) => {
-              console.error('[hook] execHook stderr', hook, chunk.toString())
-            })
-
-            child.on('error', (error) => {
-              console.error('[hook] execHook failed', hook, error)
-            })
-
-            child.stdin.write(
-              JSON.stringify({
-                type: 'timer-event',
-                line,
-                lineIdx,
-                doc,
-              })
-            )
-            child.stdin.end()
-          }
-        }
-      } else {
-        console.log('[hook] client execHook', hook, argument)
-      }
-    }),
 }
 
 export type AppRouter = typeof appRouter

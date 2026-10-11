@@ -9,7 +9,7 @@ const testLine = (
   mdContent: string,
   timeCreated: string,
   rest: Partial<ZLine> = {}
-) => lineMake(0, mdContent, { timeCreated, ...rest })
+) => lineMake(0, mdContent, { id: timeCreated, timeCreated, ...rest })
 
 describe('diffDocs', () => {
   it('returns nothing for identical docs', () => {
@@ -21,8 +21,8 @@ describe('diffDocs', () => {
     const sharedTimeCreated = iso(0)
     const doc = docMake([
       testLine('A', sharedTimeCreated),
-      testLine('B', sharedTimeCreated),
-      testLine('C', sharedTimeCreated),
+      testLine('B', sharedTimeCreated, { id: 'b' }),
+      testLine('C', sharedTimeCreated, { id: 'c' }),
     ])
 
     expect(diffDocs(doc, doc)).toEqual([])
@@ -105,15 +105,15 @@ describe('diffDocs', () => {
       testLine('changed task', sharedTimeCreated, {
         datumTaskStatus: 'unset',
       }),
-      testLine('untouched note', sharedTimeCreated),
-      testLine('another untouched note', sharedTimeCreated),
+      testLine('untouched note', sharedTimeCreated, { id: 'untouched' }),
+      testLine('another untouched note', sharedTimeCreated, { id: 'another' }),
     ])
     const draft = docMake([
       testLine('changed task', sharedTimeCreated, {
         datumTaskStatus: 'incomplete',
       }),
-      testLine('untouched note', sharedTimeCreated),
-      testLine('another untouched note', sharedTimeCreated),
+      testLine('untouched note', sharedTimeCreated, { id: 'untouched' }),
+      testLine('another untouched note', sharedTimeCreated, { id: 'another' }),
     ])
 
     expect(diffDocs(base, draft)).toEqual([
@@ -135,12 +135,12 @@ describe('diffDocs', () => {
     const sharedTimeCreated = iso(0)
     const base = docMake([
       testLine('kept first', sharedTimeCreated),
-      testLine('deleted', sharedTimeCreated),
-      testLine('kept last', sharedTimeCreated),
+      testLine('deleted', sharedTimeCreated, { id: 'deleted' }),
+      testLine('kept last', sharedTimeCreated, { id: 'last' }),
     ])
     const draft = docMake([
       testLine('kept first', sharedTimeCreated),
-      testLine('kept last', sharedTimeCreated),
+      testLine('kept last', sharedTimeCreated, { id: 'last' }),
     ])
 
     expect(diffDocs(base, draft)).toEqual([

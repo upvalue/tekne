@@ -260,7 +260,7 @@ export const TouchBar = () => {
   const selectByIdx = (idx: number) => {
     const target = store.get(docAtom).children[idx]
     if (!target) return
-    store.set(touchSelectedLineIdAtom, target.timeCreated)
+    store.set(touchSelectedLineIdAtom, target.id)
     scrollToLine(idx)
   }
 
@@ -297,13 +297,11 @@ export const TouchBar = () => {
     doc.children[lineIdx + 1].indent > line.indent
 
   const timerRunningHere =
-    line !== null &&
-    globalTimer.isActive &&
-    globalTimer.lineTimeCreated === line.timeCreated
+    line !== null && globalTimer.isActive && globalTimer.lineId === line.id
 
   const startEditing = () => {
     if (line === null || lineIdx === null) return
-    store.set(touchEditingLineIdAtom, line.timeCreated)
+    store.set(touchEditingLineIdAtom, line.id)
     store.set(requestFocusLineAtom, {
       lineIdx,
       pos: line.mdContent.length,

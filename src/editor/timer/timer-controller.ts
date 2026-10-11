@@ -5,7 +5,6 @@
 // "stop" made the Reset button silently save).
 import type { useStore } from 'jotai'
 import type { ZLine } from '@/docs/schema'
-import { orpcClient } from '@/api/client'
 import { setDetailTitle, setTimerActive } from '@/lib/title'
 import { playTimerCompleteSound } from '@/lib/sound'
 import { isMobile } from '@/lib/platform'
@@ -16,7 +15,7 @@ import {
 import {
   DEFAULT_COUNTDOWN_SECONDS,
   docAtom,
-  findLineByTimeCreated,
+  findLineById,
   globalTimerAtom,
   setDocLineDirect,
   type GlobalTimerState,
@@ -27,7 +26,7 @@ type EditorStore = ReturnType<typeof useStore>
 
 export const IDLE_TIMER_STATE: GlobalTimerState = {
   isActive: false,
-  lineTimeCreated: null,
+  lineId: null,
   lineContent: null,
   mode: 'stopwatch',
   timeMode: 'replacement',
@@ -71,26 +70,6 @@ export const isTimerPaused = (timer: {
   runningSince: number | null
 }): boolean => timer.isActive && timer.runningSince === null
 
-const execTimerHook = (
-  store: EditorStore,
-  hook: 'timer-start' | 'timer-stop'
-) => {
-  const doc = store.get(docAtom)
-  const timer = store.get(globalTimerAtom)
-  const found = findLineByTimeCreated(doc, timer.lineTimeCreated)
-  if (!found) return
-  orpcClient
-    .execHook({
-      hook,
-      argument: {
-        doc,
-        line: found.line.mdContent,
-        lineIdx: found.lineIdx,
-      },
-    })
-    .catch((error) => console.error(`[hook] ${hook} failed`, error))
-}
-
 const sendCompletionNotification = (message: string) => {
   if (
     !isMobile &&
@@ -122,7 +101,7 @@ export const startTimer = (
   }
 ): void => {
   const current = store.get(globalTimerAtom)
-  if (current.isActive && current.lineTimeCreated !== args.line.timeCreated) {
+  if (current.isActive && current.lineId !== args.line.id) {
     return
   }
 
@@ -132,7 +111,7 @@ export const startTimer = (
 
   store.set(globalTimerAtom, {
     isActive: true,
-    lineTimeCreated: args.line.timeCreated,
+    lineId: args.line.id,
     lineContent: args.line.mdContent,
     mode: args.mode,
     timeMode: args.timeMode,
@@ -141,7 +120,6 @@ export const startTimer = (
     targetDuration: args.targetDuration,
   })
 
-  execTimerHook(store, 'timer-start')
   showTimerStartedNotification(
     args.line.mdContent,
     store.get(globalTimerAtom).runningSince!
@@ -194,10 +172,8 @@ export const stopAndSaveTimer = (store: EditorStore): void => {
   const timer = store.get(globalTimerAtom)
   if (!timer.isActive) return
 
-  execTimerHook(store, 'timer-stop')
-
   const doc = store.get(docAtom)
-  const found = findLineByTimeCreated(doc, timer.lineTimeCreated)
+  const found = findLineById(doc, timer.lineId)
   if (found) {
     const elapsed = timerElapsedSeconds(timer)
     const worked =

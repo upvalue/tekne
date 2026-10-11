@@ -15,6 +15,7 @@ export const processDocumentForData = (title: string, doc: ZDoc) => {
   return data.map((d) => ({
     note_title: title,
     line_idx: d.lineIdx,
+    line_id: d.lineId,
     time_created: new Date(d.timeCreated),
     time_updated: new Date(d.timeUpdated),
     datum_tag: d.datumTag,
@@ -45,6 +46,7 @@ export const deriveNoteRows = (title: string, body: ZDoc) => {
   const noteLines = body.children.map((ln, line_idx) => ({
     note_title: title,
     line_idx,
+    line_id: ln.id,
     content: ln.mdContent,
     indent: ln.indent,
     time_created: new Date(ln.timeCreated),

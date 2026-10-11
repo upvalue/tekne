@@ -199,7 +199,7 @@ describe('toggleTimer', () => {
     store.set(globalTimerAtom, (prev) => ({
       ...prev,
       isActive: true,
-      lineTimeCreated: line.timeCreated,
+      lineId: line.id,
       runningSince: 12345,
     }))
     toggleTimer(store, 0, () => true)

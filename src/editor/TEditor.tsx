@@ -223,8 +223,8 @@ export const TEditor = () => {
 
       // Second tap on the selected line starts editing it; a tap on any
       // other line moves the selection and ends any editing session.
-      if (store.get(touchSelectedLineIdAtom) === line.timeCreated) {
-        store.set(touchEditingLineIdAtom, line.timeCreated)
+      if (store.get(touchSelectedLineIdAtom) === line.id) {
+        store.set(touchEditingLineIdAtom, line.id)
         store.set(requestFocusLineAtom, {
           lineIdx,
           pos: line.mdContent.length,
@@ -238,7 +238,7 @@ export const TEditor = () => {
           document.activeElement.blur()
         }
       }
-      store.set(touchSelectedLineIdAtom, line.timeCreated)
+      store.set(touchSelectedLineIdAtom, line.id)
     },
     [store]
   )
@@ -274,7 +274,7 @@ export const TEditor = () => {
       const line = doc.children[lineIdx]
       if (!line) return
 
-      const lineId = line.timeCreated
+      const lineId = line.id
       let nextSelection: string[]
       const currentSelection = dragSelectedLineIdsRef.current
 
@@ -438,24 +438,20 @@ export const TEditor = () => {
           />
           {doc.children.map((l, i) => (
             <ELine
-              key={l.timeCreated}
+              key={l.id}
               line={l}
               lineIdx={i}
               timestamp={gutterTimestamps[i]}
               collapseState={collapsedStates[i]}
-              isDragSelected={dragSelectedLineIds.includes(l.timeCreated)}
-              isActiveDragLine={activeDragLineId === l.timeCreated}
-              dropEdge={
-                dropIntent?.targetId === l.timeCreated ? dropIntent.edge : null
-              }
+              isDragSelected={dragSelectedLineIds.includes(l.id)}
+              isActiveDragLine={activeDragLineId === l.id}
+              dropEdge={dropIntent?.targetId === l.id ? dropIntent.edge : null}
               disableTimestampHover={isLineDragActive}
               onDragHandleClick={handleDragHandleClick}
               onEditorInteract={clearDragSelection}
               touchMode={touchMode}
-              isTouchSelected={
-                touchMode && touchSelectedLineId === l.timeCreated
-              }
-              isTouchEditing={touchMode && touchEditingLineId === l.timeCreated}
+              isTouchSelected={touchMode && touchSelectedLineId === l.id}
+              isTouchEditing={touchMode && touchEditingLineId === l.id}
               onTouchSelect={handleTouchSelect}
             />
           ))}

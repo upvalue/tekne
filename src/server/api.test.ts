@@ -148,17 +148,15 @@ test('OpenAPI describes every procedure, inputs and outputs; reference is availa
       )
       .map(([, operation]) => operation)
   )
-  expect(operations).toHaveLength(30)
+  expect(operations).toHaveLength(29)
   for (const operation of operations) {
     expect(operation.description).toBeTruthy()
     expect(
       operation.responses['200'] ?? operation.responses['204']
     ).toBeTruthy()
-    if (operation.operationId !== 'execHook') {
-      expect(
-        operation.responses['200'].content['application/json'].schema
-      ).toBeTruthy()
-    }
+    expect(
+      operation.responses['200'].content['application/json'].schema
+    ).toBeTruthy()
   }
   expect(spec.paths['/documents/content'].get.parameters).toEqual(
     expect.arrayContaining([
@@ -209,7 +207,7 @@ test('plaintext guide aliases expose every live operation without duplicating sc
   )
   const index = guide.split('## Endpoint index')[1]
   expect(index.match(/^[A-Z]+ \/api\/v1\S* \([^\n]+\)$/gm)).toEqual(expected)
-  expect(expected).toHaveLength(30)
+  expect(expected).toHaveLength(29)
   for (const methods of Object.values(spec.paths)) {
     for (const [method, operation] of Object.entries(
       methods as Record<string, any>

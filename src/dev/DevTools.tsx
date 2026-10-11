@@ -8,7 +8,7 @@ import {
 } from '@/components/vendor/Tabs'
 import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
 import { useAtom } from 'jotai'
-import { zdoc } from '@/docs/schema'
+import { zdoc, copyLines } from '@/docs/schema'
 import { extractDocData, treeifyDoc } from '@/docs/doc-analysis'
 import { docAtom } from '@/editor/state'
 import { Button } from '@/components/vendor/Button'
@@ -49,7 +49,7 @@ const RawDocument = ({ isActive }: { isActive: boolean }) => {
     }
   }
 
-  const pasteDocumentJSON = async () => {
+  const pasteDocumentJSON = async (asCopy = false) => {
     try {
       const text = await navigator.clipboard.readText()
       const parsedDoc = JSON.parse(text)
@@ -57,7 +57,11 @@ const RawDocument = ({ isActive }: { isActive: boolean }) => {
       // Validate the JSON structure
       const validatedDoc = zdoc.parse(parsedDoc)
 
-      setDoc(validatedDoc)
+      setDoc(
+        asCopy
+          ? { ...validatedDoc, children: copyLines(validatedDoc.children) }
+          : validatedDoc
+      )
       setMessage('Document JSON pasted and applied!')
       setTimeout(() => setMessage(''), 2000)
     } catch (error) {
@@ -84,8 +88,11 @@ const RawDocument = ({ isActive }: { isActive: boolean }) => {
         <Button onClick={copyDocumentJSON} outline>
           Copy JSON
         </Button>
-        <Button onClick={pasteDocumentJSON} outline>
+        <Button onClick={() => pasteDocumentJSON()} outline>
           Paste JSON
+        </Button>
+        <Button onClick={() => pasteDocumentJSON(true)} outline>
+          Paste JSON as copy
         </Button>
         {message && (
           <span className="text-sm text-gray-600 dark:text-gray-400">

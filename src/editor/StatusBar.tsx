@@ -7,7 +7,7 @@ import {
   goToLineOpenAtom,
   showLineNumbersAtom,
   requestFocusLineAtom,
-  findLineByTimeCreated,
+  findLineById,
 } from './state'
 import {
   X,
@@ -119,12 +119,12 @@ export const StatusBar = ({ isLoading }: { isLoading: boolean }) => {
   }, [doc.children])
 
   const currentLineBaseTime = useMemo(() => {
-    if (globalTimer.isActive && globalTimer.lineTimeCreated !== null) {
-      const found = findLineByTimeCreated(doc, globalTimer.lineTimeCreated)
+    if (globalTimer.isActive && globalTimer.lineId !== null) {
+      const found = findLineById(doc, globalTimer.lineId)
       return found?.line.datumTimeSeconds || 0
     }
     return 0
-  }, [globalTimer.isActive, globalTimer.lineTimeCreated, doc])
+  }, [globalTimer.isActive, globalTimer.lineId, doc])
 
   useEffect(() => {
     if (errorMessage) {

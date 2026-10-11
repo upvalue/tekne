@@ -1,6 +1,5 @@
 import { atom, useAtom, useStore } from 'jotai'
 import { type ZDoc, type ZLine } from '@/docs/schema'
-import { ensureUniqueLineTimeCreateds } from '@/docs/line-identity'
 import { useCallback } from 'react'
 import { atomWithQuery } from 'jotai-tanstack-query'
 import { orpcClient } from '@/api/client'
@@ -28,7 +27,7 @@ export const docAtom = atom(
       captureUndoEntry(get, set, currentDoc, nextDoc)
     }
 
-    set(rawDocAtom, ensureUniqueLineTimeCreateds(nextDoc))
+    set(rawDocAtom, nextDoc)
   }
 )
 
@@ -61,7 +60,7 @@ export const errorMessageAtom = atom<string | null>(null)
 
 export type GlobalTimerState = {
   isActive: boolean
-  lineTimeCreated: string | null
+  lineId: string | null
   lineContent: string | null
   /** Mode the running timer was started in; meaningless while idle. */
   mode: TimerMode
@@ -81,7 +80,7 @@ export type GlobalTimerState = {
  */
 export const globalTimerAtom = atom<GlobalTimerState>({
   isActive: false,
-  lineTimeCreated: null,
+  lineId: null,
   lineContent: null,
   mode: 'stopwatch',
   timeMode: 'replacement',
@@ -141,15 +140,15 @@ export const useDocLine = (
 }
 
 /**
- * Find a line in the document by its timeCreated value.
+ * Find a line in the document by its id value.
  * Used by the timer system to resolve a stable line identity to a current index.
  */
-export const findLineByTimeCreated = (
+export const findLineById = (
   doc: ZDoc,
-  timeCreated: string | null
+  id: string | null
 ): { line: ZLine; lineIdx: number } | null => {
-  if (timeCreated === null) return null
-  const lineIdx = doc.children.findIndex((l) => l.timeCreated === timeCreated)
+  if (id === null) return null
+  const lineIdx = doc.children.findIndex((l) => l.id === id)
   if (lineIdx === -1) return null
   return { line: doc.children[lineIdx], lineIdx }
 }

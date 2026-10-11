@@ -269,12 +269,12 @@ export const useCodeMirror = (lineInfo: LineWithIdx) => {
         const line = store.get(docAtom).children[lineIdx]
         if (line) {
           if (store.get(touchEditingLineIdAtom) === null) {
-            store.set(touchSelectedLineIdAtom, line.timeCreated)
+            store.set(touchSelectedLineIdAtom, line.id)
             setRequestFocusLine({ lineIdx: -1, pos: 0 })
             return
           }
-          store.set(touchEditingLineIdAtom, line.timeCreated)
-          store.set(touchSelectedLineIdAtom, line.timeCreated)
+          store.set(touchEditingLineIdAtom, line.id)
+          store.set(touchSelectedLineIdAtom, line.id)
         }
       }
 

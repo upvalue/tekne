@@ -68,13 +68,13 @@ test.each([320, 390])(
 
     // Selection, repeat-tap editing and switching lines keep the same targets.
     fireEvent.click(view.getByRole('button', { name: 'Select line 1' }))
-    expect(store.get(touchSelectedLineIdAtom)).toBe(lines[0].timeCreated)
+    expect(store.get(touchSelectedLineIdAtom)).toBe(lines[0].id)
     fireEvent.click(view.getByRole('button', { name: 'Select line 1' }))
     await waitFor(() =>
-      expect(store.get(touchEditingLineIdAtom)).toBe(lines[0].timeCreated)
+      expect(store.get(touchEditingLineIdAtom)).toBe(lines[0].id)
     )
     fireEvent.click(view.getByRole('button', { name: 'Select line 2' }))
-    expect(store.get(touchSelectedLineIdAtom)).toBe(lines[1].timeCreated)
+    expect(store.get(touchSelectedLineIdAtom)).toBe(lines[1].id)
     expect(store.get(touchEditingLineIdAtom)).toBeNull()
   }
 )

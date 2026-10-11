@@ -10,7 +10,7 @@ describe('treeifyDoc', () => {
 
     expect(result).toEqual({
       type: 'doc',
-      schemaVersion: 1,
+      schemaVersion: 2,
       children: [],
     })
   })

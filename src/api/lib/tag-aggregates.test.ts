@@ -23,6 +23,7 @@ const datum = (row: {
   db
     .insertInto('note_data')
     .values({
+      line_id: 'fixture-line',
       line_idx: 0,
       time_created: new Date('2026-01-01'),
       time_updated: new Date('2026-01-01'),

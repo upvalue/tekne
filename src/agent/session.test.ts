@@ -13,8 +13,8 @@ const iso = (ms: number) =>
 
 const baseDoc = () =>
   docMake([
-    lineMake(0, 'alpha', { timeCreated: iso(0) }),
-    lineMake(0, 'beta', { timeCreated: iso(1) }),
+    lineMake(0, 'alpha', { id: iso(0) }),
+    lineMake(0, 'beta', { id: iso(1) }),
   ])
 
 const assistantMessage = (

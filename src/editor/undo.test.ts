@@ -24,6 +24,7 @@ const testDoc = (...contents: string[]): ZDoc =>
   docMake(
     contents.map((mdContent, index) =>
       lineMake(0, mdContent, {
+        id: iso(index),
         timeCreated: iso(index),
         timeUpdated: iso(index),
       })

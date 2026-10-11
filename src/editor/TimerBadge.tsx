@@ -87,8 +87,7 @@ export const TimerBadge = ({
     React.useState(false)
 
   const isThisTimerActive =
-    globalTimer.isActive &&
-    globalTimer.lineTimeCreated === lineInfo.line.timeCreated
+    globalTimer.isActive && globalTimer.lineId === lineInfo.line.id
   const isAnyTimerActive = globalTimer.isActive
 
   const [timeInput, setTimeInput] = React.useState(renderTime(time))

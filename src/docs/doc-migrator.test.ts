@@ -140,7 +140,7 @@ describe('extra-field validation before and after migration', () => {
     } as unknown as ZDoc)
 
     expect(result.valid).toBe(false)
-    expect(result.migrationReport?.operations).toHaveLength(4)
+    expect(result.migrationReport?.operations).toHaveLength(5)
     expect(result.canBeFxedByMigration).toBe(false)
   })
 

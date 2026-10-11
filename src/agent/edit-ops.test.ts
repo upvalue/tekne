@@ -5,11 +5,8 @@ import { applyEditOps, summarizeOpResults, type EditOp } from './edit-ops'
 const iso = (ms: number) =>
   `2024-01-01T00:00:00.${String(ms).padStart(3, '0')}Z`
 
-const testLine = (
-  mdContent: string,
-  timeCreated: string,
-  rest: Partial<ZLine> = {}
-) => lineMake(0, mdContent, { timeCreated, timeUpdated: timeCreated, ...rest })
+const testLine = (mdContent: string, id: string, rest: Partial<ZLine> = {}) =>
+  lineMake(0, mdContent, { id, ...rest })
 
 const baseDoc = () =>
   docMake([
@@ -28,7 +25,7 @@ describe('applyEditOps', () => {
     expect(results).toEqual([{ ok: true }])
     expect(next.children[1].mdContent).toBe('beta reworded')
     expect(next.children[1].indent).toBe(1)
-    expect(next.children[1].timeCreated).toBe(iso(1))
+    expect(next.children[1].id).toBe(iso(1))
     expect(next.children[1].timeUpdated).not.toBe(iso(1))
   })
 
@@ -89,7 +86,7 @@ describe('applyEditOps', () => {
         ],
       },
     ])
-    const ids = next.children.map((l) => l.timeCreated)
+    const ids = next.children.map((l) => l.id)
     expect(new Set(ids).size).toBe(ids.length)
     expect(next.children[3].type).toBe('line')
   })

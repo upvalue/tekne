@@ -15,6 +15,8 @@ import { tmigration as addFeatureFlagsMigration } from './migrations/17716320000
 import { tmigration as addTagsMigration } from './migrations/1785124754665_add-tags.ts'
 import { tmigration as addTagArchivedMigration } from './migrations/1785217524142_add-tag-archived.ts'
 import { tmigration as searchIndexesMigration } from './migrations/1785908646900_search-indexes.ts'
+import { tmigration as historicalTimersMigration } from './migrations/1791676800000_add-timers'
+import { tmigration as lineIdsMigration } from './migrations/1791763200000_line-ids'
 import type { Database } from './types'
 
 /**
@@ -37,6 +39,8 @@ export const MIGRATIONS: Record<string, Migration> = {
   '1785124754665_add-tags': addTagsMigration,
   '1785217524142_add-tag-archived': addTagArchivedMigration,
   '1785908646900_search-indexes': searchIndexesMigration,
+  '1791676800000_add-timers': historicalTimersMigration,
+  '1791763200000_line-ids': lineIdsMigration,
 }
 
 /**

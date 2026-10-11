@@ -191,7 +191,7 @@ export const toggleTimer = (
   ) {
     return
   }
-  if (store.get(globalTimerAtom).lineTimeCreated === line.timeCreated) {
+  if (store.get(globalTimerAtom).lineId === line.id) {
     cancelTimer(store)
   }
   store.set(docAtom, (draft) => {

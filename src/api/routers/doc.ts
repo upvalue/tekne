@@ -1,6 +1,6 @@
 import { outputs } from '../outputs'
 import z from 'zod'
-import { lineMake, zdoc, type ZDoc, docMake } from '@/docs/schema'
+import { lineMake, zdoc, type ZDoc, docMake, copyLines } from '@/docs/schema'
 import { proc, storedDocumentProc } from '../init'
 import type { Database } from '@/db'
 import { sql, type Kysely } from 'kysely'
@@ -31,7 +31,25 @@ export const upsertNoteInTx = async (
   name: string,
   body: ZDoc
 ): Promise<number> => {
+  zdoc.parse(body)
   const { parsedBody, noteData, noteLines } = deriveNoteRows(name, body)
+  if (body.children.length) {
+    const existing = await tx
+      .selectFrom('note_lines')
+      .select('line_id')
+      .where(
+        'line_id',
+        'in',
+        body.children.map((line) => line.id)
+      )
+      .where('note_title', '!=', name)
+      .executeTakeFirst()
+    if (existing)
+      throw new ORPCError('CONFLICT', {
+        message:
+          'A line ID belongs to another document. Generate fresh IDs when copying lines.',
+      })
+  }
 
   const r = await tx
     .insertInto('notes')
@@ -145,11 +163,7 @@ const createFromTemplate = (
   template: ZDoc,
   targetDate?: Date
 ): ZDoc => {
-  const now = Date.now()
-  let children = template.children.map((c, i) => {
-    const ts = new Date(now + i).toISOString()
-    return { ...c, timeCreated: ts, timeUpdated: ts }
-  })
+  let children = copyLines(template.children)
   if (targetDate) {
     children = applyTemplateDirectives(children, targetDate)
   }

@@ -294,3 +294,54 @@ describe('migrateAllDocs', () => {
     expect(revision).toBe(0)
   })
 })
+
+describe('line identity writes', () => {
+  test('rejects stale clients and duplicate IDs without changing the document', async () => {
+    const doc = docMake([lineMake(0, 'keep')])
+    await upsertNoteInTx(db, 'Work', doc)
+    for (const invalid of [
+      { ...doc, schemaVersion: 1 },
+      { ...doc, children: [doc.children[0], doc.children[0]] },
+    ]) {
+      await expect(
+        caller.updateDoc({ name: 'Work', doc: invalid, expectedRevision: 0 })
+      ).rejects.toMatchObject({ code: 'BAD_REQUEST' })
+    }
+    expect((await caller.loadDoc({ name: 'Work' })).doc).toEqual(doc)
+  })
+
+  test('rejects reuse across documents and leaves both documents intact', async () => {
+    const first = docMake([lineMake(0, 'first')])
+    const second = docMake([lineMake(0, 'second')])
+    await upsertNoteInTx(db, 'First', first)
+    await upsertNoteInTx(db, 'Second', second)
+    await expect(
+      caller.updateDoc({ name: 'Second', doc: first, expectedRevision: 0 })
+    ).rejects.toMatchObject({ code: 'CONFLICT' })
+    expect((await caller.loadDoc({ name: 'First' })).doc).toEqual(first)
+    expect((await caller.loadDoc({ name: 'Second' })).doc).toEqual(second)
+  })
+
+  test('template instances get independent IDs without changing the template', async () => {
+    const template = docMake([lineMake(0, 'parent'), lineMake(1, 'child')])
+    await upsertNoteInTx(db, '$Template', template)
+    await caller.createDocFromTemplate({
+      name: 'First',
+      templateName: '$Template',
+    })
+    await caller.createDocFromTemplate({
+      name: 'Second',
+      templateName: '$Template',
+    })
+    const first = (await caller.loadDoc({ name: 'First' })).doc
+    const second = (await caller.loadDoc({ name: 'Second' })).doc
+    expect(
+      new Set(
+        [...template.children, ...first.children, ...second.children].map(
+          (line) => line.id
+        )
+      ).size
+    ).toBe(6)
+    expect((await caller.loadDoc({ name: '$Template' })).doc).toEqual(template)
+  })
+})

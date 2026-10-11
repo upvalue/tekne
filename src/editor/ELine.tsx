@@ -106,7 +106,7 @@ const ELineImpl = (lineInfo: ELineProps) => {
     transition,
     isDragging,
   } = useSortable({
-    id: lineInfo.line.timeCreated,
+    id: lineInfo.line.id,
     disabled: lineInfo.collapseState === 'collapsed',
   })
 

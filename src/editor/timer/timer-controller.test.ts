@@ -14,9 +14,6 @@ import {
 } from './timer-controller'
 import { playTimerCompleteSound } from '@/lib/sound'
 
-vi.mock('@/api/client', () => ({
-  orpcClient: { execHook: vi.fn().mockResolvedValue(undefined) },
-}))
 vi.mock('@/lib/sound', () => ({ playTimerCompleteSound: vi.fn() }))
 
 type Store = ReturnType<typeof createStore>
@@ -137,9 +134,7 @@ describe('timer-controller', () => {
     const store = makeStore()
     startStopwatch(store, 0)
     startStopwatch(store, 1)
-    expect(store.get(globalTimerAtom).lineTimeCreated).toBe(
-      lineAt(store, 0).timeCreated
-    )
+    expect(store.get(globalTimerAtom).lineId).toBe(lineAt(store, 0).id)
   })
 
   test('cancelTimer discards elapsed time', () => {

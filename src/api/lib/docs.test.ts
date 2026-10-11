@@ -30,6 +30,7 @@ describe('deriveNoteRows', () => {
       {
         note_title: 'Doc',
         line_idx: 0,
+        line_id: doc.children[0].id,
         content: 'Parent',
         indent: 0,
         time_created: new Date(doc.children[0].timeCreated),
@@ -38,6 +39,7 @@ describe('deriveNoteRows', () => {
       {
         note_title: 'Doc',
         line_idx: 1,
+        line_id: doc.children[1].id,
         content: 'Child',
         indent: 1,
         time_created: new Date(doc.children[1].timeCreated),
@@ -46,6 +48,7 @@ describe('deriveNoteRows', () => {
       {
         note_title: 'Doc',
         line_idx: 2,
+        line_id: doc.children[2].id,
         content: 'Sibling',
         indent: 1,
         time_created: new Date(doc.children[2].timeCreated),
