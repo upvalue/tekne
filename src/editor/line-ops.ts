@@ -170,11 +170,11 @@ export const setLineColor = (
  * line. The prompt and the timer transition happen before the state update —
  * never inside the Immer recipe.
  */
-export const toggleTimer = (
+export const toggleTimer = async (
   store: EditorStore,
   lineIdx: number,
   confirmFn: (message: string) => boolean = (message) => confirm(message)
-): void => {
+): Promise<void> => {
   const line = store.get(docAtom).children[lineIdx]
   if (!line) return
 
@@ -191,11 +191,14 @@ export const toggleTimer = (
   ) {
     return
   }
-  if (store.get(globalTimerAtom).lineId === line.id) {
-    cancelTimer(store)
-  }
+  if (
+    store.get(globalTimerAtom).lineId === line.id &&
+    !(await cancelTimer(store))
+  )
+    return
   store.set(docAtom, (draft) => {
-    delete draft.children[lineIdx].datumTimeSeconds
+    const target = draft.children.find((candidate) => candidate.id === line.id)
+    if (target) delete target.datumTimeSeconds
   })
 }
 

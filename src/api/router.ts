@@ -3,6 +3,7 @@ import { analysisRouter } from './routers/analysis'
 import { searchRouter } from './routers/search'
 import { flagsRouter } from './routers/flags'
 import { tagsRouter } from './routers/tags'
+import { timersRouter } from './routers/timers'
 import { tasksRouter } from './routers/tasks'
 
 export const appRouter = {
@@ -12,6 +13,7 @@ export const appRouter = {
   flags: flagsRouter,
   tags: tagsRouter,
   tasks: tasksRouter,
+  timers: timersRouter,
 }
 
 export type AppRouter = typeof appRouter

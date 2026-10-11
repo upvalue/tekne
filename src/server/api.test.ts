@@ -148,7 +148,7 @@ test('OpenAPI describes every procedure, inputs and outputs; reference is availa
       )
       .map(([, operation]) => operation)
   )
-  expect(operations).toHaveLength(29)
+  expect(operations).toHaveLength(33)
   for (const operation of operations) {
     expect(operation.description).toBeTruthy()
     expect(
@@ -207,7 +207,7 @@ test('plaintext guide aliases expose every live operation without duplicating sc
   )
   const index = guide.split('## Endpoint index')[1]
   expect(index.match(/^[A-Z]+ \/api\/v1\S* \([^\n]+\)$/gm)).toEqual(expected)
-  expect(expected).toHaveLength(29)
+  expect(expected).toHaveLength(33)
   for (const methods of Object.values(spec.paths)) {
     for (const [method, operation] of Object.entries(
       methods as Record<string, any>
@@ -292,4 +292,13 @@ test('legacy documents survive reads and save conflicts without output stripping
   })
   expect(result.body).toMatchObject({ status: 'conflict', serverDoc: legacy })
   await request('DELETE', '/documents', { name: 'Legacy' })
+})
+
+test('timer status is available through HTTP without creating a timer', async () => {
+  const result = await request('GET', '/timers/status')
+  expect(result.status).toBe(200)
+  expect(result.body).toMatchObject({
+    timers: [],
+    serverNow: expect.any(Number),
+  })
 })

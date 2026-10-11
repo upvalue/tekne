@@ -122,7 +122,7 @@ export const TimerBadge = ({
     }
   }, [notificationPermission, setNotificationPermission])
 
-  const handleStart = React.useCallback(() => {
+  const handleStart = React.useCallback(async () => {
     if (viewMode === 'manual') return
 
     let targetDuration = store.get(globalTimerAtom).targetDuration
@@ -133,13 +133,13 @@ export const TimerBadge = ({
     }
     void requestNotificationPermission()
 
-    startTimer(store, {
+    const started = await startTimer(store, {
       line: lineInfo.line,
       mode: viewMode,
       timeMode: store.get(globalTimerAtom).timeMode,
       targetDuration,
     })
-    setOpen(false)
+    if (started) setOpen(false)
   }, [
     store,
     viewMode,
@@ -249,6 +249,7 @@ export const TimerBadge = ({
                     Replace
                   </span>
                   <Switch
+                    disabled={isAnyTimerActive}
                     checked={globalTimer.timeMode === 'additive'}
                     onCheckedChange={(checked) => {
                       setGlobalTimer((prev) => ({

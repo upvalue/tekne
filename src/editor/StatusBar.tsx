@@ -191,6 +191,7 @@ export const StatusBar = ({ isLoading }: { isLoading: boolean }) => {
               />
             </div>
             <div className="text-zinc-400">
+              {globalTimer.noteTitle && `${globalTimer.noteTitle}: `}
               {globalTimer.lineContent
                 ? globalTimer.lineContent.substring(
                     0,

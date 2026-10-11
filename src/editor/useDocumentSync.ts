@@ -15,7 +15,7 @@ import type { useStore } from 'jotai'
 import { orpc } from '@/api/client'
 import type { ZDoc } from '@/docs/schema'
 import { useEventListener } from '@/hooks/useEventListener'
-import { docAtom, globalTimerAtom } from './state'
+import { docAtom } from './state'
 import { resetUndoHistory } from './undo'
 import { SaveConflictError, SaveQueue, type SaveConflict } from './save-queue'
 
@@ -89,6 +89,7 @@ export const useDocumentSync = (
     orpc.doc.loadDoc.queryOptions({
       input: { name: title },
       enabled: () => !queueRef.current.isDirty(),
+      refetchInterval: 5000,
       retry: (_fc, error) => {
         if (error instanceof ORPCError && error.code === 'NOT_FOUND') {
           return false
@@ -174,7 +175,7 @@ export const useDocumentSync = (
   )
 
   // Save before in-app navigation; stay on the page while a save fails, a
-  // conflict is unresolved, or a timer runs.
+  // conflict is unresolved.
   useBlocker({
     shouldBlockFn: async () => {
       try {
@@ -199,12 +200,6 @@ export const useDocumentSync = (
         }
         return true
       }
-      if (store.get(globalTimerAtom).isActive) {
-        toast.info(
-          'There is a timer active -- end the timer before navigating away'
-        )
-        return true
-      }
       return false
     },
     enableBeforeUnload: false,
@@ -218,11 +213,6 @@ export const useDocumentSync = (
       event.preventDefault()
       event.returnValue =
         'You have unsaved changes. Are you sure you want to leave?'
-    }
-    if (store.get(globalTimerAtom).isActive) {
-      event.preventDefault()
-      event.returnValue =
-        'You have a timer running. Are you sure you want to leave?'
     }
   })
 

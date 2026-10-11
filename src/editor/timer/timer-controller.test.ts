@@ -1,148 +1,136 @@
-import { describe, test, expect, beforeEach, afterEach, vi } from 'vitest'
+import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { createStore } from 'jotai'
 import { docMake, lineMake } from '@/docs/schema'
+import type { Timer } from '@/docs/timer'
 import { docAtom, globalTimerAtom } from '../state'
 import {
-  cancelTimer,
-  isTimerPaused,
-  pauseTimer,
-  resumeTimer,
+  bindTimer,
+  hydrateTimer,
+  releaseTimer,
   startTimer,
+  pauseTimer,
   stopAndSaveTimer,
   timerElapsedSeconds,
-  timerRemainingSeconds,
 } from './timer-controller'
-import { playTimerCompleteSound } from '@/lib/sound'
-
-vi.mock('@/lib/sound', () => ({ playTimerCompleteSound: vi.fn() }))
-
-type Store = ReturnType<typeof createStore>
-
-const makeStore = (): Store => {
+const api = vi.hoisted(() => ({ start: vi.fn(), change: vi.fn() }))
+vi.mock('@/api/client', () => ({ orpcClient: { timers: api } }))
+vi.mock('./timer-notifications', () => ({
+  showTimerStartedNotification: vi.fn(),
+}))
+vi.mock('sonner', () => ({
+  toast: { info: vi.fn(), error: vi.fn(), warning: vi.fn() },
+}))
+beforeEach(() => {
+  vi.useFakeTimers()
+  vi.setSystemTime(10000)
+})
+afterEach(() => {
+  vi.useRealTimers()
+  vi.resetAllMocks()
+})
+const setup = () => {
   const store = createStore()
-  store.set(docAtom, docMake([lineMake(0, 'task a'), lineMake(0, 'task b')]))
-  return store
+  const line = lineMake(0, 'task')
+  store.set(docAtom, docMake([line]))
+  const timer: Timer = {
+    id: 'timer',
+    noteTitle: 'Work',
+    lineId: line.id,
+    lineContent: 'task',
+    mode: 'stopwatch',
+    timeMode: 'replacement',
+    accumulatedMs: 0,
+    runningSince: 10000,
+    targetDuration: 60,
+    baseTimeSeconds: null,
+    completedAt: null,
+    completionError: null,
+    revision: 0,
+  }
+  const flush = vi.fn().mockResolvedValue(undefined)
+  const refresh = vi.fn().mockResolvedValue(undefined)
+  bindTimer(store, { title: 'Work', flush, refresh })
+  hydrateTimer(store, null)
+  return { store, line, timer, flush, refresh }
 }
 
-const lineAt = (store: Store, idx: number) => store.get(docAtom).children[idx]
-
-const startStopwatch = (
-  store: Store,
-  idx = 0,
-  timeMode: 'additive' | 'replacement' = 'replacement'
-) =>
-  startTimer(store, {
-    line: lineAt(store, idx),
-    mode: 'stopwatch',
-    timeMode,
-    targetDuration: 1800,
+test('starting flushes the line before persisting and does not mutate its document', async () => {
+  const { store, line, flush, refresh, timer } = setup()
+  const before = store.get(docAtom)
+  api.start.mockImplementation(async () => {
+    expect(flush).toHaveBeenCalled()
+    return timer
   })
-
-describe('timer-controller', () => {
-  beforeEach(() => {
-    vi.useFakeTimers()
-  })
-  afterEach(() => {
-    vi.useRealTimers()
-    vi.clearAllMocks()
-  })
-
-  test('stopwatch accrues and stop saves elapsed time', () => {
-    const store = makeStore()
-    startStopwatch(store)
-    vi.advanceTimersByTime(5000)
-    expect(timerElapsedSeconds(store.get(globalTimerAtom))).toBe(5)
-    stopAndSaveTimer(store)
-    expect(lineAt(store, 0).datumTimeSeconds).toBe(5)
-    expect(store.get(globalTimerAtom).isActive).toBe(false)
-  })
-
-  test('paused time is excluded from the saved duration', () => {
-    const store = makeStore()
-    startStopwatch(store)
-    vi.advanceTimersByTime(5000)
-    pauseTimer(store)
-    expect(isTimerPaused(store.get(globalTimerAtom))).toBe(true)
-    vi.advanceTimersByTime(60_000)
-    expect(timerElapsedSeconds(store.get(globalTimerAtom))).toBe(5)
-    resumeTimer(store)
-    expect(isTimerPaused(store.get(globalTimerAtom))).toBe(false)
-    vi.advanceTimersByTime(3000)
-    expect(timerElapsedSeconds(store.get(globalTimerAtom))).toBe(8)
-    stopAndSaveTimer(store)
-    expect(lineAt(store, 0).datumTimeSeconds).toBe(8)
-  })
-
-  test('pause and resume no-op when they do not apply', () => {
-    const store = makeStore()
-    pauseTimer(store)
-    resumeTimer(store)
-    expect(store.get(globalTimerAtom).isActive).toBe(false)
-
-    startStopwatch(store)
-    const running = store.get(globalTimerAtom)
-    resumeTimer(store)
-    expect(store.get(globalTimerAtom)).toEqual(running)
-    pauseTimer(store)
-    const paused = store.get(globalTimerAtom)
-    pauseTimer(store)
-    expect(store.get(globalTimerAtom)).toEqual(paused)
-  })
-
-  test('additive mode adds to the existing line time', () => {
-    const store = makeStore()
-    store.set(docAtom, (draft) => {
-      draft.children[0].datumTimeSeconds = 100
-    })
-    startStopwatch(store, 0, 'additive')
-    vi.advanceTimersByTime(7000)
-    stopAndSaveTimer(store)
-    expect(lineAt(store, 0).datumTimeSeconds).toBe(107)
-  })
-
-  test('countdown completes at zero and saves the target duration', () => {
-    const store = makeStore()
-    startTimer(store, {
-      line: lineAt(store, 0),
-      mode: 'countdown',
+  expect(
+    await startTimer(store, {
+      line,
+      mode: 'stopwatch',
       timeMode: 'replacement',
-      targetDuration: 10,
+      targetDuration: 60,
     })
-    vi.advanceTimersByTime(10_000)
-    expect(store.get(globalTimerAtom).isActive).toBe(false)
-    expect(lineAt(store, 0).datumTimeSeconds).toBe(10)
-    expect(playTimerCompleteSound).toHaveBeenCalled()
-  })
+  ).toBe(true)
+  expect(api.start).toHaveBeenCalledWith(
+    expect.objectContaining({ noteTitle: 'Work', lineId: line.id })
+  )
+  expect(store.get(docAtom)).toBe(before)
+  expect(refresh).toHaveBeenCalled()
+})
 
-  test('a paused countdown does not complete', () => {
-    const store = makeStore()
-    startTimer(store, {
-      line: lineAt(store, 0),
-      mode: 'countdown',
+test('failed flush prevents starting and saving a timer', async () => {
+  const { store, line, timer, flush } = setup()
+  flush.mockRejectedValue(new Error('unsaved edits'))
+  expect(
+    await startTimer(store, {
+      line,
+      mode: 'stopwatch',
       timeMode: 'replacement',
-      targetDuration: 3,
+      targetDuration: 60,
     })
-    vi.advanceTimersByTime(1000)
-    pauseTimer(store)
-    vi.advanceTimersByTime(60_000)
-    const timer = store.get(globalTimerAtom)
-    expect(timer.isActive).toBe(true)
-    expect(timerRemainingSeconds(timer)).toBe(2)
-  })
+  ).toBe(false)
+  expect(api.start).not.toHaveBeenCalled()
+  hydrateTimer(store, timer)
+  expect(await stopAndSaveTimer(store)).toBe(false)
+  expect(api.change).not.toHaveBeenCalled()
+  expect(store.get(globalTimerAtom).isActive).toBe(true)
+})
 
-  test('startTimer refuses while another line is active', () => {
-    const store = makeStore()
-    startStopwatch(store, 0)
-    startStopwatch(store, 1)
-    expect(store.get(globalTimerAtom).lineId).toBe(lineAt(store, 0).id)
+test('unmount only detaches; a fresh view restores the same running timer', () => {
+  const { store, timer } = setup()
+  hydrateTimer(store, timer)
+  releaseTimer(store)
+  expect(api.change).not.toHaveBeenCalled()
+  const other = createStore()
+  bindTimer(other, {
+    title: 'Other',
+    flush: async () => {},
+    refresh: async () => {},
   })
+  hydrateTimer(other, timer, 15000)
+  expect(timerElapsedSeconds(other.get(globalTimerAtom))).toBe(5)
+  expect(other.get(globalTimerAtom).noteTitle).toBe('Work')
+})
 
-  test('cancelTimer discards elapsed time', () => {
-    const store = makeStore()
-    startStopwatch(store)
-    vi.advanceTimersByTime(5000)
-    cancelTimer(store)
-    expect(store.get(globalTimerAtom).isActive).toBe(false)
-    expect(lineAt(store, 0).datumTimeSeconds).toBeUndefined()
-  })
+test('network failure leaves the timer visible and never saves elapsed time locally', async () => {
+  const { store, timer } = setup()
+  hydrateTimer(store, timer)
+  const before = store.get(docAtom)
+  api.change.mockRejectedValue(new Error('offline'))
+  expect(await pauseTimer(store)).toBe(false)
+  expect(store.get(globalTimerAtom).runningSince).toBe(10000)
+  expect(store.get(docAtom)).toBe(before)
+})
+
+test('elapsed display accounts for the server clock and paused segments', () => {
+  const { store, timer } = setup()
+  hydrateTimer(
+    store,
+    { ...timer, accumulatedMs: 2000, runningSince: 95000 },
+    100000
+  )
+  expect(timerElapsedSeconds(store.get(globalTimerAtom))).toBe(7)
+  vi.advanceTimersByTime(3000)
+  expect(timerElapsedSeconds(store.get(globalTimerAtom))).toBe(10)
+  hydrateTimer(store, { ...timer, runningSince: null, accumulatedMs: 7000 })
+  vi.advanceTimersByTime(10000)
+  expect(timerElapsedSeconds(store.get(globalTimerAtom))).toBe(7)
 })

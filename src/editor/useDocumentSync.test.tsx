@@ -2,7 +2,7 @@ import { act, renderHook } from '@testing-library/react'
 import { createStore } from 'jotai'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { docMake, lineMake } from '@/docs/schema'
-import { docAtom } from './state'
+import { docAtom, globalTimerAtom } from './state'
 import { SAVE_DEBOUNCE_MS } from './save-queue'
 import { useDocumentSync } from './useDocumentSync'
 
@@ -195,4 +195,16 @@ describe('useDocumentSync', () => {
       expectedRevision: 9,
     })
   })
+})
+
+test('a persisted active timer does not block navigation after document edits are flushed', async () => {
+  mocks.loadDocQuery.data = { doc: docMake([lineMake(0, 'task')]), revision: 0 }
+  mocks.mutateAsync.mockResolvedValue({ status: 'ok', revision: 1 })
+  const store = createStore()
+  renderHook(() => useDocumentSync('Doc', store))
+  store.set(globalTimerAtom, (timer) => ({ ...timer, isActive: true }))
+  const blocker = mocks.blocker.mock.lastCall![0] as {
+    shouldBlockFn: () => Promise<boolean>
+  }
+  expect(await blocker.shouldBlockFn()).toBe(false)
 })

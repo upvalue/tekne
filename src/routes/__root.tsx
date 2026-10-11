@@ -1,3 +1,4 @@
+import { TimerObserver } from '@/editor/timer/TimerObserver'
 import { Outlet, createRootRouteWithContext } from '@tanstack/react-router'
 import { useGlobalKeybinding } from '@/hooks/useGlobalKeybinding'
 import { orpc } from '@/api/client'
@@ -21,6 +22,7 @@ const RootComponent = () => {
 
   return (
     <DocumentSearch>
+      <TimerObserver />
       <Outlet />
       <Toaster />
       <TemplateDialog />

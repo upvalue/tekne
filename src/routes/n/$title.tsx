@@ -3,7 +3,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { TEditor } from '@/editor/TEditor'
 import { SaveConflictDialog } from '@/editor/SaveConflictDialog'
 import { allTagsAtom } from '@/editor/state'
-import { releaseTimer } from '@/editor/timer/timer-controller'
+import { useTimerSync } from '@/editor/timer/useTimerSync'
 import { useDocumentSync } from '@/editor/useDocumentSync'
 import { createStore, useAtom } from 'jotai'
 import { orpc } from '@/api/client'
@@ -38,15 +38,9 @@ function RouteComponent() {
     return createStore()
   }, [])
 
-  // The navigation blocker in useDocumentSync normally prevents leaving with
-  // a timer running, but if this route unmounts anyway the interval and the
-  // title marker must not outlive the store.
-  useEffect(() => {
-    return () => releaseTimer(store)
-  }, [store])
-
   const { loadDocQuery, flushDocument, conflict, resolveConflict } =
     useDocumentSync(title, store)
+  useTimerSync(title, store, flushDocument)
 
   // Side effect to cause query to fire
   useAtom(allTagsAtom)

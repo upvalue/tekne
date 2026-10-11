@@ -4,6 +4,7 @@ import cors from 'cors'
 import helmet from 'helmet'
 import compression from 'compression'
 import { registerApi } from './api'
+import { completeDueTimers } from '@/api/lib/timers'
 import { dbServer } from '@/db'
 import { sql } from 'kysely'
 import path from 'node:path'
@@ -59,6 +60,18 @@ if (NODE_ENV === 'production') {
 }
 
 const db = await dbServer()
+let completingTimers = false
+setInterval(async () => {
+  if (completingTimers) return
+  completingTimers = true
+  try {
+    await completeDueTimers(db)
+  } catch (error) {
+    console.error('Timer completion failed', error)
+  } finally {
+    completingTimers = false
+  }
+}, 1000).unref()
 await registerApi(app, db)
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))

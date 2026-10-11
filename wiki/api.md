@@ -185,6 +185,9 @@ complete input and output schema for each operation.
 | `tags.renameExecute`        | POST   | `/tags/rename`                      |
 | `tasks.cancelStalePropose`  | POST   | `/tasks/cancel-stale/preview`       |
 | `tasks.cancelStaleExecute`  | POST   | `/tasks/cancel-stale`               |
+| `timers.list`               | POST   | `/timers/list`                      |
+| `timers.start`              | POST   | `/timers/start`                     |
+| `timers.change`             | POST   | `/timers/change`                    |
 | `timers.status`             | GET    | `/timers/status`                    |
 
 ## Client and deployment migration
@@ -220,10 +223,11 @@ Wisp polls `GET /api/v1/timers/status` for xbar. Tekne owns timer state;
 there is no Dash mirror or timer hook. The read does not advance, complete,
 pause, or save timers.
 
-The response is `{ timers: [...] }` (an empty array when none are persisted).
+The response is `{ timers: [...], serverNow }` (an empty array when none are persisted).
 Each timer has `id`, `noteTitle`, `lineContent`, `context`, `mode`
 (`stopwatch` or `countdown`), `accumulatedMs`, `runningSince` (epoch
-milliseconds or null), `targetDuration` (seconds), and `revision`.
+milliseconds or null), `targetDuration` (seconds), and `revision`. `lineId` identifies the attached line. `completedAt` and
+`completionError` identify frozen timers awaiting resolution.
 Readers can add the elapsed milliseconds since `runningSince` to
 `accumulatedMs` for display.
 
@@ -231,5 +235,18 @@ Context contains the title and current outline line, with up to five lines
 on either side and two spaces per indentation level. Missing lines or notes
 fall back to the line content saved with the timer. Timers and context are
 read in a single query. Running timers sort first by newest start timestamp,
-then ID ascending; paused timers sort by ID. The existing persistence layer
-currently limits creation to one timer and cascades note deletions to timers.
+then ID ascending; paused timers sort by ID. One running or paused timer may exist across the app. Completed timers that
+need attention do not block a new timer. Document deletion retains timers;
+renaming carries their document reference along.
+
+The server completes countdowns automatically and records their duration on
+the attached line. Start, pause, and resume only write timer rows. Completion
+updates the latest document in a transaction and consumes the timer once.
+Replacement mode retains a completed timer if the recorded time changed;
+additive mode adds to the latest value. Missing lines also retain elapsed time.
+Use `change` with `retarget` and an explicit target (including its current
+recorded time) to resolve these timers, or `discard` to remove them.
+
+Open clients poll timers every two seconds and clean documents every five
+seconds. Unsaved document edits use the existing revision-conflict dialog;
+choosing the local version can overwrite time recorded by a completed timer.

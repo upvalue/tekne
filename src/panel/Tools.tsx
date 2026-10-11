@@ -11,6 +11,7 @@ import { TagRenameDialog } from './tags/TagRenameDialog'
 import { Input } from '@/components/vendor/Input'
 import { ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { TimerManager } from './timers/TimerManager'
 import { CancelStaleTasks } from './tasks/CancelStaleTasks'
 import {
   Tabs,
@@ -88,9 +89,9 @@ export const Tools = () => {
   const [renameTarget, setRenameTarget] = useState<string | null>(null)
   const [filter, setFilter] = useState('')
   const [highlightTarget, setHighlightTarget] = useTagManagerTarget()
-  const [activeToolTab, setActiveToolTab] = useState<'tasks' | 'tags'>(() =>
-    highlightTarget ? 'tags' : 'tasks'
-  )
+  const [activeToolTab, setActiveToolTab] = useState<
+    'tasks' | 'tags' | 'timers'
+  >(() => (highlightTarget ? 'tags' : 'tasks'))
 
   const [showArchived, setShowArchived] = useState(false)
 
@@ -161,16 +162,22 @@ export const Tools = () => {
       <Tabs
         value={activeToolTab}
         onValueChange={(value) => {
-          if (value === 'tasks' || value === 'tags') setActiveToolTab(value)
+          if (value === 'tasks' || value === 'tags' || value === 'timers')
+            setActiveToolTab(value)
         }}
       >
         <TabsList aria-label="Management tools" className="w-full">
           <TabsTrigger value="tasks">Task Management</TabsTrigger>
           <TabsTrigger value="tags">Tag Management</TabsTrigger>
+          <TabsTrigger value="timers">Timers</TabsTrigger>
         </TabsList>
 
         <TabsContent value="tasks" className="pt-4">
           <CancelStaleTasks />
+        </TabsContent>
+
+        <TabsContent value="timers" className="pt-4">
+          <TimerManager />
         </TabsContent>
 
         <TabsContent value="tags" className="space-y-6 pt-4">

@@ -1,6 +1,7 @@
 import { useAtomValue, useSetAtom, useStore } from 'jotai'
 import {
   focusedLineAtom,
+  globalTimerAtom,
   commandPaletteOpenAtom,
   showLineNumbersAtom,
 } from './state'
@@ -97,6 +98,7 @@ export const Gutter = ({
  */
 const ELineImpl = (lineInfo: ELineProps) => {
   const { cmRef, cmView } = useCodeMirror(lineInfo)
+  const timer = useAtomValue(globalTimerAtom)
   const {
     attributes,
     listeners,
@@ -211,9 +213,10 @@ const ELineImpl = (lineInfo: ELineProps) => {
         </div>
       )}
 
-      {line.datumTimeSeconds !== undefined && (
+      {(line.datumTimeSeconds !== undefined ||
+        (timer.isActive && timer.lineId === line.id)) && (
         <div className="ELine-leading">
-          <TimerBadge lineInfo={lineInfo} time={line.datumTimeSeconds} />
+          <TimerBadge lineInfo={lineInfo} time={line.datumTimeSeconds ?? 0} />
         </div>
       )}
 

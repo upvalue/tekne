@@ -388,6 +388,12 @@ export const docRouter = {
       // One transaction covers the existence check, every link rewrite, and
       // the rename itself, so a failure partway leaves nothing half-renamed.
       return await db.transaction().execute(async (tx) => {
+        await tx
+          .selectFrom('timers')
+          .select('id')
+          .where('note_title', '=', oldName)
+          .forUpdate()
+          .execute()
         const { docAlreadyExists, linksToUpdate } = await proposeRename(
           tx,
           oldName,
@@ -455,6 +461,11 @@ export const docRouter = {
           .where('title', '=', oldName)
           .execute()
 
+        await tx
+          .updateTable('timers')
+          .set({ note_title: newName })
+          .where('note_title', '=', oldName)
+          .execute()
         return { success: true, newName, linksUpdated }
       })
     }),

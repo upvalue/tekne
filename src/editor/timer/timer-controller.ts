@@ -1,28 +1,27 @@
-// The timer engine. Owns the single app-wide interval and every transition
-// of globalTimerAtom, so components only render state and call these
-// functions. Stopping and cancelling are distinct on purpose: stopAndSave
-// writes the elapsed time to the line, cancel discards it (the old combined
-// "stop" made the Reset button silently save).
 import type { useStore } from 'jotai'
 import type { ZLine } from '@/docs/schema'
-import { setDetailTitle, setTimerActive } from '@/lib/title'
-import { playTimerCompleteSound } from '@/lib/sound'
-import { isMobile } from '@/lib/platform'
-import {
-  dismissTimerNotification,
-  showTimerStartedNotification,
-} from './timer-notifications'
+import { elapsedMilliseconds, type Timer } from '@/docs/timer'
+import { orpcClient } from '@/api/client'
+import { toast } from 'sonner'
+import { showTimerStartedNotification } from './timer-notifications'
 import {
   DEFAULT_COUNTDOWN_SECONDS,
-  docAtom,
-  findLineById,
   globalTimerAtom,
-  setDocLineDirect,
+  timerBusyAtom,
   type GlobalTimerState,
   type TimerMode,
 } from '../state'
 
 type EditorStore = ReturnType<typeof useStore>
+type Binding = {
+  title: string
+  flush: () => Promise<void>
+  refresh: () => Promise<void>
+  timer: Timer | null
+  busy: boolean
+  ready: boolean
+}
+const bindings = new WeakMap<EditorStore, Binding>()
 
 export const IDLE_TIMER_STATE: GlobalTimerState = {
   isActive: false,
@@ -34,63 +33,94 @@ export const IDLE_TIMER_STATE: GlobalTimerState = {
   runningSince: null,
   targetDuration: DEFAULT_COUNTDOWN_SECONDS,
 }
-
-// Only one timer can run at a time (startTimer refuses while one is active),
-// so a single module-level interval handle suffices.
-let activeInterval: ReturnType<typeof setInterval> | null = null
-
-const clearActiveInterval = () => {
-  if (activeInterval !== null) {
-    clearInterval(activeInterval)
-    activeInterval = null
-  }
-}
-
-/** Seconds elapsed across all run segments, excluding paused time. */
 export const timerElapsedSeconds = (timer: {
   accumulatedMs: number
   runningSince: number | null
-}): number =>
-  Math.floor(
-    (timer.accumulatedMs +
-      (timer.runningSince !== null ? Date.now() - timer.runningSince : 0)) /
-      1000
-  )
-
-/** Seconds remaining on a countdown timer. */
+}): number => Math.floor(elapsedMilliseconds(timer) / 1000)
 export const timerRemainingSeconds = (timer: {
   accumulatedMs: number
   runningSince: number | null
   targetDuration: number
 }): number => Math.max(0, timer.targetDuration - timerElapsedSeconds(timer))
-
-/** True while a timer exists but is not accruing time. */
 export const isTimerPaused = (timer: {
   isActive: boolean
   runningSince: number | null
 }): boolean => timer.isActive && timer.runningSince === null
 
-const sendCompletionNotification = (message: string) => {
-  if (
-    !isMobile &&
-    'Notification' in window &&
-    Notification.permission === 'granted'
-  ) {
-    try {
-      new Notification('Timer Complete', {
-        body: message,
-        icon: '/favicon/tekne32-sky.png',
-      })
-    } catch (error) {
-      console.error('Timer notification failed', error)
-    }
+export const bindTimer = (
+  store: EditorStore,
+  options: Pick<Binding, 'title' | 'flush' | 'refresh'>
+) => {
+  const binding: Binding = {
+    ...options,
+    timer: null,
+    busy: false,
+    ready: false,
+  }
+  bindings.set(store, binding)
+  return () => {
+    if (bindings.get(store) === binding) releaseTimer(store)
   }
 }
 
-/**
- * Start a stopwatch or countdown timer for a line. Refuses when another
- * line's timer is already running.
- */
+export const hydrateTimer = (
+  store: EditorStore,
+  timer: Timer | null,
+  serverNow = Date.now()
+) => {
+  const binding = bindings.get(store)
+  if (!binding || binding.busy) return
+  if (binding.ready && binding.timer === timer) return
+  binding.ready = true
+  binding.timer = timer
+  store.set(
+    globalTimerAtom,
+    timer
+      ? {
+          isActive: true,
+          lineId: timer.lineId,
+          lineContent: timer.lineContent,
+          noteTitle: timer.noteTitle,
+          mode: timer.mode,
+          timeMode: timer.timeMode,
+          accumulatedMs: timer.accumulatedMs,
+          runningSince:
+            timer.runningSince === null
+              ? null
+              : Date.now() - (serverNow - timer.runningSince),
+          targetDuration: timer.targetDuration,
+        }
+      : { ...IDLE_TIMER_STATE, timeMode: store.get(globalTimerAtom).timeMode }
+  )
+}
+
+const run = async (
+  store: EditorStore,
+  operation: (binding: Binding) => Promise<void>
+): Promise<boolean> => {
+  const binding = bindings.get(store)
+  if (!binding?.ready) {
+    toast.info('Open a saved document and wait for timers to load.')
+    return false
+  }
+  if (binding.busy) return false
+  binding.busy = true
+  store.set(timerBusyAtom, true)
+  try {
+    await operation(binding)
+    return true
+  } catch (error) {
+    toast.error(
+      error instanceof Error ? error.message : 'Timer could not be updated'
+    )
+    return false
+  } finally {
+    binding.busy = false
+    if (bindings.get(store) === binding) store.set(timerBusyAtom, false)
+    await binding.refresh().catch(() => {})
+  }
+}
+
 export const startTimer = (
   store: EditorStore,
   args: {
@@ -99,113 +129,47 @@ export const startTimer = (
     timeMode: GlobalTimerState['timeMode']
     targetDuration: number
   }
-): void => {
-  const current = store.get(globalTimerAtom)
-  if (current.isActive && current.lineId !== args.line.id) {
-    return
-  }
-
-  clearActiveInterval()
-  setDetailTitle(args.line.mdContent)
-  setTimerActive(true)
-
-  store.set(globalTimerAtom, {
-    isActive: true,
-    lineId: args.line.id,
-    lineContent: args.line.mdContent,
-    mode: args.mode,
-    timeMode: args.timeMode,
-    accumulatedMs: 0,
-    runningSince: Date.now(),
-    targetDuration: args.targetDuration,
-  })
-
-  showTimerStartedNotification(
-    args.line.mdContent,
-    store.get(globalTimerAtom).runningSince!
-  )
-
-  // The interval exists only to detect countdown completion; elapsed-time
-  // display derives from accumulatedMs/runningSince and ticks locally in
-  // the components.
-  if (args.mode === 'countdown') {
-    activeInterval = setInterval(() => {
-      const timer = store.get(globalTimerAtom)
-      if (!timer.isActive) {
-        clearActiveInterval()
-        return
-      }
-      if (timerRemainingSeconds(timer) === 0) {
-        sendCompletionNotification(`Timer completed for: ${timer.lineContent}`)
-        playTimerCompleteSound()
-        stopAndSaveTimer(store)
-      }
-    }, 1000)
-  }
-}
-
-/**
- * Pause the running timer: fold the current run segment into accumulatedMs.
- * Elapsed time stays derived, so pausing is drift-free and the countdown
- * completion check simply stops advancing.
- */
-export const pauseTimer = (store: EditorStore): void => {
-  const timer = store.get(globalTimerAtom)
-  if (!timer.isActive || timer.runningSince === null) return
-  dismissTimerNotification()
-  store.set(globalTimerAtom, {
-    ...timer,
-    accumulatedMs: timer.accumulatedMs + (Date.now() - timer.runningSince),
-    runningSince: null,
-  })
-}
-
-/** Resume a paused timer by opening a new run segment. */
-export const resumeTimer = (store: EditorStore): void => {
-  const timer = store.get(globalTimerAtom)
-  if (!timer.isActive || timer.runningSince !== null) return
-  store.set(globalTimerAtom, { ...timer, runningSince: Date.now() })
-}
-
-/** Stop the running timer and write the elapsed time to its line. */
-export const stopAndSaveTimer = (store: EditorStore): void => {
-  const timer = store.get(globalTimerAtom)
-  if (!timer.isActive) return
-
-  const doc = store.get(docAtom)
-  const found = findLineById(doc, timer.lineId)
-  if (found) {
-    const elapsed = timerElapsedSeconds(timer)
-    const worked =
-      timer.mode === 'countdown'
-        ? Math.min(elapsed, timer.targetDuration)
-        : elapsed
-    setDocLineDirect(store, found.lineIdx, (line) => {
-      line.datumTimeSeconds =
-        timer.timeMode === 'additive'
-          ? (line.datumTimeSeconds || 0) + worked
-          : worked
+) =>
+  run(store, async (binding) => {
+    if (binding.timer)
+      throw new Error('A timer is already active. Manage it in Tools → Timers.')
+    await binding.flush()
+    const timer = await orpcClient.timers.start({
+      id: crypto.randomUUID(),
+      noteTitle: binding.title,
+      lineId: args.line.id,
+      mode: args.mode,
+      timeMode: args.timeMode,
+      targetDuration: args.targetDuration,
     })
-  }
+    showTimerStartedNotification(timer.lineContent, Date.now())
+  })
+const change = (
+  store: EditorStore,
+  action: 'pause' | 'resume' | 'save' | 'discard'
+) =>
+  run(store, async (binding) => {
+    const timer = binding.timer
+    if (!timer) return
+    if (action === 'save') await binding.flush()
+    const result = await orpcClient.timers.change({
+      id: timer.id,
+      revision: timer.revision,
+      action,
+    })
+    if (result?.completionError)
+      toast.warning(
+        'Elapsed time retained. Resolve this timer in Tools → Timers.'
+      )
+  })
+export const pauseTimer = (store: EditorStore) => change(store, 'pause')
+export const resumeTimer = (store: EditorStore) => change(store, 'resume')
+export const stopAndSaveTimer = (store: EditorStore) => change(store, 'save')
+export const cancelTimer = (store: EditorStore) => change(store, 'discard')
 
-  releaseTimer(store)
-}
-
-/** Stop the running timer and discard the elapsed time. */
-export const cancelTimer = (store: EditorStore): void => {
-  if (!store.get(globalTimerAtom).isActive) return
-  releaseTimer(store)
-}
-
-/**
- * Clear the interval, title marker, and timer state without touching the
- * document. Also the route-unmount cleanup: a per-route store dies with its
- * route, and the interval must not outlive it.
- */
-export const releaseTimer = (store: EditorStore): void => {
-  dismissTimerNotification()
-  clearActiveInterval()
-  setDetailTitle(null)
-  setTimerActive(false)
+/** Detach this view without changing the persisted timer. */
+export const releaseTimer = (store: EditorStore) => {
+  bindings.delete(store)
+  store.set(timerBusyAtom, false)
   store.set(globalTimerAtom, IDLE_TIMER_STATE)
 }

@@ -26,9 +26,9 @@ export const SaveConflictDialog = ({
         <DialogTitle>Document was changed elsewhere</DialogTitle>
         <DialogDescription>
           A newer version of this document was saved (for example from another
-          tab) while you had unsaved edits here. Choose which version to keep —
-          the other one is overwritten. Keeping the other version still lets you
-          undo back to your edits.
+          tab or a completed timer) while you had unsaved edits here. Choose
+          which version to keep — the other one is overwritten. Keeping the
+          other version still lets you undo back to your edits.
         </DialogDescription>
       </DialogHeader>
       <DialogFooter>

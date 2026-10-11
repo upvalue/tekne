@@ -58,7 +58,10 @@ export const timerDialogRequestAtom = atom<{
 
 export const errorMessageAtom = atom<string | null>(null)
 
+export const timerBusyAtom = atom(false)
+
 export type GlobalTimerState = {
+  noteTitle?: string
   isActive: boolean
   lineId: string | null
   lineContent: string | null

@@ -75,10 +75,27 @@ export type DBFeatureFlag = {
 
 // Define your database schema interface here
 export type Database = {
+  timers: DBTimer
   notes: DBNote
   note_data: DBNoteData
   note_lines: DBNoteLine
   saved_searches: DBSavedSearch
   feature_flags: DBFeatureFlag
   tags: DBTag
+}
+
+export type DBTimer = {
+  id: string
+  note_title: string
+  line_id: string | null
+  line_content: string
+  mode: 'stopwatch' | 'countdown'
+  time_mode: 'additive' | 'replacement'
+  accumulated_ms: number
+  running_since: number | null
+  target_duration: number
+  base_time_seconds: number | null
+  completed_at: number | null
+  completion_error: 'missing_line' | 'time_changed' | null
+  revision: number
 }

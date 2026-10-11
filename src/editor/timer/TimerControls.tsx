@@ -1,3 +1,5 @@
+import { useAtomValue } from 'jotai'
+import { timerBusyAtom } from '../state'
 import { Button } from '@/components/vendor/Button'
 import { Pause, Play, Square } from 'lucide-react'
 import { formatTimeDisplay } from '@/lib/time'
@@ -48,49 +50,55 @@ export const TimerControls = ({
   onResume: () => void
   onStop: () => void
   onDiscard: () => void
-}) => (
-  <div className="flex flex-wrap gap-2 justify-center [&>button]:min-h-11 [&>button]:grow">
-    {!isRunning ? (
-      <Button
-        type={startIsSubmit ? 'submit' : 'button'}
-        onClick={startIsSubmit ? undefined : onStart}
-        className="flex items-center gap-2"
-        disabled={startDisabled}
-      >
-        <Play className="w-4 h-4" />
-        {startLabel}
+}) => {
+  const busy = useAtomValue(timerBusyAtom)
+  return (
+    <fieldset
+      disabled={busy}
+      className="flex flex-wrap gap-2 justify-center [&>button]:min-h-11 [&>button]:grow"
+    >
+      {!isRunning ? (
+        <Button
+          type={startIsSubmit ? 'submit' : 'button'}
+          onClick={startIsSubmit ? undefined : onStart}
+          className="flex items-center gap-2"
+          disabled={startDisabled}
+        >
+          <Play className="w-4 h-4" />
+          {startLabel}
+        </Button>
+      ) : (
+        <>
+          <Button
+            type="button"
+            onClick={isPaused ? onResume : onPause}
+            className="flex items-center gap-2"
+          >
+            {isPaused ? (
+              <>
+                <Play className="w-4 h-4" />
+                Resume
+              </>
+            ) : (
+              <>
+                <Pause className="w-4 h-4" />
+                Pause
+              </>
+            )}
+          </Button>
+          <Button
+            type="button"
+            onClick={onStop}
+            className="flex items-center gap-2"
+          >
+            <Square className="w-4 h-4" />
+            Stop & Save
+          </Button>
+        </>
+      )}
+      <Button type="button" onClick={onDiscard} outline disabled={!isRunning}>
+        Discard
       </Button>
-    ) : (
-      <>
-        <Button
-          type="button"
-          onClick={isPaused ? onResume : onPause}
-          className="flex items-center gap-2"
-        >
-          {isPaused ? (
-            <>
-              <Play className="w-4 h-4" />
-              Resume
-            </>
-          ) : (
-            <>
-              <Pause className="w-4 h-4" />
-              Pause
-            </>
-          )}
-        </Button>
-        <Button
-          type="button"
-          onClick={onStop}
-          className="flex items-center gap-2"
-        >
-          <Square className="w-4 h-4" />
-          Stop & Save
-        </Button>
-      </>
-    )}
-    <Button type="button" onClick={onDiscard} outline disabled={!isRunning}>
-      Discard
-    </Button>
-  </div>
-)
+    </fieldset>
+  )
+}

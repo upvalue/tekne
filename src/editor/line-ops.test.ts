@@ -1,4 +1,4 @@
-import { describe, test, expect, beforeEach } from 'vitest'
+import { describe, test, expect, beforeEach, vi } from 'vitest'
 import { createStore } from 'jotai'
 import { docMake, lineMake, type ZDoc } from '@/docs/schema'
 import { docAtom, globalTimerAtom, timerDialogRequestAtom } from './state'
@@ -21,6 +21,11 @@ import {
   toggleTask,
   toggleTimer,
 } from './line-ops'
+
+import { cancelTimer } from './timer/timer-controller'
+vi.mock('./timer/timer-controller', () => ({
+  cancelTimer: vi.fn().mockResolvedValue(true),
+}))
 
 type Store = ReturnType<typeof createStore>
 
@@ -190,7 +195,7 @@ describe('toggleTimer', () => {
     expect(store.get(docAtom).children[0].datumTimeSeconds).toBeUndefined()
   })
 
-  test('removing the timer of the running line cancels the global timer', () => {
+  test('removing the timer of the running line waits for server cancellation', async () => {
     const store = makeStore(doc(['a', 0]))
     store.set(docAtom, (draft) => {
       draft.children[0].datumTimeSeconds = 0
@@ -202,8 +207,8 @@ describe('toggleTimer', () => {
       lineId: line.id,
       runningSince: 12345,
     }))
-    toggleTimer(store, 0, () => true)
-    expect(store.get(globalTimerAtom).isActive).toBe(false)
+    await toggleTimer(store, 0, () => true)
+    expect(cancelTimer).toHaveBeenCalledWith(store)
     expect(store.get(docAtom).children[0].datumTimeSeconds).toBeUndefined()
   })
 })
