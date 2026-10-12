@@ -377,7 +377,7 @@ export function HelpDialog() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent
-        className="flex h-[90dvh] w-[94vw] max-w-[1080px] gap-0 overflow-hidden rounded-[14px] border-0 bg-[#1a1a1a] p-0 text-text shadow-[0_0_0_0.5px_rgba(255,255,255,0.1),0_30px_80px_rgba(0,0,0,0.6)] sm:max-w-[1080px] dark:bg-[#1a1a1a]"
+        className="flex h-[90dvh] w-[94vw] max-w-[1080px] gap-0 overflow-hidden rounded-[14px] border-0 bg-panel p-0 text-text shadow-[0_0_0_0.5px_rgba(255,255,255,0.1),0_30px_80px_rgba(0,0,0,0.6)] sm:max-w-[1080px]"
         aria-describedby={undefined}
       >
         <Help />

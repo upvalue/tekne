@@ -1,16 +1,18 @@
 @theme {
-  --color-page: #101010;
-  --color-panel: #141414;
-  --color-raised: #2e2e2e;
-  --color-mark: #4b4b4b;
-  --color-text: #e4e4e4;
-  --color-text-2: #bababa;
-  --color-muted: #838383;
-  --color-accent: #92bbff;
-  --color-accent-fill: #5283d5;
-  --color-on-accent: #091426;
-  --color-accent-tint: #1a2e4f;
-  --color-done: #8fc982;
+  /* Zed's One Dark UI colors (zed-industries/zed assets/themes/one/one.json).
+     page, panel and raised keep Zed's hue but are darker in OKLCH lightness. */
+  --color-page: #0b0e14; /* editor.background #282c33 */
+  --color-panel: #11151c; /* panel.background #2f343e */
+  --color-raised: #2c323c; /* element.hover #363c46 */
+  --color-mark: #464b57; /* border */
+  --color-text: #dce0e5; /* text */
+  --color-text-2: #a9afbc; /* text.muted */
+  --color-muted: #878a98; /* text.placeholder */
+  --color-accent: #74ade8; /* text.accent */
+  --color-accent-fill: #47679e; /* border.focused */
+  --color-on-accent: #282c33; /* editor.background */
+  --color-accent-tint: #293b5b; /* border.selected */
+  --color-done: #a1c181; /* success */
   --font-sans:
     system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
     'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji',
@@ -108,43 +110,8 @@ button:disabled {
     visibility 0s 220ms;
 }
 
-.Loading-dots,
-.Loading-pulse {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-}
-.Loading-dots i,
-.Loading-pulse i {
-  display: block;
-  width: 3px;
-  height: 3px;
-  border-radius: 50%;
-  background: currentColor;
-  animation: loading-fade 1.2s ease-in-out infinite;
-}
-.Loading-dots i:nth-child(2) {
-  animation-delay: 150ms;
-}
-.Loading-dots i:nth-child(3) {
-  animation-delay: 300ms;
-}
-.Loading-pulse i {
-  width: 6px;
-  height: 6px;
-}
-@keyframes loading-fade {
-  0%,
-  100% {
-    opacity: 0.25;
-  }
-  50% {
-    opacity: 1;
-  }
-}
-
 .OverlaySurface {
-  background: linear-gradient(145deg, #252525, #1c1c1c);
+  background: linear-gradient(145deg, var(--color-raised), var(--color-panel));
   border: 1px solid #ffffff14;
   border-radius: 12px;
   box-shadow:
