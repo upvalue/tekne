@@ -260,10 +260,13 @@ test.each([1280, 1470])(
     const editor = view.container.querySelector<HTMLElement>('.TEditor-scroll')!
     const bounds = editor.getBoundingClientRect()
     const available = width - 320
-    expect(bounds.width).toBe(Math.min(1040, available))
-    expect(bounds.left).toBe((available - bounds.width) / 2)
-    expect(getComputedStyle(editor).paddingLeft).toBe('48px')
-    expect(getComputedStyle(editor).paddingRight).toBe('48px')
+    // The scroll area fills the editor so its scrollbar sits at the edge;
+    // padding centers a 1040px column inside it.
+    expect(bounds.width).toBe(available)
+    expect(bounds.left).toBe(0)
+    const inset = Math.max(48, (available - 1040) / 2 + 48)
+    expect(parseFloat(getComputedStyle(editor).paddingLeft)).toBeCloseTo(inset)
+    expect(parseFloat(getComputedStyle(editor).paddingRight)).toBeCloseTo(inset)
     expect(editor.scrollWidth).toBeLessThanOrEqual(editor.clientWidth)
   }
 )

@@ -281,18 +281,17 @@
   left: 0;
 }
 @media (min-width: 768px) {
-  .TitleBar,
-  .TEditor-scroll {
+  .TitleBar {
     width: 100%;
     max-width: 1040px;
     margin-inline: auto;
-  }
-  .TitleBar {
     padding-left: 228px;
     padding-right: 48px;
   }
+  /* Spans the whole editor area so the scrollbar sits at its edge; the
+     padding centers a 1040px column inside it, matching the title bar. */
   .TEditor-scroll {
-    padding-inline: 48px;
+    padding-inline: max(48px, calc((100% - 1040px) / 2 + 48px));
   }
 }
 
