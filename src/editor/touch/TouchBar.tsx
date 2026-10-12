@@ -21,7 +21,6 @@ import {
   Pin,
   Play,
   Plus,
-  Pointer,
   Redo2,
   Square,
   Timer,
@@ -30,7 +29,6 @@ import {
 } from 'lucide-react'
 import { generateCollapse } from '@/docs/collapse'
 import { setDisplayModeOverride, useDisplayMode } from '@/hooks/display-mode'
-import { isTouchPrimary } from '@/lib/platform'
 import { docAtom, globalTimerAtom, requestFocusLineAtom } from '../state'
 import { findLineIndexById, getVisibleLineIds } from '../outline-selection'
 import { canIndentLine } from '../line-editor/line-mutations'
@@ -196,21 +194,7 @@ export const TouchBar = () => {
     editingId === null ? -1 : findLineIndexById(doc.children, editingId)
   useKeepEditingLineVisible(editingLineIdx, viewport)
 
-  if (mode !== 'touch') {
-    // Desktop mode on a touch-first device still needs a way back that
-    // doesn't involve the command palette.
-    if (!isTouchPrimary) return null
-    return (
-      <button
-        type="button"
-        aria-label="Switch to touch mode"
-        onClick={() => setDisplayModeOverride('touch')}
-        className="fixed bottom-3 right-3 z-40 flex items-center justify-center w-11 h-11 rounded-full bg-raised text-text-2 shadow-lg"
-      >
-        <Pointer width={18} height={18} />
-      </button>
-    )
-  }
+  if (mode !== 'touch') return null
 
   const selectedIdx =
     selectedId === null ? null : findLineIndexById(doc.children, selectedId)
