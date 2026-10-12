@@ -200,7 +200,7 @@ export const TimerBadge = ({
                   </span>
                 </span>
               ) : (
-                renderTime(time)
+                time > 0 && renderTime(time)
               )}
             </PopoverButton>
           </div>

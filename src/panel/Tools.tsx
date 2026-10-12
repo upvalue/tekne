@@ -9,7 +9,7 @@ import { useTagManagerTarget, useActiveToolTab } from '@/hooks/panel-state'
 import { TagCard } from './tags/TagCard'
 import { TagRenameDialog } from './tags/TagRenameDialog'
 import { Input } from '@/components/vendor/Input'
-import { ChevronRight } from 'lucide-react'
+import { ChevronRight, CheckSquare, Hash, Timer } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { TimerManager } from './timers/TimerManager'
 import { CancelStaleTasks } from './tasks/CancelStaleTasks'
@@ -165,20 +165,41 @@ export const Tools = () => {
         }}
       >
         <TabsList aria-label="Management tools" className="w-full">
-          <TabsTrigger value="tasks">Task Management</TabsTrigger>
-          <TabsTrigger value="tags">Tag Management</TabsTrigger>
-          <TabsTrigger value="timers">Timers</TabsTrigger>
+          <TabsTrigger value="tasks" className="flex-1">
+            <CheckSquare />
+            Task Management
+          </TabsTrigger>
+          <TabsTrigger value="tags" className="flex-1">
+            <Hash />
+            Tag Management
+          </TabsTrigger>
+          <TabsTrigger value="timers" className="flex-1">
+            <Timer />
+            Timers
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="tasks" className="pt-4">
+          <p className="mb-4 text-sm text-muted">
+            Find old unchecked tasks across documents and review them before
+            cancelling.
+          </p>
           <CancelStaleTasks />
         </TabsContent>
 
         <TabsContent value="timers" className="pt-4">
+          <p className="mb-4 text-sm text-muted">
+            Review active timers across documents. Pause, resume, or choose
+            where to save their time.
+          </p>
           <TimerManager />
         </TabsContent>
 
         <TabsContent value="tags" className="space-y-6 pt-4">
+          <p className="text-sm text-muted">
+            Browse tags in this document or across all documents. Rename, merge,
+            or archive tags and edit their descriptions.
+          </p>
           <ToolsSection title="Document Tags">
             {activeTags.length === 0 ? (
               <div className="rounded-lg border border-raised p-4 text-sm text-muted">

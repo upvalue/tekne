@@ -14,7 +14,6 @@ import { zdoc, copyLines } from '@/docs/schema'
 import { extractDocData, treeifyDoc } from '@/docs/doc-analysis'
 import { docAtom } from '@/editor/state'
 import { Button } from '@/components/vendor/Button'
-import { FeatureFlags } from './FeatureFlags'
 
 // PGlite only exists in the development in-memory mode, so this panel — and
 // with it the pglite wasm and the REPL — is compiled out of production
@@ -146,19 +145,51 @@ const DocumentData = ({ isActive }: { isActive: boolean }) => {
   )
 }
 
+const DocumentInspector = () => {
+  const [mode, setMode] = useState('raw')
+  return (
+    <Tabs value={mode} onValueChange={setMode}>
+      <TabsList aria-label="Document mode">
+        <TabsTrigger value="raw">Content</TabsTrigger>
+        <TabsTrigger value="tree">Tree</TabsTrigger>
+        <TabsTrigger value="data">Data</TabsTrigger>
+      </TabsList>
+      <TabsContent value="raw" className="space-y-4">
+        <p className="text-sm text-muted">
+          The editor’s document JSON, including line IDs, text, and recorded
+          values. Copy it for inspection. Pasting replaces the current document;
+          paste as copy assigns new line IDs.
+        </p>
+        <RawDocument isActive={mode === 'raw'} />
+      </TabsContent>
+      <TabsContent value="tree" className="space-y-4">
+        <p className="text-sm text-muted">
+          Lines arranged into parent and child groups using indentation, with
+          inherited tags. Use this to inspect outline structure.
+        </p>
+        <TreeDocument isActive={mode === 'tree'} />
+      </TabsContent>
+      <TabsContent value="data" className="space-y-4">
+        <p className="text-sm text-muted">
+          Structured records extracted from the outline for search and
+          summaries, including tags, task status, and time.
+        </p>
+        <DocumentData isActive={mode === 'data'} />
+      </TabsContent>
+    </Tabs>
+  )
+}
+
 export const DevTools = () => {
   const usingPglite = PgliteDevtools !== null && !!window.dbHandle
-  const [activeTab, setActiveTab] = useState('raw')
+  const [activeTab, setActiveTab] = useState('document')
 
   const router = useRouter()
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab}>
-      <TabsList>
+      <TabsList aria-label="Developer tools">
         <TabsTrigger value="appearance">Appearance & errors</TabsTrigger>
-        <TabsTrigger value="raw">Document Content</TabsTrigger>
-        <TabsTrigger value="tree">Tree Document</TabsTrigger>
-        <TabsTrigger value="data">Document Data</TabsTrigger>
-        <TabsTrigger value="flags">Flags</TabsTrigger>
+        <TabsTrigger value="document">Document</TabsTrigger>
         {DatabaseMigrations && (
           <TabsTrigger value="migrations">Migrations</TabsTrigger>
         )}
@@ -166,22 +197,20 @@ export const DevTools = () => {
         {usingPglite && <TabsTrigger value="pglite">pglite</TabsTrigger>}
       </TabsList>
       <TabsContent value="appearance">
+        <p className="mb-4 text-sm text-muted">
+          Try sample error states and the error history prototype.
+        </p>
         <AppearancePreview />
       </TabsContent>
-      <TabsContent value="raw">
-        <RawDocument isActive={activeTab === 'raw'} />
-      </TabsContent>
-      <TabsContent value="tree">
-        <TreeDocument isActive={activeTab === 'tree'} />
-      </TabsContent>
-      <TabsContent value="data">
-        <DocumentData isActive={activeTab === 'data'} />
-      </TabsContent>
-      <TabsContent value="flags">
-        <FeatureFlags isActive={activeTab === 'flags'} />
+      <TabsContent value="document">
+        <DocumentInspector />
       </TabsContent>
       {DatabaseMigrations && (
         <TabsContent value="migrations">
+          <p className="mb-4 text-sm text-muted">
+            Run document migrations or rebuild extracted data across the
+            database.
+          </p>
           <Suspense fallback={<LoadingIndicator />}>
             <DatabaseMigrations isActive={activeTab === 'migrations'} />
           </Suspense>
@@ -190,11 +219,17 @@ export const DevTools = () => {
       {usingPglite && PgliteDevtools && (
         <TabsContent value="pglite">
           <Suspense fallback={<LoadingIndicator />}>
+            <p className="mb-4 text-sm text-muted">
+              Query the local development database with SQL.
+            </p>
             <PgliteDevtools />
           </Suspense>
         </TabsContent>
       )}
       <TabsContent value="tanstackdev">
+        <p className="mb-4 text-sm text-muted">
+          Inspect the current route, parameters, and router state.
+        </p>
         <TanStackRouterDevtoolsPanel router={router} />
       </TabsContent>
     </Tabs>

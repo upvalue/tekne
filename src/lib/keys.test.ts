@@ -19,7 +19,7 @@ const modDown = (key: string, rest: KeyboardEventInit = {}) =>
 
 describe('displayKey', () => {
   test('renders the combos the Help panel used to hardcode', () => {
-    expect(displayKey(keybindings.documentSearch)).toBe(`${modSymbol} O`)
+    expect(displayKey(keybindings.documentSearch)).toBe(`${modSymbol} Shift O`)
     expect(displayKey(keybindings.searchPanel)).toBe(`${modSymbol} /`)
     expect(displayKey(keybindings.togglePanel)).toBe(`${modSymbol} \\`)
     expect(displayKey(keybindings.commandPalette)).toBe(`${modSymbol} K`)
@@ -33,7 +33,7 @@ describe('adapters', () => {
   test('produce the strings CodeMirror and kbar were given by hand', () => {
     expect(codeMirrorKey('toggleCollapse')).toBe('Mod-.')
     expect(codeMirrorKey('deleteLine')).toBe('Mod-Shift-k')
-    expect(kbarShortcut('documentSearch')).toBe('$mod+o')
+    expect(kbarShortcut('documentSearch')).toBe('$mod+shift+o')
   })
 })
 
@@ -44,6 +44,18 @@ describe('matchesKeybinding', () => {
     )
     expect(matchesKeybinding(keybindings.searchPanel, modDown('/'))).toBe(true)
     expect(matchesKeybinding(keybindings.togglePanel, modDown('\\'))).toBe(true)
+  })
+
+  test('opens documents with the new shortcut and leaves Mod-O to the browser', () => {
+    expect(
+      matchesKeybinding(
+        keybindings.documentSearch,
+        modDown('O', { shiftKey: true })
+      )
+    ).toBe(true)
+    expect(matchesKeybinding(keybindings.documentSearch, modDown('o'))).toBe(
+      false
+    )
   })
 
   test('treats ctrl as the literal key on every platform', () => {

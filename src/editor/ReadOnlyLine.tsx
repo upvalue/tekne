@@ -87,9 +87,14 @@ const ReadOnlyCheckbox = ({
 
 // Display-only timer badge - shows time without dialog
 const ReadOnlyTimerBadge = ({ time }: { time: number }) => (
-  <span className="inline-flex items-center gap-1 text-xs font-mono text-muted whitespace-nowrap ml-2">
+  <span
+    aria-label={
+      time > 0 ? `Recorded time: ${renderTime(time)}` : 'No time recorded'
+    }
+    className="inline-flex shrink-0 items-center gap-1.5 rounded bg-white/7 px-1.5 text-xs leading-5 tabular-nums text-text-2 whitespace-nowrap ml-2 mt-0.5"
+  >
     <Clock size={11} />
-    {renderTime(time)}
+    {time > 0 && renderTime(time)}
   </span>
 )
 
@@ -122,7 +127,7 @@ export const ReadOnlyLine = ({
   return (
     <div
       className={cn(
-        'ReadOnlyLine w-full py-1 flex items-start',
+        'ReadOnlyLine w-full py-1 flex items-start leading-6',
         datumTaskStatus === 'incomplete' && 'ELine-cancelled',
         datumTaskStatus === 'complete' && 'ELine-complete',
         onClick && 'cursor-pointer',
@@ -138,7 +143,7 @@ export const ReadOnlyLine = ({
         }}
       />
 
-      <div className="ELine-leading w-4 justify-center">
+      <div className="ELine-leading min-h-6 w-4 justify-center">
         {datumTaskStatus ? (
           <ReadOnlyCheckbox status={datumTaskStatus} />
         ) : (
@@ -146,7 +151,9 @@ export const ReadOnlyLine = ({
         )}
       </div>
 
-      {!!datumTimeSeconds && <ReadOnlyTimerBadge time={datumTimeSeconds} />}
+      {datumTimeSeconds !== undefined && (
+        <ReadOnlyTimerBadge time={datumTimeSeconds} />
+      )}
 
       {/* CodeMirror content */}
       <div className="cm-editor-container flex-1 min-w-0 ml-2" ref={cmRef} />

@@ -27,7 +27,7 @@ function TabsList({
       data-slot="tabs-list"
       activateOnFocus={activateOnFocus}
       className={cn(
-        'inline-flex flex-wrap w-fit items-center gap-1 rounded-lg bg-white/3 p-1 text-muted',
+        'inline-flex flex-wrap w-fit items-center gap-1 rounded-xl border border-white/7 bg-page/40 p-1 text-muted',
         className
       )}
       {...props}
@@ -43,7 +43,7 @@ function TabsTrigger({
     <TabsPrimitive.Tab
       data-slot="tabs-trigger"
       className={cn(
-        'inline-flex items-center justify-center gap-1.5 rounded px-2 py-1 text-xs font-medium text-muted hover:text-text data-active:bg-raised data-active:text-text focus-visible:outline-2 focus-visible:outline-accent disabled:opacity-50 [&_svg]:size-4',
+        'inline-flex items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium text-muted hover:text-text data-active:bg-raised data-active:text-text data-active:shadow-sm transition-colors focus-visible:outline-2 focus-visible:outline-accent disabled:opacity-50 [&_svg]:size-4',
         className
       )}
       {...props}

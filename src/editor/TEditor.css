@@ -508,9 +508,3 @@
     left: 0;
   }
 }
-.CommandPalette-container {
-  background: color-mix(in srgb, var(--color-raised) 80%, transparent);
-  backdrop-filter: blur(8px) saturate(140%);
-  border: 1px solid #ffffff14;
-  box-shadow: 0 8px 24px #00000040;
-}

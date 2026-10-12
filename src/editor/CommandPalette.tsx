@@ -235,7 +235,7 @@ export const CommandPalette = ({
                 }
               : undefined
           }
-          className="CommandPalette-container fixed top-[18vh] left-1/2 -translate-x-1/2 z-50 w-[calc(100%-2rem)] max-w-xl rounded-xl p-2 text-text outline-none"
+          className="OverlaySurface fixed top-[18vh] left-1/2 -translate-x-1/2 z-50 w-[calc(100%-2rem)] max-w-xl rounded-xl p-2 text-text outline-none"
         >
           <Dialog.Title className="sr-only">Command palette</Dialog.Title>
           <input

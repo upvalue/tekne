@@ -79,7 +79,10 @@ export const makeTutorial = () => {
       }
     ),
     lineMake((i = 0), '# Navigation'),
-    lineMake(++i, `You can open or create documents with \`${modName}-O\``),
+    lineMake(
+      ++i,
+      `You can open or create documents with \`${modName}-Shift-O\``
+    ),
     lineMake(i, `You can search across all documents with \`${modName}-/\``),
     lineMake(i, `And trigger a command palette with \`${modName}-K\``),
     lineMake(i, 'For more help, see the help section of the side panel'),

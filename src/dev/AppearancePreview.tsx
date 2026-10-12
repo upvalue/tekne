@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { toast } from 'sonner'
+import { ErrorScratchpadPreview } from './ErrorScratchpadPreview'
 import { ErrorState } from '@/components/ErrorState'
 import { Button } from '@/components/vendor/Button'
 import { SaveConflictDialog } from '@/editor/SaveConflictDialog'
@@ -34,6 +34,7 @@ export function AppearancePreview() {
   const [retried, setRetried] = useState(false)
   return (
     <div className="space-y-5 text-sm">
+      <ErrorScratchpadPreview />
       <section className="space-y-2">
         <h2 className="font-medium">Error previews</h2>
         <p className="text-xs text-muted">
@@ -67,23 +68,6 @@ export function AppearancePreview() {
           <ErrorState {...SAMPLES[sample]} onRetry={() => setRetried(true)} />
         )}
         <div className="flex flex-wrap gap-2">
-          <Button
-            onClick={() =>
-              toast.error('Could not save changes', {
-                id: 'error-preview',
-                description:
-                  'Your edits are still in this tab. Check your connection and retry.',
-                duration: Infinity,
-                closeButton: true,
-                action: {
-                  label: 'Retry',
-                  onClick: () => toast.dismiss('error-preview'),
-                },
-              })
-            }
-          >
-            Preview error toast
-          </Button>
           <Button onClick={() => setConflict(true)}>
             Preview save conflict
           </Button>

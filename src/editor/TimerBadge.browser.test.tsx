@@ -145,7 +145,7 @@ test('a line without time has no hover timer but still opens from a shortcut', a
   expect(popup.getBoundingClientRect().left).toBeGreaterThanOrEqual(0)
 })
 
-test('a toggled timer with no time yet shows its chip', () => {
+test('a toggled timer with no time yet shows only its icon', () => {
   const store = createStore()
   const line = lineMake(0, 'Task', { datumTimeSeconds: 0 })
   store.set(docAtom, docMake([line]))
@@ -154,7 +154,7 @@ test('a toggled timer with no time yet shows its chip', () => {
       <TimerBadge lineInfo={{ line, lineIdx: 0 }} time={0} />
     </Provider>
   )
-  expect(
-    view.getByRole('button', { name: 'Time for line 1' }).textContent
-  ).toBe('0s')
+  const chip = view.getByRole('button', { name: 'Time for line 1' })
+  expect(chip.textContent).toBe('')
+  expect(chip.querySelector('svg')).not.toBeNull()
 })

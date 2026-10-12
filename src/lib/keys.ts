@@ -25,7 +25,7 @@ export const modName = isApple ? 'Cmd' : 'Ctrl'
 
 export const keybindings = {
   documentSearch: {
-    key: 'mod+o',
+    key: 'mod+shift+o',
     name: 'document-search',
     description: 'Open a document',
     type: 'global' as const,
