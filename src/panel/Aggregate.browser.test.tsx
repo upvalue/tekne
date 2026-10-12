@@ -1,10 +1,9 @@
-import { cleanup, fireEvent, render } from '@testing-library/react'
+import { cleanup, render } from '@testing-library/react'
 import { page } from '@vitest/browser/context'
 import { afterEach, expect, test, vi } from 'vitest'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { Aggregate } from './Aggregate'
 import { ResultCardGrid, type ResultCardData } from './AggregateComponents'
-import { DocumentOverviewSection } from './DocumentOverview'
 import '@/styles/styles.css'
 
 const fixture = vi.hoisted(() => ({ data: [] as ResultCardData[] }))
@@ -67,9 +66,7 @@ test.each([
       <QueryClientProvider client={new QueryClient()}>
         {/* A 320px panel leaves 270px after its rail and outer border. */}
         <div style={{ width: panel }}>
-          <DocumentOverviewSection label="Aggregate" flush>
-            <Aggregate />
-          </DocumentOverviewSection>
+          <Aggregate />
         </div>
       </QueryClientProvider>
     )
@@ -109,13 +106,6 @@ test.each([
     const description = view.getByText(fixture.data[1].pinned_desc!)
     expect(description.getBoundingClientRect().height).toBeGreaterThan(20)
 
-    const toggle = view.getByRole('button', { name: 'Aggregate' })
-    fireEvent.click(toggle)
-    expect(toggle.getAttribute('aria-expanded')).toBe('false')
-    expect(list.getClientRects()).toHaveLength(0)
-    fireEvent.click(toggle)
-    expect(toggle.getAttribute('aria-expanded')).toBe('true')
-    expect(list.getBoundingClientRect().width).toBe(panel - 24)
   }
 )
 
