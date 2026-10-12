@@ -24,15 +24,17 @@ export function PopoverPanel({
   side = 'bottom',
   align = 'start',
   sideOffset = 8,
+  anchor,
   ...props
 }: React.ComponentProps<typeof PopoverPrimitive.Popup> &
   Pick<
     React.ComponentProps<typeof PopoverPrimitive.Positioner>,
-    'side' | 'align' | 'sideOffset'
+    'side' | 'align' | 'sideOffset' | 'anchor'
   >) {
   return (
     <PopoverPrimitive.Portal>
       <PopoverPrimitive.Positioner
+        anchor={anchor}
         side={side}
         align={align}
         sideOffset={sideOffset}

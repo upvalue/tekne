@@ -273,37 +273,6 @@
     font-size: 24px;
   }
 }
-.TimerChip-hover {
-  opacity: 0;
-  pointer-events: none;
-}
-.ELine:hover .TimerChip-hover,
-.ELine:focus-within .TimerChip-hover {
-  opacity: 1;
-  pointer-events: auto;
-}
-.TimerRow {
-  margin-right: 16px;
-}
-@media (max-width: 767px) {
-  .TimerRow {
-    margin-left: 0;
-    margin-right: 0;
-    flex-basis: 100%;
-  }
-  .TimerRow button {
-    min-height: 44px;
-  }
-  .TimerChip {
-    margin-right: 0;
-  }
-}
-@media (pointer: coarse) {
-  .TimerChip-hover {
-    opacity: 1;
-    pointer-events: auto;
-  }
-}
 
 .ELine-gutter > .ELine-drag-handle {
   position: absolute;
@@ -349,11 +318,6 @@
   grid-column: 4;
   grid-row: 1;
 }
-.ELine > .TimerRow {
-  grid-column: 4 / -1;
-  grid-row: 2;
-  margin-left: 8px;
-}
 .ELine > .ELine-header-1,
 .ELine > .ELine-header-2,
 .ELine > .ELine-header-3 {
@@ -366,22 +330,11 @@
         max-content
       ) max-content minmax(16px, 1fr);
   }
-  .ELine > .TimerRow {
-    grid-column: 1 / -1;
-    margin-left: 0;
-  }
-  .TimerChip-hover {
-    display: none;
-  }
-  .ELine:focus-within .TimerChip-hover {
-    display: flex;
-  }
 }
 .ELine.hidden {
   display: none;
 }
 
-.TimerRow,
 .TimerChip {
   position: relative;
   z-index: 11;
@@ -447,12 +400,6 @@
     pointer-events: auto;
   }
 }
-.ELine > .TimerRow {
-  padding: 12px 14px;
-  margin-top: 6px;
-  margin-bottom: 6px;
-  box-shadow: none;
-}
 .ELine:has([data-popup-open]) {
   z-index: 12;
 }
@@ -512,26 +459,12 @@
   .ELine {
     padding-block: 4px;
   }
-  .ELine > .TimerRow {
-    grid-column: 3 / -1;
-  }
 }
 
 .ELine-gutter > .ELine-drag-handle {
   left: 96px;
 }
 @media (max-width: 767px) {
-  .ELine > .TimerChip-active {
-    max-width: 160px;
-    flex-wrap: wrap;
-  }
-  .ELine > .TimerRow {
-    grid-row: 3;
-  }
-  .TimerChip-active button {
-    min-width: 36px;
-    min-height: 44px;
-  }
   .LineActions button {
     min-height: 30px;
   }
