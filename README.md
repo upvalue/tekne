@@ -9,6 +9,8 @@ The basic idea is that you write out tags, add data anywhere within those tags
 data in those tags over time. It's really easier to understand with a short
 video.
 
+https://github.com/user-attachments/assets/77cdbda3-b077-4fac-a3c6-a91b4ce5e574
+
 The best way to get started is with the [live demo](https://demo.tekne.app)
 which has some built in help and a tutorial.
 
