@@ -1,23 +1,14 @@
 # tekne
 
-Tekne (formerly [meditations](https://github.com/upvalue/tekne/tree/meditations-stable)) is a
-freestyle productivity app in the shape of an outline editor.
+Tekne (formerly
+[meditations](https://github.com/upvalue/tekne/tree/meditations-stable)) is a
+freestyle productivity app in the shape of an outline editor. 
 
-It's currently extremely alpha software! I'm using it every day now (as of 10/1/25) but it's missing
-lots of features, is sometimes broken in odd ways and does not yet have a stable database or
-document schema.
+The basic idea is that you write out tags, add data anywhere within those tags
+(such as how much time you spent on something), and you get an overview of the data in those tags over time.
 
-- [tekne.app](https://tekne.app) - website
-- [Demo](https://demo.tekne.app) - live demo; the built-in application help on the right
-  has some help with syntax and keyboard shortcuts
-
-## API
-
-See the [HTTP API guide](wiki/api.md) for curl and Python examples. Each server
-serves a plaintext agent guide at `/llms.txt` (also `/api/llms.txt`), its
-endpoint reference at `/api`, and the OpenAPI specification at
-`/api/openapi.json`. Give an agent your server's origin and the guide URL;
-it needs the same trusted-network access as the app.
+The best way to get started is with the [live demo](https://demo.tekne.app)
+which has some built in help and a tutorial.
 
 ## Credits
 
@@ -27,3 +18,4 @@ Tekne is released under the AGPL. Tekne depends on a lot of projects, here are a
 - Some Tailwind Plus templates and Tailwind Catalyst are used with a license for the app and website
 - General stack: React with tanstack-router, Express/oRPC for server, postgres (& pglite) for
   database, Jotai for state management
+- Theme was heavily inspired by Zed 

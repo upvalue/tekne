@@ -9,7 +9,7 @@ beginning work.
 
 ## Conventions
 
-- docs/ are hand-written human docs, don't alter them
+- docs/ are hand-written human docs, don't alter them. Same with README.md
 - agentic docs can go into wiki/
 - `ticket --help` can be used to view and manage tickets
 - Code is grouped by feature (`src/editor`, `src/db`, …) and directionally layered
