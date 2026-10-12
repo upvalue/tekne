@@ -1,6 +1,6 @@
 @theme {
-  --color-page: #141414;
-  --color-panel: #101010;
+  --color-page: #101010;
+  --color-panel: #141414;
   --color-raised: #2e2e2e;
   --color-mark: #4b4b4b;
   --color-text: #e4e4e4;
@@ -107,14 +107,6 @@ button:disabled {
     translate 220ms cubic-bezier(0.32, 0.72, 0, 1),
     visibility 0s 220ms;
 }
-@media (prefers-reduced-motion: reduce) {
-  .PanelShell,
-  .PanelShell > .Panel,
-  .PanelOverlay,
-  .PanelOverlay:not([data-open]) {
-    transition: none;
-  }
-}
 
 .Loading-dots,
 .Loading-pulse {
@@ -148,12 +140,6 @@ button:disabled {
   }
   50% {
     opacity: 1;
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  .Loading-dots i,
-  .Loading-pulse i {
-    animation: none;
   }
 }
 
