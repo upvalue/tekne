@@ -1,8 +1,12 @@
 import {
   PANEL_MIN_WIDTH,
+  isWideViewportAtom,
+  uiStore,
   usePanelVisible,
   usePanelWidth,
 } from '@/hooks/panel-state'
+import { useAtomValue } from 'jotai'
+import { PanelRight } from 'lucide-react'
 import { useCallback } from 'react'
 
 interface EditorLayoutProps {
@@ -11,7 +15,8 @@ interface EditorLayoutProps {
 }
 
 export function EditorLayout({ editor, sidepanel }: EditorLayoutProps) {
-  const [panelVisible] = usePanelVisible()
+  const wide = useAtomValue(isWideViewportAtom, { store: uiStore })
+  const [panelVisible, setPanelVisible] = usePanelVisible()
   const [panelWidth, setPanelWidth] = usePanelWidth()
 
   const startResize = useCallback(
@@ -41,37 +46,51 @@ export function EditorLayout({ editor, sidepanel }: EditorLayoutProps) {
   )
 
   return (
-    <div className="w-full flex flex-col relative md:px-6">
+    <div className="w-full flex flex-col relative">
       <div className="flex flex-grow">
-        <div
-          className={panelVisible ? 'flex-1 min-w-0 Editor' : 'w-full Editor'}
-        >
-          {editor}
-        </div>
+        <div className="flex-1 min-w-0 Editor">{editor}</div>
 
+        {!panelVisible && (
+          <button
+            aria-label="Show panel"
+            title="Show panel"
+            onClick={() => setPanelVisible(true)}
+            className="absolute right-3 top-4 z-20 p-2 text-muted hover:text-text rounded bg-panel"
+          >
+            <PanelRight size={16} />
+          </button>
+        )}
         {/* Desktop panel (side-by-side, drag left edge to resize) */}
-        {panelVisible && (
+        {wide && (
           <div
-            className="hidden lg:block relative flex-shrink-0 Panel"
+            inert={!panelVisible}
+            aria-hidden={!panelVisible}
+            className="hidden lg:block relative flex-shrink-0 PanelShell"
             style={{
-              width: panelWidth,
-              minWidth: PANEL_MIN_WIDTH,
+              width: panelVisible ? panelWidth : 0,
               maxWidth: '70%',
             }}
           >
+            {panelVisible && (
+              <div
+                onPointerDown={startResize}
+                className="absolute inset-y-0 -left-1 w-2 cursor-col-resize z-10 after:absolute after:inset-y-0 after:left-1 after:w-px after:bg-mark after:opacity-0 hover:after:opacity-100 after:transition-opacity"
+                role="separator"
+                aria-orientation="vertical"
+                aria-label="Resize panel"
+              />
+            )}
             <div
-              onPointerDown={startResize}
-              className="absolute inset-y-0 -left-1 w-2 cursor-col-resize z-10 hover:bg-muted/40 transition-colors"
-              role="separator"
-              aria-orientation="vertical"
-              aria-label="Resize panel"
-            />
-            {sidepanel}
+              className="Panel h-dvh overflow-hidden"
+              style={{ width: panelWidth }}
+            >
+              {sidepanel}
+            </div>
           </div>
         )}
 
         {/* Mobile panel (fullscreen overlay) */}
-        {panelVisible && (
+        {panelVisible && !wide && (
           <div className="fixed inset-0 z-50 bg-page lg:hidden Panel overflow-auto">
             {sidepanel}
           </div>

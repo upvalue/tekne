@@ -59,7 +59,7 @@ test.each([320, 390])(
       expect(getComputedStyle(row).paddingBottom).toBe('4px')
       expect(
         getComputedStyle(row.querySelector('.ELine-gutter')!).display
-      ).toBe('none')
+      ).toBe('grid')
       const touchTarget = row.querySelector('.ELine-touch-overlay')!
       expect(touchTarget.getBoundingClientRect().height).toBe(
         row.getBoundingClientRect().height
@@ -90,10 +90,10 @@ test('desktop gutter and document inset return at the 768px breakpoint', async (
   )
   const editor = view.container.querySelector('.TEditor-scroll')!
   const gutter = view.container.querySelector('.ELine-gutter')!
-  expect(getComputedStyle(editor).paddingLeft).toBe('14px')
-  expect(getComputedStyle(editor).paddingRight).toBe('0px')
+  expect(getComputedStyle(editor).paddingLeft).toBe('32px')
+  expect(getComputedStyle(editor).paddingRight).toBe('40px')
   expect(getComputedStyle(gutter).display).toBe('grid')
-  expect(gutter.getBoundingClientRect().width).toBe(96)
+  expect(gutter.getBoundingClientRect().width).toBe(144)
 })
 
 test('collapsed children stay hidden when line chips and timer rows use the grid', () => {
@@ -130,4 +130,89 @@ test('the new-line field transfers focus synchronously so initial keystrokes are
     '[data-line-idx="1"] .cm-content'
   )!
   expect(document.activeElement).toBe(content)
+})
+
+test('clicking the empty right side focuses the line at its text end', () => {
+  const store = createStore()
+  store.set(docAtom, docMake([lineMake(0, 'A short line')]))
+  const view = render(
+    <Provider store={store}>
+      <TEditor />
+    </Provider>
+  )
+  const tail = view.container.querySelector('.ELine-tail')!
+  expect(tail.getBoundingClientRect().width).toBeGreaterThan(100)
+  fireEvent.mouseDown(tail, { button: 0 })
+  expect(document.activeElement).toBe(
+    view.container.querySelector('.cm-content')
+  )
+  expect(window.getSelection()?.anchorOffset).toBe('A short line'.length)
+})
+
+test('empty lines have full-width editors and the prompt stays after the document', async () => {
+  const store = createStore()
+  store.set(
+    docAtom,
+    docMake([lineMake(0, '# Heading'), lineMake(0, 'Text'), lineMake(0, '')])
+  )
+  const view = render(
+    <Provider store={store}>
+      <TEditor />
+    </Provider>
+  )
+  const editors = Array.from(
+    view.container.querySelectorAll<HTMLElement>('.cm-editor-container')
+  )
+  expect(editors[0].getBoundingClientRect().left).toBe(
+    editors[1].getBoundingClientRect().left
+  )
+  expect(editors[2].getBoundingClientRect().left).toBe(
+    editors[1].getBoundingClientRect().left
+  )
+  expect(editors[2].getBoundingClientRect().width).toBeGreaterThan(500)
+  expect(view.container.querySelector('.cm-placeholder')).toBeNull()
+  const blank = page.elementLocator(editors[2])
+  await blank.click({ position: { x: 250, y: 10 } })
+  expect(document.activeElement).toBe(editors[2].querySelector('.cm-content'))
+  const prompt = view.getByRole('textbox', { name: 'New line' })
+  expect(prompt.getBoundingClientRect().top).toBeGreaterThanOrEqual(
+    editors[2].getBoundingClientRect().bottom
+  )
+})
+
+test('drag handles and action menus stay between timestamps and bullets at every indent', () => {
+  const store = createStore()
+  store.set(
+    docAtom,
+    docMake([
+      lineMake(0, 'Parent'),
+      lineMake(1, 'Child'),
+      lineMake(2, 'Grandchild'),
+    ])
+  )
+  const view = render(
+    <Provider store={store}>
+      <TEditor />
+    </Provider>
+  )
+  const rows = Array.from(
+    view.container.querySelectorAll<HTMLElement>('.ELine')
+  )
+  const positions = rows.map((row) => ({
+    drag: row.querySelector('.ELine-drag-handle')!.getBoundingClientRect(),
+    actions: row.querySelector('.LineActions')!.getBoundingClientRect(),
+    bullet: row.querySelector('.ELine-leading')!.getBoundingClientRect(),
+    timestamp: row.querySelector('.ELine-gutter-text')!.getBoundingClientRect(),
+    top: row.getBoundingClientRect().top,
+  }))
+  for (const position of positions) {
+    expect(position.drag.x).toBe(positions[0].drag.x)
+    expect(position.actions.x).toBe(positions[0].actions.x)
+    expect(position.timestamp.right).toBeLessThanOrEqual(position.drag.left)
+    expect(position.drag.right).toBeLessThanOrEqual(position.actions.left)
+    expect(position.actions.right).toBeLessThanOrEqual(position.bullet.left)
+    expect(position.actions.top - position.top).toBe(
+      positions[0].actions.top - positions[0].top
+    )
+  }
 })

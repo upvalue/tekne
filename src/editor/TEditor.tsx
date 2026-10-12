@@ -1,3 +1,4 @@
+import { useWritingPrompt, writingPrompt } from '@/hooks/writing-prompt'
 import { flushSync } from 'react-dom'
 import {
   useCallback,
@@ -157,6 +158,7 @@ const EditorBoundaryDropZone = ({
  * The top level editor component.
  */
 export const TEditor = () => {
+  const [promptIndex] = useWritingPrompt()
   const [doc, setDoc] = useAtom(docAtom)
   const [dragSelectedLineIds, setDragSelectedLineIds] = useAtom(
     dragSelectedLineIdsAtom
@@ -439,7 +441,7 @@ export const TEditor = () => {
       >
         <div
           ref={containerRef}
-          className={`TEditor-scroll h-[calc(100dvh-132px)] max-md:h-[calc(100dvh-116px)] overflow-y-auto px-3 md:px-0 ${
+          className={`TEditor-scroll overflow-y-auto px-3 md:px-0 ${
             touchMode ? 'TEditor-scroll-touch' : 'pb-4'
           } ${
             dragSelectedLineIds.length > 0 ? 'TEditor-has-drag-selection' : ''
@@ -481,29 +483,29 @@ export const TEditor = () => {
               onTouchSelect={handleTouchSelect}
             />
           ))}
-          {(doc.children.at(-1)?.mdContent ||
-            doc.children.at(-1)?.collapsed ||
-            collapsedStates.at(-1) === 'collapsed') && (
-            <input
-              aria-label="New line"
-              placeholder="New line. Try /task or /countdown 25m"
-              className="ml-24 max-md:ml-0 w-[calc(100%-7rem)] bg-transparent py-2 pl-6 text-[15px] text-muted outline-none"
-              onFocus={() => {
-                const lineIdx = doc.children.length
-                const line = lineMake(0, '')
-                flushSync(() => {
-                  setDoc((draft) => {
-                    draft.children.push(line)
-                  })
-                  if (touchMode) {
-                    store.set(touchSelectedLineIdAtom, line.id)
-                    store.set(touchEditingLineIdAtom, line.id)
-                  }
-                  setRequestFocusLine({ lineIdx, pos: 0 })
+
+          <input
+            aria-label="New line"
+            placeholder={writingPrompt(
+              promptIndex,
+              doc.children.at(-1)?.id ?? 'empty'
+            )}
+            className="NewLinePrompt ml-36 max-md:ml-0 w-[calc(100%-9rem)] max-md:w-full bg-transparent py-1 pl-6 text-[15px] text-muted outline-none"
+            onFocus={() => {
+              const lineIdx = doc.children.length
+              const line = lineMake(0, '')
+              flushSync(() => {
+                setDoc((draft) => {
+                  draft.children.push(line)
                 })
-              }}
-            />
-          )}
+                if (touchMode) {
+                  store.set(touchSelectedLineIdAtom, line.id)
+                  store.set(touchEditingLineIdAtom, line.id)
+                }
+                setRequestFocusLine({ lineIdx, pos: 0 })
+              })
+            }}
+          />
           <EditorBoundaryDropZone
             id={DOC_END_DROP_ID}
             isLineDragActive={isLineDragActive}

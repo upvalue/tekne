@@ -63,7 +63,7 @@ export const Gutter = ({
     Boolean(timestamp) && isTimestampHovered && !disableTimestampHover
 
   return (
-    <div className="ELine-gutter text-muted text-sm font-mono">
+    <div className="ELine-gutter text-muted tabular-nums">
       <span
         className="ELine-gutter-text"
         onMouseEnter={() => setIsTimestampHovered(true)}
@@ -147,8 +147,24 @@ const ELineImpl = (lineInfo: ELineProps) => {
     <div
       ref={setNodeRef}
       style={style}
+      onMouseDown={(event) => {
+        if (
+          event.target !== event.currentTarget ||
+          event.button !== 0 ||
+          lineInfo.touchMode
+        )
+          return
+        event.preventDefault()
+        lineInfo.onEditorInteract()
+        const view = cmView.current
+        if (view) {
+          view.focus()
+          view.dispatch({ selection: { anchor: view.state.doc.length } })
+        }
+      }}
       className={cn(
-        'ELine relative w-full py-1 flex flex-wrap items-start',
+        'ELine relative w-full py-0.5 flex flex-wrap items-start',
+        !line.mdContent && 'ELine-empty',
         line.datumTaskStatus === 'incomplete' && 'ELine-cancelled',
         line.datumTaskStatus === 'complete' && 'ELine-complete',
         collapseState === 'collapsed' && 'hidden',
@@ -236,6 +252,27 @@ const ELineImpl = (lineInfo: ELineProps) => {
         </button>
       )}
 
+      <div
+        className="ELine-tail"
+        aria-hidden="true"
+        onMouseDown={(event) => {
+          if (lineInfo.touchMode || event.button !== 0) return
+          event.preventDefault()
+          lineInfo.onEditorInteract()
+          const view = cmView.current
+          if (view) {
+            view.focus()
+            view.dispatch({
+              selection: {
+                anchor: event.shiftKey
+                  ? view.state.selection.main.anchor
+                  : view.state.doc.length,
+                head: view.state.doc.length,
+              },
+            })
+          }
+        }}
+      />
       <TimerBadge lineInfo={lineInfo} time={line.datumTimeSeconds ?? 0} />
 
       {lineInfo.touchMode && !lineInfo.isTouchEditing && (

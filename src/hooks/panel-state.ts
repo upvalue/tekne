@@ -13,7 +13,11 @@ import { atomWithStorage } from 'jotai/utils'
 /** The single store backing app-level UI atoms, usable outside React too. */
 export const uiStore = getDefaultStore()
 
-export type PanelTab = 'document' | 'search' | 'tools' | 'help' | 'devtools'
+export type PanelTab = 'document' | 'search' | 'tools' | 'devtools'
+
+export const helpOpenAtom = atom(false)
+export const useHelpOpen = () => useAtom(helpOpenAtom, { store: uiStore })
+export const openHelp = () => uiStore.set(helpOpenAtom, true)
 
 export const activePanelTabAtom = atom<PanelTab>('document')
 
@@ -52,13 +56,16 @@ export const panelVisibleAtom = atom(
 )
 
 /** Narrowest the desktop panel can be dragged (px). */
-export const PANEL_MIN_WIDTH = 320
+export const PANEL_MIN_WIDTH = 240
 
-/** Desktop panel width in px, persisted across sessions. Defaults to the pre-resize 40% split. */
+/** Desktop panel width in px, persisted across sessions. Defaults to a compact 22% split, capped at 300px. */
 const getDefaultPanelWidth = () =>
   typeof window !== 'undefined'
-    ? Math.max(320, Math.round(window.innerWidth * 0.28))
-    : 360
+    ? Math.min(
+        300,
+        Math.max(PANEL_MIN_WIDTH, Math.round(window.innerWidth * 0.22))
+      )
+    : 280
 
 export const panelWidthAtom = atomWithStorage<number>(
   'tekne.panelWidth',

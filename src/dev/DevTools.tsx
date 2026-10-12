@@ -1,3 +1,5 @@
+import { AppearancePreview } from './AppearancePreview'
+import { LoadingIndicator } from '@/components/LoadingIndicator'
 import { lazy, Suspense, useMemo, useState } from 'react'
 import { useRouter } from '@tanstack/react-router'
 import {
@@ -152,6 +154,7 @@ export const DevTools = () => {
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab}>
       <TabsList>
+        <TabsTrigger value="appearance">Appearance & errors</TabsTrigger>
         <TabsTrigger value="raw">Document Content</TabsTrigger>
         <TabsTrigger value="tree">Tree Document</TabsTrigger>
         <TabsTrigger value="data">Document Data</TabsTrigger>
@@ -162,6 +165,9 @@ export const DevTools = () => {
         <TabsTrigger value="tanstackdev">TanStack</TabsTrigger>
         {usingPglite && <TabsTrigger value="pglite">pglite</TabsTrigger>}
       </TabsList>
+      <TabsContent value="appearance">
+        <AppearancePreview />
+      </TabsContent>
       <TabsContent value="raw">
         <RawDocument isActive={activeTab === 'raw'} />
       </TabsContent>
@@ -176,14 +182,14 @@ export const DevTools = () => {
       </TabsContent>
       {DatabaseMigrations && (
         <TabsContent value="migrations">
-          <Suspense fallback={<div className="p-4 text-muted">Loading…</div>}>
+          <Suspense fallback={<LoadingIndicator />}>
             <DatabaseMigrations isActive={activeTab === 'migrations'} />
           </Suspense>
         </TabsContent>
       )}
       {usingPglite && PgliteDevtools && (
         <TabsContent value="pglite">
-          <Suspense fallback={<div className="p-4 text-muted">Loading…</div>}>
+          <Suspense fallback={<LoadingIndicator />}>
             <PgliteDevtools />
           </Suspense>
         </TabsContent>

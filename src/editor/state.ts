@@ -40,6 +40,7 @@ export const dragSelectionAnchorIdAtom = atom<string | null>(null)
  * The focused line (if any) will render it
  */
 export const commandPaletteOpenAtom = atom<boolean>(false)
+export const commandPaletteSearchAtom = atom(false)
 
 export const goToLineOpenAtom = atom<boolean>(false)
 

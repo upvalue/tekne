@@ -158,24 +158,6 @@ export const cycleTaskStatus = (store: EditorStore, lineIdx: number): void => {
   store.set(docAtom, (draft) => {
     draft.children[lineIdx].datumTaskStatus = next
   })
-  toast.success(
-    next === 'complete'
-      ? 'Task completed'
-      : next === 'incomplete'
-        ? 'Task cancelled'
-        : 'Task reopened',
-    {
-      action: {
-        label: 'Undo',
-        onClick: () =>
-          store.set(docAtom, (draft) => {
-            const current = draft.children.find((item) => item.id === line.id)
-            if (current?.datumTaskStatus === next)
-              current.datumTaskStatus = before
-          }),
-      },
-    }
-  )
 }
 
 /**

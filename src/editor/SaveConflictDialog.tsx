@@ -21,7 +21,7 @@ export const SaveConflictDialog = ({
   onResolve: (choice: 'keepMine' | 'takeServer') => void
 }) => (
   <Dialog open={open} onOpenChange={() => {}}>
-    <EditorDialogContent>
+    <EditorDialogContent showCloseButton={false}>
       <DialogHeader>
         <DialogTitle>Document was changed elsewhere</DialogTitle>
         <DialogDescription>

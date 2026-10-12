@@ -1,3 +1,4 @@
+import { LoadingIndicator } from '@/components/LoadingIndicator'
 import { useQuery } from '@tanstack/react-query'
 import {
   Dialog,
@@ -22,7 +23,7 @@ const DocumentDetails = ({ title }: { title: string }) => {
 
   return (
     <div>
-      {isLoading && <p>Loading...</p>}
+      {isLoading && <LoadingIndicator label="Loading document details" />}
       {!isLoading && (
         <div>
           <p>Created at: {data?.createdAt.toISOString()}</p>

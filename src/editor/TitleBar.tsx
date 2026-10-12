@@ -1,16 +1,12 @@
 import { apiErrorMessage } from '@/api/errors'
 import { useMutation } from '@tanstack/react-query'
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useLayoutEffect } from 'react'
 import { useAtom } from 'jotai'
 import { orpc } from '@/api/client'
 import { useNavigate } from '@tanstack/react-router'
 import { errorMessageAtom } from './state'
 import { StatusBar } from './StatusBar'
-import { usePanelVisible } from '@/hooks/panel-state'
-import { commandPaletteOpenAtom } from './state'
-import { ChevronLeft, ChevronRight, PanelRight } from 'lucide-react'
-import { formatDate } from '@/lib/utils'
-import { RunningTimerPill } from './timer/RunningTimerPill'
+import { DateNavigation } from './DateNavigation'
 import {
   Dialog,
   DialogDescription,
@@ -42,14 +38,7 @@ export const TitleBar = ({
   }>({ show: false, linksToUpdate: [] })
   const editableRef = useRef<HTMLDivElement>(null)
   const navigate = useNavigate()
-  const [panelVisible, setPanelVisible] = usePanelVisible()
-  const [, setPaletteOpen] = useAtom(commandPaletteOpenAtom)
   const isDate = /^\d{4}-\d{2}-\d{2}$/.test(title)
-  const goDay = (offset: number) => {
-    const date = new Date(`${title}T12:00:00`)
-    date.setDate(date.getDate() + offset)
-    void navigate({ to: '/n/$title', params: { title: formatDate(date) } })
-  }
 
   const setDisplayedTitle = (title: string) => {
     setProposedTitle(title)
@@ -102,7 +91,7 @@ export const TitleBar = ({
     })
   )
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     setProposedTitle(title)
     if (editableRef.current) {
       editableRef.current.textContent = title
@@ -135,58 +124,25 @@ export const TitleBar = ({
 
   return (
     <header className="TitleBar">
+      {isDate && (
+        <DateNavigation
+          value={title}
+          onChange={(date) =>
+            void navigate({ to: '/n/$title', params: { title: date } })
+          }
+        />
+      )}
       <div className="flex items-center gap-3 min-w-0">
         <div
           ref={editableRef}
           contentEditable={allowTitleEdit && !isDate}
           suppressContentEditableWarning
           aria-label="Document title"
-          className="text-[28px] font-semibold tracking-tight outline-none min-w-0 truncate"
+          className="text-lg font-normal text-text-2 outline-none min-w-0 truncate"
           onInput={(e) => setProposedTitle(e.currentTarget.textContent || '')}
           onBlur={handleSubmit}
           onKeyDown={handleKeyDown}
         />
-        {isDate && (
-          <nav
-            aria-label="Date navigation"
-            className="flex items-center gap-1 text-muted text-xs"
-          >
-            <button aria-label="Previous day" onClick={() => goDay(-1)}>
-              <ChevronLeft size={18} />
-            </button>
-            <button aria-label="Next day" onClick={() => goDay(1)}>
-              <ChevronRight size={18} />
-            </button>
-            <button
-              className="px-1 hover:text-text"
-              onClick={() =>
-                navigate({
-                  to: '/n/$title',
-                  params: { title: formatDate(new Date()) },
-                })
-              }
-            >
-              Today
-            </button>
-          </nav>
-        )}
-        <div className="ml-auto flex items-center gap-3 text-muted shrink-0">
-          <RunningTimerPill />
-          <button
-            aria-label="Open command palette"
-            onClick={() => setPaletteOpen(true)}
-            className="text-xs hover:text-text"
-          >
-            ⌘K
-          </button>
-          <button
-            aria-label={panelVisible ? 'Hide panel' : 'Show panel'}
-            onClick={() => setPanelVisible(!panelVisible)}
-            className="hover:text-text"
-          >
-            <PanelRight size={16} />
-          </button>
-        </div>
       </div>
       <StatusBar title={title} isLoading={isLoading} />
 

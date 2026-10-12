@@ -1,14 +1,16 @@
+import { navigateToDocument } from '@/lib/app-events'
 // Command definitions. Importing this module registers every command with the
 // registry in @/editor/command-registry; the app root does that import.
 
 import { registerCommands, type Command } from '@/editor/command-registry'
 import { emitCodemirrorEvent } from '@/editor/line-editor/cm-events'
 import { deleteLine } from '@/editor/line-ops'
-import { docAtom, timerRowRequestAtom } from '@/editor/state'
+import { docAtom } from '@/editor/state'
 import { startTimer } from '@/editor/timer/timer-controller'
 import { formatDate, getDocTitle } from '@/lib/utils'
 import { orpcClient } from '@/api/client'
 import {
+  openHelp,
   openPanelTab,
   openToolTab,
   panelVisibleAtom,
@@ -29,7 +31,7 @@ const parseDate = (str: string): Date | null => {
 
 /** Navigate to a document */
 const navigateTo = (title: string) => {
-  window.location.href = appPath(`/n/${encodeURIComponent(title)}`)
+  navigateToDocument(title)
 }
 
 // ============================================================================
@@ -72,12 +74,56 @@ const editorCommands: Command[] = [
   },
   {
     id: 'timer',
-    name: 'Timer controls',
-    description: 'Countdown, stopwatch or manual time',
+    name: 'Timer',
+    description: 'Timer commands',
+    shortcut: 't',
+    displayShortcut: 'T',
+    keywords: ['timer', 'time', 'track', 'clock'],
     requiresEditor: true,
-    execute: ({ store, lineIdx }) => {
-      if (lineIdx !== null)
-        store.set(timerRowRequestAtom, { lineIdx, mode: 'stopwatch' })
+    subcommands: [
+      {
+        key: 't',
+        displayKey: 'T',
+        name: 'Toggle timer',
+        description: 'Add or remove a timer on the current line',
+        execute: ({ lineIdx }) => {
+          if (lineIdx === null) return
+          emitCodemirrorEvent('lineTimerToggle', { lineIdx })
+        },
+      },
+      {
+        key: '1',
+        displayKey: '1',
+        name: 'Stopwatch',
+        description: 'Open timer in stopwatch mode (counts up)',
+        execute: ({ lineIdx }) => {
+          if (lineIdx === null) return
+          emitCodemirrorEvent('lineTimerOpen', { lineIdx, mode: 'stopwatch' })
+        },
+      },
+      {
+        key: '2',
+        displayKey: '2',
+        name: 'Countdown',
+        description: 'Open timer in countdown mode',
+        execute: ({ lineIdx }) => {
+          if (lineIdx === null) return
+          emitCodemirrorEvent('lineTimerOpen', { lineIdx, mode: 'countdown' })
+        },
+      },
+      {
+        key: '3',
+        displayKey: '3',
+        name: 'Manual',
+        description: 'Open timer in manual entry mode',
+        execute: ({ lineIdx }) => {
+          if (lineIdx === null) return
+          emitCodemirrorEvent('lineTimerOpen', { lineIdx, mode: 'manual' })
+        },
+      },
+    ],
+    execute: () => {
+      // Parent command doesn't execute directly when subcommands exist
     },
   },
   {
@@ -370,7 +416,7 @@ const panelCommands: Command[] = [
     name: 'Help',
     description: 'Keyboard shortcuts and documentation',
     requiresEditor: false,
-    execute: () => openPanelTab('help'),
+    execute: openHelp,
   },
 ]
 registerCommands([...editorCommands, ...navigationCommands, ...panelCommands])

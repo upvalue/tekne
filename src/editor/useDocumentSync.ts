@@ -7,7 +7,14 @@ import { useQueryClient, useMutation, useQuery } from '@tanstack/react-query'
 // in-app navigation, best-effort saves on tab hide/close, answers
 // tekne:request-save flushes from other UI trees, and surfaces revision
 // conflicts for the user to resolve instead of clobbering either side.
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react'
 import { useBlocker } from '@tanstack/react-router'
 import { toast } from 'sonner'
 import { truncate } from 'lodash-es'
@@ -90,11 +97,11 @@ export const useDocumentSync = (
       input: { name: title },
       enabled: () => !queueRef.current.isDirty(),
       refetchInterval: 5000,
-      retry: (_fc, error) => {
+      retry: (failureCount, error) => {
         if (error instanceof ORPCError && error.code === 'NOT_FOUND') {
           return false
         }
-        return true
+        return failureCount < 2
       },
     })
   )
@@ -102,7 +109,7 @@ export const useDocumentSync = (
   // Hydrate the store when genuinely new server content lands. Cache writes
   // from our own saves are skipped by revision, and unsaved local work is
   // never overwritten (a losing save surfaces as a conflict instead).
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (loadDocQuery.isLoading || !loadDocQuery.data) {
       return
     }

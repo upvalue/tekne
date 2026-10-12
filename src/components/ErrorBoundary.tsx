@@ -1,5 +1,5 @@
 import React from 'react'
-import { Button } from './vendor/Button'
+import { ErrorState } from './ErrorState'
 
 interface ErrorBoundaryState {
   hasError: boolean
@@ -64,32 +64,12 @@ export class ErrorBoundary extends React.Component<
       }
 
       return (
-        <div className="p-8 text-center">
-          <div className="max-w-md space-y-4 mx-auto">
-            <h2 className="text-xl font-semibold text-page dark:text-text">
-              {this.props.title || 'Something went wrong'}
-            </h2>
-            <p className="text-muted dark:text-text-2">
-              An unexpected error occurred.
-            </p>
-            <Button onClick={this.handleRetry} color="zinc">
-              Try again
-            </Button>
-            {this.state.error && (
-              <div className="text-left bg-text dark:bg-raised p-3 rounded text-sm">
-                <div className="font-medium mb-2">Error details</div>
-                <div className="text-raised dark:text-text-2">
-                  <div>
-                    <strong>Type:</strong> {this.state.error.name}
-                  </div>
-                  <div>
-                    <strong>Message:</strong> {this.state.error.message}
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
+        <ErrorState
+          title={this.props.title}
+          message="This view could not be displayed. Try loading it again."
+          detail={this.state.error?.message}
+          onRetry={this.handleRetry}
+        />
       )
     }
 

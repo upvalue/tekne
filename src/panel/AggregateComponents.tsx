@@ -25,7 +25,7 @@ export const AggregateList = ({ data }: { data: ResultCardData[] }) => (
         tag.incomplete_tasks ? `${tag.incomplete_tasks} cancelled` : null,
       ].filter(Boolean)
       return (
-        <li key={tag.tag} className="min-w-0 px-3 py-3">
+        <li key={tag.tag} className="min-w-0 px-3 py-2">
           <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 text-xs">
             <span className="text-sm text-accent [overflow-wrap:anywhere] min-w-0">
               {tag.tag.startsWith('#') ? tag.tag : `#${tag.tag}`}

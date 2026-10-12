@@ -1,3 +1,5 @@
+import { ErrorState } from '@/components/ErrorState'
+import { LoadingIndicator } from '@/components/LoadingIndicator'
 import { useQuery } from '@tanstack/react-query'
 // Search panel - sidebar-friendly search interface
 
@@ -28,19 +30,32 @@ const PanelEmptyState = ({ children }: { children: React.ReactNode }) => (
 const LinesResults = ({
   isLoading,
   errorMessage,
+  onRetry,
   data,
   onNavigate,
 }: {
   isLoading: boolean
   errorMessage?: string
+  onRetry: () => void
   data?: RouterOutputs['search']['searchLines']
   onNavigate: (noteTitle: string) => void
 }) => {
   if (isLoading) {
-    return <PanelEmptyState>Searching...</PanelEmptyState>
+    return (
+      <PanelEmptyState>
+        <LoadingIndicator label="Searching" />
+      </PanelEmptyState>
+    )
   }
   if (errorMessage) {
-    return <PanelEmptyState>{errorMessage}</PanelEmptyState>
+    return (
+      <ErrorState
+        title="Search unavailable"
+        message="Your query is still here. Try the search again."
+        detail={errorMessage}
+        onRetry={onRetry}
+      />
+    )
   }
 
   const items = data?.items ?? []
@@ -92,17 +107,30 @@ const LinesResults = ({
 const AggregateResults = ({
   isLoading,
   errorMessage,
+  onRetry,
   data,
 }: {
   isLoading: boolean
   errorMessage?: string
+  onRetry: () => void
   data?: RouterOutputs['search']['searchAggregate']
 }) => {
   if (isLoading) {
-    return <PanelEmptyState>Loading...</PanelEmptyState>
+    return (
+      <PanelEmptyState>
+        <LoadingIndicator label="Loading search results" />
+      </PanelEmptyState>
+    )
   }
   if (errorMessage) {
-    return <PanelEmptyState>{errorMessage}</PanelEmptyState>
+    return (
+      <ErrorState
+        title="Search unavailable"
+        message="Your query is still here. Try the search again."
+        detail={errorMessage}
+        onRetry={onRetry}
+      />
+    )
   }
 
   const rows = data ?? []
@@ -278,6 +306,7 @@ export const Search = () => {
         ) : viewMode === 'text' ? (
           <div className="p-3 space-y-2">
             <LinesResults
+              onRetry={() => void linesQuery.refetch()}
               isLoading={linesQuery.isLoading}
               errorMessage={linesQuery.error?.message}
               data={linesQuery.data}
@@ -287,6 +316,7 @@ export const Search = () => {
         ) : (
           <div className="p-4">
             <AggregateResults
+              onRetry={() => void aggregateQuery.refetch()}
               isLoading={aggregateQuery.isLoading}
               errorMessage={aggregateQuery.error?.message}
               data={aggregateQuery.data}

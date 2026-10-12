@@ -11,12 +11,15 @@ import './styles/styles.css'
 import { orpc } from './api/client'
 import { appBasePath } from './lib/app-path'
 
+const queryClient = new QueryClient()
+
 // Create a new router instance
 const router = createRouter({
   routeTree,
   basepath: appBasePath || '/',
   context: {
     orpc,
+    queryClient,
   },
   defaultPreload: 'intent',
   scrollRestoration: true,
@@ -24,9 +27,6 @@ const router = createRouter({
   defaultPreloadStaleTime: 0,
   defaultNotFoundComponent: NotFound,
 })
-
-// Create a query client
-const queryClient = new QueryClient()
 
 // Register the router instance for type safety
 declare module '@tanstack/react-router' {

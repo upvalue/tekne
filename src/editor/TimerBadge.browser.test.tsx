@@ -12,7 +12,7 @@ afterEach(async () => {
   await page.viewport(1280, 800)
 })
 
-test('inline timer remains usable on a narrow screen without a modal or mode tabs', async () => {
+test('inline timer remains usable on a narrow screen with compact pause and save controls', async () => {
   await page.viewport(320, 568)
   const store = createStore()
   const line = lineMake(0, 'A long task name '.repeat(20))
@@ -35,15 +35,15 @@ test('inline timer remains usable on a narrow screen without a modal or mode tab
   const row = view.getByRole('region', { name: 'Timer for line 1' })
   expect(view.queryByRole('dialog')).toBeNull()
   expect(view.queryByRole('tab')).toBeNull()
-  const resume = view.getByRole('button', { name: 'Resume' })
-  view.getByRole('button', { name: /Stop · add/ })
+  const resume = view.getByRole('button', { name: 'Resume timer' })
+  view.getByRole('button', { name: 'Stop and save timer' })
   view.getByRole('button', { name: '+5m' })
   expect(row.getBoundingClientRect().right).toBeLessThanOrEqual(320)
   expect(row.scrollWidth).toBeLessThanOrEqual(row.clientWidth)
   expect(resume.getBoundingClientRect().height).toBeGreaterThanOrEqual(44)
 })
 
-test('manual time adds or replaces and exposes all three choices together', () => {
+test('manual time adds or replaces from the compact log-time row', () => {
   const store = createStore()
   const line = lineMake(0, 'task', { datumTimeSeconds: 600 })
   store.set(docAtom, docMake([line]))
@@ -53,9 +53,9 @@ test('manual time adds or replaces and exposes all three choices together', () =
     </Provider>
   )
   fireEvent.click(view.getByRole('button', { name: 'Time for line 1' }))
-  view.getByRole('heading', { name: 'Stopwatch' })
-  view.getByRole('heading', { name: 'Countdown' })
-  view.getByRole('heading', { name: 'Enter time' })
+  view.getByRole('button', { name: 'Stopwatch' })
+  view.getByRole('button', { name: 'Countdown' })
+  view.getByRole('button', { name: 'Log time' })
   fireEvent.change(view.getByLabelText('Time to log'), {
     target: { value: '45m' },
   })

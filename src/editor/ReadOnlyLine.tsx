@@ -1,7 +1,7 @@
 // ReadOnlyLine.tsx - Display-only line component for search results
 // Uses the same CodeMirror syntax rendering as the editor, but without editing capabilities
 
-import { useEffect, useRef } from 'react'
+import { useLayoutEffect, useRef } from 'react'
 import { EditorView } from '@codemirror/view'
 import { EditorState } from '@codemirror/state'
 import { syntaxPlugin } from './line-editor/syntax-plugin'
@@ -35,7 +35,7 @@ const useReadOnlyCodeMirror = (content: string) => {
   const cmRef = useRef<HTMLDivElement>(null)
   const viewRef = useRef<EditorView | null>(null)
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!cmRef.current) return
 
     // Clean up any existing view

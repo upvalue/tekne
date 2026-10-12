@@ -62,7 +62,7 @@ export const DocumentOverviewSection = ({
   const [collapsed, setCollapsed] = useState(false)
 
   return (
-    <div className={cn('flex flex-col gap-2 pb-5 pt-1', !flush && 'px-3')}>
+    <div className={cn('flex flex-col gap-2 pb-3 pt-1', !flush && 'px-3')}>
       <h2 className={flush ? 'px-3' : undefined}>
         <button
           type="button"

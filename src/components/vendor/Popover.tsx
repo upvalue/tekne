@@ -36,7 +36,7 @@ export function PopoverPanel({
         side={side}
         align={align}
         sideOffset={sideOffset}
-        className="z-10"
+        className="z-40"
       >
         <PopoverPrimitive.Popup
           data-slot="popover-panel"

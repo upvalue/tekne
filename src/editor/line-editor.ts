@@ -1,6 +1,6 @@
 // line-editor.ts - Meat of the actual editor implementation
 // Wraps Codemirror with lots of custom behavior
-import { useEffect, useRef } from 'react'
+import { useEffect, useLayoutEffect, useRef } from 'react'
 
 import { EditorView, keymap } from '@codemirror/view'
 import { emacsStyleKeymap } from '@codemirror/commands'
@@ -22,7 +22,6 @@ import { autocompletion } from '@codemirror/autocomplete'
 import { useLineEvent } from './line-editor/cm-events'
 import { baseLineThemeSpec } from './line-visuals'
 import { slashCommandsPlugin } from './line-editor/slash-commands-plugin'
-import { placeholder } from './line-editor/placeholder-plugin'
 import { makeKeymap, toggleCollapse } from './line-editor/line-operations'
 import { syntaxPlugin } from './line-editor/syntax-plugin'
 import { tagCompletionPlugin } from './line-editor/tag-completion-plugin'
@@ -143,31 +142,6 @@ export const useCodeMirror = (lineInfo: LineWithIdx) => {
       }
     })
 
-    // Placeholder plugin: renders some grayed out text under
-    // certain circumstances
-    const placeholderPlugin = placeholder(
-      () => {
-        const idx = getLineIdx()
-        const line = store.get(docAtom).children[idx]
-        if (!line) return ''
-        return 'New line. Try /task or /countdown 25m'
-      },
-      (view) => {
-        // If line is collapsed, we show a placeholder indicating collapsed line details
-        const doc = store.get(docAtom)
-        const idx = getLineIdx()
-
-        if (!doc || !doc.children || !doc.children[idx]) return false
-        if (doc.children[idx].collapsed) return false
-
-        // Don't show placeholder if:
-        // There's any content on the line
-        if (view.state.doc.length > 0) return false
-
-        return idx === doc.children.length - 1
-      }
-    )
-
     const extensions: Extension[] = [
       theme,
       undoRedoHandler,
@@ -177,8 +151,9 @@ export const useCodeMirror = (lineInfo: LineWithIdx) => {
       keymap.of(emacsStyleKeymap),
       EditorView.lineWrapping,
       syntaxPlugin,
-      placeholderPlugin,
       autocompletion({
+        icons: false,
+        optionClass: () => 'tekne-completion',
         override: [
           slashCommandsPlugin(getLineIdx, store),
           tagCompletionPlugin(store),
@@ -214,7 +189,7 @@ export const useCodeMirror = (lineInfo: LineWithIdx) => {
   // identity changes every parent render) means the comparison below only
   // runs when this line's content actually changed.
   const mdContent = lineInfo.line.mdContent
-  useEffect(() => {
+  useLayoutEffect(() => {
     const v = cmView.current
     if (!v) return
 
@@ -234,7 +209,7 @@ export const useCodeMirror = (lineInfo: LineWithIdx) => {
 
   // Sets up new editor on mount
   // oxlint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(makeEditor, [])
+  useLayoutEffect(makeEditor, [])
 
   /**
    * Focus management.

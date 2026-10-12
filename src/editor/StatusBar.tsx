@@ -1,3 +1,4 @@
+import { LoadingIndicator } from '@/components/LoadingIndicator'
 import { useAtomValue, useSetAtom, useAtom } from 'jotai'
 import { useEffect, useRef, useState } from 'react'
 import {
@@ -11,19 +12,7 @@ import { List } from 'lucide-react'
 import { renderTime } from '@/lib/time'
 import { useGlobalKeybinding } from '@/hooks/useGlobalKeybinding'
 import { toast } from 'sonner'
-
-const LoadingDots = () => {
-  const [dots, setDots] = useState(0)
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setDots((prev) => (prev + 1) % 4)
-    }, 500)
-    return () => clearInterval(interval)
-  }, [])
-
-  return <div className="text-sm text-text-2">Loading{'.'.repeat(dots)}</div>
-}
+import { RunningTimerPill } from './timer/RunningTimerPill'
 
 const GoToLineInput = ({
   totalLines,
@@ -116,7 +105,7 @@ export const StatusBar = ({
       })
     : null
   return (
-    <div className="DocumentSummary flex items-center gap-1.5 text-xs text-muted mt-2">
+    <div className="DocumentSummary flex flex-wrap items-center gap-x-1.5 gap-y-1 text-xs text-muted mt-1">
       {weekday && (
         <>
           <span>{weekday}</span>
@@ -124,7 +113,7 @@ export const StatusBar = ({
         </>
       )}
       {isLoading ? (
-        <LoadingDots />
+        <LoadingIndicator label="Loading document" />
       ) : (
         <>
           <span>{lines.length} lines</span>
@@ -138,6 +127,7 @@ export const StatusBar = ({
           )}
         </>
       )}
+      <RunningTimerPill />
       {goToLineOpen && (
         <GoToLineInput
           totalLines={doc.children.length}

@@ -1,6 +1,18 @@
 import { useEffect, useState } from 'react'
 import { useAtom, useAtomValue, useStore } from 'jotai'
-import { Clock, ChevronDown, Pause, X } from 'lucide-react'
+import {
+  Clock,
+  MoreHorizontal,
+  Pause,
+  Play,
+  Square,
+  X,
+  Pin,
+  CheckSquare,
+  ChevronRight,
+  Timer,
+  Pencil,
+} from 'lucide-react'
 import type { LineWithIdx } from './line-editor'
 import {
   docAtom,
@@ -27,6 +39,13 @@ import {
 } from './timer/timer-controller'
 import { toast } from 'sonner'
 import {
+  Popover,
+  PopoverButton,
+  PopoverPanel,
+} from '@/components/vendor/Popover'
+import { toggleTask, togglePin, toggleCollapse } from './line-ops'
+import { displayKey, keybindings } from '@/lib/keys'
+import {
   enableTimerNotifications,
   supportsTimerNotifications,
 } from './timer/timer-notifications'
@@ -43,6 +62,10 @@ export const TimerBadge = ({
   const busy = useAtomValue(timerBusyAtom)
   const [request, setRequest] = useAtom(timerRowRequestAtom)
   const [open, setOpen] = useState(false)
+  const [menuOpen, setMenuOpen] = useState(false)
+  const [mode, setMode] = useState<'stopwatch' | 'countdown' | 'manual'>(
+    'stopwatch'
+  )
   const [countdown, setCountdown] = useState('')
   const [manual, setManual] = useState('')
   const runningHere = timer.isActive && timer.lineId === lineInfo.line.id
@@ -50,6 +73,7 @@ export const TimerBadge = ({
   useTimerTick(runningHere && !paused)
   useEffect(() => {
     if (request?.lineIdx !== lineInfo.lineIdx) return
+    setMode(request.mode)
     setOpen(true)
     setRequest(null)
   }, [request, lineInfo.lineIdx, setRequest])
@@ -59,6 +83,8 @@ export const TimerBadge = ({
     if (supportsTimerNotifications() && Notification.permission === 'default') {
       void enableTimerNotifications().catch(() => {})
     }
+    setMenuOpen(false)
+    setOpen(false)
     void startTimer(store, {
       line: lineInfo.line,
       mode,
@@ -99,220 +125,385 @@ export const TimerBadge = ({
     )
   }
   const inputClass =
-    'w-full min-w-0 rounded bg-white/5 px-2 py-1.5 text-sm font-mono outline-none focus:ring-1 focus:ring-accent'
+    'w-24 min-w-0 rounded bg-page px-2 py-1 text-sm tabular-nums outline-none focus:ring-1 focus:ring-accent'
+  const openMode = (next: typeof mode) => {
+    store.set(focusedLineAtom, lineInfo.lineIdx)
+    setMode(next)
+    setOpen(true)
+    setMenuOpen(false)
+  }
+  const paletteKey = displayKey(keybindings.commandPalette)
+  const menuItem =
+    'flex w-full items-center gap-3 rounded-md px-3 py-2 text-left text-sm text-text-2 hover:bg-white/5 focus:bg-white/5 outline-none'
   return (
     <>
-      <div
-        className={cn(
-          'ELine-leading TimerChip mr-4 ml-2',
-          !runningHere && time === 0 && !open && 'TimerChip-hover'
-        )}
-      >
-        {runningHere || time > 0 ? (
+      {(runningHere || time > 0) && (
+        <div
+          className={cn(
+            'ELine-leading TimerChip ml-2 text-xs tabular-nums gap-1 whitespace-nowrap',
+            runningHere && 'TimerChip-active'
+          )}
+        >
           <button
-            onClick={() => {
-              store.set(focusedLineAtom, lineInfo.lineIdx)
-              setOpen(!open)
-            }}
-            aria-label={`Time for line ${lineInfo.lineIdx + 1}`}
-            aria-expanded={open}
             className={cn(
-              'flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-mono whitespace-nowrap',
+              'flex items-center gap-1 rounded px-1.5 py-0.5',
               runningHere
-                ? paused
-                  ? 'bg-white/5 text-muted'
-                  : 'bg-accent-tint text-accent'
+                ? 'text-accent bg-accent-tint'
                 : 'text-muted hover:bg-white/5'
             )}
+            aria-label={`Time for line ${lineInfo.lineIdx + 1}`}
+            onClick={() => openMode(runningHere ? timer.mode : 'manual')}
           >
-            {runningHere ? (
-              paused ? (
-                <Pause size={11} />
-              ) : (
-                <span>●</span>
-              )
-            ) : (
-              <Clock size={11} />
-            )}
+            <Clock size={12} />
             {runningHere
               ? timer.mode === 'countdown'
                 ? `${formatTimeDisplay(remaining)} left`
-                : formatTimeDisplay(time + elapsed)
+                : formatTimeDisplay(elapsed)
               : renderTime(time)}
           </button>
-        ) : (
-          <div className="flex rounded bg-white/5 text-muted text-xs whitespace-nowrap">
+          {runningHere && (
+            <>
+              <button
+                disabled={busy}
+                aria-label={paused ? 'Resume timer' : 'Pause timer'}
+                title={`${paused ? 'Resume' : 'Pause'} (${displayKey(keybindings.toggleStopwatch)})`}
+                className="p-1 text-muted hover:text-text"
+                onClick={() =>
+                  void (paused ? resumeTimer(store) : pauseTimer(store))
+                }
+              >
+                {paused ? <Play size={13} /> : <Pause size={13} />}
+              </button>
+              <button
+                disabled={busy}
+                aria-label="Stop and save timer"
+                title="Stop and add time"
+                className="p-1 text-muted hover:text-text"
+                onClick={() => void stopAndSaveTimer(store, 'additive')}
+              >
+                <Square size={12} />
+              </button>
+              {time > 0 && (
+                <span className="text-muted">· {renderTime(time)} logged</span>
+              )}
+            </>
+          )}
+        </div>
+      )}
+      <div className={cn('LineActions', menuOpen && 'LineActions-open')}>
+        <Popover open={menuOpen} onOpenChange={setMenuOpen}>
+          <PopoverButton
+            aria-label={`Actions for line ${lineInfo.lineIdx + 1}`}
+            title="Line actions"
+            className="rounded p-1 text-muted hover:text-text hover:bg-white/5"
+            onClick={() => store.set(focusedLineAtom, lineInfo.lineIdx)}
+          >
+            <MoreHorizontal size={16} />
+          </PopoverButton>
+          <PopoverPanel
+            onKeyDown={(event) => {
+              if (!['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key))
+                return
+              const items = Array.from(
+                event.currentTarget.querySelectorAll<HTMLButtonElement>(
+                  'button:not(:disabled)'
+                )
+              )
+              const index = items.indexOf(
+                document.activeElement as HTMLButtonElement
+              )
+              const next =
+                event.key === 'Home'
+                  ? 0
+                  : event.key === 'End'
+                    ? items.length - 1
+                    : (index +
+                        (event.key === 'ArrowDown' ? 1 : -1) +
+                        items.length) %
+                      items.length
+              event.preventDefault()
+              items[next]?.focus()
+            }}
+            align="start"
+            sideOffset={4}
+            aria-label={`Actions for line ${lineInfo.lineIdx + 1}`}
+            className="OverlaySurface LineActionMenu w-72 p-2 text-text"
+          >
             <button
-              className="px-2 py-1 hover:text-text"
-              disabled={busy}
-              onClick={() => start('stopwatch')}
-            >
-              ▶ Stopwatch
-            </button>
-            <button
-              className="px-1 hover:text-text"
-              aria-label={`Open timer row for line ${lineInfo.lineIdx + 1}`}
-              aria-expanded={open}
+              className={menuItem}
               onClick={() => {
-                store.set(focusedLineAtom, lineInfo.lineIdx)
-                setOpen(!open)
+                toggleTask(store, lineInfo.lineIdx)
+                setMenuOpen(false)
               }}
             >
-              <ChevronDown size={12} />
+              <CheckSquare size={15} />
+              {lineInfo.line.datumTaskStatus ? 'Remove task' : 'Make task'}
+              <kbd className="ml-auto text-xs text-muted">{paletteKey} C</kbd>
             </button>
-          </div>
-        )}
-      </div>
-      {open && (
-        <section
-          className="TimerRow relative rounded-lg bg-raised p-4 mt-2 mb-3 overflow-hidden"
-          aria-label={`Timer for line ${lineInfo.lineIdx + 1}`}
-        >
-          <button
-            aria-label="Close timer row"
-            className="absolute right-3 top-3 text-muted hover:text-text"
-            onClick={() => setOpen(false)}
-          >
-            <X size={14} />
-          </button>
-          <fieldset disabled={busy} className="min-w-0">
+            <button
+              className={menuItem}
+              onClick={() => {
+                togglePin(store, lineInfo.lineIdx)
+                setMenuOpen(false)
+              }}
+            >
+              <Pin size={15} />
+              {lineInfo.line.datumPinnedAt ? 'Unpin' : 'Pin'}
+              <kbd className="ml-auto text-xs text-muted">{paletteKey} P</kbd>
+            </button>
+            <button
+              className={menuItem}
+              onClick={() => {
+                toggleCollapse(store, lineInfo.lineIdx)
+                setMenuOpen(false)
+              }}
+            >
+              <ChevronRight size={15} />
+              {lineInfo.line.collapsed ? 'Expand' : 'Collapse'}
+              <kbd className="ml-auto text-xs text-muted">
+                {displayKey(keybindings.toggleCollapse)}
+              </kbd>
+            </button>
+            <div className="my-2 mx-2 h-px bg-white/7" />
             {runningHere ? (
               <>
-                <div className="text-xs text-text-2 mb-2">
-                  {timer.mode === 'countdown'
-                    ? `Countdown · ${renderTime(timer.targetDuration)}`
-                    : 'Stopwatch'}
-                  {paused && ' · Paused'}
-                </div>
-                <div className="font-mono text-3xl text-accent">
-                  {formatTimeDisplay(
-                    timer.mode === 'countdown' ? remaining : elapsed
-                  )}
-                </div>
-                <p className="text-xs text-muted mt-2 mb-4">
-                  {timer.mode === 'countdown' &&
-                    !paused &&
-                    `Ends at ${new Date(Date.now() + remaining * 1000).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })} · `}
-                  {renderTime(time)} logged before
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {timer.mode === 'countdown' && (
-                    <Button onClick={() => void extendTimer(store)}>+5m</Button>
-                  )}
-                  <Button
-                    onClick={() =>
-                      void (paused ? resumeTimer(store) : pauseTimer(store))
-                    }
-                  >
-                    {paused ? 'Resume' : 'Pause'}
-                  </Button>
-                  <Button
-                    color="accent"
-                    onClick={() => void stopAndSaveTimer(store, 'additive')}
-                  >
-                    Stop · add {formatTimeDisplay(elapsed)}
-                  </Button>
-                  {time > 0 && (
-                    <Button
-                      onClick={() =>
-                        void stopAndSaveTimer(store, 'replacement', time)
-                      }
-                    >
-                      Stop · replace {renderTime(time)}
-                    </Button>
-                  )}
-                  <Button plain onClick={() => void cancelTimer(store)}>
-                    Discard
-                  </Button>
-                </div>
+                <button
+                  disabled={busy}
+                  className={menuItem}
+                  onClick={() => {
+                    void (paused ? resumeTimer(store) : pauseTimer(store))
+                    setMenuOpen(false)
+                  }}
+                >
+                  <Pause size={15} />
+                  {paused ? 'Resume timer' : 'Pause timer'}
+                  <kbd className="ml-auto text-xs text-muted">
+                    {displayKey(keybindings.toggleStopwatch)}
+                  </kbd>
+                </button>
                 {timer.mode === 'countdown' && (
-                  <div
-                    className="absolute bottom-0 left-0 h-[3px] bg-accent-fill"
-                    style={{
-                      width: `${Math.min(100, (elapsed / timer.targetDuration) * 100)}%`,
-                    }}
-                  />
+                  <button
+                    disabled={busy}
+                    className={menuItem}
+                    onClick={() => void extendTimer(store)}
+                  >
+                    Add 5 minutes
+                  </button>
                 )}
+                <button
+                  disabled={busy}
+                  className={menuItem}
+                  onClick={() => {
+                    void stopAndSaveTimer(store, 'additive')
+                    setMenuOpen(false)
+                  }}
+                >
+                  <Square size={15} />
+                  Stop and add time
+                </button>
+                {time > 0 && (
+                  <button
+                    disabled={busy}
+                    className={menuItem}
+                    onClick={() => {
+                      void stopAndSaveTimer(store, 'replacement', time)
+                      setMenuOpen(false)
+                    }}
+                  >
+                    Stop and replace {renderTime(time)}
+                  </button>
+                )}
+                <button
+                  disabled={busy}
+                  className={menuItem}
+                  onClick={() => {
+                    void cancelTimer(store)
+                    setMenuOpen(false)
+                  }}
+                >
+                  <X size={15} />
+                  Discard timer
+                </button>
               </>
             ) : (
               <>
-                <div className="text-xs text-muted mb-4">
-                  <span className="font-mono text-text-2">
-                    {renderTime(time)}
-                  </span>{' '}
-                  logged on this line
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-                  <div>
-                    <h3 className="text-sm mb-3">Stopwatch</h3>
-                    <Button color="accent" onClick={() => start('stopwatch')}>
-                      Start
-                    </Button>
-                  </div>
-                  <div>
-                    <h3 className="text-sm mb-3">Countdown</h3>
-                    <div className="flex gap-1 mb-2">
-                      {[15, 25, 50].map((minutes) => (
-                        <Button
-                          key={minutes}
-                          className="px-2"
-                          onClick={() => start('countdown', minutes * 60)}
-                        >
-                          {minutes}m
-                        </Button>
-                      ))}
-                    </div>
-                    <form
-                      className="flex gap-1"
-                      onSubmit={(e) => {
-                        e.preventDefault()
-                        const duration = parseTime(countdown)
-                        if (duration !== null && duration > 0)
-                          start('countdown', duration)
-                      }}
-                    >
-                      <input
-                        aria-label="Countdown length"
-                        className={inputClass}
-                        placeholder="25m"
-                        value={countdown}
-                        onChange={(e) => setCountdown(e.target.value)}
-                      />
-                      <Button type="submit" disabled={!parseTime(countdown)}>
-                        Start
-                      </Button>
-                    </form>
-                  </div>
-                  <div>
-                    <h3 className="text-sm mb-3">Enter time</h3>
-                    <input
-                      aria-label="Time to log"
-                      className={inputClass}
-                      placeholder="45m, 1h 20m"
-                      value={manual}
-                      onChange={(e) => setManual(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') log(false)
-                      }}
-                    />
-                    <div className="flex flex-wrap gap-1 mt-2">
-                      <Button
-                        disabled={parseTime(manual) === null}
-                        onClick={() => log(false)}
-                      >
-                        Add
-                      </Button>
-                      <Button
-                        disabled={parseTime(manual) === null}
-                        onClick={() => log(true)}
-                      >
-                        Set total
-                      </Button>
-                    </div>
-                  </div>
-                </div>
+                <button
+                  disabled={busy}
+                  className={menuItem}
+                  onClick={() => start('stopwatch')}
+                >
+                  <Clock size={15} />
+                  Start stopwatch
+                  <kbd className="ml-auto text-xs text-muted">
+                    {displayKey(keybindings.toggleStopwatch)}
+                  </kbd>
+                </button>
+                <button
+                  className={menuItem}
+                  onClick={() => openMode('countdown')}
+                >
+                  <Timer size={15} />
+                  Countdown
+                  <kbd className="ml-auto text-xs text-muted">
+                    {paletteKey} T 2
+                  </kbd>
+                </button>
+                <button className={menuItem} onClick={() => openMode('manual')}>
+                  <Pencil size={15} />
+                  Log time
+                  <kbd className="ml-auto text-xs text-muted">
+                    {paletteKey} T 3
+                  </kbd>
+                </button>
               </>
             )}
+          </PopoverPanel>
+        </Popover>
+      </div>
+      {open && (
+        <section
+          className="TimerRow OverlaySurface text-xs text-text-2"
+          aria-label={`Timer for line ${lineInfo.lineIdx + 1}`}
+        >
+          <fieldset
+            disabled={busy}
+            className="flex flex-wrap items-center gap-x-4 gap-y-3 min-w-0"
+          >
+            {runningHere ? (
+              <>
+                <span>
+                  {timer.mode === 'countdown' ? 'Countdown' : 'Stopwatch'}
+                  {paused && ' · Paused'}
+                </span>
+                {timer.mode === 'countdown' && (
+                  <Button plain onClick={() => void extendTimer(store)}>
+                    +5m
+                  </Button>
+                )}
+                <span className="text-muted">{renderTime(time)} logged</span>
+                <button
+                  onClick={() => void cancelTimer(store)}
+                  className="text-muted hover:text-text"
+                >
+                  Discard
+                </button>
+              </>
+            ) : (
+              <>
+                <div
+                  className="flex gap-1 rounded-md bg-page/60 p-1"
+                  aria-label="Timer mode"
+                >
+                  {(['stopwatch', 'countdown', 'manual'] as const).map(
+                    (item) => (
+                      <button
+                        key={item}
+                        onClick={() => setMode(item)}
+                        aria-pressed={mode === item}
+                        className={cn(
+                          'rounded px-2 py-1',
+                          mode === item
+                            ? 'bg-white/7 text-text'
+                            : 'text-muted hover:text-text'
+                        )}
+                      >
+                        {item === 'manual'
+                          ? 'Log time'
+                          : item === 'countdown'
+                            ? 'Countdown'
+                            : 'Stopwatch'}
+                      </button>
+                    )
+                  )}
+                </div>
+                {mode === 'stopwatch' && (
+                  <Button plain onClick={() => start('stopwatch')}>
+                    <Play size={13} />
+                    Start
+                  </Button>
+                )}
+                {mode === 'countdown' && (
+                  <form
+                    className="flex flex-wrap items-center gap-2"
+                    onSubmit={(e) => {
+                      e.preventDefault()
+                      const duration = parseTime(countdown || '25m')
+                      if (duration && duration > 0) start('countdown', duration)
+                    }}
+                  >
+                    <input
+                      autoFocus
+                      aria-label="Countdown length"
+                      className={inputClass}
+                      placeholder="25m"
+                      value={countdown}
+                      onChange={(e) => setCountdown(e.target.value)}
+                    />
+                    <Button
+                      plain
+                      type="submit"
+                      disabled={!parseTime(countdown || '25m')}
+                    >
+                      <Play size={13} />
+                      Start
+                    </Button>
+                    {[15, 25, 50].map((minutes) => (
+                      <button
+                        key={minutes}
+                        type="button"
+                        className="px-1 py-1 text-muted hover:text-text"
+                        onClick={() => start('countdown', minutes * 60)}
+                      >
+                        {minutes}m
+                      </button>
+                    ))}
+                  </form>
+                )}
+                {mode === 'manual' && (
+                  <form
+                    className="flex flex-wrap items-center gap-2"
+                    onSubmit={(e) => {
+                      e.preventDefault()
+                      log(false)
+                    }}
+                  >
+                    <input
+                      autoFocus
+                      aria-label="Time to log"
+                      className={inputClass}
+                      placeholder="45m"
+                      value={manual}
+                      onChange={(e) => setManual(e.target.value)}
+                    />
+                    <Button
+                      plain
+                      type="submit"
+                      disabled={parseTime(manual) === null}
+                    >
+                      Add
+                    </Button>
+                    <Button
+                      plain
+                      type="button"
+                      disabled={parseTime(manual) === null}
+                      onClick={() => log(true)}
+                    >
+                      Set total
+                    </Button>
+                    <span className="text-muted">
+                      {renderTime(time)} logged
+                    </span>
+                  </form>
+                )}
+              </>
+            )}
+            <button
+              aria-label="Close timer row"
+              className="ml-auto p-1 text-muted hover:text-text"
+              onClick={() => setOpen(false)}
+            >
+              <X size={14} />
+            </button>
           </fieldset>
         </section>
       )}

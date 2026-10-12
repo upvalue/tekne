@@ -35,24 +35,23 @@ export const slashCommandsPlugin =
       )
       const preview =
         name === 'stopwatch'
-          ? '● 0:00 · start stopwatch'
+          ? 'Start stopwatch · 0:00'
           : name === 'countdown'
             ? duration
-              ? `● ${renderTime(duration)} left · start countdown`
+              ? `${renderTime(duration)} · start countdown`
               : 'Enter a duration, e.g. 25m'
             : name === 'log'
               ? duration !== null
-                ? `◷ +${renderTime(duration)} logged`
+                ? `Add ${renderTime(duration)} logged`
                 : 'Enter a duration, e.g. 45m'
               : name === 'task'
-                ? '☐ Task'
+                ? 'Make task'
                 : name === 'pin'
                   ? 'Pin this line'
                   : formatDate(new Date())
       return {
         label: `/${name}${argument ? ` ${argument}` : ''}`,
         detail: preview,
-        info: preview,
         type: 'text',
         apply: (view, _completion, from, to) => {
           if (

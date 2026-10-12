@@ -61,7 +61,15 @@ export function Checkbox({
       {...props}
       className={clsx(className, 'group inline-flex focus:outline-hidden')}
     >
-      <span className="flex size-3.5 items-center justify-center rounded border border-mark text-text-2 group-focus-visible:outline-2 group-focus-visible:outline-accent">
+      <span
+        className={clsx(
+          'relative isolate flex size-4.5 sm:size-4 items-center justify-center rounded-[0.3125rem] border border-white/15 bg-white/5 text-text',
+          'group-hover:border-white/30 group-data-checked:bg-mark group-data-indeterminate:bg-mark group-data-checked:border-white/5 group-data-indeterminate:border-white/5',
+          'after:absolute after:-inset-px after:rounded-[0.3125rem] after:hidden after:shadow-[inset_0_1px_#ffffff26] group-data-checked:after:block group-data-indeterminate:after:block',
+          'group-focus-visible:outline-2 group-focus-visible:outline-offset-2 group-focus-visible:outline-accent group-data-disabled:opacity-50',
+          'forced-colors:group-data-checked:bg-[Highlight] forced-colors:text-[HighlightText]'
+        )}
+      >
         <svg
           className="size-4 stroke-current opacity-0 group-data-checked:opacity-100 group-data-indeterminate:opacity-100 sm:h-3.5 sm:w-3.5"
           viewBox="0 0 14 14"
@@ -78,7 +86,7 @@ export function Checkbox({
           {/* Indeterminate icon */}
           <path
             className="opacity-0 group-data-indeterminate:opacity-100"
-            d="M4 7H10"
+            d="M4 4L10 10M10 4L4 10"
             strokeWidth={2}
             strokeLinecap="round"
             strokeLinejoin="round"

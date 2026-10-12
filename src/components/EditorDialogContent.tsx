@@ -7,11 +7,19 @@ import { cn } from '@/lib/utils'
 export const EditorDialogContent = ({
   children,
   className,
+  showCloseButton = true,
 }: {
   children: React.ReactNode
   className?: string
+  showCloseButton?: boolean
 }) => (
-  <DialogContent className={cn('left-[32%] top-[40%] ', className)}>
+  <DialogContent
+    showCloseButton={showCloseButton}
+    className={cn(
+      'max-lg:left-1/2 lg:left-[calc((100vw-min(22vw,300px))/2)] top-[40%]',
+      className
+    )}
+  >
     {children}
   </DialogContent>
 )

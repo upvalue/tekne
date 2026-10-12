@@ -1,3 +1,4 @@
+import { LoadingIndicator } from '@/components/LoadingIndicator'
 import { dbMemory, DB_PATH_KEY, DEFAULT_DB_PATH } from '@/db'
 import type { PGlite } from '@electric-sql/pglite'
 import { Repl } from '@electric-sql/pglite-repl'
@@ -386,7 +387,7 @@ export const PgliteDevtools = () => {
                   }
                 />
                 <Button onClick={loadDatabases} disabled={isLoading}>
-                  {isLoading ? 'Loading...' : 'Refresh'}
+                  {isLoading ? <LoadingIndicator /> : 'Refresh'}
                 </Button>
               </DialogFooter>
             </DialogContent>

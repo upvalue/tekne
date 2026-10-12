@@ -3,7 +3,7 @@ import type { ZLine } from '@/docs/schema'
 import { elapsedMilliseconds, type Timer } from '@/docs/timer'
 import { orpcClient } from '@/api/client'
 import { toast } from 'sonner'
-import { appPath } from '@/lib/app-path'
+import { navigateToDocument } from '@/lib/app-events'
 import { showTimerStartedNotification } from './timer-notifications'
 import {
   DEFAULT_COUNTDOWN_SECONDS,
@@ -141,9 +141,7 @@ export const startTimer = (
           action: {
             label: 'Jump to line',
             onClick: () => {
-              window.location.href = appPath(
-                `/n/${encodeURIComponent(current.noteTitle)}#line-${current.lineId}`
-              )
+              navigateToDocument(current.noteTitle, current.lineId ?? undefined)
             },
           },
         }

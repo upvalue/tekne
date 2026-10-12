@@ -3,28 +3,33 @@
 The branch starts from `main`, as agreed: local `master` is 346 commits behind
 and lacks the timer and line-colour changes required by the brief.
 
-The theme uses the supplied Harmony hex values directly. Existing component
-colour props remain accepted, but all accent variants now use the same blue.
-Checkboxes are neutral. The panel separation is in `src/styles/styles.css`.
+The theme uses the supplied Harmony hex values directly. Forced font smoothing
+has been removed. The narrower, darker sidebar has a soft edge, descriptive
+icon tooltips, and its original tools. Calendar controls sit above the muted
+18px title; Today is inside the calendar.
 
-The prototype now has the title-row navigation, inline timer controls, a flat
-command palette, slash-command previews, and This page/Search panel views.
-Editor rows use a timestamp gutter with trailing time chips. Task and pin
-actions support undo. Forced font smoothing has been removed from the body.
-Stored data formats are unchanged. Nothing has been deployed to production.
+Editor rows fill the available width, including empty rows. Timestamps, drag
+handles, and action menus occupy fixed gutter columns across indentation levels.
+The original line icons and checkbox shape are restored. The writing prompt
+appears only after the document: four selectable styles generate five randomized
+marks per new line, stable while typing. Loading has separate animated variants.
 
-This is a checkpoint, not a finished redesign. The visual gap to the brief
-still needs review. General Markdown syntax remains visible, as specified by
-the brief.
+Inline timers have spaced controls and no drop shadow. The line action menu
+uses a dark rounded surface; autocomplete uses the same palette with a lighter
+shadow. Checkbox status changes no longer raise notification popups. Keyboard
+commands and timer shortcuts are retained. Page navigation preloads content and
+updates the title and editors before paint to avoid mismatched text flashes.
 
-Validation at this checkpoint: `pnpm check` passes, and `pnpm test` passes all
-475 tests across 63 files. Browser checks covered timer controls, countdown
-extension and completion, shortcuts, slash commands, the palette, panel search,
-and the mobile layout.
+Dev tools → Appearance & errors previews loading and writing styles, recoverable
+errors, long messages, notifications, and save conflicts. Stored data formats
+are unchanged. Nothing has been deployed to production.
 
-One unresolved observation needs investigation before calling this complete:
-after countdown completion, an appended test line appeared empty in the
-isolated browser fixture despite having text earlier. It is not yet clear
-whether this is a display issue or a persistence issue. The automated tests
-pass but do not cover that exact interaction sequence. Work stopped here at
-the user's request.
+Validation: `pnpm check` passes, and `pnpm test` passes all 480 tests across 64
+files. Browser checks covered fixed gutter alignment, far-right and empty-line
+focus, timer controls and shortcuts, countdown completion, autocomplete, calendar
+navigation, sidebar tooltips, randomized prompts, mobile overflow, and navigation
+frames. The previously observed empty countdown fixture line did not recur:
+its content survived countdown completion and a reload. No root cause was
+established for the earlier observation.
+
+This remains a design checkpoint for further visual review.

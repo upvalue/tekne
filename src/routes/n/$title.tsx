@@ -1,3 +1,4 @@
+import { ErrorState } from '@/components/ErrorState'
 import { ORPCError } from '@orpc/client'
 import { useQueryClient } from '@tanstack/react-query'
 import { TEditor } from '@/editor/TEditor'
@@ -16,6 +17,15 @@ import { useCreateDoc } from '@/hooks/useCreateDoc'
 
 export const Route = createFileRoute('/n/$title')({
   component: RouteComponent,
+  pendingMs: Infinity,
+  loader: ({ context, params }) =>
+    context.queryClient.prefetchQuery({
+      ...context.orpc.doc.loadDoc.queryOptions({
+        input: { name: params.title },
+      }),
+      retry: false,
+      staleTime: 1000,
+    }),
 })
 
 /**
@@ -109,7 +119,22 @@ function RouteComponent() {
       allowTitleEdit={true}
       isLoading={loadDocQuery.isLoading}
     >
-      {!loadDocQuery.isLoading && <TEditor />}
+      {loadDocQuery.isError &&
+      !(
+        loadDocQuery.error instanceof ORPCError &&
+        loadDocQuery.error.code === 'NOT_FOUND'
+      ) ? (
+        <ErrorState
+          title="Could not load this document"
+          message="Check your connection and try again."
+          detail={loadDocQuery.error.message}
+          onRetry={() => void loadDocQuery.refetch()}
+          busy={loadDocQuery.isFetching}
+        />
+      ) : (
+        loadDocQuery.isSuccess && <TEditor />
+      )}
+
       <SaveConflictDialog
         open={conflict !== null}
         onResolve={resolveConflict}

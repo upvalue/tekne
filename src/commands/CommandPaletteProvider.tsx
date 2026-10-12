@@ -2,7 +2,11 @@
 
 import React from 'react'
 import { useAtom, useAtomValue } from 'jotai'
-import { focusedLineAtom, commandPaletteOpenAtom } from '@/editor/state'
+import {
+  focusedLineAtom,
+  commandPaletteOpenAtom,
+  commandPaletteSearchAtom,
+} from '@/editor/state'
 import { CommandPalette } from '@/editor/CommandPalette'
 import { useGlobalKeybinding } from '@/hooks/useGlobalKeybinding'
 
@@ -10,10 +14,17 @@ export const CommandPaletteProvider: React.FC<{
   children: React.ReactNode
 }> = ({ children }) => {
   const [paletteOpen, setPaletteOpen] = useAtom(commandPaletteOpenAtom)
+  const [, setSearch] = useAtom(commandPaletteSearchAtom)
   const focusedLineIdx = useAtomValue(focusedLineAtom)
 
-  useGlobalKeybinding('documentSearch', () => setPaletteOpen(true))
-  useGlobalKeybinding('commandPalette', () => setPaletteOpen((open) => !open))
+  useGlobalKeybinding('documentSearch', () => {
+    setSearch(true)
+    setPaletteOpen(true)
+  })
+  useGlobalKeybinding('commandPalette', () => {
+    setSearch(false)
+    setPaletteOpen((open) => !open)
+  })
 
   // Global fallback palette (when no line is focused)
   // If a line is focused, ELine will render the palette instead

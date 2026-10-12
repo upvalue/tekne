@@ -7,7 +7,7 @@ import {
   timerRemainingSeconds,
 } from './timer-controller'
 import { formatTimeDisplay } from '@/lib/time'
-import { appPath } from '@/lib/app-path'
+import { navigateToDocument } from '@/lib/app-events'
 import { docAtom, requestFocusLineAtom } from '../state'
 
 export const RunningTimerPill = () => {
@@ -21,7 +21,7 @@ export const RunningTimerPill = () => {
       : (timer.baseTimeSeconds ?? 0) + timerElapsedSeconds(timer)
   return (
     <button
-      className="rounded-full bg-accent-tint px-3 py-1.5 text-xs text-accent font-mono max-w-64 truncate"
+      className="rounded bg-accent-tint px-2 py-0.5 text-xs text-accent tabular-nums max-w-64 truncate"
       aria-label="Jump to running timer"
       onClick={() => {
         const index = store
@@ -33,9 +33,7 @@ export const RunningTimerPill = () => {
           })
           store.set(requestFocusLineAtom, { lineIdx: index, pos: 0 })
         } else if (timer.noteTitle) {
-          window.location.href = appPath(
-            `/n/${encodeURIComponent(timer.noteTitle)}#line-${timer.lineId}`
-          )
+          navigateToDocument(timer.noteTitle, timer.lineId ?? undefined)
         }
       }}
     >
