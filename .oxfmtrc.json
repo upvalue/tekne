@@ -17,6 +17,7 @@
     ".claude",
     "pnpm-lock.yaml",
     "docs/**",
+    "README.md",
     "src/documentation/generated/**",
     "src/routeTree.gen.ts",
     "redesign-mockups/**",

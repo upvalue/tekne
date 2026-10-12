@@ -105,7 +105,6 @@ test.each([
     }
     const description = view.getByText(fixture.data[1].pinned_desc!)
     expect(description.getBoundingClientRect().height).toBeGreaterThan(20)
-
   }
 )
 
