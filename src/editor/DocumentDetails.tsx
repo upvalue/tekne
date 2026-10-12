@@ -20,22 +20,38 @@ export const DocumentDetails = ({ title }: { title: string }) => {
     )
   if (!data) return null
 
+  const formatDate = (date: Date) =>
+    date.toLocaleString(undefined, {
+      year: '2-digit',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      hourCycle: 'h23',
+    })
+
   return (
-    <dl className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-1 text-xs text-muted">
-      <dt>Created</dt>
-      <dd>
-        <time dateTime={data.createdAt.toISOString()}>
-          {data.createdAt.toLocaleString()}
-        </time>
-      </dd>
-      <dt>Updated</dt>
-      <dd>
-        <time dateTime={data.updatedAt.toISOString()}>
-          {data.updatedAt.toLocaleString()}
-        </time>
-      </dd>
-      <dt>Revision</dt>
-      <dd>{data.revision}</dd>
+    <dl className="flex flex-wrap gap-x-3 text-[10px] leading-[14px] text-muted">
+      <div className="flex gap-1">
+        <dt>Created</dt>
+        <dd>
+          <time dateTime={data.createdAt.toISOString()}>
+            {formatDate(data.createdAt)}
+          </time>
+        </dd>
+      </div>
+      <div className="flex gap-1">
+        <dt>Updated</dt>
+        <dd>
+          <time dateTime={data.updatedAt.toISOString()}>
+            {formatDate(data.updatedAt)}
+          </time>
+        </dd>
+      </div>
+      <div className="flex gap-1">
+        <dt>Rev.</dt>
+        <dd>{data.revision}</dd>
+      </div>
     </dl>
   )
 }

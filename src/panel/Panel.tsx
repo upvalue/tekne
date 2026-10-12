@@ -79,7 +79,7 @@ export function Panel() {
           </button>
         </Tooltip>
       </nav>
-      <div className="flex-1 overflow-auto min-w-0 pb-6">
+      <div className="flex flex-col flex-1 overflow-auto min-h-0 min-w-0 pb-4">
         <ErrorBoundary title="Panel crashed">
           {activeTab === 'document' && <DocumentOverview />}
           {activeTab === 'search' && <Search />}

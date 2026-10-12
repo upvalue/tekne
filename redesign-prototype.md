@@ -58,8 +58,8 @@ These are firm.
 - **Keep stopwatch, countdown and manual time entry.** Drop the timer dialog
   and mode tabs.
 - **Keep the muted timestamp gutter** on the left.
-- **Date documents are titled ISO-style** (`2026-10-11`). Date navigation
-  (‹ › Today) only appears on date documents.
+- **Date documents are titled ISO-style** (`2026-10-11`). Moving between days
+  is done with keyboard shortcuts and commands; there are no on-screen controls.
 
 ## Theme: Harmony Neutral · Blue
 

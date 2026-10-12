@@ -1,10 +1,7 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 :root {
-  --font-stack:
-    'Inter', -apple-system, BlinkMacSystemFont, avenir next, avenir, segoe ui,
-    helvetica neue, Adwaita Sans, Cantarell, Ubuntu, roboto, noto, helvetica,
-    arial, sans-serif;
+  --font-stack: var(--font-sans);
 
   --editor-font-stack: var(--font-stack);
   --mono-font-stack:

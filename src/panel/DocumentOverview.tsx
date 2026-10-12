@@ -86,7 +86,7 @@ export const DocumentOverview = () => {
   const focusedLineIdx = useAtomValue(focusedLineAtom)
   const toc = generateTableOfContents(doc.children, focusedLineIdx ?? undefined)
   return (
-    <div>
+    <div className="flex flex-1 flex-col">
       {toc.length > 0 && (
         <DocumentOverviewSection label="Outline">
           <TableOfContents toc={toc} />
@@ -96,9 +96,9 @@ export const DocumentOverview = () => {
         <Aggregate />
       </DocumentOverviewSection>
       {title && (
-        <DocumentOverviewSection label="Document details">
+        <footer aria-label="Document details" className="mt-auto px-3 pt-3">
           <DocumentDetails title={title} />
-        </DocumentOverviewSection>
+        </footer>
       )}
     </div>
   )

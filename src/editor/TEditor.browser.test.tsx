@@ -96,8 +96,8 @@ test('desktop gutter and document inset return at the 768px breakpoint', async (
   )
   const editor = view.container.querySelector('.TEditor-scroll')!
   const gutter = view.container.querySelector('.ELine-gutter')!
-  expect(getComputedStyle(editor).paddingLeft).toBe('32px')
-  expect(getComputedStyle(editor).paddingRight).toBe('40px')
+  expect(getComputedStyle(editor).paddingLeft).toBe('48px')
+  expect(getComputedStyle(editor).paddingRight).toBe('48px')
   expect(getComputedStyle(gutter).display).toBe('grid')
   expect(gutter.getBoundingClientRect().width).toBe(144)
 })
@@ -119,7 +119,7 @@ test('collapsed children stay hidden when line chips and timer rows use the grid
   )
   const child = view.container.querySelector('[data-line-idx="1"]')!
   expect(child.getClientRects()).toHaveLength(0)
-  fireEvent.click(view.getByRole('button', { name: '+1' }))
+  fireEvent.click(view.getByRole('button', { name: 'Expand 1 hidden line' }))
   expect(child.getClientRects().length).toBeGreaterThan(0)
 })
 
@@ -186,39 +186,84 @@ test('empty lines have full-width editors and the prompt stays after the documen
   )
 })
 
-test('drag handles and action menus stay between timestamps and bullets at every indent', () => {
-  const store = createStore()
-  store.set(
-    docAtom,
-    docMake([
-      lineMake(0, 'Parent'),
-      lineMake(1, 'Child'),
-      lineMake(2, 'Grandchild'),
-    ])
-  )
-  const view = render(
-    <Provider store={store}>
-      <TEditor />
-    </Provider>
-  )
-  const rows = Array.from(
-    view.container.querySelectorAll<HTMLElement>('.ELine')
-  )
-  const positions = rows.map((row) => ({
-    drag: row.querySelector('.ELine-drag-handle')!.getBoundingClientRect(),
-    actions: row.querySelector('.LineActions')!.getBoundingClientRect(),
-    bullet: row.querySelector('.ELine-leading')!.getBoundingClientRect(),
-    timestamp: row.querySelector('.ELine-gutter-text')!.getBoundingClientRect(),
-    top: row.getBoundingClientRect().top,
-  }))
-  for (const position of positions) {
-    expect(position.drag.x).toBe(positions[0].drag.x)
-    expect(position.actions.x).toBe(positions[0].actions.x)
-    expect(position.timestamp.right).toBeLessThanOrEqual(position.drag.left)
-    expect(position.drag.right).toBeLessThanOrEqual(position.actions.left)
-    expect(position.actions.right).toBeLessThanOrEqual(position.bullet.left)
-    expect(position.actions.top - position.top).toBe(
-      positions[0].actions.top - positions[0].top
+test.each([390, 1280])(
+  'drag handles and action menus align with line text at every indent at %ipx',
+  async (width) => {
+    await page.viewport(width, 800)
+    const store = createStore()
+    store.set(
+      docAtom,
+      docMake([
+        lineMake(0, 'Parent'),
+        lineMake(1, 'Child'),
+        lineMake(2, 'Grandchild'),
+      ])
     )
+    const view = render(
+      <Provider store={store}>
+        <TEditor />
+      </Provider>
+    )
+    const rows = Array.from(
+      view.container.querySelectorAll<HTMLElement>('.ELine')
+    )
+    const positions = rows.map((row) => ({
+      drag: row.querySelector('.ELine-drag-handle')!.getBoundingClientRect(),
+      actions: row.querySelector('.LineActions')!.getBoundingClientRect(),
+      bullet: row.querySelector('.ELine-leading')!.getBoundingClientRect(),
+      timestamp: row
+        .querySelector('.ELine-gutter-text')!
+        .getBoundingClientRect(),
+      text: row.querySelector('.cm-line')!.getBoundingClientRect(),
+      menuIcon: row.querySelector('.LineActions svg')!.getBoundingClientRect(),
+      dragIcon: row
+        .querySelector('.ELine-drag-handle svg')!
+        .getBoundingClientRect(),
+      top: row.getBoundingClientRect().top,
+    }))
+    for (const position of positions) {
+      expect(position.drag.x).toBe(positions[0].drag.x)
+      expect(position.actions.x).toBe(positions[0].actions.x)
+      if (width >= 768) {
+        expect(position.timestamp.right).toBeLessThanOrEqual(position.drag.left)
+      } else {
+        expect(position.timestamp.width).toBe(0)
+      }
+      expect(position.drag.right).toBeLessThanOrEqual(position.actions.left)
+      expect(position.actions.right).toBeLessThanOrEqual(position.bullet.left)
+      const center = position.text.top + position.text.height / 2
+      for (const rect of [
+        position.bullet,
+        position.menuIcon,
+        position.dragIcon,
+      ]) {
+        expect(rect.top + rect.height / 2).toBeCloseTo(center, 0)
+      }
+      expect(position.actions.top - position.top).toBe(
+        positions[0].actions.top - positions[0].top
+      )
+    }
   }
-})
+)
+
+test.each([1280, 1470])(
+  'editor page is centered and capped at %ipx',
+  async (width) => {
+    await page.viewport(width, 900)
+    const view = render(
+      <Provider store={createStore()}>
+        <div className="Editor" style={{ width: width - 320 }}>
+          <TEditor />
+        </div>
+      </Provider>
+    )
+    const editor = view.container.querySelector<HTMLElement>('.TEditor-scroll')!
+    const bounds = editor.getBoundingClientRect()
+    const available = width - 320
+    expect(bounds.width).toBe(Math.min(1040, available))
+    expect(bounds.left).toBe((available - bounds.width) / 2)
+    expect(getComputedStyle(editor).paddingLeft).toBe('48px')
+    expect(getComputedStyle(editor).paddingRight).toBe('48px')
+    expect(editor.scrollWidth).toBeLessThanOrEqual(editor.clientWidth)
+  }
+)

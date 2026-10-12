@@ -20,7 +20,7 @@
   font-family: var(--font-editor);
 }
 
-/* Keep glyphs and timestamps aligned with the first 22px text line. */
+/* Keep glyphs and timestamps aligned with the first 24px text line. */
 @property --eline-first-line-height {
   syntax: '<length>';
   inherits: true;
@@ -44,7 +44,7 @@
   font-size: 12px;
   position: relative;
   grid-template-columns: minmax(0, 1fr);
-  padding-right: 48px;
+  padding-right: 60px;
 }
 
 /* The timestamp/drag-handle gutter assumes a wide viewport; drop it on phones. */
@@ -53,7 +53,7 @@
     width: 44px;
     padding-right: 0;
   }
-  .ELine-gutter-text {
+  .ELine .ELine-gutter-text {
     display: none;
   }
 }
@@ -215,9 +215,9 @@
 }
 .ELine,
 .ReadOnlyLine {
-  font-size: 15px;
-  min-height: 26px;
-  --eline-first-line-height: 22px;
+  font-size: 16px;
+  min-height: 30px;
+  --eline-first-line-height: 24px;
 }
 .ELine-gutter-timestamp-base {
   overflow: hidden;
@@ -243,7 +243,7 @@
   font-weight: 650;
 }
 .cm-scroller {
-  line-height: 22px !important;
+  line-height: 24px !important;
 }
 .cm-tag {
   color: var(--color-accent);
@@ -276,12 +276,22 @@
 
 .ELine-gutter > .ELine-drag-handle {
   position: absolute;
+  top: 0;
   left: 0;
 }
 @media (min-width: 768px) {
+  .TitleBar,
   .TEditor-scroll {
-    padding-left: 32px;
-    padding-right: 40px;
+    width: 100%;
+    max-width: 1040px;
+    margin-inline: auto;
+  }
+  .TitleBar {
+    padding-left: 216px;
+    padding-right: 48px;
+  }
+  .TEditor-scroll {
+    padding-inline: 48px;
   }
 }
 
@@ -313,6 +323,8 @@
   grid-column: 6;
   grid-row: 1;
   align-self: start;
+  height: var(--eline-first-line-height);
+  line-height: 1;
 }
 .ELine > .TimerChip {
   grid-column: 4;
@@ -348,8 +360,8 @@
 .cm-tooltip.cm-tooltip-autocomplete.cm-tooltip-autocomplete
   > ul
   > li[aria-selected] {
-  background: var(--color-accent-tint);
-  color: var(--color-accent);
+  background: var(--color-mark);
+  color: var(--color-text);
 }
 .cm-completionDetail {
   color: var(--color-muted);
@@ -378,10 +390,16 @@
   cursor: text;
 }
 .ELine > .LineActions {
-  position: absolute;
-  left: 116px;
-  top: 2px;
+  grid-column: 1;
+  grid-row: 1;
+  justify-self: end;
+  align-self: start;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 4px;
   width: 24px;
+  height: var(--eline-first-line-height);
   z-index: 11;
 }
 .LineActions {
@@ -437,12 +455,6 @@
   gap: 16px;
   line-height: 20px;
 }
-.cm-tooltip.cm-tooltip-autocomplete.cm-tooltip-autocomplete
-  > ul
-  > li[aria-selected='true'] {
-  background: var(--color-accent-tint);
-  color: var(--color-text);
-}
 .cm-tooltip .cm-completionDetail {
   font-style: normal;
   margin-left: auto;
@@ -464,38 +476,32 @@
 .ELine-gutter > .ELine-drag-handle {
   left: 96px;
 }
-@media (max-width: 767px) {
-  .LineActions button {
-    min-height: 30px;
-  }
-}
 
 .ELine-empty > .cm-editor-container {
   grid-column: 5 / -1;
-  min-height: 22px;
+  min-height: 24px;
 }
 .ELine-empty > .ELine-tail {
   display: none;
 }
 .ELine-empty .cm-content {
-  min-height: 22px;
+  min-height: 24px;
 }
 
 @media (max-width: 767px) {
-  .ELine > .LineActions {
-    left: 20px;
-    top: 4px;
-  }
   .NewLinePrompt {
     padding-left: 68px;
   }
 }
 
 .LineActions > [data-slot='popover-button'] {
-  width: 22px;
-  height: 22px;
-  min-height: 22px;
-  padding: 3px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: var(--eline-first-line-height);
+  min-height: var(--eline-first-line-height);
+  padding: 0;
 }
 @media (max-width: 767px) {
   .ELine-gutter > .ELine-drag-handle {

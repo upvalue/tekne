@@ -22,7 +22,6 @@ vi.mock('@/api/client', () => ({
 }))
 vi.mock('@tanstack/react-router', () => ({ useNavigate: () => mocks.navigate }))
 vi.mock('./StatusBar', () => ({ StatusBar: () => null }))
-vi.mock('./DateNavigation', () => ({ DateNavigation: () => null }))
 
 afterEach(() => {
   cleanup()

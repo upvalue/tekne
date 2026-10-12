@@ -4,7 +4,6 @@ import { useState, useRef, useLayoutEffect } from 'react'
 import { orpc } from '@/api/client'
 import { useNavigate } from '@tanstack/react-router'
 import { StatusBar } from './StatusBar'
-import { DateNavigation } from './DateNavigation'
 import { Button } from '@/components/vendor/Button'
 import { toast } from 'sonner'
 
@@ -98,14 +97,6 @@ export const TitleBar = ({
 
   return (
     <header className="TitleBar">
-      {isDate && (
-        <DateNavigation
-          value={title}
-          onChange={(date) =>
-            void navigate({ to: '/n/$title', params: { title: date } })
-          }
-        />
-      )}
       <div className="flex items-center gap-3 min-w-0">
         <input
           aria-label="Document title"

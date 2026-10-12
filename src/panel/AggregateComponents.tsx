@@ -50,7 +50,7 @@ const Totals = ({ tag }: { tag: ResultCardData }) => {
 
   return (
     <div
-      className="flex flex-wrap items-center gap-x-4 gap-y-1"
+      className="flex flex-wrap items-center gap-x-3 gap-y-1"
       aria-label="All-time totals"
     >
       {metrics.map(({ icon: Icon, value, label, className }) => (

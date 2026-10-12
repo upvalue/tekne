@@ -163,7 +163,7 @@ const ELineImpl = (lineInfo: ELineProps) => {
         }
       }}
       className={cn(
-        'ELine relative w-full py-0.5 flex flex-wrap items-start',
+        'ELine relative w-full py-[3px] flex flex-wrap items-start',
         !line.mdContent && 'ELine-empty',
         line.datumTaskStatus === 'incomplete' && 'ELine-cancelled',
         line.datumTaskStatus === 'complete' && 'ELine-complete',
@@ -220,7 +220,7 @@ const ELineImpl = (lineInfo: ELineProps) => {
           ) : (
             <button
               aria-label={`Toggle collapse for line ${lineInfo.lineIdx + 1}`}
-              className="flex items-center justify-center w-4 h-[22px]"
+              className="flex items-center justify-center w-4 h-[24px]"
               tabIndex={-1}
               onClick={() => toggleCollapse(store, lineInfo.lineIdx)}
             >
@@ -246,7 +246,8 @@ const ELineImpl = (lineInfo: ELineProps) => {
 
       {(lineInfo.hiddenCount ?? 0) > 0 && (
         <button
-          className="ELine-hidden-count text-muted text-xs rounded-full bg-white/5 px-1.5 mx-1 mt-0.5"
+          className="ELine-hidden-count inline-flex items-center justify-center rounded px-1.5 ml-1.5 text-xs tabular-nums text-muted hover:bg-white/5 hover:text-text-2 focus-visible:outline-1 focus-visible:outline-accent cursor-pointer"
+          aria-label={`Expand ${lineInfo.hiddenCount} hidden ${lineInfo.hiddenCount === 1 ? 'line' : 'lines'}`}
           onClick={() => toggleCollapse(store, lineInfo.lineIdx)}
         >
           +{lineInfo.hiddenCount}
