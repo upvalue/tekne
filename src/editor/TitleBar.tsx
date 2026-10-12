@@ -6,6 +6,7 @@ import { useNavigate } from '@tanstack/react-router'
 import { StatusBar } from './StatusBar'
 import { Button } from '@/components/vendor/Button'
 import { notifications } from '@/lib/notifications'
+import { runEditorMutation } from '@/lib/app-events'
 
 export const TitleBar = ({
   title,
@@ -81,10 +82,12 @@ export const TitleBar = ({
     const newName = preview.newName
     const request = generation.current
     try {
-      await execute.mutateAsync({ oldName: title, newName })
-      if (request !== generation.current) return
-      notifications.success(`Document renamed to "${newName}"`)
-      await navigate({ to: '/n/$title', params: { title: newName } })
+      await runEditorMutation(async () => {
+        await execute.mutateAsync({ oldName: title, newName })
+        if (request !== generation.current) return
+        notifications.success(`Document renamed to "${newName}"`)
+        await navigate({ to: '/n/$title', params: { title: newName } })
+      })
     } catch (error) {
       if (request === generation.current)
         setError(

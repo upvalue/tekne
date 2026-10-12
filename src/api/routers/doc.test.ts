@@ -41,6 +41,21 @@ beforeEach(async () => {
 })
 
 describe('createDoc', () => {
+  test('concurrent creation has one winner and preserves its first revision', async () => {
+    const results = await Promise.allSettled([
+      caller.createDoc({ name: 'Race' }),
+      caller.createDoc({ name: 'Race' }),
+    ])
+    expect(
+      results.filter((result) => result.status === 'fulfilled')
+    ).toHaveLength(1)
+    const rejected = results.find((result) => result.status === 'rejected')
+    expect(rejected).toMatchObject({
+      status: 'rejected',
+      reason: { code: 'CONFLICT' },
+    })
+    expect((await caller.loadDoc({ name: 'Race' })).revision).toBe(0)
+  })
   test('creates a document with derived line rows', async () => {
     await caller.createDoc({ name: 'Fresh' })
 
@@ -71,6 +86,21 @@ describe('loadDoc / loadDocDetails', () => {
 })
 
 describe('createDocFromTemplate', () => {
+  test('concurrent copies cannot replace the winning document', async () => {
+    await noteWith('$Example', ['template content'])
+    const results = await Promise.allSettled([
+      caller.createDocFromTemplate({ name: 'Copy', templateName: '$Example' }),
+      caller.createDocFromTemplate({ name: 'Copy', templateName: '$Example' }),
+    ])
+    expect(
+      results.filter((result) => result.status === 'fulfilled')
+    ).toHaveLength(1)
+    expect(
+      results.find((result) => result.status === 'rejected')
+    ).toMatchObject({ reason: { code: 'CONFLICT' } })
+    expect((await caller.loadDoc({ name: 'Copy' })).revision).toBe(0)
+    expect(await lineContents('Copy')).toEqual(['template content'])
+  })
   test('missing templates keep their distinct NOT_FOUND message', async () => {
     await expect(
       caller.createDocFromTemplate({ name: 'New', templateName: '$Missing' })
@@ -97,6 +127,19 @@ describe('createDocFromTemplate', () => {
 })
 
 describe('updateDoc', () => {
+  test.each([-1, 0.5])(
+    'rejects invalid indentation %s before writing any data',
+    async (indent) => {
+      await noteWith('Valid', ['original'])
+      const { doc, revision } = await caller.loadDoc({ name: 'Valid' })
+      doc.children[0].indent = indent
+      await expect(
+        caller.updateDoc({ name: 'Valid', doc, expectedRevision: revision })
+      ).rejects.toMatchObject({ code: 'BAD_REQUEST' })
+      expect(await lineContents('Valid')).toEqual(['original'])
+      expect((await caller.loadDoc({ name: 'Valid' })).revision).toBe(revision)
+    }
+  )
   test('bumps the revision and rebuilds derived rows', async () => {
     await noteWith('Doc', ['first'])
 

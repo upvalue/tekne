@@ -6,7 +6,7 @@ const zline = z.object({
   type: z.literal('line'),
   id: z.string().regex(LINE_ID_PATTERN),
   mdContent: z.string(),
-  indent: z.number(),
+  indent: z.number().int().nonnegative(),
   timeCreated: z.iso.datetime(),
   timeUpdated: z.iso.datetime(),
   collapsed: z.boolean().optional(),

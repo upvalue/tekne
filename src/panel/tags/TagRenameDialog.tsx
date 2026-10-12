@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { notifications } from '@/lib/notifications'
 import { orpc } from '@/api/client'
 import { tagNameSchema } from '@/docs/validation'
-import { requestEditorFlush } from '@/lib/app-events'
+import { runEditorMutation } from '@/lib/app-events'
 import {
   Dialog,
   DialogFooter,
@@ -75,19 +75,13 @@ export const TagRenameDialog = ({
     if (!inputReady || tag === null) {
       return
     }
-    // The server-side rewrite must start from current content, so a failed
-    // editor save cancels the rename instead of silently proceeding.
     try {
-      await requestEditorFlush()
-    } catch {
-      notifications.error('Could not save the open document — rename cancelled')
-      return
-    }
-    try {
-      await execute.mutateAsync({ oldName: tag, newName, includeChildren })
-      // A full reload is the simplest way to refresh every cache the rename
-      // touches (open document, tag lists, aggregates, search results).
-      window.location.reload()
+      await runEditorMutation(async () => {
+        await execute.mutateAsync({ oldName: tag, newName, includeChildren })
+        // A full reload is the simplest way to refresh every cache the rename
+        // touches (open document, tag lists, aggregates, search results).
+        window.location.reload()
+      })
     } catch (e) {
       notifications.error(
         `Failed to ${isMerge ? 'merge' : 'rename'} tag: ${String(e)}`

@@ -80,6 +80,16 @@ function RouteComponent() {
         createDocMutation.mutate(
           { name: title },
           {
+            onError: (error) => {
+              if (error instanceof ORPCError && error.code === 'CONFLICT') {
+                return utils.invalidateQueries({
+                  queryKey: orpc.doc.loadDoc.key({
+                    input: { name: title },
+                    type: 'query',
+                  }),
+                })
+              }
+            },
             onSuccess: () => {
               return utils.invalidateQueries({
                 queryKey: orpc.doc.loadDoc.key({

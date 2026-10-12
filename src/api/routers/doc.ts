@@ -30,7 +30,8 @@ import { ORPCError } from '@orpc/server'
 export const upsertNoteInTx = async (
   tx: Kysely<Database>,
   name: string,
-  body: ZDoc
+  body: ZDoc,
+  insertOnly = false
 ): Promise<number> => {
   body = zdoc.parse(body)
   const { parsedBody, noteData, noteLines } = deriveNoteRows(name, body)
@@ -62,15 +63,22 @@ export const upsertNoteInTx = async (
       updatedAt: sql`now()`,
     })
     .onConflict((oc) =>
-      oc.column('title').doUpdateSet({
-        body,
-        parsed_body: sql`${JSON.stringify(parsedBody)}::jsonb`,
-        updatedAt: sql`now()`,
-        revision: sql`notes.revision + 1`,
-      })
+      insertOnly
+        ? oc.column('title').doNothing()
+        : oc.column('title').doUpdateSet({
+            body,
+            parsed_body: sql`${JSON.stringify(parsedBody)}::jsonb`,
+            updatedAt: sql`now()`,
+            revision: sql`notes.revision + 1`,
+          })
     )
     .returning('revision')
-    .executeTakeFirstOrThrow()
+    .executeTakeFirst()
+
+  if (!r)
+    throw new ORPCError('CONFLICT', {
+      message: `Document with name "${name}" already exists`,
+    })
 
   // Drop all data by note title
   await tx.deleteFrom('note_data').where('note_title', '=', name).execute()
@@ -89,8 +97,10 @@ export const upsertNoteInTx = async (
   return r.revision
 }
 
-const upsertNote = async (db: Kysely<Database>, name: string, body: ZDoc) => {
-  return await db.transaction().execute((tx) => upsertNoteInTx(tx, name, body))
+const insertNote = async (db: Kysely<Database>, name: string, body: ZDoc) => {
+  return await db
+    .transaction()
+    .execute((tx) => upsertNoteInTx(tx, name, body, true))
 }
 
 const docExists = async (
@@ -496,19 +506,21 @@ export const docRouter = {
           })
         }
 
-        const notesToUpdate =
-          linksToUpdate.length > 0
-            ? await tx
-                .selectFrom('notes')
-                .select(['body', 'title'])
-                .where(
-                  'title',
-                  'in',
-                  linksToUpdate.map((l) => l.title)
-                )
-                .where('parsed_body', 'is not', null)
-                .execute()
-            : []
+        const notesToUpdate = await tx
+          .selectFrom('notes')
+          .select(['body', 'title'])
+          .where('title', 'in', [
+            ...new Set([oldName, ...linksToUpdate.map((l) => l.title)]),
+          ])
+          .orderBy('title')
+          .forUpdate()
+          .execute()
+
+        if (!notesToUpdate.some((note) => note.title === oldName)) {
+          throw new ORPCError('NOT_FOUND', {
+            message: `Document "${oldName}" no longer exists`,
+          })
+        }
 
         let linksUpdated = 0
         // In order to be reliable about how we update InternalLinks,
@@ -586,7 +598,7 @@ export const docRouter = {
 
       const newDoc = await createNewDocument(db, name)
 
-      await upsertNote(db, name, newDoc)
+      await insertNote(db, name, newDoc)
 
       return { success: true, name }
     }),
@@ -644,7 +656,12 @@ export const docRouter = {
       // upsertNoteInTx so derived data (note_data, note_lines, parsed_body)
       // tracks the rewritten bodies and revisions record the change.
       return await db.transaction().execute(async (tx) => {
-        const allDocs = await tx.selectFrom('notes').selectAll().execute()
+        const allDocs = await tx
+          .selectFrom('notes')
+          .selectAll()
+          .orderBy('title')
+          .forUpdate()
+          .execute()
 
         const migrationReports = []
         let migratedCount = 0
@@ -779,7 +796,7 @@ export const docRouter = {
         targetDate
       )
 
-      await upsertNote(db, name, newDoc)
+      await insertNote(db, name, newDoc)
 
       return { success: true, name }
     }),

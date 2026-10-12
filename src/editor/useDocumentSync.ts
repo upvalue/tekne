@@ -1,5 +1,8 @@
 import { openDocumentOutbox, type DocumentOutbox } from './document-outbox'
-import { syncedDocumentAtom } from './document-sync-state'
+import {
+  documentMutationPendingAtom,
+  syncedDocumentAtom,
+} from './document-sync-state'
 import { diffDocuments } from '@/docs/document-patch'
 import { ORPCError } from '@orpc/client'
 import { useQueryClient, useMutation, useQuery } from '@tanstack/react-query'
@@ -20,7 +23,7 @@ import {
 } from 'react'
 import { useBlocker } from '@tanstack/react-router'
 import { notifications } from '@/lib/notifications'
-import type { useStore } from 'jotai'
+import { useAtomValue, type useStore } from 'jotai'
 import { orpc } from '@/api/client'
 import type { ZDoc } from '@/docs/schema'
 import { useEventListener } from '@/hooks/useEventListener'
@@ -32,6 +35,7 @@ export const useDocumentSync = (
   title: string,
   store: ReturnType<typeof useStore>
 ) => {
+  const mutationPending = useAtomValue(documentMutationPendingAtom, { store })
   const utils = useQueryClient()
   const updateDocMutation = useMutation({
     ...orpc.doc.patchDoc.mutationOptions(),
@@ -177,7 +181,10 @@ export const useDocumentSync = (
   const loadDocQuery = useQuery(
     orpc.doc.loadDoc.queryOptions({
       input: { name: title },
-      enabled: () => recoveryReady === queue && !queueRef.current.isDirty(),
+      enabled: () =>
+        recoveryReady === queue &&
+        !mutationPending &&
+        !queueRef.current.isDirty(),
       refetchInterval: 5000,
       retry: (failureCount, error) => {
         if (error instanceof ORPCError && error.code === 'NOT_FOUND') {
@@ -194,6 +201,7 @@ export const useDocumentSync = (
   useLayoutEffect(() => {
     if (
       recoveryReady !== queue ||
+      mutationPending ||
       loadDocQuery.isLoading ||
       !loadDocQuery.data
     ) {
@@ -221,6 +229,7 @@ export const useDocumentSync = (
     queue,
     title,
     recoveryReady,
+    mutationPending,
   ])
 
   // Every non-hydration docAtom change is a new generation to save.
@@ -237,11 +246,12 @@ export const useDocumentSync = (
    * Drain every unsaved generation. Resolves once the server acknowledged
    * them all; rejects on failure or a pending conflict, keeping local state.
    */
-  const flushDocument = useCallback((): Promise<void> => {
+  const flushDocument = useCallback(async (): Promise<void> => {
     if (!loadedRef.current) {
-      return Promise.resolve()
+      return
     }
-    return queue.flush()
+    await queue.flush()
+    await queue.persisted()
   }, [queue])
 
   const resolveConflict = useCallback(
@@ -348,6 +358,27 @@ export const useDocumentSync = (
   // the sender learns an editor is mounted at all.
   useEventListener('tekne:request-save', (event) => {
     event.detail.flush = flushDocument()
+  })
+
+  useEventListener('tekne:mutate-document', (event) => {
+    event.detail.completion = (async () => {
+      if (recoveryReady !== queue || !loadedRef.current) {
+        throw new Error('Wait for the document to finish loading')
+      }
+      if (store.get(documentMutationPendingAtom)) {
+        throw new Error('Another document change is still running')
+      }
+      store.set(documentMutationPendingAtom, true)
+      try {
+        await utilsRef.current.cancelQueries({
+          queryKey: orpc.doc.loadDoc.queryKey({ input: { name: title } }),
+        })
+        await flushDocument()
+        await event.detail.action()
+      } finally {
+        store.set(documentMutationPendingAtom, false)
+      }
+    })()
   })
 
   return {

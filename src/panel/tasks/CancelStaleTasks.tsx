@@ -1,3 +1,4 @@
+import { requestEditorFlush, runEditorMutation } from '@/lib/app-events'
 import { useMutation } from '@tanstack/react-query'
 import { useMemo, useState } from 'react'
 import { CalendarX } from 'lucide-react'
@@ -40,6 +41,7 @@ export const CancelStaleTasks = () => {
   const preview = async () => {
     if (!cutoff) return
     try {
+      await requestEditorFlush()
       const result = await propose.mutateAsync({ cutoff })
       setSelectedTitles(
         new Set(result.documents.map((document) => document.title))
@@ -53,14 +55,16 @@ export const CancelStaleTasks = () => {
   const apply = async () => {
     if (!cutoff || selectedDocuments.length === 0) return
     try {
-      await execute.mutateAsync({
-        cutoff,
-        documents: selectedDocuments.map((document) => ({
-          title: document.title,
-          expectedRevision: document.revision,
-        })),
+      await runEditorMutation(async () => {
+        await execute.mutateAsync({
+          cutoff,
+          documents: selectedDocuments.map((document) => ({
+            title: document.title,
+            expectedRevision: document.revision,
+          })),
+        })
+        window.location.reload()
       })
-      window.location.reload()
     } catch (error) {
       notifications.error(`Failed to cancel stale checkboxes: ${String(error)}`)
     }

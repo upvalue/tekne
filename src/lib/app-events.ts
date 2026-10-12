@@ -12,6 +12,10 @@ declare global {
      * listener synchronously attaches its flush promise to the detail.
      */
     'tekne:request-save': CustomEvent<{ flush?: Promise<void> }>
+    'tekne:mutate-document': CustomEvent<{
+      action: () => Promise<void>
+      completion?: Promise<void>
+    }>
     /** Open the "new document from template" dialog. */
     'tekne:new-from-template': CustomEvent<undefined>
     'tekne:navigate-document': CustomEvent<{ title: string; lineId?: string }>
@@ -29,6 +33,16 @@ export const requestEditorFlush = (): Promise<void> => {
   const detail: { flush?: Promise<void> } = {}
   window.dispatchEvent(new CustomEvent('tekne:request-save', { detail }))
   return detail.flush ?? Promise.resolve()
+}
+
+export const runEditorMutation = (
+  action: () => Promise<void>
+): Promise<void> => {
+  const detail: { action: () => Promise<void>; completion?: Promise<void> } = {
+    action,
+  }
+  window.dispatchEvent(new CustomEvent('tekne:mutate-document', { detail }))
+  return detail.completion ?? action()
 }
 
 export const navigateToDocument = (title: string, lineId?: string) => {

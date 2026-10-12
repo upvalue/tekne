@@ -4,6 +4,31 @@ import { describe, it, expect } from 'vitest'
 import { generateCollapse } from '@/docs/collapse'
 import { lineMake } from '@/docs/schema'
 
+it('keeps nested collapsed sections and their siblings hidden by the parent', () => {
+  const lines = [
+    lineMake(0, 'Parent', { collapsed: true }),
+    lineMake(1, 'Child', { collapsed: true }),
+    lineMake(2, 'Grandchild'),
+    lineMake(1, 'Sibling'),
+    lineMake(0, 'Outside'),
+  ]
+  expect(generateCollapse(lines)).toEqual([
+    'collapse-start',
+    'collapsed',
+    'collapsed',
+    'collapsed',
+    'uncollapsed',
+  ])
+  lines[0].collapsed = false
+  expect(generateCollapse(lines)).toEqual([
+    'uncollapsed',
+    'collapse-start',
+    'collapsed',
+    'uncollapsed',
+    'uncollapsed',
+  ])
+})
+
 describe('generateCollapse', () => {
   it('should return all false for lines without collapsed property', () => {
     const lines = [

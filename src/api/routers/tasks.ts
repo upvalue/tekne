@@ -114,13 +114,21 @@ export const tasksRouter = {
         let tasksUpdated = 0
         let documentsUpdated = 0
 
+        const lockedNotes = await tx
+          .selectFrom('notes')
+          .select(['title', 'body', 'revision'])
+          .where(
+            'title',
+            'in',
+            input.documents.map((document) => document.title)
+          )
+          .orderBy('title')
+          .forUpdate()
+          .execute()
+        const notes = new Map(lockedNotes.map((note) => [note.title, note]))
+
         for (const selected of input.documents) {
-          const note = await tx
-            .selectFrom('notes')
-            .select(['body', 'revision'])
-            .where('title', '=', selected.title)
-            .forUpdate()
-            .executeTakeFirst()
+          const note = notes.get(selected.title)
 
           if (!note) {
             throw new ORPCError('NOT_FOUND', {

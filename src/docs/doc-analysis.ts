@@ -41,7 +41,7 @@ export const treeifyDoc = (doc: ZDoc): ZDocTree => {
       }
     })
 
-    while (stack.length > node.indent) {
+    while (stack.length > 0 && stack[stack.length - 1].indent >= node.indent) {
       stack.pop()
     }
 
@@ -50,6 +50,7 @@ export const treeifyDoc = (doc: ZDoc): ZDocTree => {
       const parent = stack[stack.length - 1]
       node.tags.push(...parent.tags)
     }
+    node.tags = [...new Set(node.tags)]
 
     if (stack.length === 0) {
       root.children.push(node)

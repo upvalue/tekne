@@ -6,6 +6,7 @@ import {
   usePanelWidth,
 } from '@/hooks/panel-state'
 import { useAtomValue } from 'jotai'
+import { documentMutationPendingAtom } from '@/editor/document-sync-state'
 import { PanelRight } from 'lucide-react'
 import { useCallback, useState } from 'react'
 
@@ -15,6 +16,7 @@ interface EditorLayoutProps {
 }
 
 export function EditorLayout({ editor, sidepanel }: EditorLayoutProps) {
+  const mutationPending = useAtomValue(documentMutationPendingAtom)
   const wide = useAtomValue(isWideViewportAtom, { store: uiStore })
   const [panelVisible, setPanelVisible] = usePanelVisible()
   const [panelWidth, setPanelWidth] = usePanelWidth()
@@ -49,7 +51,11 @@ export function EditorLayout({ editor, sidepanel }: EditorLayoutProps) {
   )
 
   return (
-    <div className="w-full flex flex-col relative">
+    <div
+      inert={mutationPending}
+      aria-busy={mutationPending}
+      className="w-full flex flex-col relative"
+    >
       <div className="flex flex-grow">
         <div className="flex-1 min-w-0 Editor">{editor}</div>
 

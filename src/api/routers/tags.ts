@@ -79,7 +79,8 @@ const getArchivedTagNames = async (
  */
 const proposeTagRename = async (
   db: Kysely<Database>,
-  input: RenameInput
+  input: RenameInput,
+  lockDocuments = false
 ): Promise<TagRenameProposal> => {
   const allNames = await getAllTagNames(db)
 
@@ -123,6 +124,7 @@ const proposeTagRename = async (
             candidates.map((c) => c.note_title)
           )
           .orderBy('title')
+          .$if(lockDocuments, (query) => query.forUpdate())
           .execute()
 
   for (const note of notes) {
@@ -433,7 +435,7 @@ export const tagsRouter = {
     .input(renameInputSchema)
     .handler(async ({ input, context: { db } }) => {
       return await db.transaction().execute(async (tx) => {
-        const proposal = await proposeTagRename(tx, input)
+        const proposal = await proposeTagRename(tx, input, true)
 
         for (const [title, newDoc] of proposal.newDocs) {
           await upsertNoteInTx(tx, title, newDoc)

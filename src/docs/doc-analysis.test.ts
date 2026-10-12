@@ -1,8 +1,48 @@
 import { describe, test, expect } from 'vitest'
-import { treeifyDoc } from '@/docs/doc-analysis'
+import { extractDocData, treeifyDoc } from '@/docs/doc-analysis'
 import { lineMake, docMake, type ZDoc } from '@/docs/schema'
 
 describe('treeifyDoc', () => {
+  test('equal indentation remains siblings across a skipped level', () => {
+    const tree = treeifyDoc(
+      docMake([
+        lineMake(0, 'Project'),
+        lineMake(2, 'First #wrong'),
+        lineMake(2, 'Second'),
+      ])
+    )
+    expect(tree.children[0].children.map((line) => line.mdContent)).toEqual([
+      'First #wrong',
+      'Second',
+    ])
+    expect(tree.children[0].children[1].tags).toEqual([])
+  })
+
+  test('repeated and inherited tags count a task and its time once', () => {
+    const tree = treeifyDoc(
+      docMake([
+        lineMake(0, '#work'),
+        lineMake(1, 'Task #work #work', {
+          datumTaskStatus: 'complete',
+          datumTimeSeconds: 60,
+        }),
+      ])
+    )
+    const data = extractDocData(tree.children)
+    expect(data.filter((datum) => datum.datumType === 'task')).toHaveLength(1)
+    expect(
+      data
+        .filter((datum) => datum.datumType === 'timer')
+        .map((datum) => datum.datumTimeSeconds)
+    ).toEqual([60])
+  })
+
+  test('traversal terminates even for unchecked negative indentation', () => {
+    const tree = treeifyDoc(
+      docMake([lineMake(-1, 'Invalid'), lineMake(0, 'Next')])
+    )
+    expect(tree.children[0].mdContent).toBe('Invalid')
+  })
   test('should handle empty document', () => {
     const doc: ZDoc = docMake([])
 

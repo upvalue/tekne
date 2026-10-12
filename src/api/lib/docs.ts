@@ -63,7 +63,12 @@ export const deriveNoteRows = (title: string, body: ZDoc) => {
 export const recomputeAllDocumentData = async (db: Kysely<Database>) => {
   const results = await db.transaction().execute(async (tx) => {
     // Get all documents
-    const allDocs = await tx.selectFrom('notes').selectAll().execute()
+    const allDocs = await tx
+      .selectFrom('notes')
+      .selectAll()
+      .orderBy('title')
+      .forUpdate()
+      .execute()
 
     // Clear all existing derived data
     await tx.deleteFrom('note_data').execute()

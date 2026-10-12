@@ -1,3 +1,4 @@
+import { requestEditorFlush } from '@/lib/app-events'
 import { useState } from 'react'
 import { Link } from '@tanstack/react-router'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
@@ -61,9 +62,7 @@ const TimerCard = ({ timer, now }: { timer: Timer; now: number }) => {
     setBusy(true)
     try {
       if (action === 'save' || action === 'retarget') {
-        const detail: { flush?: Promise<void> } = {}
-        window.dispatchEvent(new CustomEvent('tekne:request-save', { detail }))
-        await detail.flush
+        await requestEditorFlush()
       }
       const result = await orpcClient.timers.change({
         id: timer.id,
