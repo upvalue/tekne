@@ -156,7 +156,7 @@ export const Tools = () => {
   )
 
   return (
-    <div className="p-4">
+    <div className="p-3">
       <Tabs
         value={activeToolTab}
         onValueChange={(value) => {

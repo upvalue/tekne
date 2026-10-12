@@ -150,7 +150,7 @@ const AggregateResults = ({
 }
 
 const SearchHelp = () => (
-  <div className="p-4 space-y-4">
+  <div className="p-3 space-y-4">
     <p className="text-sm text-text-2 font-medium">
       Search across all documents
     </p>

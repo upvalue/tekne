@@ -19,7 +19,7 @@ export function Panel() {
     <aside className="flex flex-col h-dvh pt-4">
       <nav
         aria-label="Panel sections"
-        className="flex items-center gap-1 pb-2 px-1 text-xs"
+        className="flex items-center gap-1 pb-2 px-3 text-xs"
       >
         <div className="flex gap-0.5 rounded-lg bg-white/[0.04] p-0.5">
           {[
@@ -74,7 +74,7 @@ export function Panel() {
         <Tooltip label="Hide panel">
           <button
             aria-label="Hide panel"
-            className="p-2 text-muted hover:text-text"
+            className="-mr-2 p-2 text-muted hover:text-text"
             onClick={() => setPanelVisible(false)}
           >
             <X size={16} />
