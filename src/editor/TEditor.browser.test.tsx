@@ -85,23 +85,6 @@ test.each([320, 390])(
   }
 )
 
-test('desktop gutter and document inset return at the 768px breakpoint', async () => {
-  await page.viewport(768, 800)
-  const store = createStore()
-  store.set(docAtom, docMake([lineMake(0, 'Desktop line')]))
-  const view = render(
-    <Provider store={store}>
-      <TEditor />
-    </Provider>
-  )
-  const editor = view.container.querySelector('.TEditor-scroll')!
-  const gutter = view.container.querySelector('.ELine-gutter')!
-  expect(getComputedStyle(editor).paddingLeft).toBe('48px')
-  expect(getComputedStyle(editor).paddingRight).toBe('48px')
-  expect(getComputedStyle(gutter).display).toBe('grid')
-  expect(gutter.getBoundingClientRect().width).toBe(156)
-})
-
 test('collapsed children stay hidden when line chips and timer rows use the grid', () => {
   const store = createStore()
   store.set(

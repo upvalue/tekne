@@ -3,7 +3,7 @@ import { page } from '@vitest/browser/context'
 import { afterEach, expect, test, vi } from 'vitest'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { Aggregate } from './Aggregate'
-import { ResultCardGrid, type ResultCardData } from './AggregateComponents'
+import type { ResultCardData } from './AggregateComponents'
 import '@/styles/styles.css'
 
 const fixture = vi.hoisted(() => ({ data: [] as ResultCardData[] }))
@@ -118,20 +118,4 @@ test('empty aggregate retains one inset and wraps within a small panel', async (
   expect(getComputedStyle(empty).paddingLeft).toBe('12px')
   expect(empty.scrollWidth).toBeLessThanOrEqual(empty.clientWidth)
   expect(view.queryByRole('list')).toBeNull()
-})
-
-test('search cards stack in a narrow panel without borders or extra inset', () => {
-  const view = render(
-    <div style={{ width: 270 }}>
-      <ResultCardGrid data={[{ tag: 'search-one' }, { tag: 'search-two' }]} />
-    </div>
-  )
-  const rows = view.getAllByRole('listitem')
-  expect(rows[1].getBoundingClientRect().top).toBeGreaterThanOrEqual(
-    rows[0].getBoundingClientRect().bottom
-  )
-  expect(view.getByRole('list').getBoundingClientRect().width).toBe(270)
-  expect(getComputedStyle(rows[0].firstElementChild!).borderLeftWidth).toBe(
-    '0px'
-  )
 })

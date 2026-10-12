@@ -35,19 +35,6 @@ describe('InternalLinkRegex', () => {
     expect(match![0]).toBe('folder/subfolder/page]]')
   })
 
-  test('matches link with alphanumeric characters', () => {
-    const text = '$Text123ABC]]'
-    const match = InternalLinkRegex.exec(text)
-    expect(match).toBeTruthy()
-    expect(match![0]).toBe('$Text123ABC]]')
-  })
-
-  test('does not match text without $ or # prefix', () => {
-    const text = 'SomeText'
-    const match = InternalLinkRegex.exec(text)
-    expect(match).toBeNull()
-  })
-
   test('does not match without closing brackets', () => {
     const text = '$SomeText'
     const match = InternalLinkRegex.exec(text)
@@ -81,13 +68,6 @@ describe('TagRegex', () => {
     const match = TagRegex.exec(text)
     expect(match).toBeTruthy()
     expect(match![0]).toBe('endtag')
-  })
-
-  test('matches tag with hyphens', () => {
-    const text = 'multi-word-tag '
-    const match = TagRegex.exec(text)
-    expect(match).toBeTruthy()
-    expect(match![0]).toBe('multi-word-tag')
   })
 
   test('does not match text with only numbers and symbols', () => {

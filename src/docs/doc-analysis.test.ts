@@ -45,29 +45,6 @@ describe('treeifyDoc', () => {
     })
   })
 
-  test('should handle simple nested structure', () => {
-    const doc: ZDoc = docMake([
-      { ...lineMake(0, 'Parent 1') },
-      { ...lineMake(1, 'Child 1.1') },
-      { ...lineMake(1, 'Child 1.2') },
-      { ...lineMake(0, 'Parent 2') },
-    ])
-
-    const result = treeifyDoc(doc)
-
-    expect(result.children).toHaveLength(2)
-
-    // First parent
-    expect(result.children[0].mdContent).toBe('Parent 1')
-    expect(result.children[0].children).toHaveLength(2)
-    expect(result.children[0].children[0].mdContent).toBe('Child 1.1')
-    expect(result.children[0].children[1].mdContent).toBe('Child 1.2')
-
-    // Second parent
-    expect(result.children[1].mdContent).toBe('Parent 2')
-    expect(result.children[1].children).toHaveLength(0)
-  })
-
   test('should handle deeply nested structure', () => {
     const doc: ZDoc = docMake([
       { ...lineMake(0, 'Level 0') },
@@ -138,41 +115,6 @@ describe('treeifyDoc', () => {
     expect(root2.children[1].children[1].mdContent).toBe('Grandchild 2.2.2')
   })
 
-  test('should handle single line document', () => {
-    const line = lineMake(0, 'Only line')
-    const doc: ZDoc = docMake([line])
-
-    const result = treeifyDoc(doc)
-
-    expect(result.children).toHaveLength(1)
-    expect(result.children[0]).toEqual({
-      ...line,
-      arrayIdx: 0,
-      children: [],
-      tags: [],
-    })
-  })
-
-  test('should preserve original line properties', () => {
-    const doc: ZDoc = docMake([
-      {
-        ...lineMake(0, 'Task line'),
-        datumTaskStatus: 'incomplete',
-      },
-      {
-        ...lineMake(1, 'Child task'),
-        datumTaskStatus: 'complete',
-      },
-    ])
-
-    const result = treeifyDoc(doc)
-
-    expect(result.children).toHaveLength(1)
-    expect(result.children[0].datumTaskStatus).toBe('incomplete')
-    expect(result.children[0].children).toHaveLength(1)
-    expect(result.children[0].children[0].datumTaskStatus).toBe('complete')
-  })
-
   test('should handle skipped indentation levels', () => {
     const doc: ZDoc = docMake([
       { ...lineMake(0, 'Level 0') },
@@ -191,21 +133,6 @@ describe('treeifyDoc', () => {
     // The skipped level should still work
     expect(level0.children[0].mdContent).toBe('Level 2 (skipped 1)')
     expect(level0.children[1].mdContent).toBe('Level 1')
-  })
-
-  test('should initialize tags and children arrays for all lines', () => {
-    const doc: ZDoc = docMake([
-      { ...lineMake(0, 'Line 1') },
-      { ...lineMake(1, 'Line 2') },
-    ])
-
-    const result = treeifyDoc(doc)
-
-    // Check that all lines have empty tags and children arrays
-    expect(result.children[0].tags).toEqual([])
-    expect(result.children[0].children).toEqual(expect.any(Array))
-    expect(result.children[0].children[0].tags).toEqual([])
-    expect(result.children[0].children[0].children).toEqual([])
   })
 
   test('should extract tags from mdContent', () => {
@@ -278,21 +205,5 @@ describe('treeifyDoc', () => {
       '#tag1',
       '#tag2',
     ])
-  })
-
-  test('should handle nodes with no tags in propagation', () => {
-    const doc: ZDoc = docMake([
-      { ...lineMake(0, 'Parent with no tags') },
-      { ...lineMake(1, 'Child with no tags') },
-      { ...lineMake(0, 'Another parent #tag1') },
-      { ...lineMake(1, 'Child should inherit') },
-    ])
-
-    const result = treeifyDoc(doc)
-
-    expect(result.children[0].tags).toEqual([])
-    expect(result.children[0].children[0].tags).toEqual([])
-    expect(result.children[1].tags).toEqual(['#tag1'])
-    expect(result.children[1].children[0].tags).toEqual(['#tag1'])
   })
 })

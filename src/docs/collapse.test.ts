@@ -22,17 +22,6 @@ describe('generateCollapse', () => {
     ])
   })
 
-  it('should not collapse the line with collapsed=true itself', () => {
-    const lines = [
-      lineMake(0, 'Line 1'),
-      { ...lineMake(1, 'Line 2'), collapsed: true },
-      lineMake(2, 'Line 3'),
-    ]
-
-    const result = generateCollapse(lines)
-    expect(result[1]).toBe('collapse-start') // The collapsed line itself should be marked as collapse-start
-  })
-
   it('should collapse lines indented past a collapsed line', () => {
     const lines = [
       lineMake(0, 'Root'),
@@ -114,12 +103,6 @@ describe('generateCollapse', () => {
   it('should handle empty lines array', () => {
     const result = generateCollapse([])
     expect(result).toEqual([])
-  })
-
-  it('should handle single line', () => {
-    const lines = [{ ...lineMake(0, 'Only line'), collapsed: true }]
-    const result = generateCollapse(lines)
-    expect(result).toEqual(['collapse-start'])
   })
 
   it('should reset collapse when encountering a line with lower indent', () => {

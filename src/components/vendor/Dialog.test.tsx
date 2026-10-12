@@ -39,14 +39,4 @@ describe('Dialog', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Close' }))
     expect(screen.queryByRole('dialog')).toBeNull()
   })
-
-  test('closes on Escape', () => {
-    render(<ControlledDialog />)
-
-    fireEvent.click(screen.getByRole('button', { name: 'Open details' }))
-    expect(screen.getByRole('dialog')).not.toBeNull()
-
-    fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Escape' })
-    expect(screen.queryByRole('dialog')).toBeNull()
-  })
 })

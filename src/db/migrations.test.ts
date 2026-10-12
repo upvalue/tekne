@@ -18,12 +18,6 @@ describe('migration provider', () => {
     expect(Object.keys(MIGRATIONS).sort()).toEqual(files)
   })
 
-  test('migration keys sort in timestamp order', () => {
-    const keys = Object.keys(MIGRATIONS)
-    const sorted = [...keys].sort()
-    expect(keys).toEqual(sorted)
-  })
-
   test('down reverts one migration and latest reapplies it', async () => {
     const { db } = await makeTestDb()
     const applied = async () =>

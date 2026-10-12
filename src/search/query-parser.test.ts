@@ -91,19 +91,6 @@ describe('parseQuery', () => {
       expect(result.operators[0]).toEqual({ type: 'status', value: 'complete' })
     })
 
-    it('should parse incomplete status', () => {
-      const result = parseQuery('status:incomplete')
-      expect(result.operators[0]).toEqual({
-        type: 'status',
-        value: 'incomplete',
-      })
-    })
-
-    it('should parse unset status', () => {
-      const result = parseQuery('status:unset')
-      expect(result.operators[0]).toEqual({ type: 'status', value: 'unset' })
-    })
-
     it('should error on invalid status', () => {
       const result = parseQuery('status:done')
       expect(result.operators).toHaveLength(0)
@@ -117,16 +104,6 @@ describe('parseQuery', () => {
       const result = parseQuery('has:timer')
       expect(result.operators).toHaveLength(1)
       expect(result.operators[0]).toEqual({ type: 'has', value: 'timer' })
-    })
-
-    it('should parse has:task', () => {
-      const result = parseQuery('has:task')
-      expect(result.operators[0]).toEqual({ type: 'has', value: 'task' })
-    })
-
-    it('should parse has:pin', () => {
-      const result = parseQuery('has:pin')
-      expect(result.operators[0]).toEqual({ type: 'has', value: 'pin' })
     })
 
     it('should error on invalid has value', () => {

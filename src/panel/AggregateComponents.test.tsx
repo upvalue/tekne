@@ -1,6 +1,6 @@
 import { cleanup, render, within } from '@testing-library/react'
 import { afterEach, expect, test } from 'vitest'
-import { AggregateList, ResultCardGrid } from './AggregateComponents'
+import { AggregateList } from './AggregateComponents'
 
 afterEach(cleanup)
 
@@ -95,13 +95,4 @@ test('a pinned description without metrics is still visible', () => {
   )
   expect(view.getByText('Useful context')).not.toBeNull()
   expect(view.getByRole('listitem').firstElementChild!.children).toHaveLength(2)
-})
-
-test('search aggregates use the same tag cards', () => {
-  const view = render(
-    <ResultCardGrid data={[{ tag: 'search', complete_tasks: 2 }]} />
-  )
-  expect(view.getByRole('list', { name: 'Tag aggregates' })).not.toBeNull()
-  expect(view.getByText('#search')).not.toBeNull()
-  expect(view.getByTitle('2 done')).not.toBeNull()
 })

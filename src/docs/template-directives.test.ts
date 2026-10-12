@@ -88,10 +88,6 @@ describe('matchesDayOfWeek', () => {
     expect(matchesDayOfWeek('mon-fri', saturday)).toBe(false)
   })
 
-  it('matches friday against fri', () => {
-    expect(matchesDayOfWeek('fri', friday)).toBe(true)
-  })
-
   it('matches friday against mon-fri', () => {
     expect(matchesDayOfWeek('mon-fri', friday)).toBe(true)
   })

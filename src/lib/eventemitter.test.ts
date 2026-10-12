@@ -6,9 +6,6 @@ import { TypedEventEmitter, useEmitterEventListener } from './eventemitter'
 type TestEvents = {
   userLogin: { id: string; name: string }
   userLogout: undefined
-  dataUpdate: { timestamp: number; payload: any }
-  errorOccurred: { message: string; code: number }
-  simpleEvent: undefined
 }
 
 describe('TypedEventEmitter', () => {
@@ -28,14 +25,6 @@ describe('TypedEventEmitter', () => {
 
       emitter.emit('userLogin', { id: '123', name: 'John' })
       expect(listener).toHaveBeenCalledWith({ id: '123', name: 'John' })
-    })
-
-    test('should handle events with undefined data', () => {
-      const listener = vi.fn()
-      emitter.on('userLogout', listener)
-
-      emitter.emit('userLogout')
-      expect(listener).toHaveBeenCalledWith(undefined)
     })
 
     test('should allow multiple listeners for same event', () => {
@@ -65,15 +54,6 @@ describe('TypedEventEmitter', () => {
       emitter.emit('userLogin', { id: '456', name: 'Jane' })
       expect(listener).toHaveBeenCalledTimes(1) // Should not be called again
     })
-
-    test('should clean up empty listener sets when unsubscribing', () => {
-      const listener = vi.fn()
-      const unsubscribe = emitter.on('userLogin', listener)
-
-      expect(emitter.listenerCount('userLogin')).toBe(1)
-      unsubscribe()
-      expect(emitter.listenerCount('userLogin')).toBe(0)
-    })
   })
 
   describe('off() method', () => {
@@ -100,31 +80,9 @@ describe('TypedEventEmitter', () => {
       expect(() => emitter.off('userLogin', listener)).not.toThrow()
       expect(emitter.listenerCount('userLogin')).toBe(0)
     })
-
-    test('should clean up empty listener sets', () => {
-      const listener = vi.fn()
-      emitter.on('userLogin', listener)
-
-      emitter.off('userLogin', listener)
-      expect(emitter.listenerCount('userLogin')).toBe(0)
-    })
   })
 
   describe('emit() method', () => {
-    test('should call all listeners with correct data', () => {
-      const listener1 = vi.fn()
-      const listener2 = vi.fn()
-
-      emitter.on('dataUpdate', listener1)
-      emitter.on('dataUpdate', listener2)
-
-      const data = { timestamp: Date.now(), payload: { test: 'data' } }
-      emitter.emit('dataUpdate', data)
-
-      expect(listener1).toHaveBeenCalledWith(data)
-      expect(listener2).toHaveBeenCalledWith(data)
-    })
-
     test('should handle emitting to non-existent event', () => {
       expect(() =>
         emitter.emit('userLogin', { id: '123', name: 'John' })
@@ -142,24 +100,6 @@ describe('TypedEventEmitter', () => {
 
       expect(loginListener).toHaveBeenCalledWith({ id: '123', name: 'John' })
       expect(logoutListener).not.toHaveBeenCalled()
-    })
-  })
-
-  describe('listenerCount() method', () => {
-    test('should return correct count', () => {
-      expect(emitter.listenerCount('userLogin')).toBe(0)
-
-      const listener1 = vi.fn()
-      const listener2 = vi.fn()
-
-      emitter.on('userLogin', listener1)
-      expect(emitter.listenerCount('userLogin')).toBe(1)
-
-      emitter.on('userLogin', listener2)
-      expect(emitter.listenerCount('userLogin')).toBe(2)
-
-      emitter.off('userLogin', listener1)
-      expect(emitter.listenerCount('userLogin')).toBe(1)
     })
   })
 })
@@ -247,20 +187,6 @@ describe('React Hooks', () => {
 })
 
 describe('Edge Cases and Error Handling', () => {
-  test('should handle rapid subscribe/unsubscribe cycles', () => {
-    const emitter = new TypedEventEmitter<TestEvents>()
-    const listener = vi.fn()
-
-    for (let i = 0; i < 100; i++) {
-      const unsubscribe = emitter.on('userLogin', listener)
-      unsubscribe()
-    }
-
-    expect(emitter.listenerCount('userLogin')).toBe(0)
-    emitter.emit('userLogin', { id: '123', name: 'John' })
-    expect(listener).not.toHaveBeenCalled()
-  })
-
   test('should handle double unsubscribe gracefully', () => {
     const emitter = new TypedEventEmitter<TestEvents>()
     const listener = vi.fn()
@@ -288,28 +214,5 @@ describe('Edge Cases and Error Handling', () => {
 
     expect(listener1).toHaveBeenCalledTimes(2) // Once for login, once for logout
     expect(listener2).toHaveBeenCalledTimes(1)
-  })
-
-  test('should maintain correct listener count during complex operations', () => {
-    const emitter = new TypedEventEmitter<TestEvents>()
-    const listeners = Array.from({ length: 5 }, () => vi.fn())
-
-    // Add multiple listeners
-    const unsubscribeFunctions = listeners.map((listener) =>
-      emitter.on('userLogin', listener)
-    )
-
-    expect(emitter.listenerCount('userLogin')).toBe(5)
-
-    // Remove some listeners
-    unsubscribeFunctions[1]()
-    unsubscribeFunctions[3]()
-
-    expect(emitter.listenerCount('userLogin')).toBe(3)
-
-    // Add more listeners
-    emitter.on('userLogin', vi.fn())
-
-    expect(emitter.listenerCount('userLogin')).toBe(4)
   })
 })

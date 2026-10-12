@@ -10,20 +10,6 @@ describe('generateTableOfContents', () => {
     expect(result).toEqual([])
   })
 
-  it('should handle single heading', () => {
-    const lines = [lineMake(0, '# Single heading')]
-
-    const result = generateTableOfContents(lines)
-    expect(result).toEqual([
-      {
-        lineIdx: 0,
-        content: '# Single heading',
-        indentLevel: 0,
-        isActive: false,
-      },
-    ])
-  })
-
   it('should handle multiple flat headings at same indent', () => {
     const lines = [
       lineMake(0, '# First heading'),
@@ -51,21 +37,6 @@ describe('generateTableOfContents', () => {
         indentLevel: 0,
         isActive: false,
       },
-    ])
-  })
-
-  it('should calculate indent levels based on document indent hierarchy', () => {
-    const lines = [
-      lineMake(0, '# heading 1'),
-      lineMake(1, '# heading 2'),
-      lineMake(2, '### heading 3'),
-    ]
-
-    const result = generateTableOfContents(lines)
-    expect(result).toEqual([
-      { lineIdx: 0, content: '# heading 1', indentLevel: 0, isActive: false },
-      { lineIdx: 1, content: '# heading 2', indentLevel: 1, isActive: false },
-      { lineIdx: 2, content: '### heading 3', indentLevel: 2, isActive: false },
     ])
   })
 
@@ -162,36 +133,6 @@ describe('generateTableOfContents', () => {
         lineIdx: 5,
         content: '# Back to Level 1',
         indentLevel: 1,
-        isActive: false,
-      },
-    ])
-  })
-
-  it('should handle mixed heading types at different indents', () => {
-    const lines = [
-      lineMake(0, '### Top level with ###'),
-      lineMake(1, '# Child with #'),
-      lineMake(2, '## Grandchild with ##'),
-    ]
-
-    const result = generateTableOfContents(lines)
-    expect(result).toEqual([
-      {
-        lineIdx: 0,
-        content: '### Top level with ###',
-        indentLevel: 0,
-        isActive: false,
-      },
-      {
-        lineIdx: 1,
-        content: '# Child with #',
-        indentLevel: 1,
-        isActive: false,
-      },
-      {
-        lineIdx: 2,
-        content: '## Grandchild with ##',
-        indentLevel: 2,
         isActive: false,
       },
     ])

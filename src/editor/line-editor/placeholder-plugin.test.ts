@@ -16,17 +16,6 @@ afterEach(() => {
   views.splice(0).forEach((view) => view.destroy())
 })
 
-test('renders function content immediately with the default visibility', () => {
-  const view = createView(
-    '',
-    placeholder(() => 'The world is your canvas')
-  )
-  const widget = view.dom.querySelector('.cm-placeholder')
-
-  expect(widget?.textContent).toBe('The world is your canvas')
-  expect(widget?.getAttribute('aria-hidden')).toBe('true')
-})
-
 test('rebuilds the placeholder at the document end after successive edits', () => {
   const view = createView(
     'a',

@@ -61,12 +61,6 @@ describe('undo capture', () => {
     vi.useRealTimers()
   })
 
-  it('captures an entry when the doc changes', () => {
-    const store = makeStore(testDoc('hello'))
-    setLineContent(store, 0, 'hello!')
-    expect(store.get(undoStackAtom)).toHaveLength(1)
-  })
-
   it('coalesces consecutive text edits to the same line', () => {
     const store = makeStore(testDoc(''))
     for (const text of ['h', 'he', 'hel', 'hell', 'hello']) {

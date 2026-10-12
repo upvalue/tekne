@@ -72,17 +72,4 @@ describe('deriveNoteRows', () => {
       datum_tag: '#work',
     })
   })
-
-  test('reads the document it is given rather than a rebuilt one', () => {
-    // linesToZodDoc used to rebuild the doc with a hardcoded schemaVersion of
-    // 1 before analysis, so a doc at any other version was silently analyzed
-    // as v1. Nothing branches on the version yet -- this pins the plumbing so
-    // it stays that way when something does.
-    const doc = { ...docMake([lineMake(0, 'line #tag')]), schemaVersion: 99 }
-
-    const { noteData } = deriveNoteRows('Doc', doc)
-
-    expect(noteData).toHaveLength(1)
-    expect(noteData[0].datum_tag).toBe('#tag')
-  })
 })

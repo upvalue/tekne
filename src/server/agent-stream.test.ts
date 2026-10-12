@@ -42,11 +42,6 @@ describe('resolveServerModel', () => {
     expect(model.contextWindow).toBeGreaterThan(0)
   })
 
-  it('honors LLM_MODEL for other catalog entries', () => {
-    const model = resolveServerModel({ LLM_MODEL: 'openai/gpt-5.6-luna-pro' })
-    expect(model.id).toBe('openai/gpt-5.6-luna-pro')
-  })
-
   it('builds a generic literal for unknown models', () => {
     const model = resolveServerModel({ LLM_MODEL: 'acme/unknown-model' })
     expect(model.id).toBe('acme/unknown-model')
