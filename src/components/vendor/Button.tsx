@@ -20,7 +20,7 @@ export const Button = forwardRef(function Button(
     'relative inline-flex items-center justify-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent data-disabled:opacity-50',
     outline || plain || !color
       ? 'bg-white/5 text-text-2 hover:bg-white/9 hover:text-text'
-      : 'bg-accent-fill text-on-accent hover:brightness-110',
+      : 'bg-mark text-text hover:brightness-125',
     className
   )
 

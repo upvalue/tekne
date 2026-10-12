@@ -62,7 +62,7 @@ const formatLiveTime = (seconds: number) => {
 const button =
   'inline-flex items-center justify-center gap-1.5 rounded-md bg-white/6 px-2.5 py-1.5 text-text-2 hover:bg-white/10 hover:text-text'
 const primaryButton =
-  'inline-flex items-center justify-center gap-1.5 rounded-md bg-accent-fill px-2.5 py-1.5 font-semibold text-on-accent hover:brightness-110'
+  'inline-flex items-center justify-center gap-1.5 rounded-md bg-mark px-2.5 py-1.5 font-semibold text-text hover:brightness-125'
 
 export const TimerBadge = ({
   lineInfo,

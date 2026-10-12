@@ -110,7 +110,7 @@ export const SavedSearches = ({
           />
           <button
             disabled={save.isPending || !name.trim()}
-            className="rounded bg-accent-fill text-on-accent px-2 text-xs"
+            className="rounded bg-mark text-text px-2 text-xs hover:brightness-125"
           >
             Save
           </button>
