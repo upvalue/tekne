@@ -1,4 +1,4 @@
-import { useWritingPrompt, writingPrompt } from '@/hooks/writing-prompt'
+import { writingPrompt } from '@/hooks/writing-prompt'
 import { flushSync } from 'react-dom'
 import {
   useCallback,
@@ -159,7 +159,6 @@ const EditorBoundaryDropZone = ({
  * The top level editor component.
  */
 export const TEditor = () => {
-  const [promptIndex] = useWritingPrompt()
   const [doc, setDoc] = useAtom(docAtom)
   const [dragSelectedLineIds, setDragSelectedLineIds] = useAtom(
     dragSelectedLineIdsAtom
@@ -494,9 +493,7 @@ export const TEditor = () => {
 
           <input
             aria-label="New line"
-            placeholder={
-              showWritingPrompt ? writingPrompt(promptIndex, lastLine?.id) : ''
-            }
+            placeholder={showWritingPrompt ? writingPrompt(lastLine?.id) : ''}
             className="NewLinePrompt ml-36 max-md:ml-0 w-[calc(100%-9rem)] max-md:w-full bg-transparent py-1 pl-6 text-base leading-6 text-muted outline-none"
             onFocus={() => {
               const lineIdx = doc.children.length

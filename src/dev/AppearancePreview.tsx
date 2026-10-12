@@ -1,11 +1,8 @@
-import { useLoadingStyle, type LoadingStyle } from '@/lib/loading-style'
 import { useState } from 'react'
 import { toast } from 'sonner'
 import { ErrorState } from '@/components/ErrorState'
-import { LoadingIndicator } from '@/components/LoadingIndicator'
 import { Button } from '@/components/vendor/Button'
 import { SaveConflictDialog } from '@/editor/SaveConflictDialog'
-import { useWritingPrompt, WRITING_PROMPTS } from '@/hooks/writing-prompt'
 
 const SAMPLES = {
   load: {
@@ -35,8 +32,6 @@ export function AppearancePreview() {
   const [sample, setSample] = useState<keyof typeof SAMPLES>('load')
   const [conflict, setConflict] = useState(false)
   const [retried, setRetried] = useState(false)
-  const [loadingStyle, setLoadingStyle] = useLoadingStyle()
-  const [prompt, setPrompt] = useWritingPrompt()
   return (
     <div className="space-y-5 text-sm">
       <section className="space-y-2">
@@ -97,44 +92,6 @@ export function AppearancePreview() {
           open={conflict}
           onResolve={() => setConflict(false)}
         />
-      </section>
-      <section className="space-y-2">
-        <h2 className="font-medium">Loading</h2>
-        <div className="flex flex-wrap gap-2">
-          {(['spinner', 'dots', 'pulse'] as LoadingStyle[]).map((variant) => (
-            <button
-              key={variant}
-              onClick={() => setLoadingStyle(variant)}
-              aria-pressed={loadingStyle === variant}
-              className={`flex items-center gap-1 rounded px-2 py-1 text-xs ${loadingStyle === variant ? 'bg-accent-tint text-accent' : 'bg-raised text-muted'}`}
-            >
-              <LoadingIndicator
-                variant={variant}
-                label={`${variant} preview`}
-              />
-              {variant}
-            </button>
-          ))}
-        </div>
-      </section>
-      <section className="space-y-2">
-        <h2 className="font-medium">Writing prompt</h2>
-        <p className="text-xs text-muted">
-          Choose a static mark to try in empty lines.
-        </p>
-        <div className="flex flex-wrap gap-2">
-          {WRITING_PROMPTS.map((mark, index) => (
-            <button
-              key={mark}
-              aria-label={`Writing prompt variant ${index + 1}`}
-              aria-pressed={prompt === index}
-              onClick={() => setPrompt(index)}
-              className={`rounded px-2 py-1 text-lg ${prompt === index ? 'bg-accent-tint text-accent' : 'bg-raised text-muted'}`}
-            >
-              {mark}
-            </button>
-          ))}
-        </div>
       </section>
     </div>
   )
