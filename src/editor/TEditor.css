@@ -509,7 +509,7 @@
   }
 }
 .CommandPalette-container {
-  background: color-mix(in srgb, var(--color-raised) 94%, transparent);
+  background: color-mix(in srgb, var(--color-raised) 90%, transparent);
   backdrop-filter: blur(20px) saturate(120%);
   -webkit-backdrop-filter: blur(20px) saturate(120%);
   border: 1px solid #ffffff14;
