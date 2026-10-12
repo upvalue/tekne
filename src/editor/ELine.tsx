@@ -165,8 +165,6 @@ const ELineImpl = (lineInfo: ELineProps) => {
       className={cn(
         'ELine relative w-full py-[3px] flex flex-wrap items-start',
         !line.mdContent && 'ELine-empty',
-        line.datumTaskStatus === 'incomplete' && 'ELine-cancelled',
-        line.datumTaskStatus === 'complete' && 'ELine-complete',
         collapseState === 'collapsed' && 'hidden',
         isFocused && 'ELine-focused',
         lineInfo.isTouchSelected && 'ELine-touch-selected',

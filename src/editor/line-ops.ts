@@ -24,7 +24,7 @@ import {
 import { getLineId, getOutlineIds, getOutlineRange } from './outline-selection'
 import { moveSelectedLines } from './line-reorder'
 import { cancelTimer } from './timer/timer-controller'
-import { toast } from 'sonner'
+import { notifications } from '@/lib/notifications'
 
 type EditorStore = ReturnType<typeof useStore>
 
@@ -118,7 +118,7 @@ export const togglePin = (store: EditorStore, lineIdx: number): void => {
   store.set(docAtom, (draft) => {
     draft.children[lineIdx].datumPinnedAt = next
   })
-  toast.success(next ? 'Line pinned' : 'Line unpinned', {
+  notifications.success(next ? 'Line pinned' : 'Line unpinned', {
     action: {
       label: 'Undo',
       onClick: () =>

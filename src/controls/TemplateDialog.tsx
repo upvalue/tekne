@@ -3,7 +3,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { orpc } from '@/api/client'
 import { docRoute, formatDate } from '@/lib/utils'
-import { toast } from 'sonner'
+import { notifications } from '@/lib/notifications'
 import {
   Dialog,
   DialogContent,
@@ -30,10 +30,10 @@ export const TemplateDialog = () => {
     orpc.doc.createDocFromTemplate.mutationOptions({
       onSuccess: (data) => {
         setOpen(false)
-        navigate({ to: docRoute(data.name) })
+        return navigate({ to: docRoute(data.name) })
       },
       onError: (error) => {
-        toast.error(error.message)
+        notifications.error(error.message)
       },
     })
   )

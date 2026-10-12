@@ -287,7 +287,7 @@ export const TouchBar = () => {
   return (
     <>
       {sheetOpen && line !== null && lineIdx !== null && (
-        <div className="TouchSheet fixed bottom-13 left-0 right-0 z-40 mx-2 mb-2 p-2 rounded-xl bg-raised border border-raised shadow-xl space-y-1">
+        <div className="TouchSheet fixed bottom-[calc(var(--notification-bar-height)+3.25rem)] left-0 right-0 z-40 mx-2 mb-2 p-2 rounded-xl bg-raised border border-raised shadow-xl space-y-1">
           <SheetAction
             label="Insert line above"
             onPress={() => {
@@ -366,9 +366,9 @@ export const TouchBar = () => {
               }
               onPress={() => {
                 if (timerRunningHere) {
-                  stopAndSaveTimer(store)
+                  void stopAndSaveTimer(store)
                 } else {
-                  startTimer(store, {
+                  void startTimer(store, {
                     line,
                     mode: 'stopwatch',
                     timeMode: store.get(globalTimerAtom).timeMode,
@@ -391,9 +391,9 @@ export const TouchBar = () => {
               }
               onPress={() => {
                 if (isTimerPaused(globalTimer)) {
-                  resumeTimer(store)
+                  void resumeTimer(store)
                 } else {
-                  pauseTimer(store)
+                  void pauseTimer(store)
                 }
               }}
             >
@@ -425,7 +425,7 @@ export const TouchBar = () => {
         </div>
       )}
 
-      <div className="TouchBar fixed bottom-0 left-0 right-0 z-40 flex items-center justify-between gap-0.5 px-1 bg-raised/95 backdrop-blur border-t border-raised pb-[env(safe-area-inset-bottom)]">
+      <div className="TouchBar fixed bottom-[var(--notification-bar-height)] left-0 right-0 z-40 flex items-center justify-between gap-0.5 px-1 bg-raised/95 backdrop-blur border-t border-raised">
         <TouchButton label="Previous line" onPress={() => step(-1)}>
           <ChevronUp width={20} height={20} />
         </TouchButton>

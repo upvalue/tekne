@@ -1,266 +1,247 @@
-import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import {
-  SAVE_DEBOUNCE_MS,
-  SAVE_MAX_WAIT_MS,
   SAVE_RETRY_MS,
   SaveConflictError,
   SaveQueue,
+  type SaveQueueState,
   type SaveResult,
 } from './save-queue'
 
 type Doc = { text: string }
-
-/** A queue over a mutable doc with manually resolvable save requests. */
-const makeQueue = (opts?: { revision?: number }) => {
-  const doc = { text: 'initial' }
+const makeQueue = (persist?: (state: SaveQueueState<Doc>) => Promise<void>) => {
+  let doc = { text: 'initial' }
   const requests: Array<{
     snapshot: Doc
     expectedRevision: number
+    requestId: string
+    baseline: Doc
     resolve: (result: SaveResult<Doc>) => void
     reject: (error: unknown) => void
   }> = []
   const onSaved = vi.fn()
   const onConflict = vi.fn()
   const onSaveError = vi.fn()
+  const onPersistenceError = vi.fn()
   const queue = new SaveQueue<Doc>({
-    revision: opts?.revision ?? 0,
-    getSnapshot: () => ({ ...doc }),
-    performSave: (snapshot, expectedRevision) =>
+    revision: 0,
+    getSnapshot: () => doc,
+    persist,
+    performSave: (snapshot, expectedRevision, requestId, baseline) =>
       new Promise((resolve, reject) => {
-        requests.push({ snapshot, expectedRevision, resolve, reject })
+        requests.push({
+          snapshot,
+          expectedRevision,
+          requestId,
+          baseline,
+          resolve,
+          reject,
+        })
       }),
     onSaved,
     onConflict,
     onSaveError,
+    onPersistenceError,
   })
   const edit = (text: string) => {
-    doc.text = text
+    doc = { text }
     queue.noteEdit()
   }
-  return { queue, doc, requests, edit, onSaved, onConflict, onSaveError }
+  return {
+    queue,
+    requests,
+    edit,
+    onSaved,
+    onConflict,
+    onSaveError,
+    onPersistenceError,
+  }
 }
-
-/** Let pending promise reactions run without advancing timers. */
 const settle = () => vi.advanceTimersByTimeAsync(0)
+beforeEach(() => vi.useFakeTimers())
+afterEach(() => vi.useRealTimers())
 
-beforeEach(() => {
-  vi.useFakeTimers()
+test('starts sending on the edit itself, without advancing a timer', () => {
+  const { edit, requests } = makeQueue()
+  edit('first')
+  expect(requests).toHaveLength(1)
+  expect(requests[0].snapshot.text).toBe('first')
 })
 
-afterEach(() => {
-  vi.useRealTimers()
+test('combines edits during a request and sends the latest immediately on acknowledgement', async () => {
+  const { queue, edit, requests } = makeQueue()
+  edit('first')
+  edit('second')
+  edit('third')
+  expect(requests).toHaveLength(1)
+  requests[0].resolve({ status: 'ok', revision: 1 })
+  await settle()
+  expect(requests).toHaveLength(2)
+  expect(requests[1]).toMatchObject({
+    snapshot: { text: 'third' },
+    baseline: { text: 'first' },
+    expectedRevision: 1,
+  })
+  expect(queue.isDirty()).toBe(true)
+  requests[1].resolve({ status: 'ok', revision: 2 })
+  await settle()
+  expect(queue.isDirty()).toBe(false)
 })
 
-describe('debounce and max wait', () => {
-  test('rapid edits collapse into one request after the debounce', async () => {
-    const { requests, edit } = makeQueue()
-    edit('a')
-    edit('ab')
-    edit('abc')
-    await vi.advanceTimersByTimeAsync(SAVE_DEBOUNCE_MS - 1)
-    expect(requests).toHaveLength(0)
-    await vi.advanceTimersByTimeAsync(1)
-    expect(requests).toHaveLength(1)
-    expect(requests[0].snapshot.text).toBe('abc')
+test('waits for a durable local record before sending and records edits during a request', async () => {
+  const states: SaveQueueState<Doc>[] = []
+  let commit!: () => void
+  const { queue, requests, edit } = makeQueue(async (state) => {
+    states.push(state)
+    if (states.length === 1)
+      await new Promise<void>((resolve) => {
+        commit = resolve
+      })
   })
-
-  test('continuous editing saves once the max wait elapses', async () => {
-    const { requests, edit } = makeQueue()
-    // Keep editing more often than the debounce so it never fires on its own
-    for (let elapsed = 0; elapsed < SAVE_MAX_WAIT_MS; elapsed += 500) {
-      edit(`edit at ${elapsed}`)
-      await vi.advanceTimersByTimeAsync(500)
-    }
-    expect(requests).toHaveLength(1)
-  })
+  edit('first')
+  await settle()
+  expect(requests).toHaveLength(0)
+  edit('second')
+  commit()
+  await queue.persisted()
+  await settle()
+  expect(requests).toHaveLength(1)
+  expect(states.at(-1)?.snapshot.text).toBe('second')
+  expect(states.at(-1)?.attempt?.snapshot.text).toBe('first')
 })
 
-describe('serialization and acknowledgment', () => {
-  test('edits during an in-flight request stay dirty and go in a later request', async () => {
-    const { queue, requests, edit, onSaved } = makeQueue()
-    edit('first')
-    await vi.advanceTimersByTimeAsync(SAVE_DEBOUNCE_MS)
-    expect(requests).toHaveLength(1)
-
-    edit('second') // while request 1 is in flight
-    await vi.advanceTimersByTimeAsync(SAVE_MAX_WAIT_MS)
-    // Still only one request: nothing overlaps
-    expect(requests).toHaveLength(1)
-
-    requests[0].resolve({ status: 'ok', revision: 1 })
-    await settle()
-    // The ack covers 'first' only; the queue is still dirty
-    expect(onSaved).toHaveBeenCalledWith({ text: 'first' }, 1)
-    expect(queue.isDirty()).toBe(true)
-
-    await vi.advanceTimersByTimeAsync(SAVE_DEBOUNCE_MS)
-    expect(requests).toHaveLength(2)
-    expect(requests[1].snapshot.text).toBe('second')
-    expect(requests[1].expectedRevision).toBe(1)
-
-    requests[1].resolve({ status: 'ok', revision: 2 })
-    await settle()
-    expect(queue.isDirty()).toBe(false)
-  })
-
-  test('a slow request never overlaps with a later scheduled save', async () => {
-    const { requests, edit } = makeQueue()
-    edit('one')
-    await vi.advanceTimersByTimeAsync(SAVE_DEBOUNCE_MS)
-    edit('two')
-    // Request 1 stays unresolved well past every timer
-    await vi.advanceTimersByTimeAsync(SAVE_MAX_WAIT_MS * 3)
-    expect(requests).toHaveLength(1)
-  })
+test('flush drains every pending edit; a failure rejects and retains dirtiness', async () => {
+  const { queue, requests, edit } = makeQueue()
+  await queue.flush()
+  edit('first')
+  edit('second')
+  const flushed = vi.fn()
+  const pending = queue.flush().then(flushed)
+  requests[0].resolve({ status: 'ok', revision: 1 })
+  await settle()
+  expect(flushed).not.toHaveBeenCalled()
+  requests[1].resolve({ status: 'ok', revision: 2 })
+  await pending
+  edit('third')
+  const failed = queue.flush()
+  requests[2].reject(new Error('offline'))
+  await expect(failed).rejects.toThrow('offline')
+  expect(queue.isDirty()).toBe(true)
 })
 
-describe('flush', () => {
-  test('resolves immediately when clean', async () => {
-    const { queue } = makeQueue()
-    await expect(queue.flush()).resolves.toBeUndefined()
+test('lost responses retry exactly before sending later edits; new edits respect retry backoff', async () => {
+  const { queue, edit, requests } = makeQueue()
+  edit('first')
+  requests[0].reject(new Error('response lost'))
+  await settle()
+  edit('second')
+  expect(requests).toHaveLength(1)
+  await vi.advanceTimersByTimeAsync(SAVE_RETRY_MS)
+  expect(requests[1]).toMatchObject({
+    snapshot: requests[0].snapshot,
+    requestId: requests[0].requestId,
+    expectedRevision: 0,
   })
-
-  test('drains edits made during an earlier request', async () => {
-    const { queue, requests, edit } = makeQueue()
-    edit('first')
-    await vi.advanceTimersByTimeAsync(SAVE_DEBOUNCE_MS)
-    edit('second')
-
-    const flushed = vi.fn()
-    const flush = queue.flush().then(flushed)
-
-    requests[0].resolve({ status: 'ok', revision: 1 })
-    await settle()
-    // 'second' is not acknowledged yet, so the flush must still be pending,
-    // and draining starts immediately rather than waiting for the debounce
-    expect(flushed).not.toHaveBeenCalled()
-    expect(requests).toHaveLength(2)
-
-    requests[1].resolve({ status: 'ok', revision: 2 })
-    await settle()
-    await flush
-    expect(flushed).toHaveBeenCalled()
-  })
-
-  test('starts the save immediately instead of waiting for the debounce', async () => {
-    const { queue, requests, edit } = makeQueue()
-    edit('a')
-    void queue.flush().catch(() => {})
-    expect(requests).toHaveLength(1)
-  })
-
-  test('rejects when the save fails and the document stays dirty', async () => {
-    const { queue, requests, edit, onSaveError } = makeQueue()
-    edit('a')
-    const flush = queue.flush()
-    requests[0].reject(new Error('network down'))
-    await expect(flush).rejects.toThrow('network down')
-    expect(queue.isDirty()).toBe(true)
-    expect(onSaveError).toHaveBeenCalledOnce()
-  })
+  requests[1].resolve({ status: 'ok', revision: 1 })
+  await settle()
+  expect(requests[2].snapshot.text).toBe('second')
+  expect(requests[2].requestId).not.toBe(requests[0].requestId)
+  requests[2].resolve({ status: 'ok', revision: 2 })
+  await settle()
+  expect(queue.isDirty()).toBe(false)
 })
 
-describe('failures', () => {
-  test('a failed autosave retries and eventually succeeds', async () => {
-    const { queue, requests, edit } = makeQueue()
-    edit('a')
-    await vi.advanceTimersByTimeAsync(SAVE_DEBOUNCE_MS)
-    requests[0].reject(new Error('boom'))
-    await settle()
-
-    await vi.advanceTimersByTimeAsync(SAVE_RETRY_MS)
-    expect(requests).toHaveLength(2)
-    requests[1].resolve({ status: 'ok', revision: 1 })
-    await settle()
-    expect(queue.isDirty()).toBe(false)
+test('restores an interrupted request and newer local edits, preserving its ID and baseline', async () => {
+  let saved!: SaveQueueState<Doc>
+  const first = makeQueue(async (state) => {
+    saved = structuredClone(state)
   })
+  first.edit('sent')
+  await settle()
+  first.edit('newer')
+  await first.queue.persisted()
+  first.queue.dispose()
+  const second = makeQueue()
+  second.queue.restore(saved)
+  second.queue.activate()
+  expect(second.requests[0]).toMatchObject({
+    snapshot: { text: 'sent' },
+    requestId: first.requests[0].requestId,
+    baseline: { text: 'initial' },
+  })
+  second.requests[0].resolve({ status: 'ok', revision: 1 })
+  await settle()
+  expect(second.requests[1].snapshot.text).toBe('newer')
+  // The old tab cannot erase a record now owned by its replacement.
+  first.requests[0].resolve({ status: 'ok', revision: 1 })
+  await settle()
+  expect(saved.snapshot.text).toBe('newer')
+  expect(saved.ackedGeneration).toBe(0)
 })
 
-describe('dispose and activate', () => {
-  test('a dispose/activate cycle (React StrictMode) keeps the queue working', async () => {
-    const { queue, requests, edit } = makeQueue()
-    // StrictMode runs the effect cleanup and setup once on the same instance
-    queue.dispose()
-    queue.activate()
-
-    edit('a')
-    await vi.advanceTimersByTimeAsync(SAVE_DEBOUNCE_MS)
-    expect(requests).toHaveLength(1)
+test('conflicts persist subsequent edits and resolutions use the new baseline', async () => {
+  const persist = vi.fn(async (_state: SaveQueueState<Doc>) => {})
+  const { queue, edit, requests, onConflict } = makeQueue(persist)
+  edit('mine')
+  await settle()
+  requests[0].resolve({
+    status: 'conflict',
+    serverDoc: { text: 'theirs' },
+    serverRevision: 7,
   })
-
-  test('activating a dirty queue reschedules its save', async () => {
-    const { queue, requests, edit } = makeQueue()
-    edit('a')
-    queue.dispose()
-    await vi.advanceTimersByTimeAsync(SAVE_MAX_WAIT_MS)
-    expect(requests).toHaveLength(0)
-
-    queue.activate()
-    await vi.advanceTimersByTimeAsync(SAVE_DEBOUNCE_MS)
-    expect(requests).toHaveLength(1)
+  await settle()
+  expect(onConflict).toHaveBeenCalledOnce()
+  edit('more')
+  await queue.persisted()
+  expect(persist.mock.lastCall![0].snapshot.text).toBe('more')
+  expect(persist.mock.lastCall![0].conflict?.serverRevision).toBe(7)
+  await expect(queue.flush()).rejects.toBeInstanceOf(SaveConflictError)
+  queue.resolveKeepMine()
+  await settle()
+  expect(requests[1]).toMatchObject({
+    expectedRevision: 7,
+    baseline: { text: 'theirs' },
+    snapshot: { text: 'more' },
+  })
+  requests[1].resolve({
+    status: 'conflict',
+    serverDoc: { text: 'latest' },
+    serverRevision: 8,
+  })
+  await settle()
+  queue.resolveTakeServer()
+  await queue.persisted()
+  expect(queue.isDirty()).toBe(false)
+  expect(persist.mock.lastCall![0]).toMatchObject({
+    baseline: { text: 'latest' },
+    conflict: null,
   })
 })
 
-describe('conflicts', () => {
-  test('a conflict pauses autosave and preserves dirtiness', async () => {
-    const { queue, requests, edit, onConflict } = makeQueue()
-    edit('mine')
-    await vi.advanceTimersByTimeAsync(SAVE_DEBOUNCE_MS)
-    requests[0].resolve({
-      status: 'conflict',
-      serverDoc: { text: 'theirs' },
-      serverRevision: 7,
-    })
-    await settle()
-
-    expect(onConflict).toHaveBeenCalledOnce()
-    expect(queue.isDirty()).toBe(true)
-    await expect(queue.flush()).rejects.toBeInstanceOf(SaveConflictError)
-
-    // Edits and time do not produce requests while unresolved
-    edit('more')
-    await vi.advanceTimersByTimeAsync(SAVE_MAX_WAIT_MS * 2)
-    expect(requests).toHaveLength(1)
+test('storage failure is reported but does not prevent server saving', async () => {
+  const { edit, requests, onPersistenceError } = makeQueue(async () => {
+    throw new Error('disk full')
   })
+  edit('keep me')
+  await settle()
+  expect(onPersistenceError).toHaveBeenCalled()
+  expect(requests).toHaveLength(1)
+})
 
-  test('keep-mine resends the local snapshot at the server revision', async () => {
-    const { queue, requests, edit } = makeQueue()
-    edit('mine')
-    await vi.advanceTimersByTimeAsync(SAVE_DEBOUNCE_MS)
-    requests[0].resolve({
-      status: 'conflict',
-      serverDoc: { text: 'theirs' },
-      serverRevision: 7,
-    })
-    await settle()
-
-    queue.resolveKeepMine()
-    expect(requests).toHaveLength(2)
-    expect(requests[1].snapshot.text).toBe('mine')
-    expect(requests[1].expectedRevision).toBe(7)
-    requests[1].resolve({ status: 'ok', revision: 8 })
-    await settle()
-    expect(queue.isDirty()).toBe(false)
-  })
-
-  test('take-server marks the queue clean at the server revision', async () => {
-    const { queue, requests, edit } = makeQueue()
-    edit('mine')
-    await vi.advanceTimersByTimeAsync(SAVE_DEBOUNCE_MS)
-    requests[0].resolve({
-      status: 'conflict',
-      serverDoc: { text: 'theirs' },
-      serverRevision: 7,
-    })
-    await settle()
-
-    queue.resolveTakeServer()
-    expect(queue.isDirty()).toBe(false)
-    await expect(queue.flush()).resolves.toBeUndefined()
-
-    // The next edit saves against the adopted server revision
-    edit('later')
-    await vi.advanceTimersByTimeAsync(SAVE_DEBOUNCE_MS)
-    expect(requests[1].expectedRevision).toBe(7)
-  })
+test('dispose and activate preserve pending work; explicit discard clears its durable record', async () => {
+  const persist = vi.fn(async (_state: SaveQueueState<Doc>) => {})
+  const { queue, edit, requests } = makeQueue(persist)
+  queue.dispose()
+  edit('pending')
+  await settle()
+  expect(requests).toHaveLength(0)
+  queue.activate()
+  await settle()
+  expect(requests).toHaveLength(1)
+  requests[0].reject(new Error('offline'))
+  await settle()
+  queue.discardLocal()
+  await queue.persisted()
+  expect(queue.isDirty()).toBe(false)
+  const state = persist.mock.lastCall![0]
+  expect(state.ackedGeneration).toBe(state.generation)
 })

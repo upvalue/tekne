@@ -6,7 +6,7 @@ import { setDetailTitle, setTimerActive, setTimerDisplay } from '@/lib/title'
 import { formatTimeDisplay } from '@/lib/time'
 import { playTimerCompleteSound } from '@/lib/sound'
 import { dismissTimerNotification } from './timer-notifications'
-import { toast } from 'sonner'
+import { notifications } from '@/lib/notifications'
 
 /** Runs outside document routes so navigation cannot interrupt a timer. */
 export const TimerObserver = () => {
@@ -25,11 +25,13 @@ export const TimerObserver = () => {
     )
     setTimerActive(!!active)
     setDetailTitle(active?.lineContent ?? null)
-    if (!active || active.runningSince === null) dismissTimerNotification()
+    if (!active || active.runningSince === null) void dismissTimerNotification()
     for (const timer of query.data?.timers ?? []) {
       if (timer.completionError && !notified.current.has(`error:${timer.id}`)) {
         notified.current.add(`error:${timer.id}`)
-        toast.warning('A completed timer needs attention in Tools → Timers.')
+        notifications.warning(
+          'A completed timer needs attention in Tools → Timers.'
+        )
       }
     }
   }, [query.data])
@@ -91,7 +93,7 @@ export const TimerObserver = () => {
               utils.invalidateQueries({ queryKey: orpc.timers.list.key() }),
               utils.invalidateQueries({ queryKey: orpc.doc.loadDoc.key() }),
               utils.invalidateQueries({
-                queryKey: orpc.analysis.aggregateData.key(),
+                queryKey: orpc.analysis.key(),
               }),
             ])
           })

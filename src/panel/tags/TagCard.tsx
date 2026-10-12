@@ -1,7 +1,7 @@
 import { useQueryClient, useMutation } from '@tanstack/react-query'
 import { useEffect, useRef, useState } from 'react'
 import { Tag, Pencil, Archive, ArchiveRestore, Replace } from 'lucide-react'
-import { toast } from 'sonner'
+import { notifications } from '@/lib/notifications'
 import { orpc } from '@/api/client'
 import { cn } from '@/lib/utils'
 
@@ -33,10 +33,10 @@ export const TagCard = ({
   const setDescription = useMutation(
     orpc.tags.setDescription.mutationOptions({
       onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: orpc.tags.list.key() })
+        void queryClient.invalidateQueries({ queryKey: orpc.tags.list.key() })
       },
       onError: (e) => {
-        toast.error(`Failed to save description: ${e.message}`)
+        notifications.error(`Failed to save description: ${e.message}`)
       },
     })
   )
@@ -44,15 +44,15 @@ export const TagCard = ({
   const setArchived = useMutation(
     orpc.tags.setArchived.mutationOptions({
       onSuccess: (_data, variables) => {
-        queryClient.invalidateQueries({ queryKey: orpc.tags.list.key() })
+        void queryClient.invalidateQueries({ queryKey: orpc.tags.list.key() })
         // Autocomplete reads this through its own Jotai-backed query
-        queryClient.invalidateQueries({ queryKey: ['allTags'] })
-        toast.success(
+        void queryClient.invalidateQueries({ queryKey: ['allTags'] })
+        notifications.success(
           variables.archived ? `Archived #${name}` : `Restored #${name}`
         )
       },
       onError: (e) => {
-        toast.error(`Failed to archive tag: ${e.message}`)
+        notifications.error(`Failed to archive tag: ${e.message}`)
       },
     })
   )

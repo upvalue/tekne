@@ -1,6 +1,6 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["typescript", "react"],
+  "plugins": ["typescript", "react", "vitest"],
   "categories": {
     "correctness": "off",
   },
@@ -9,6 +9,7 @@
   },
   "ignorePatterns": [
     "dist",
+    "tmp/**",
     "docs-build/**",
     "src/documentation/generated/**",
     "dist-server/**",
@@ -20,8 +21,16 @@
   ],
   "overrides": [
     {
-      "files": ["**/*.{ts,tsx}"],
+      "files": ["**/*.{js,jsx,ts,tsx,mjs,cjs}"],
       "rules": {
+        "vitest/no-focused-tests": "error",
+        "vitest/valid-expect": ["error", { "maxArgs": 2 }],
+        "vitest/valid-title": "error",
+        "typescript/no-floating-promises": "error",
+        "typescript/no-misused-promises": [
+          "error",
+          { "checksVoidReturn": false },
+        ],
         "constructor-super": "off",
         "for-direction": "error",
         "getter-return": "off",
@@ -126,7 +135,12 @@
           {
             "patterns": [
               {
-                "group": ["@headlessui/react", "@base-ui/*"],
+                "group": [
+                  "@headlessui/react",
+                  "@headlessui/react/*",
+                  "@base-ui/react",
+                  "@base-ui/react/*",
+                ],
                 "message": "Import UI primitives from @/components/vendor, not the kit directly.",
               },
               {

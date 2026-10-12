@@ -17,7 +17,7 @@ export function FeatureFlags({ isActive }: { isActive: boolean }) {
 
   const handleToggle = async (key: string, currentValue: boolean) => {
     await setFlagMutation.mutateAsync({ key, value: !currentValue })
-    utils.invalidateQueries({ queryKey: orpc.flags.getAll.key() })
+    await utils.invalidateQueries({ queryKey: orpc.flags.getAll.key() })
   }
 
   if (!isActive) {

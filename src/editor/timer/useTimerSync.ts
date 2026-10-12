@@ -18,7 +18,7 @@ export const useTimerSync = (
     await Promise.all([
       utils.invalidateQueries({ queryKey: orpc.timers.list.key() }),
       utils.invalidateQueries({ queryKey: orpc.doc.loadDoc.key() }),
-      utils.invalidateQueries({ queryKey: orpc.analysis.aggregateData.key() }),
+      utils.invalidateQueries({ queryKey: orpc.analysis.key() }),
     ])
   }, [utils])
   useEffect(

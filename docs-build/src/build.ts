@@ -24,7 +24,7 @@ async function findMdxFiles(dir: string): Promise<string[]> {
       }
     }
   } catch (error) {
-    console.error(`Error reading directory ${dir}:`, error);
+    throw new Error(`Error reading directory ${dir}`, { cause: error });
   }
   
   return files;
@@ -36,6 +36,7 @@ async function buildAll(options: CompilerOptions): Promise<void> {
   const startTime = Date.now();
   
   try {
+    await fs.rm(options.outputDir, { recursive: true, force: true });
     await fs.mkdir(options.outputDir, { recursive: true });
     
     const files = await findMdxFiles(options.inputDir);
@@ -54,7 +55,7 @@ async function buildAll(options: CompilerOptions): Promise<void> {
         const manifest = await processFile(file, options.outputDir);
         fileManifests.push(manifest);
       } catch (error) {
-        console.error(`✗ Error processing ${path.basename(file)}:`, error);
+        throw new Error(`Error processing ${path.basename(file)}`, { cause: error });
       }
     }
     
@@ -192,4 +193,7 @@ async function main(): Promise<void> {
   }
 }
 
-main().catch(console.error);
+main().catch((error) => {
+  console.error(error);
+  process.exitCode = 1;
+});

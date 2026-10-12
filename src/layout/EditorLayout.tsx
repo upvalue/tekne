@@ -86,7 +86,7 @@ export function EditorLayout({ editor, sidepanel }: EditorLayoutProps) {
               />
             )}
             <div
-              className="Panel h-dvh overflow-hidden"
+              className="Panel AppViewport overflow-hidden"
               style={{ width: panelWidth }}
             >
               {sidepanel}
@@ -100,7 +100,7 @@ export function EditorLayout({ editor, sidepanel }: EditorLayoutProps) {
             inert={!panelVisible}
             aria-hidden={!panelVisible}
             data-open={panelVisible || undefined}
-            className="fixed inset-0 z-50 bg-page lg:hidden Panel PanelOverlay overflow-auto"
+            className="fixed inset-x-0 top-0 bottom-[var(--notification-bar-height)] z-50 bg-page lg:hidden Panel PanelOverlay overflow-auto"
           >
             {sidepanel}
           </div>

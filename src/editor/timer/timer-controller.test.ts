@@ -17,8 +17,8 @@ vi.mock('@/api/client', () => ({ orpcClient: { timers: api } }))
 vi.mock('./timer-notifications', () => ({
   showTimerStartedNotification: vi.fn(),
 }))
-vi.mock('sonner', () => ({
-  toast: { info: vi.fn(), error: vi.fn(), warning: vi.fn() },
+vi.mock('@/lib/notifications', () => ({
+  notifications: { info: vi.fn(), error: vi.fn(), warning: vi.fn() },
 }))
 beforeEach(() => {
   vi.useFakeTimers()

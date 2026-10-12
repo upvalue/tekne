@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Dialog } from '@base-ui/react/dialog'
+import { DialogPrimitive as Dialog } from '@/components/vendor/Dialog'
 import type { EditorView } from '@codemirror/view'
 import { useAtom, useStore } from 'jotai'
 import { useQuery } from '@tanstack/react-query'

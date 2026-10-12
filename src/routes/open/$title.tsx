@@ -17,7 +17,7 @@ function RouteComponent() {
   })
 
   useEffect(() => {
-    navigate({
+    void navigate({
       to: '/n/$title',
       params: {
         title: title,

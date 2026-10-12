@@ -1,3 +1,5 @@
+import { Tooltip } from '@/components/vendor/Tooltip'
+import { CircleHelp } from 'lucide-react'
 import { useState } from 'react'
 import { ErrorScratchpadPreview } from './ErrorScratchpadPreview'
 import { ErrorState } from '@/components/ErrorState'
@@ -36,11 +38,21 @@ export function AppearancePreview() {
     <div className="space-y-5 text-sm">
       <ErrorScratchpadPreview />
       <section className="space-y-2">
-        <h2 className="font-medium">Error previews</h2>
-        <p className="text-xs text-muted">
-          Sample errors using the app’s error components. Retry and conflict
-          choices only dismiss the preview.
-        </p>
+        <h2 className="flex items-center gap-2 font-medium">
+          Error previews
+          <Tooltip
+            label="About this preview"
+            description="Sample errors using the app’s error components. Retry and conflict choices only dismiss the preview."
+          >
+            <button
+              type="button"
+              aria-label="About this preview"
+              className="text-muted hover:text-text"
+            >
+              <CircleHelp className="size-3.5" />
+            </button>
+          </Tooltip>
+        </h2>
         <label className="block text-xs text-text-2">
           Error type
           <select

@@ -128,8 +128,6 @@ export const ReadOnlyLine = ({
     <div
       className={cn(
         'ReadOnlyLine w-full py-1 flex items-start leading-6',
-        datumTaskStatus === 'incomplete' && 'ELine-cancelled',
-        datumTaskStatus === 'complete' && 'ELine-complete',
         onClick && 'cursor-pointer',
         className
       )}

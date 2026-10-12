@@ -3,7 +3,6 @@ import {
   codeMirrorKey,
   displayKey,
   getAllKeybindings,
-  kbarShortcut,
   keybindings,
   matchesKeybinding,
 } from './keys'
@@ -30,10 +29,9 @@ describe('displayKey', () => {
 })
 
 describe('adapters', () => {
-  test('produce the strings CodeMirror and kbar were given by hand', () => {
+  test('produce the strings CodeMirror expects', () => {
     expect(codeMirrorKey('toggleCollapse')).toBe('Mod-.')
     expect(codeMirrorKey('deleteLine')).toBe('Mod-Shift-k')
-    expect(kbarShortcut('documentSearch')).toBe('$mod+shift+o')
   })
 })
 

@@ -5,7 +5,7 @@ import { orpc } from '@/api/client'
 import { useNavigate } from '@tanstack/react-router'
 import { StatusBar } from './StatusBar'
 import { Button } from '@/components/vendor/Button'
-import { toast } from 'sonner'
+import { notifications } from '@/lib/notifications'
 
 export const TitleBar = ({
   title,
@@ -83,7 +83,7 @@ export const TitleBar = ({
     try {
       await execute.mutateAsync({ oldName: title, newName })
       if (request !== generation.current) return
-      toast.success(`Document renamed to "${newName}"`)
+      notifications.success(`Document renamed to "${newName}"`)
       await navigate({ to: '/n/$title', params: { title: newName } })
     } catch (error) {
       if (request === generation.current)

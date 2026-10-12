@@ -75,6 +75,12 @@ export type DBFeatureFlag = {
 
 // Define your database schema interface here
 export type Database = {
+  document_patch_receipts: {
+    request_id: string
+    note_title: string
+    request_hash: string
+    revision: number
+  }
   timers: DBTimer
   notes: DBNote
   note_data: DBNoteData

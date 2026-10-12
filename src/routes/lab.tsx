@@ -6,7 +6,7 @@ import { createStore } from 'jotai'
 import { useMemo } from 'react'
 import { EditorShell } from '@/layout/EditorShell'
 import { useCodemirrorEvent } from '@/editor/line-editor'
-import { toast } from 'sonner'
+import { notifications } from '@/lib/notifications'
 
 export const Route = createFileRoute('/lab')({
   component: RouteComponent,
@@ -19,11 +19,11 @@ export const Route = createFileRoute('/lab')({
  */
 function RouteComponent() {
   useCodemirrorEvent('internalLinkClick', (data) => {
-    toast.info(`Clicked internal link ${data.link}`)
+    notifications.info(`Clicked internal link ${data.link}`)
   })
 
   useCodemirrorEvent('tagClick', (data) => {
-    toast.info(`Clicked tag ${data.name}`)
+    notifications.info(`Clicked tag ${data.name}`)
   })
 
   const store = useMemo(() => {

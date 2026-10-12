@@ -1,7 +1,7 @@
 import { useMutation } from '@tanstack/react-query'
 import { useMemo, useState } from 'react'
 import { CalendarX } from 'lucide-react'
-import { toast } from 'sonner'
+import { notifications } from '@/lib/notifications'
 import { Button } from '@/components/vendor/Button'
 import {
   Dialog,
@@ -46,7 +46,7 @@ export const CancelStaleTasks = () => {
       )
       setReviewOpen(true)
     } catch (error) {
-      toast.error(`Failed to find stale checkboxes: ${String(error)}`)
+      notifications.error(`Failed to find stale checkboxes: ${String(error)}`)
     }
   }
 
@@ -62,7 +62,7 @@ export const CancelStaleTasks = () => {
       })
       window.location.reload()
     } catch (error) {
-      toast.error(`Failed to cancel stale checkboxes: ${String(error)}`)
+      notifications.error(`Failed to cancel stale checkboxes: ${String(error)}`)
     }
   }
 

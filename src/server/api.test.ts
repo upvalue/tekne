@@ -148,7 +148,7 @@ test('OpenAPI describes every procedure, inputs and outputs; reference is availa
       )
       .map(([, operation]) => operation)
   )
-  expect(operations).toHaveLength(33)
+  expect(operations).toHaveLength(35)
   for (const operation of operations) {
     expect(operation.description).toBeTruthy()
     expect(
@@ -207,7 +207,7 @@ test('plaintext guide aliases expose every live operation without duplicating sc
   )
   const index = guide.split('## Endpoint index')[1]
   expect(index.match(/^[A-Z]+ \/api\/v1\S* \([^\n]+\)$/gm)).toEqual(expected)
-  expect(expected).toHaveLength(33)
+  expect(expected).toHaveLength(35)
   for (const methods of Object.values(spec.paths)) {
     for (const [method, operation] of Object.entries(
       methods as Record<string, any>
@@ -301,4 +301,45 @@ test('timer status is available through HTTP without creating a timer', async ()
     timers: [],
     serverNow: expect.any(Number),
   })
+})
+
+test('line patches and aggregate snapshots work over HTTP and RPC', async () => {
+  const name = 'Incremental API'
+  await request('POST', '/documents', { name })
+  const { doc } = await rpc.doc.loadDoc({ name })
+  const line = {
+    ...doc.children[0],
+    mdContent: '#incremental',
+    datumTaskStatus: 'complete' as const,
+  }
+  const input = {
+    name,
+    expectedRevision: 0,
+    requestId: crypto.randomUUID(),
+    patch: [{ op: 'update' as const, line }],
+  }
+  expect(await request('PATCH', '/documents/content', input)).toMatchObject({
+    status: 200,
+    body: { status: 'ok', revision: 1 },
+  })
+  expect(await rpc.doc.patchDoc(input)).toEqual({ status: 'ok', revision: 1 })
+  const baseline = await rpc.analysis.aggregateSnapshot({
+    title: name,
+    tags: ['#incremental'],
+  })
+  expect(baseline).toMatchObject({
+    title: name,
+    revision: 1,
+    rows: [{ tag: '#incremental', complete_tasks: 1, page_complete_tasks: 1 }],
+  })
+  expect(
+    await request('PATCH', '/documents/content', {
+      ...input,
+      requestId: crypto.randomUUID(),
+    })
+  ).toMatchObject({
+    status: 200,
+    body: { status: 'conflict', serverRevision: 1 },
+  })
+  expect((await rpc.doc.loadDoc({ name })).doc.children[0]).toEqual(line)
 })

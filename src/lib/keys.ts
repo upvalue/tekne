@@ -124,12 +124,6 @@ export const codeMirrorKey = (name: KeybindingName): string =>
     })
     .join('-')
 
-/** kbar shortcut form, e.g. 'mod+o' -> '$mod+o' */
-export const kbarShortcut = (name: KeybindingName): string =>
-  comboParts(keybindings[name].key)
-    .map((part) => (part === MOD ? '$mod' : part))
-    .join('+')
-
 /**
  * Whether a keydown event is this combo. Modifiers have to match exactly, so
  * Cmd+Shift+/ no longer fires the Cmd+/ binding.

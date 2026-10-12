@@ -7,7 +7,7 @@ import { Input } from '@/components/vendor/Input'
 import { useTimerTick } from '@/editor/timer/useTimerTick'
 import { elapsedMilliseconds, type Timer } from '@/docs/timer'
 import { formatTimeDisplay } from '@/lib/time'
-import { toast } from 'sonner'
+import { notifications } from '@/lib/notifications'
 
 export const TimerManager = () => {
   const query = useQuery(
@@ -80,11 +80,11 @@ const TimerCard = ({ timer, now }: { timer: Timer; now: number }) => {
             : undefined,
       })
       if (result?.completionError)
-        toast.warning(
+        notifications.warning(
           'Elapsed time is retained. Select a line below to save it.'
         )
     } catch (error) {
-      toast.error(
+      notifications.error(
         error instanceof Error ? error.message : 'Timer could not be updated'
       )
     } finally {
@@ -93,7 +93,7 @@ const TimerCard = ({ timer, now }: { timer: Timer; now: number }) => {
         utils.invalidateQueries({ queryKey: orpc.timers.list.key() }),
         utils.invalidateQueries({ queryKey: orpc.doc.loadDoc.key() }),
         utils.invalidateQueries({
-          queryKey: orpc.analysis.aggregateData.key(),
+          queryKey: orpc.analysis.key(),
         }),
       ])
       setBusy(false)

@@ -1,33 +1,34 @@
-import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
-import { afterEach, expect, test, vi } from 'vitest'
+import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { afterEach, expect, test } from 'vitest'
 import { ErrorScratchpadPreview } from './ErrorScratchpadPreview'
+import { NotificationScratchpad } from '@/components/NotificationScratchpad'
+import { notifications } from '@/lib/notifications'
 
 afterEach(() => {
   cleanup()
-  vi.useRealTimers()
+  notifications.clear()
 })
 
-test('expires the latest status independently and retains errors in history', () => {
-  vi.useFakeTimers()
-  render(<ErrorScratchpadPreview />)
+test('sample errors use the app status line and history', async () => {
+  render(
+    <>
+      <ErrorScratchpadPreview />
+      <NotificationScratchpad />
+    </>
+  )
   fireEvent.click(screen.getByRole('button', { name: 'Simulate save error' }))
-  act(() => vi.advanceTimersByTime(4000))
-  fireEvent.click(screen.getByRole('button', { name: 'Simulate search error' }))
-  act(() => vi.advanceTimersByTime(1000))
-  expect(screen.getByRole('status').textContent).toContain('Search unavailable')
-  act(() => vi.advanceTimersByTime(4000))
+  expect(screen.getByRole('status').textContent).toContain(
+    'Sample: could not save changes.'
+  )
+  fireEvent.click(screen.getByRole('button', { name: 'Dismiss notification' }))
   expect(screen.getByRole('status').textContent).toBe('')
-  fireEvent.click(screen.getByRole('button', { name: 'History (2)' }))
-  expect(screen.getAllByRole('listitem')).toHaveLength(2)
+  fireEvent.click(
+    screen.getByRole('button', { name: 'Notification history (1)' })
+  )
+  expect(
+    await screen.findByRole('dialog', { name: 'Notification history' })
+  ).not.toBeNull()
+  expect(screen.getAllByRole('listitem')).toHaveLength(1)
   fireEvent.click(screen.getByRole('button', { name: 'Clear history' }))
   expect(screen.queryAllByRole('listitem')).toHaveLength(0)
-})
-
-test('dismissing the status preserves its history entry', () => {
-  render(<ErrorScratchpadPreview />)
-  fireEvent.click(screen.getByRole('button', { name: 'Simulate save error' }))
-  fireEvent.click(screen.getByRole('button', { name: 'Dismiss' }))
-  expect(screen.getByRole('status').textContent).toBe('')
-  fireEvent.click(screen.getByRole('button', { name: 'History (1)' }))
-  expect(screen.getAllByRole('listitem')).toHaveLength(1)
 })

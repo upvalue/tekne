@@ -2,7 +2,7 @@ import type { useStore } from 'jotai'
 import type { ZLine } from '@/docs/schema'
 import { elapsedMilliseconds, type Timer } from '@/docs/timer'
 import { orpcClient } from '@/api/client'
-import { toast } from 'sonner'
+import { notifications } from '@/lib/notifications'
 import { navigateToDocument } from '@/lib/app-events'
 import { showTimerStartedNotification } from './timer-notifications'
 import {
@@ -102,7 +102,7 @@ const run = async (
 ): Promise<boolean> => {
   const binding = bindings.get(store)
   if (!binding?.ready) {
-    toast.info('Open a saved document and wait for timers to load.')
+    notifications.info('Open a saved document and wait for timers to load.')
     return false
   }
   if (binding.busy) return false
@@ -112,7 +112,7 @@ const run = async (
     await operation(binding)
     return true
   } catch (error) {
-    toast.error(
+    notifications.error(
       error instanceof Error ? error.message : 'Timer could not be updated'
     )
     return false
@@ -135,7 +135,7 @@ export const startTimer = (
   run(store, async (binding) => {
     if (binding.timer) {
       const current = binding.timer
-      toast.info(
+      notifications.info(
         `Timer already running: ${current.lineContent || current.noteTitle}`,
         {
           action: {
@@ -157,7 +157,7 @@ export const startTimer = (
       timeMode: args.timeMode,
       targetDuration: args.targetDuration,
     })
-    showTimerStartedNotification(timer.lineContent, Date.now())
+    void showTimerStartedNotification(timer.lineContent, Date.now())
   })
 const change = (
   store: EditorStore,
@@ -176,7 +176,7 @@ const change = (
       ...(timeMode ? { timeMode, expectedTimeSeconds } : {}),
     })
     if (result?.completionError)
-      toast.warning(
+      notifications.warning(
         'Elapsed time retained. Resolve this timer in Tools → Timers.'
       )
   })

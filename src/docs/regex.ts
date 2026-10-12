@@ -2,7 +2,14 @@
 
 // (probably should eventually not use regex and parse everything properly)
 // (but good enough for now)
-export const InternalLinkRegex = new RegExp('[$]?[a-zA-Z0-9 /]+\\]\\]')
+export const DOCUMENT_NAME_BODY = String.raw`[a-zA-Z0-9\s\-_.,:;()[\]{}'"/\\&*+~\x60|]`
+
+export const DocumentNameRegex = new RegExp(`^\\$?${DOCUMENT_NAME_BODY}+$`)
+
+// Inline links end at the first closing delimiter and cannot span lines.
+export const InternalLinkRegex = new RegExp(
+  `^\\$?(?:(?![\\r\\n])${DOCUMENT_NAME_BODY})+?\\]\\]`
+)
 
 const TAG_BODY_STR = '[a-zA-Z][a-zA-Z0-9-/]*'
 

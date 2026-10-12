@@ -50,7 +50,9 @@ export const DatabaseMigrations = ({ isActive }: { isActive: boolean }) => {
         setMigrationResults(data)
         // Revalidate against the migrated documents
         setShouldValidate(true)
-        utils.invalidateQueries({ queryKey: orpc.doc.validateAllDocs.key() })
+        return utils.invalidateQueries({
+          queryKey: orpc.doc.validateAllDocs.key(),
+        })
       },
       onError: (error) => {
         setMigrationResults({ error: error.message })

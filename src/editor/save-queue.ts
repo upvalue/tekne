@@ -7,8 +7,6 @@
 // so it can be tested without React; useDocumentSync owns the wiring to the
 // Jotai store and the network.
 
-export const SAVE_DEBOUNCE_MS = 750
-export const SAVE_MAX_WAIT_MS = 5000
 export const SAVE_RETRY_MS = 5000
 
 export type SaveResult<Doc> =
@@ -30,6 +28,21 @@ export class SaveQueueDisposedError extends Error {
   }
 }
 
+export type SaveQueueState<Doc> = {
+  baseline: Doc
+  snapshot: Doc
+  revision: number
+  generation: number
+  ackedGeneration: number
+  attempt: {
+    snapshot: Doc
+    generation: number
+    revision: number
+    requestId: string
+  } | null
+  conflict: SaveConflict<Doc> | null
+}
+
 type Waiter = {
   generation: number
   resolve: () => void
@@ -41,20 +54,32 @@ export class SaveQueue<Doc> {
   private ackedGeneration = 0
   private revision: number
   private inFlight = false
+  private attempt: {
+    snapshot: Doc
+    generation: number
+    revision: number
+    requestId: string
+  } | null = null
   private conflict: SaveConflict<Doc> | null = null
-  private debounceTimer: ReturnType<typeof setTimeout> | null = null
-  private maxWaitTimer: ReturnType<typeof setTimeout> | null = null
   private retryTimer: ReturnType<typeof setTimeout> | null = null
   private waiters: Waiter[] = []
   private disposed = false
+  private baseline: Doc
+  private snapshot: Doc
+  private persistence = Promise.resolve()
 
   constructor(
     private readonly opts: {
       revision: number
+      paused?: boolean
+      persist?: (state: SaveQueueState<Doc>) => Promise<void>
+      onPersistenceError?: (error: unknown) => void
       getSnapshot: () => Doc
       performSave: (
         snapshot: Doc,
-        expectedRevision: number
+        expectedRevision: number,
+        requestId: string,
+        baseline: Doc
       ) => Promise<SaveResult<Doc>>
       /** The server acknowledged this snapshot at this revision. */
       onSaved: (snapshot: Doc, revision: number) => void
@@ -64,6 +89,8 @@ export class SaveQueue<Doc> {
     }
   ) {
     this.revision = opts.revision
+    this.baseline = this.snapshot = opts.getSnapshot()
+    this.disposed = opts.paused ?? false
   }
 
   isDirty(): boolean {
@@ -75,17 +102,53 @@ export class SaveQueue<Doc> {
   }
 
   /** Adopt a revision the caller hydrated from the server while clean. */
-  setRevision(revision: number) {
+  hydrate(snapshot: Doc, revision: number) {
+    this.baseline = this.snapshot = snapshot
     this.revision = revision
   }
 
+  restore(state: SaveQueueState<Doc>) {
+    this.baseline = state.baseline
+    this.snapshot = state.snapshot
+    this.revision = state.revision
+    this.generation = state.generation
+    this.ackedGeneration = state.ackedGeneration
+    this.attempt = state.attempt
+    this.conflict = state.conflict
+    if (this.conflict) this.opts.onConflict(this.conflict)
+  }
+
+  persisted(): Promise<void> {
+    return this.persistence
+  }
+
+  private checkpoint(): Promise<void> {
+    const state: SaveQueueState<Doc> = {
+      baseline: this.baseline,
+      snapshot: this.snapshot,
+      revision: this.revision,
+      generation: this.generation,
+      ackedGeneration: this.ackedGeneration,
+      attempt: this.attempt,
+      conflict: this.conflict,
+    }
+    this.persistence = this.persistence
+      .then(() => this.opts.persist?.(state))
+      .catch((error) => {
+        // A storage failure must not stop a working connection from saving edits.
+        this.opts.onPersistenceError?.(error)
+      })
+    return this.persistence
+  }
+
   noteEdit() {
+    this.snapshot = this.opts.getSnapshot()
     this.generation++
     // While a conflict is pending, edits accumulate but nothing is sent; the
     // resolution decides which revision they are based on.
-    if (this.conflict === null) {
-      this.scheduleSave()
-    }
+    const sending =
+      this.conflict === null && this.retryTimer === null && this.startSave()
+    if (!sending) void this.checkpoint()
   }
 
   /**
@@ -112,6 +175,7 @@ export class SaveQueue<Doc> {
       return
     }
     this.revision = this.conflict.serverRevision
+    this.baseline = this.conflict.serverDoc
     this.conflict = null
     this.startSave()
   }
@@ -125,15 +189,20 @@ export class SaveQueue<Doc> {
       return
     }
     this.revision = this.conflict.serverRevision
+    this.baseline = this.snapshot = this.conflict.serverDoc
     this.conflict = null
+    this.attempt = null
     this.ackedGeneration = this.generation
+    void this.checkpoint()
   }
 
   /** Abandon unsaved generations after an explicit user discard. */
   discardLocal() {
     this.conflict = null
+    this.attempt = null
     this.ackedGeneration = this.generation
     this.clearTimers()
+    void this.checkpoint()
   }
 
   dispose() {
@@ -150,86 +219,81 @@ export class SaveQueue<Doc> {
   activate() {
     this.disposed = false
     if (this.conflict === null && this.generation > this.ackedGeneration) {
-      this.scheduleSave()
-    }
-  }
-
-  private scheduleSave() {
-    if (this.disposed) {
-      return
-    }
-    if (this.debounceTimer !== null) {
-      clearTimeout(this.debounceTimer)
-    }
-    this.debounceTimer = setTimeout(() => this.startSave(), SAVE_DEBOUNCE_MS)
-    // The max-wait timer runs from the first unsaved edit and is not pushed
-    // back by later ones, so continuous editing still saves periodically.
-    if (this.maxWaitTimer === null) {
-      this.maxWaitTimer = setTimeout(() => this.startSave(), SAVE_MAX_WAIT_MS)
+      this.startSave()
     }
   }
 
   private clearTimers() {
-    if (this.debounceTimer !== null) {
-      clearTimeout(this.debounceTimer)
-      this.debounceTimer = null
-    }
-    if (this.maxWaitTimer !== null) {
-      clearTimeout(this.maxWaitTimer)
-      this.maxWaitTimer = null
-    }
     if (this.retryTimer !== null) {
       clearTimeout(this.retryTimer)
       this.retryTimer = null
     }
   }
 
-  private startSave() {
+  private startSave(): boolean {
     if (this.disposed || this.inFlight || this.conflict !== null) {
-      return
+      return false
     }
     if (this.generation === this.ackedGeneration) {
-      return
+      return false
     }
     this.clearTimers()
     this.inFlight = true
-    const generation = this.generation
-    const snapshot = this.opts.getSnapshot()
-    void this.opts.performSave(snapshot, this.revision).then(
-      (result) => {
+    // A lost response may hide a committed write. Retry the exact request.
+    this.attempt ??= {
+      generation: this.generation,
+      snapshot: this.snapshot,
+      revision: this.revision,
+      requestId: crypto.randomUUID(),
+    }
+    const { generation, snapshot, revision, requestId } = this.attempt
+    const send = () => {
+      if (this.disposed) {
         this.inFlight = false
-        if (result.status === 'ok') {
-          this.revision = result.revision
-          this.ackedGeneration = generation
-          this.opts.onSaved(snapshot, result.revision)
-          this.settleWaiters()
-          if (this.generation > this.ackedGeneration && !this.disposed) {
-            // Edits landed during the request. Drain immediately when a
-            // flush is waiting on them; otherwise debounce as usual.
-            if (this.waiters.length > 0) {
-              this.startSave()
+        return
+      }
+      void this.opts
+        .performSave(snapshot, revision, requestId, this.baseline)
+        .then(
+          (result) => {
+            this.inFlight = false
+            if (this.disposed) return
+            this.attempt = null
+            if (result.status === 'ok') {
+              this.baseline = snapshot
+              this.revision = result.revision
+              this.ackedGeneration = generation
+              this.opts.onSaved(snapshot, result.revision)
+              this.settleWaiters()
+              void this.checkpoint()
+              if (this.generation > this.ackedGeneration) this.startSave()
             } else {
-              this.scheduleSave()
+              this.conflict = {
+                serverDoc: result.serverDoc,
+                serverRevision: result.serverRevision,
+              }
+              this.rejectWaiters(new SaveConflictError())
+              void this.checkpoint()
+              this.opts.onConflict(this.conflict)
+            }
+          },
+          (error) => {
+            this.inFlight = false
+            if (this.disposed) return
+            this.rejectWaiters(error)
+            this.opts.onSaveError(error)
+            if (!this.disposed) {
+              this.retryTimer = setTimeout(
+                () => this.startSave(),
+                SAVE_RETRY_MS
+              )
             }
           }
-        } else {
-          this.conflict = {
-            serverDoc: result.serverDoc,
-            serverRevision: result.serverRevision,
-          }
-          this.rejectWaiters(new SaveConflictError())
-          this.opts.onConflict(this.conflict)
-        }
-      },
-      (error) => {
-        this.inFlight = false
-        this.rejectWaiters(error)
-        this.opts.onSaveError(error)
-        if (!this.disposed) {
-          this.retryTimer = setTimeout(() => this.startSave(), SAVE_RETRY_MS)
-        }
-      }
-    )
+        )
+    }
+    if (this.opts.persist) void this.checkpoint().then(send)
+    else send()
+    return true
   }
 
   private settleWaiters() {

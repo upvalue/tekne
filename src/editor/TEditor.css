@@ -259,13 +259,6 @@
   background: rgba(255, 255, 255, 0.03);
   border-radius: 6px;
 }
-.ELine-cancelled .cm-line {
-  text-decoration: line-through;
-  color: var(--color-muted);
-}
-.ELine-complete .cm-line {
-  color: var(--color-muted);
-}
 @media (max-width: 767px) {
   .TitleBar {
     padding: 16px 44px 10px 16px;
@@ -374,7 +367,7 @@
 .Editor {
   display: flex;
   flex-direction: column;
-  height: 100dvh;
+  height: calc(100dvh - var(--notification-bar-height, 0px));
 }
 .TitleBar {
   flex: none;

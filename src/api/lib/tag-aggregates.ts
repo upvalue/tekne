@@ -21,6 +21,7 @@ export type TagAggregateFilters = {
   docPattern?: string
   /** Narrow to exactly one document */
   docTitle?: string
+  excludeDocTitle?: string
   /**
    * Leave out documents whose title starts with '$'.
    *
@@ -75,6 +76,9 @@ const matching = (
   }
   if (filters.docTitle) {
     conditions.push(eb('note_title', '=', filters.docTitle))
+  }
+  if (filters.excludeDocTitle) {
+    conditions.push(eb('note_title', '!=', filters.excludeDocTitle))
   }
   if (filters.docPattern) {
     conditions.push(eb('note_title', 'ilike', filters.docPattern))
@@ -141,23 +145,7 @@ export const aggregateTagData = async (
       .groupBy('datum_tag')
       .execute(),
 
-    withPins
-      ? db
-          .selectFrom('note_data')
-          .select([
-            'datum_tag as tag',
-            'datum_pinned_at as pinned_at',
-            'datum_pinned_content as pinned_desc',
-          ])
-          .where((eb) => matching(eb, 'pin', tags, filters))
-          // An unpinned row would sort first under DESC, so drop those rather
-          // than let one beat a real pin.
-          .where('datum_pinned_at', 'is not', null)
-          .distinctOn('datum_tag')
-          .orderBy('datum_tag')
-          .orderBy('datum_pinned_at', 'desc')
-          .execute()
-      : Promise.resolve([]),
+    withPins ? latestTagPins(db, tags, filters) : Promise.resolve([]),
   ])
 
   for (const row of [...taskRows, ...timerRows, ...pinRows]) {
@@ -166,4 +154,27 @@ export const aggregateTagData = async (
   }
 
   return results
+}
+
+export const latestTagPins = async (
+  db: Kysely<Database>,
+  tags: string[],
+  filters: TagAggregateFilters
+) => {
+  if (tags.length === 0) return []
+  return db
+    .selectFrom('note_data')
+    .select([
+      'datum_tag as tag',
+      'datum_pinned_at as pinned_at',
+      'datum_pinned_content as pinned_desc',
+      'line_id as pin_line_id',
+    ])
+    .where((eb) => matching(eb, 'pin', tags, filters))
+    .where('datum_pinned_at', 'is not', null)
+    .distinctOn('datum_tag')
+    .orderBy('datum_tag')
+    .orderBy('datum_pinned_at', 'desc')
+    .orderBy(sql`line_id collate "C"`, 'desc')
+    .execute()
 }

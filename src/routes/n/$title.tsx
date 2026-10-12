@@ -18,14 +18,16 @@ import { useCreateDoc } from '@/hooks/useCreateDoc'
 export const Route = createFileRoute('/n/$title')({
   component: RouteComponent,
   pendingMs: Infinity,
-  loader: ({ context, params }) =>
-    context.queryClient.prefetchQuery({
+  loader: ({ context, params }) => {
+    // Local recovery must be able to mount even when the network is stalled.
+    void context.queryClient.prefetchQuery({
       ...context.orpc.doc.loadDoc.queryOptions({
         input: { name: params.title },
       }),
       retry: false,
       staleTime: 1000,
-    }),
+    })
+  },
 })
 
 /**
@@ -75,14 +77,19 @@ function RouteComponent() {
           return
         }
         // Create the tutorial, then invalidate the query to refetch
-        createDocMutation.mutateAsync({ name: title }).then(() => {
-          utils.invalidateQueries({
-            queryKey: orpc.doc.loadDoc.key({
-              input: { name: title },
-              type: 'query',
-            }),
-          })
-        })
+        createDocMutation.mutate(
+          { name: title },
+          {
+            onSuccess: () => {
+              return utils.invalidateQueries({
+                queryKey: orpc.doc.loadDoc.key({
+                  input: { name: title },
+                  type: 'query',
+                }),
+              })
+            },
+          }
+        )
         return
       }
       // For non-tutorial documents
@@ -90,7 +97,7 @@ function RouteComponent() {
         return
       }
       notFoundRedirectedTitle.current = title
-      navigate({
+      void navigate({
         to: '/doc-not-found/$title',
         params: { title: title },
         replace: true,

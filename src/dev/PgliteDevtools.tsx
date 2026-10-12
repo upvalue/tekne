@@ -168,10 +168,12 @@ export const PgliteRepl = () => {
   const dbHandleRef: RefObject<PGlite | null> = useRef(null)
   const [haveDb, setHaveDb] = useState(false)
   useEffect(() => {
-    dbMemory().then(({ dbHandle }) => {
-      dbHandleRef.current = dbHandle
-      setHaveDb(true)
-    })
+    dbMemory()
+      .then(({ dbHandle }) => {
+        dbHandleRef.current = dbHandle
+        setHaveDb(true)
+      })
+      .catch((error) => console.error('Could not open database console', error))
   }, [])
 
   return (
@@ -193,7 +195,7 @@ export const PgliteDevtools = () => {
 
   useEffect(() => {
     setCurrentDbPath(getCurrentDatabasePath())
-    loadDatabases()
+    void loadDatabases()
   }, [])
 
   const loadDatabases = async () => {

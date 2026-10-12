@@ -28,7 +28,7 @@ jobs:
         uses: pnpm/action-setup@v4
 
       - name: Install dependencies
-        run: pnpm install
+        run: pnpm install --frozen-lockfile
 
       - name: Install Playwright browser
         run: pnpm exec playwright install --with-deps chromium
@@ -38,3 +38,14 @@ jobs:
 
       - name: Run tests
         run: pnpm test
+
+      - name: Build server-backed production app
+        run: pnpm build
+
+      - name: Check server-backed bundle excludes PGlite WASM
+        run: test -z "$(find dist -name '*.wasm' -print -quit)"
+
+      - name: Build standalone demo
+        run: pnpm client:build
+        env:
+          TEKNE_DEMO: 'true'

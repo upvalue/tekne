@@ -71,6 +71,7 @@ export default defineConfig({
     },
   },
   optimizeDeps: {
+    include: ['framer-motion'],
     exclude: ['@electric-sql/pglite'],
   },
   test: {

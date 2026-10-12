@@ -25,6 +25,50 @@ describe('jsonifyTree', () => {
 })
 
 describe('TEKNE_MD_PARSER', () => {
+  test.each([
+    '2026-10-12',
+    'foo-bar',
+    'Project: Alpha',
+    '$Daily',
+    'folder/My notes',
+  ])('preserves the complete link target and spans: %s', (title) => {
+    const text = `before [[${title}]] after [[Other]]`
+    const links: Array<{ from: number; to: number; text: string }> = []
+    TEKNE_MD_PARSER.parse(text).iterate({
+      enter(node) {
+        if (node.name === 'InternalLinkBody') {
+          links.push({
+            from: node.from,
+            to: node.to,
+            text: text.slice(node.from, node.to),
+          })
+        }
+      },
+    })
+    expect(links).toEqual([
+      { from: 9, to: 9 + title.length, text: title },
+      {
+        from: text.indexOf('Other'),
+        to: text.indexOf('Other') + 5,
+        text: 'Other',
+      },
+    ])
+  })
+
+  test.each(['[[#Invalid]]', '[[]]', '[[broken\nlink]]'])(
+    'rejects malformed links without matching a suffix: %s',
+    (text) => {
+      const links: string[] = []
+      TEKNE_MD_PARSER.parse(text).iterate({
+        enter(node) {
+          if (node.name === 'InternalLinkBody')
+            links.push(text.slice(node.from, node.to))
+        },
+      })
+      expect(links).toEqual([])
+    }
+  )
+
   test('parses basic text "hello"', () => {
     const text = 'hello'
     const tree = TEKNE_MD_PARSER.parse(text)

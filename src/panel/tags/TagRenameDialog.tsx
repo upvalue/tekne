@@ -1,6 +1,6 @@
 import { useMutation } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
-import { toast } from 'sonner'
+import { notifications } from '@/lib/notifications'
 import { orpc } from '@/api/client'
 import { tagNameSchema } from '@/docs/validation'
 import { requestEditorFlush } from '@/lib/app-events'
@@ -80,7 +80,7 @@ export const TagRenameDialog = ({
     try {
       await requestEditorFlush()
     } catch {
-      toast.error('Could not save the open document — rename cancelled')
+      notifications.error('Could not save the open document — rename cancelled')
       return
     }
     try {
@@ -89,7 +89,9 @@ export const TagRenameDialog = ({
       // touches (open document, tag lists, aggregates, search results).
       window.location.reload()
     } catch (e) {
-      toast.error(`Failed to ${isMerge ? 'merge' : 'rename'} tag: ${String(e)}`)
+      notifications.error(
+        `Failed to ${isMerge ? 'merge' : 'rename'} tag: ${String(e)}`
+      )
     }
   }
 

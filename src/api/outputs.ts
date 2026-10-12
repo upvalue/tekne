@@ -118,7 +118,20 @@ export const outputs = {
       totalLineRows: count,
     }),
   },
-  analysis: { aggregateData: z.array(aggregate) },
+  analysis: {
+    aggregateData: z.array(aggregate),
+    aggregateSnapshot: z.object({
+      title: z.string(),
+      revision: count,
+      rows: z.array(
+        aggregate.extend({
+          other_pinned_at: z.date().nullable(),
+          other_pinned_desc: z.string().nullable(),
+          other_pin_line_id: z.string().nullable(),
+        })
+      ),
+    }),
+  },
   search: {
     searchLines: z.object({
       items: z.array(

@@ -214,7 +214,7 @@ export const Search = () => {
 
   const handleNavigateToResult = useCallback(
     (noteTitle: string) => {
-      navigate({ to: '/n/$title', params: { title: noteTitle } })
+      void navigate({ to: '/n/$title', params: { title: noteTitle } })
     },
     [navigate]
   )

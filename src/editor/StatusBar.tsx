@@ -11,7 +11,7 @@ import {
 import { List } from 'lucide-react'
 import { renderTime } from '@/lib/time'
 import { useGlobalKeybinding } from '@/hooks/useGlobalKeybinding'
-import { toast } from 'sonner'
+import { notifications } from '@/lib/notifications'
 import { RunningTimerPill } from './timer/RunningTimerPill'
 
 const GoToLineInput = ({
@@ -85,7 +85,7 @@ export const StatusBar = ({
   useGlobalKeybinding('goToLine', () => setGoToLineOpen((open) => !open))
   useEffect(() => {
     if (!errorMessage) return
-    toast.error(errorMessage)
+    notifications.error(errorMessage)
     setErrorMessage(null)
   }, [errorMessage, setErrorMessage])
   const lines = doc.children.filter(

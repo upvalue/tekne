@@ -16,7 +16,7 @@ export const useDocumentLineEvents = () => {
   const store = useStore()
 
   useCodemirrorEvent('lineTimerToggle', (event) => {
-    toggleTimer(store, event.lineIdx)
+    void toggleTimer(store, event.lineIdx)
   })
 
   useCodemirrorEvent('lineTimerOpen', (event) => {

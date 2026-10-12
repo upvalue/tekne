@@ -1,3 +1,5 @@
+import { AnimatedMetric } from '@/components/AnimatedMetric'
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 // Shared aggregate display components for use in Aggregate panel and Search
 
 import { renderTime } from '@/lib/time'
@@ -66,7 +68,7 @@ const Totals = ({ tag }: { tag: ResultCardData }) => {
               label === 'logged' && 'font-mono'
             )}
           >
-            {value}
+            <AnimatedMetric value={value!} />
           </span>
         </span>
       ))}
@@ -97,7 +99,7 @@ const PageContribution = ({ tag }: { tag: ResultCardData }) => {
           className={cn('flex items-center gap-1 whitespace-nowrap', className)}
         >
           <Icon size={13} className="shrink-0" />
-          {value}
+          <AnimatedMetric value={value!} />
         </span>
       ))}
     </div>
@@ -129,17 +131,29 @@ const CardMasonry = ({
 }: {
   data: ResultCardData[]
   className?: string
-}) => (
-  <div className={cn('@container', className)}>
-    <ul aria-label="Tag aggregates" className="gap-2 @md:columns-2">
-      {data.map((tag) => (
-        <li key={tag.tag} className="mb-2 break-inside-avoid">
-          <ResultCard tag={tag} />
-        </li>
-      ))}
-    </ul>
-  </div>
-)
+}) => {
+  const reduceMotion = useReducedMotion()
+  return (
+    <div className={cn('@container', className)}>
+      <ul aria-label="Tag aggregates" className="gap-2 @md:columns-2">
+        <AnimatePresence initial={false}>
+          {data.map((tag) => (
+            <motion.li
+              key={tag.tag}
+              initial={reduceMotion ? false : { opacity: 0, y: 4 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={reduceMotion ? { opacity: 1 } : { opacity: 0 }}
+              transition={{ duration: reduceMotion ? 0 : 0.15 }}
+              className="mb-2 break-inside-avoid"
+            >
+              <ResultCard tag={tag} />
+            </motion.li>
+          ))}
+        </AnimatePresence>
+      </ul>
+    </div>
+  )
+}
 
 /** The panel section is flush, so the list supplies its own inset. */
 export const AggregateList = ({ data }: { data: ResultCardData[] }) => (

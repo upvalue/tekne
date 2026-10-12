@@ -19,6 +19,7 @@ import { tmigration as historicalTimersMigration } from './migrations/1791676800
 import { tmigration as lineIdsMigration } from './migrations/1791763200000_line-ids'
 import { tmigration as timerOverlaysMigration } from './migrations/1791766800000_timer-overlays'
 import { tmigration as removeLineColorsMigration } from './migrations/1791770400000_remove-line-colors'
+import { tmigration as patchReceiptsMigration } from './migrations/1791800000000_document-patch-receipts'
 import type { Database } from './types'
 
 /**
@@ -45,6 +46,7 @@ export const MIGRATIONS: Record<string, Migration> = {
   '1791763200000_line-ids': lineIdsMigration,
   '1791766800000_timer-overlays': timerOverlaysMigration,
   '1791770400000_remove-line-colors': removeLineColorsMigration,
+  '1791800000000_document-patch-receipts': patchReceiptsMigration,
 }
 
 /**

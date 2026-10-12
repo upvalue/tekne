@@ -1,3 +1,4 @@
+import { applyDocumentPatch, documentPatchSchema } from '@/docs/document-patch'
 import { outputs } from '../outputs'
 import z from 'zod'
 import { lineMake, zdoc, type ZDoc, docMake, copyLines } from '@/docs/schema'
@@ -283,6 +284,95 @@ export const docRouter = {
         updatedAt: doc.updatedAt,
         revision: doc.revision,
       }
+    }),
+
+  patchDoc: storedDocumentProc
+    .route({
+      method: 'PATCH',
+      path: '/documents/content',
+      tags: ['doc'],
+      summary: 'Patch doc',
+      description:
+        'Apply ordered line operations atomically at expectedRevision. Use the same requestId and payload when retrying a lost response. Returns the acknowledged revision or the current document on conflict.',
+    })
+    .input(
+      z.object({
+        name: z.string(),
+        expectedRevision: z.number().int().nonnegative(),
+        requestId: z.uuid(),
+        patch: documentPatchSchema,
+      })
+    )
+    .output(outputs.doc.updateDoc)
+    .handler(async ({ input, context: { db } }) => {
+      return db.transaction().execute(async (tx) => {
+        const current = await tx
+          .selectFrom('notes')
+          .select(['body', 'revision'])
+          .where('title', '=', input.name)
+          .forUpdate()
+          .executeTakeFirst()
+        if (!current)
+          throw new ORPCError('NOT_FOUND', {
+            message: 'Document no longer exists',
+          })
+        const digest = await crypto.subtle.digest(
+          'SHA-256',
+          new TextEncoder().encode(
+            JSON.stringify({
+              expectedRevision: input.expectedRevision,
+              patch: input.patch,
+            })
+          )
+        )
+        const requestHash = Array.from(new Uint8Array(digest), (byte) =>
+          byte.toString(16).padStart(2, '0')
+        ).join('')
+        const receipt = await tx
+          .selectFrom('document_patch_receipts')
+          .selectAll()
+          .where('request_id', '=', input.requestId)
+          .executeTakeFirst()
+        if (receipt) {
+          if (
+            receipt.note_title !== input.name ||
+            receipt.request_hash !== requestHash
+          )
+            throw new ORPCError('BAD_REQUEST', {
+              message: 'Request ID was already used for a different patch',
+            })
+          return { status: 'ok' as const, revision: receipt.revision }
+        }
+        if (current.revision !== input.expectedRevision) {
+          return {
+            status: 'conflict' as const,
+            serverDoc: current.body,
+            serverRevision: current.revision,
+          }
+        }
+        let body: ZDoc
+        try {
+          body = applyDocumentPatch(current.body, input.patch)
+        } catch (error) {
+          throw new ORPCError('BAD_REQUEST', {
+            message: error instanceof Error ? error.message : 'Invalid patch',
+          })
+        }
+        const revision =
+          input.patch.length === 0
+            ? current.revision
+            : await upsertNoteInTx(tx, input.name, body)
+        await tx
+          .insertInto('document_patch_receipts')
+          .values({
+            request_id: input.requestId,
+            note_title: input.name,
+            request_hash: requestHash,
+            revision,
+          })
+          .execute()
+        return { status: 'ok' as const, revision }
+      })
     }),
 
   updateDoc: storedDocumentProc

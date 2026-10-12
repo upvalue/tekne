@@ -27,7 +27,7 @@ export function Tooltip({
             <TooltipPrimitive.Popup
               id={descriptionId}
               role="tooltip"
-              className="OverlaySurface max-w-56 px-3 py-2 text-xs text-text shadow-lg"
+              className="max-w-56 rounded-md border border-white/10 bg-raised px-3 py-2 text-xs text-text shadow-lg"
             >
               <div className="font-medium">{label}</div>
               {description && (

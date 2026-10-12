@@ -24,6 +24,7 @@ async function buildDocs() {
       'generated'
     )
     console.log('\n📁 Creating src/documentation directory...')
+    await fs.rm(srcDocsDir, { recursive: true, force: true })
     await fs.mkdir(srcDocsDir, { recursive: true })
 
     // Step 3: Copy generated files to src/docs
@@ -46,4 +47,4 @@ async function buildDocs() {
   }
 }
 
-buildDocs()
+await buildDocs()

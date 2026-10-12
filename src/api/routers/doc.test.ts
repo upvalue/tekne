@@ -162,38 +162,41 @@ describe('updateDoc', () => {
 })
 
 describe('renameDocExecute', () => {
-  test('rewrites inbound links, including multiple links on one line', async () => {
-    await noteWith('Target', ['content'])
-    await noteWith('Referrer', [
-      'see [[Target]] and [[Target]] again',
-      'unrelated [[Other]]',
-    ])
+  test.each(['Target', '2026-10-12', 'Project: Alpha'])(
+    'rewrites inbound links to %s, including multiple links on one line',
+    async (target) => {
+      await noteWith(target, ['content'])
+      await noteWith('Referrer', [
+        `see [[${target}]] and [[${target}]] again`,
+        'unrelated [[Other]]',
+      ])
 
-    const result = await caller.renameDocExecute({
-      oldName: 'Target',
-      newName: 'Renamed',
-    })
+      const result = await caller.renameDocExecute({
+        oldName: target,
+        newName: 'Renamed',
+      })
 
-    expect(result).toMatchObject({ newName: 'Renamed', linksUpdated: 2 })
+      expect(result).toMatchObject({ newName: 'Renamed', linksUpdated: 2 })
 
-    const { doc } = await caller.loadDoc({ name: 'Referrer' })
-    expect(doc.children[0].mdContent).toBe(
-      'see [[Renamed]] and [[Renamed]] again'
-    )
-    expect(doc.children[1].mdContent).toBe('unrelated [[Other]]')
+      const { doc } = await caller.loadDoc({ name: 'Referrer' })
+      expect(doc.children[0].mdContent).toBe(
+        'see [[Renamed]] and [[Renamed]] again'
+      )
+      expect(doc.children[1].mdContent).toBe('unrelated [[Other]]')
 
-    // Derived rows must reflect the rewritten body
-    expect(await lineContents('Referrer')).toEqual([
-      'see [[Renamed]] and [[Renamed]] again',
-      'unrelated [[Other]]',
-    ])
+      // Derived rows must reflect the rewritten body
+      expect(await lineContents('Referrer')).toEqual([
+        'see [[Renamed]] and [[Renamed]] again',
+        'unrelated [[Other]]',
+      ])
 
-    // The document itself is renamed; the old name is gone
-    await expect(caller.loadDoc({ name: 'Renamed' })).resolves.toBeTruthy()
-    await expect(caller.loadDoc({ name: 'Target' })).rejects.toMatchObject({
-      code: 'NOT_FOUND',
-    })
-  })
+      // The document itself is renamed; the old name is gone
+      await expect(caller.loadDoc({ name: 'Renamed' })).resolves.toBeTruthy()
+      await expect(caller.loadDoc({ name: target })).rejects.toMatchObject({
+        code: 'NOT_FOUND',
+      })
+    }
+  )
 
   test('renaming onto an existing document is CONFLICT and changes nothing', async () => {
     await noteWith('A', ['[[B]]'])
@@ -365,3 +368,118 @@ test('saving legacy input cannot restore line colors', async () => {
     await db.destroy()
   }
 }, 60_000)
+
+describe('patchDoc', () => {
+  test('patches preserve full-save derived data and duplicate requests acknowledge once', async () => {
+    const { diffDocuments } = await import('@/docs/document-patch')
+    const before = docMake([
+      lineMake(0, '#work'),
+      lineMake(1, 'task', { datumTaskStatus: 'unset' }),
+    ])
+    await upsertNoteInTx(db, 'Patch', before)
+    const after = structuredClone(before)
+    after.children[1].datumTaskStatus = 'complete'
+    after.children[0].mdContent = '#new'
+    after.children.unshift(lineMake(0, 'inserted'))
+    const input = {
+      name: 'Patch',
+      expectedRevision: 0,
+      requestId: crypto.randomUUID(),
+      patch: diffDocuments(before, after),
+    }
+    expect(await caller.patchDoc(input)).toEqual({ status: 'ok', revision: 1 })
+    const rows = await db
+      .selectFrom('note_data')
+      .selectAll()
+      .where('note_title', '=', 'Patch')
+      .execute()
+    const lines = await lineContents('Patch')
+    expect(await caller.patchDoc(input)).toEqual({ status: 'ok', revision: 1 })
+    expect(await caller.loadDoc({ name: 'Patch' })).toEqual({
+      doc: after,
+      revision: 1,
+    })
+    await caller.updateDoc({ name: 'Patch', doc: after, expectedRevision: 1 })
+    expect(
+      await db
+        .selectFrom('note_data')
+        .selectAll()
+        .where('note_title', '=', 'Patch')
+        .execute()
+    ).toEqual(rows)
+    expect(await lineContents('Patch')).toEqual(lines)
+    // A late retry still acknowledges its own revision after another writer saves.
+    expect(await caller.patchDoc(input)).toEqual({ status: 'ok', revision: 1 })
+    expect((await caller.loadDoc({ name: 'Patch' })).revision).toBe(2)
+    await expect(
+      caller.patchDoc({ ...input, patch: [] })
+    ).rejects.toMatchObject({ code: 'BAD_REQUEST' })
+  })
+
+  test('stale revisions, invalid operations and deleted documents never partially write', async () => {
+    const before = docMake([lineMake(0, 'original #tag')])
+    await upsertNoteInTx(db, 'Patch', before)
+    const request = {
+      name: 'Patch',
+      expectedRevision: 0,
+      requestId: crypto.randomUUID(),
+    }
+    await expect(
+      caller.patchDoc({
+        ...request,
+        patch: [
+          {
+            op: 'update',
+            line: { ...before.children[0], mdContent: 'changed' },
+          },
+          { op: 'delete', id: lineMake(0).id },
+        ],
+      })
+    ).rejects.toMatchObject({ code: 'BAD_REQUEST' })
+    expect(await caller.loadDoc({ name: 'Patch' })).toEqual({
+      doc: before,
+      revision: 0,
+    })
+    expect(await lineContents('Patch')).toEqual(['original #tag'])
+    expect(
+      await db.selectFrom('document_patch_receipts').selectAll().execute()
+    ).toEqual([])
+    expect(
+      await caller.patchDoc({ ...request, expectedRevision: 7, patch: [] })
+    ).toEqual({ status: 'conflict', serverDoc: before, serverRevision: 0 })
+    await caller.deleteDoc({ name: 'Patch' })
+    await expect(
+      caller.patchDoc({ ...request, patch: [] })
+    ).rejects.toMatchObject({ code: 'NOT_FOUND' })
+  })
+
+  test('competing patches accept only one revision and reject cross-document line IDs', async () => {
+    const before = docMake([lineMake(0, 'original')])
+    await upsertNoteInTx(db, 'Patch', before)
+    const results = await Promise.all(
+      ['one', 'two'].map((mdContent) =>
+        caller.patchDoc({
+          name: 'Patch',
+          expectedRevision: 0,
+          requestId: crypto.randomUUID(),
+          patch: [{ op: 'update', line: { ...before.children[0], mdContent } }],
+        })
+      )
+    )
+    expect(results.map((result) => result.status).sort()).toEqual([
+      'conflict',
+      'ok',
+    ])
+    const other = lineMake(0, 'belongs elsewhere')
+    await upsertNoteInTx(db, 'Other', docMake([other]))
+    await expect(
+      caller.patchDoc({
+        name: 'Patch',
+        expectedRevision: 1,
+        requestId: crypto.randomUUID(),
+        patch: [{ op: 'insert', line: other, after: null }],
+      })
+    ).rejects.toMatchObject({ code: 'CONFLICT' })
+    expect((await caller.loadDoc({ name: 'Patch' })).revision).toBe(1)
+  })
+})

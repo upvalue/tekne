@@ -170,20 +170,20 @@ describe('line data toggles', () => {
 })
 
 describe('toggleTimer', () => {
-  test('adds a zero timer to a bare line', () => {
+  test('adds a zero timer to a bare line', async () => {
     const store = makeStore(doc(['a', 0]))
-    toggleTimer(store, 0)
+    await toggleTimer(store, 0)
     expect(store.get(docAtom).children[0].datumTimeSeconds).toBe(0)
   })
 
-  test('declined confirm keeps a timer with data', () => {
+  test('declined confirm keeps a timer with data', async () => {
     const store = makeStore(doc(['a', 0]))
     store.set(docAtom, (draft) => {
       draft.children[0].datumTimeSeconds = 90
     })
-    toggleTimer(store, 0, () => false)
+    await toggleTimer(store, 0, () => false)
     expect(store.get(docAtom).children[0].datumTimeSeconds).toBe(90)
-    toggleTimer(store, 0, () => true)
+    await toggleTimer(store, 0, () => true)
     expect(store.get(docAtom).children[0].datumTimeSeconds).toBeUndefined()
   })
 

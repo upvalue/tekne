@@ -16,7 +16,7 @@ export function Panel() {
   const [activeTab, setActiveTab] = useActivePanelTab()
   const setPanelVisible = useSetPanelVisible()
   return (
-    <aside className="flex flex-col h-dvh pt-4">
+    <aside className="flex flex-col AppViewport pt-4">
       <nav
         aria-label="Panel sections"
         className="flex items-center gap-1 pb-2 px-3 text-xs"

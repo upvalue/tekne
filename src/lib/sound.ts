@@ -73,7 +73,12 @@ export function playTimerCompleteSound() {
     shimmer.start(now + chordStart)
     shimmer.stop(now + chordStart + chordDur + tail)
 
-    setTimeout(() => ctx.close(), (chordStart + chordDur + tail) * 1000 + 200)
+    setTimeout(
+      () => {
+        void ctx.close().catch(() => {})
+      },
+      (chordStart + chordDur + tail) * 1000 + 200
+    )
   } catch {
     // Audio not available - silently ignore
   }

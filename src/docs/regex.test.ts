@@ -15,11 +15,10 @@ describe('InternalLinkRegex', () => {
     expect(match).toBeNull()
   })
 
-  test('matches internal link starting with #', () => {
+  test('does not skip invalid characters to match a suffix', () => {
     const text = '#MyPage]]'
     const match = InternalLinkRegex.exec(text)
-    expect(match).toBeTruthy()
-    expect(match![0]).toBe('MyPage]]')
+    expect(match).toBeNull()
   })
 
   test('matches link with spaces', () => {
@@ -30,7 +29,7 @@ describe('InternalLinkRegex', () => {
   })
 
   test('matches link with forward slashes', () => {
-    const text = '#folder/subfolder/page]]'
+    const text = 'folder/subfolder/page]]'
     const match = InternalLinkRegex.exec(text)
     expect(match).toBeTruthy()
     expect(match![0]).toBe('folder/subfolder/page]]')

@@ -35,7 +35,7 @@ import {
   timerElapsedSeconds,
   timerRemainingSeconds,
 } from './timer/timer-controller'
-import { toast } from 'sonner'
+import { notifications } from '@/lib/notifications'
 import {
   Popover,
   PopoverButton,
@@ -134,7 +134,7 @@ export const TimerBadge = ({
     })
     setManual('')
     setOpen(false)
-    toast.success(
+    notifications.success(
       `${replace ? 'Set total to' : 'Added'} ${renderTime(duration)}`,
       {
         action: {

@@ -13,7 +13,7 @@ function RouteComponent() {
     localStorage.setItem('tekne-demo-visited', 'true')
 
     // Navigate to today's date document
-    navigate({
+    void navigate({
       to: '/n/$title',
       params: {
         title: 'Tutorial',

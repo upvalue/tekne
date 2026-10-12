@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useRef, useState } from 'react'
 import { Plus, X } from 'lucide-react'
 import { orpc } from '@/api/client'
-import { toast } from 'sonner'
+import { notifications } from '@/lib/notifications'
 
 export const SavedSearches = ({
   currentQuery,
@@ -26,9 +26,9 @@ export const SavedSearches = ({
         void refresh()
         setAdding(false)
         setName('')
-        toast.success('Search saved')
+        notifications.success('Search saved')
       },
-      onError: (e) => toast.error(e.message),
+      onError: (e) => notifications.error(e.message),
     })
   )
   const remove = useMutation(
@@ -36,7 +36,7 @@ export const SavedSearches = ({
       onSuccess: () => {
         void refresh()
       },
-      onError: (e) => toast.error(e.message),
+      onError: (e) => notifications.error(e.message),
     })
   )
   const cancelAdding = () => {
@@ -66,7 +66,7 @@ export const SavedSearches = ({
                   { id: search.id },
                   {
                     onSuccess: () =>
-                      toast.success('Saved search deleted', {
+                      notifications.success('Saved search deleted', {
                         action: {
                           label: 'Undo',
                           onClick: () =>

@@ -2,6 +2,7 @@ import { atom, useAtom, useStore } from 'jotai'
 import { type ZDoc, type ZLine } from '@/docs/schema'
 import { useCallback } from 'react'
 import { atomWithQuery } from 'jotai-tanstack-query'
+import { queryClient } from '@/lib/query-client'
 import { orpcClient } from '@/api/client'
 import { produce, type Draft } from 'immer'
 import { captureUndoEntry, suppressUndoCaptureAtom } from './undo'
@@ -94,18 +95,17 @@ export const globalTimerAtom = atom<GlobalTimerState>({
   targetDuration: DEFAULT_COUNTDOWN_SECONDS,
 })
 
-export const notificationPermissionAtom = atom<NotificationPermission | null>(
-  null
+export const allTagsAtom = atomWithQuery(
+  () => ({
+    queryKey: ['allTags'],
+    queryFn: () => {
+      return orpcClient.tags.allTags()
+    },
+    // every 5 minutes
+    refetchInterval: 60 * 5 * 1000,
+  }),
+  () => queryClient
 )
-
-export const allTagsAtom = atomWithQuery(() => ({
-  queryKey: ['allTags'],
-  queryFn: () => {
-    return orpcClient.tags.allTags()
-  },
-  // every 5 minutes
-  refetchInterval: 60 * 5 * 1000,
-}))
 
 /**
  * Update a line in the document outside of the React tree

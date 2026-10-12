@@ -9,20 +9,14 @@ import '@/styles/styles.css'
 const fixture = vi.hoisted(() => ({ data: [] as ResultCardData[] }))
 
 vi.mock('@/hooks/useDocTitle', () => ({ useDocTitle: () => 'mobile-layout' }))
-vi.mock('@/api/client', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('@/api/client')>()),
-  orpc: {
-    analysis: {
-      aggregateData: {
-        queryOptions: () => ({
-          queryKey: ['aggregate-layout'],
-          queryFn: async () => fixture.data,
-          initialData: fixture.data,
-          staleTime: Infinity,
-        }),
-      },
-    },
-  },
+vi.mock('./useLiveAggregates', () => ({
+  useLiveAggregates: () => ({
+    data: fixture.data,
+    ready: true,
+    error: null,
+    isFetching: false,
+    refetch: () => {},
+  }),
 }))
 
 afterEach(async () => {

@@ -12,11 +12,8 @@
   "dependencies": {
     "@mdx-js/mdx": "^3.1.0",
     "gray-matter": "^4.0.3",
-    "remark": "^15.0.1",
     "remark-frontmatter": "^5.0.0",
-    "remark-gfm": "^4.0.0",
-    "unified": "^11.0.5",
-    "vfile": "^6.0.3"
+    "remark-gfm": "^4.0.0"
   },
   "devDependencies": {
     "@types/node": "^22.10.5",

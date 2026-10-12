@@ -7,7 +7,7 @@
 
 import { useEffect, useMemo, useState, useSyncExternalStore } from 'react'
 import { useStore } from 'jotai'
-import { toast } from 'sonner'
+import { notifications } from '@/lib/notifications'
 import { CircleStop, Sparkles } from 'lucide-react'
 import { Button } from '@/components/vendor/Button'
 import { docAtom } from '@/editor/state'
@@ -108,14 +108,14 @@ const ActiveSession = ({
       next = replay.doc
       const failed = replay.results.filter((r) => !r.ok).length
       if (failed > 0) {
-        toast.warning(
+        notifications.warning(
           `${failed} edit${failed === 1 ? '' : 's'} no longer applied cleanly and ${failed === 1 ? 'was' : 'were'} skipped`
         )
       }
     }
     store.set(docAtom, next)
     requestEditorFlush().catch(() => {
-      toast.error(
+      notifications.error(
         'Changes were applied to the editor but could not be saved yet'
       )
     })
