@@ -6,8 +6,8 @@
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#18181b",
-  "theme_color": "#18181b",
+  "background_color": "#0b0e14",
+  "theme_color": "#0b0e14",
   "icons": [
     {
       "src": "favicon/tekne-app-192.png",

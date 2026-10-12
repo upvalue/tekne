@@ -68,7 +68,7 @@ export const TimerObserver = () => {
             try {
               new Notification('Timer Complete', {
                 body: timer.lineContent,
-                icon: '/favicon/tekne32-sky.png',
+                icon: '/favicon/tekne32.png',
               })
             } catch {
               /* Mobile browsers may only support worker notifications. */
