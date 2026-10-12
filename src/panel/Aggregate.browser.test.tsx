@@ -92,13 +92,13 @@ test.each([
     expect(rows[1].getBoundingClientRect().top).toBe(
       rows[0].getBoundingClientRect().bottom
     )
-    expect(getComputedStyle(rows[0]).backgroundColor).not.toBe(
+    expect(getComputedStyle(rows[0]).backgroundColor).toBe(
       getComputedStyle(rows[1]).backgroundColor
     )
     expect(getComputedStyle(rows[0]).backgroundColor).toBe(
       getComputedStyle(rows[2]).backgroundColor
     )
-    expect(view.getByText('12').getBoundingClientRect().top).toBe(
+    expect(view.getByText('· 12 done').getBoundingClientRect().top).toBe(
       view.getByText('1h 30m').getBoundingClientRect().top
     )
     const description = view.getByText(fixture.data[1].pinned_desc!)
@@ -132,13 +132,13 @@ test('empty aggregate retains one inset and wraps within a small panel', async (
   expect(view.queryByRole('list')).toBeNull()
 })
 
-test('search result cards retain their desktop columns, border and inset', () => {
+test('search summaries remain a single column without card borders', () => {
   const view = render(
     <ResultCardGrid data={[{ tag: 'search-one' }, { tag: 'search-two' }]} />
   )
-  const grid = view.container.firstElementChild!
-  expect(getComputedStyle(grid).columnCount).toBe('2')
-  const card = view.getByText('search-one').parentElement!.parentElement!
-  expect(getComputedStyle(card).paddingLeft).toBe('16px')
-  expect(getComputedStyle(card).borderLeftWidth).toBe('1px')
+  const rows = view.getAllByRole('listitem')
+  expect(rows[1].getBoundingClientRect().top).toBeGreaterThanOrEqual(
+    rows[0].getBoundingClientRect().bottom
+  )
+  expect(getComputedStyle(rows[0]).borderLeftWidth).toBe('0px')
 })

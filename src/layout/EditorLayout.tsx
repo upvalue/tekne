@@ -41,7 +41,7 @@ export function EditorLayout({ editor, sidepanel }: EditorLayoutProps) {
   )
 
   return (
-    <div className="w-full flex flex-col relative">
+    <div className="w-full flex flex-col relative md:px-6">
       <div className="flex flex-grow">
         <div
           className={panelVisible ? 'flex-1 min-w-0 Editor' : 'w-full Editor'}

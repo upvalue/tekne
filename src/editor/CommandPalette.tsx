@@ -34,7 +34,7 @@ export const CommandPalette = ({
   const store = useStore()
   const navigate = useNavigate()
   const [query, setQuery] = useState('')
-  const [active, setActive] = useState(0)
+  const [active, setActive] = useState(-1)
   const input = useRef<HTMLInputElement>(null)
   const list = useRef<HTMLDivElement>(null)
   const debounced = useDebouncedValue(query, 150)
@@ -53,7 +53,7 @@ export const CommandPalette = ({
   useEffect(() => {
     if (isOpen) {
       setQuery('')
-      setActive(0)
+      setActive(-1)
     }
   }, [isOpen])
   const items = useMemo(() => {
@@ -94,7 +94,9 @@ export const CommandPalette = ({
         })
       }
     }
-    for (const doc of docs.data ?? [])
+    for (const doc of (docs.data ?? []).filter((doc) =>
+      doc.title.toLowerCase().includes(query.toLowerCase())
+    ))
       result.push({
         id: `doc:${doc.id}`,
         name: doc.title,
@@ -122,11 +124,20 @@ export const CommandPalette = ({
       (a, b) => GROUPS.indexOf(a.group) - GROUPS.indexOf(b.group)
     )
   }, [store, lineIdx, view, query, docs.data, navigate, createDoc])
+  const activeIndex =
+    active < 0
+      ? Math.max(
+          0,
+          items.findIndex(
+            (item) => !item.id.startsWith('doc:') && item.id !== 'create'
+          )
+        )
+      : Math.min(active, items.length - 1)
   useEffect(() => {
     list.current
       ?.querySelector('[aria-selected="true"]')
       ?.scrollIntoView({ block: 'nearest' })
-  }, [active])
+  }, [activeIndex])
   const run = (item: Item) => {
     void item.run()
     onClose()
@@ -158,7 +169,7 @@ export const CommandPalette = ({
             value={query}
             onChange={(e) => {
               setQuery(e.target.value)
-              setActive(0)
+              setActive(-1)
             }}
             className="w-full bg-transparent px-3 py-3 text-base outline-none placeholder:text-muted"
             placeholder="Find a command or document…"
@@ -167,7 +178,7 @@ export const CommandPalette = ({
             aria-expanded="true"
             aria-controls="palette-results"
             aria-activedescendant={
-              items[active] ? `palette-item-${active}` : undefined
+              items[activeIndex] ? `palette-item-${activeIndex}` : undefined
             }
             onKeyDown={(e) => {
               if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
@@ -177,14 +188,15 @@ export const CommandPalette = ({
                     0,
                     Math.min(
                       items.length - 1,
-                      index + (e.key === 'ArrowDown' ? 1 : -1)
+                      (index < 0 ? activeIndex : index) +
+                        (e.key === 'ArrowDown' ? 1 : -1)
                     )
                   )
                 )
               }
               if (e.key === 'Enter') {
                 e.preventDefault()
-                if (items[active]) run(items[active])
+                if (items[activeIndex]) run(items[activeIndex])
               }
             }}
           />
@@ -204,12 +216,12 @@ export const CommandPalette = ({
                 <div
                   id={`palette-item-${index}`}
                   role="option"
-                  aria-selected={active === index}
+                  aria-selected={activeIndex === index}
                   onMouseEnter={() => setActive(index)}
                   onClick={() => run(item)}
                   className={cn(
                     'px-3 py-2 rounded-md cursor-pointer flex items-center justify-between gap-4',
-                    active === index && 'bg-white/7'
+                    activeIndex === index && 'bg-white/7'
                   )}
                 >
                   <span className="text-sm">{item.name}</span>

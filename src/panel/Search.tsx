@@ -13,8 +13,6 @@ import { SavedSearches } from './SavedSearches'
 import { Search as SearchIcon, AlignLeft, ChartColumn } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
-type SearchResultItem = RouterOutputs['search']['searchLines']['items'][number]
-
 const OPERATOR_HELP: Array<{ operator: string; description: string }> = [
   { operator: '#tag', description: 'Filter by tag (prefix match)' },
   { operator: 'age:90d', description: 'Last N days/weeks/months' },
@@ -26,47 +24,6 @@ const OPERATOR_HELP: Array<{ operator: string; description: string }> = [
 const PanelEmptyState = ({ children }: { children: React.ReactNode }) => (
   <div className="text-center text-text-2 text-sm py-8">{children}</div>
 )
-
-// Search result card - shows document title and ReadOnlyLine
-const SearchResultCard = ({
-  item,
-  onNavigate,
-}: {
-  item: SearchResultItem
-  onNavigate: () => void
-}) => {
-  return (
-    <div
-      className="rounded-lg border border-raised hover:border-raised transition-colors overflow-hidden cursor-pointer"
-      onClick={onNavigate}
-    >
-      {/* Document header */}
-      <div className="px-3 py-2 bg-raised/50 border-b border-raised">
-        <div className="flex items-center justify-between">
-          <span className="text-xs font-medium text-text-2">
-            {item.note_title}
-          </span>
-          {item.child_count > 0 && (
-            <span className="text-xs text-muted">
-              +{item.child_count} line{item.child_count !== 1 ? 's' : ''}
-            </span>
-          )}
-        </div>
-      </div>
-
-      {/* Line content using ReadOnlyLine */}
-      <div className="px-2 py-1">
-        <ReadOnlyLine
-          content={item.content}
-          indent={item.indent}
-          datumTaskStatus={item.datum_task_status ?? undefined}
-          datumTimeSeconds={item.datum_time_seconds ?? undefined}
-          datumPinnedAt={item.datum_pinned_at ?? undefined}
-        />
-      </div>
-    </div>
-  )
-}
 
 const LinesResults = ({
   isLoading,
@@ -96,14 +53,32 @@ const LinesResults = ({
       <div className="text-xs text-muted px-1 mb-3">
         {items.length} result{items.length !== 1 ? 's' : ''}
       </div>
-      <div className="space-y-3">
-        {items.map((item, idx) => (
-          <SearchResultCard
-            key={`${item.note_title}-${item.line_idx}-${idx}`}
-            item={item}
-            onNavigate={() => onNavigate(item.note_title)}
-          />
-        ))}
+      <div className="space-y-6">
+        {Array.from(new Set(items.map((item) => item.note_title))).map(
+          (title) => (
+            <section key={title}>
+              <button
+                className="text-sm text-text-2 mb-2 hover:text-text"
+                onClick={() => onNavigate(title)}
+              >
+                {title}
+              </button>
+              {items
+                .filter((item) => item.note_title === title)
+                .map((item) => (
+                  <ReadOnlyLine
+                    key={`${item.note_title}-${item.line_idx}`}
+                    content={item.content}
+                    indent={0}
+                    datumTaskStatus={item.datum_task_status ?? undefined}
+                    datumTimeSeconds={item.datum_time_seconds ?? undefined}
+                    datumPinnedAt={item.datum_pinned_at ?? undefined}
+                    onClick={() => onNavigate(item.note_title)}
+                  />
+                ))}
+            </section>
+          )
+        )}
       </div>
       {data?.nextCursor && (
         <div className="text-center text-muted text-sm py-3">
@@ -209,20 +184,49 @@ export const Search = () => {
   return (
     <div className="flex flex-col h-full">
       {/* Search header */}
-      <div className="p-4 space-y-3 border-b border-raised">
-        <SavedSearches currentQuery={query} onSelectSearch={setQuery} />
-
+      <div className="px-3 py-2 space-y-3">
         {/* Search input */}
         <div className="relative">
           <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 size-5 text-text-2" />
           <input
+            aria-label="Search query"
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="#exercise age:90d..."
-            className="w-full pl-10 pr-4 py-2.5 text-sm bg-raised border border-muted rounded-lg text-text placeholder-muted focus:outline-none focus:ring-2 focus:ring-accent-fill focus:border-transparent transition-shadow"
+            className="w-full pl-10 pr-4 py-2.5 text-sm bg-raised border-0 rounded-lg text-text placeholder-muted focus:outline-none focus:ring-2 focus:ring-accent-fill focus:border-transparent transition-shadow"
           />
         </div>
+
+        {query && (
+          <div aria-label="Search suggestions" className="flex flex-wrap gap-1">
+            {[
+              '#',
+              'age:7d',
+              'status:unset',
+              'status:complete',
+              'has:timer',
+              'has:task',
+              'has:pin',
+              'doc:',
+            ]
+              .filter((operator) =>
+                operator.startsWith(query.split(/\s+/).at(-1) || '')
+              )
+              .map((operator) => (
+                <button
+                  key={operator}
+                  className="text-xs text-text-2 bg-white/5 rounded px-2 py-1"
+                  onClick={() =>
+                    setQuery(query.replace(/\S*$/, operator + ' '))
+                  }
+                >
+                  {operator}
+                </button>
+              ))}
+          </div>
+        )}
+        <SavedSearches currentQuery={query} onSelectSearch={setQuery} />
 
         {parsedQuery.errors.length > 0 && (
           <div className="text-accent text-sm font-medium bg-accent-fill/10 px-3 py-2 rounded-lg">

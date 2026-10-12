@@ -1,17 +1,8 @@
-import { useQueryClient, useQuery, useMutation } from '@tanstack/react-query'
-// Saved-searches dropdown for the search panel: list, apply, save the
-// current query, delete. Built on the Base UI popover so outside-click,
-// Escape, and focus handling come from the kit instead of a hand-rolled
-// document listener.
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
-import {
-  Popover,
-  PopoverButton,
-  PopoverPanel,
-} from '@/components/vendor/Popover'
-import { Bookmark, Trash2, Plus, ChevronDown } from 'lucide-react'
+import { Plus, X } from 'lucide-react'
 import { orpc } from '@/api/client'
-import { cn } from '@/lib/utils'
+import { toast } from 'sonner'
 
 export const SavedSearches = ({
   currentQuery,
@@ -20,150 +11,111 @@ export const SavedSearches = ({
   currentQuery: string
   onSelectSearch: (query: string) => void
 }) => {
-  const [open, setOpen] = useState(false)
-  const [isAdding, setIsAdding] = useState(false)
-  const [newName, setNewName] = useState('')
-
+  const [adding, setAdding] = useState(false)
+  const [name, setName] = useState('')
   const utils = useQueryClient()
-  const { data: savedSearches } = useQuery(
+  const { data = [] } = useQuery(
     orpc.search.getSavedSearches.queryOptions({ input: undefined })
   )
-
-  const saveMutation = useMutation(
+  const refresh = () =>
+    utils.invalidateQueries({ queryKey: orpc.search.getSavedSearches.key() })
+  const save = useMutation(
     orpc.search.saveSearch.mutationOptions({
       onSuccess: () => {
-        utils.invalidateQueries({
-          queryKey: orpc.search.getSavedSearches.key(),
-        })
-        setIsAdding(false)
-        setNewName('')
+        void refresh()
+        setAdding(false)
+        setName('')
+        toast.success('Search saved')
       },
+      onError: (e) => toast.error(e.message),
     })
   )
-
-  const deleteMutation = useMutation(
+  const remove = useMutation(
     orpc.search.deleteSavedSearch.mutationOptions({
       onSuccess: () => {
-        utils.invalidateQueries({
-          queryKey: orpc.search.getSavedSearches.key(),
-        })
+        void refresh()
       },
+      onError: (e) => toast.error(e.message),
     })
   )
-
-  const handleSave = () => {
-    if (newName.trim() && currentQuery.trim()) {
-      saveMutation.mutate({ name: newName.trim(), query: currentQuery })
-    }
-  }
-
-  const count = savedSearches?.length || 0
-
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverButton
-        className={cn(
-          'flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg transition-all w-full focus:outline-none',
-          open
-            ? 'bg-raised text-text'
-            : 'text-text-2 hover:text-text hover:bg-raised'
-        )}
-      >
-        <Bookmark className="size-4" />
-        <span className="flex-1 text-left">
-          {count > 0 ? `Saved Searches (${count})` : 'Saved Searches'}
-        </span>
-        <ChevronDown
-          className={cn(
-            'size-4 transition-transform text-text-2',
-            open && 'rotate-180'
-          )}
-        />
-      </PopoverButton>
-
-      <PopoverPanel className="bg-raised border border-muted rounded-xl shadow-xl max-h-72 overflow-auto">
-        {/* Save current search option */}
-        {currentQuery.trim() && !isAdding && (
-          <button
-            onClick={() => setIsAdding(true)}
-            className="w-full px-4 py-3 text-sm text-left text-text-2 hover:text-text hover:bg-raised flex items-center gap-2 border-b border-raised"
+    <div className="space-y-2">
+      <div className="flex flex-wrap gap-1.5 text-xs">
+        {data.map((search) => (
+          <div
+            key={search.id}
+            className="group flex items-center rounded bg-white/5 text-text-2"
           >
-            <Plus className="size-4" />
-            Save current search
+            <button
+              className="px-2 py-1.5 hover:text-text"
+              onClick={() => onSelectSearch(search.query)}
+            >
+              {search.name}
+            </button>
+            <button
+              aria-label={`Delete saved search ${search.name}`}
+              className="pr-1.5 text-muted hover:text-text"
+              onClick={() => {
+                remove.mutate(
+                  { id: search.id },
+                  {
+                    onSuccess: () =>
+                      toast.success('Saved search deleted', {
+                        action: {
+                          label: 'Undo',
+                          onClick: () =>
+                            save.mutate({
+                              name: search.name,
+                              query: search.query,
+                            }),
+                        },
+                      }),
+                  }
+                )
+              }}
+            >
+              <X size={11} />
+            </button>
+          </div>
+        ))}
+        {currentQuery.trim() && (
+          <button
+            className="flex items-center gap-1 px-2 py-1 text-muted hover:text-text"
+            onClick={() => setAdding(!adding)}
+          >
+            <Plus size={12} />
+            Save search
           </button>
         )}
-
-        {/* Save form */}
-        {isAdding && (
-          <div className="p-3 border-b border-raised space-y-3">
-            <input
-              type="text"
-              value={newName}
-              onChange={(e) => setNewName(e.target.value)}
-              placeholder="Search name..."
-              autoFocus
-              className="w-full px-3 py-2 text-sm bg-page border border-muted rounded-lg text-text placeholder-muted focus:outline-none focus:ring-2 focus:ring-accent-fill focus:border-transparent"
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') handleSave()
-                if (e.key === 'Escape') setIsAdding(false)
-              }}
-            />
-            <div className="flex gap-2">
-              <button
-                onClick={handleSave}
-                disabled={!newName.trim() || saveMutation.isPending}
-                className="flex-1 px-3 py-2 text-sm font-medium bg-accent-fill hover:bg-accent-fill disabled:opacity-50 rounded-lg text-text transition-colors"
-              >
-                Save
-              </button>
-              <button
-                onClick={() => setIsAdding(false)}
-                className="px-3 py-2 text-sm text-text-2 hover:text-text hover:bg-raised rounded-lg transition-colors"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
+        {!data.length && !currentQuery.trim() && (
+          <span className="text-muted">Saved searches will appear here.</span>
         )}
-
-        {/* Saved searches list */}
-        {savedSearches && savedSearches.length > 0 ? (
-          <div className="py-1">
-            {savedSearches.map((search) => (
-              <div
-                key={search.id}
-                className="flex items-center justify-between px-4 py-3 hover:bg-raised cursor-pointer group transition-colors"
-                onClick={() => {
-                  onSelectSearch(search.query)
-                  setOpen(false)
-                }}
-              >
-                <div className="flex-1 min-w-0">
-                  <div className="text-sm font-medium text-text truncate">
-                    {search.name}
-                  </div>
-                  <div className="text-xs text-text-2 truncate mt-0.5">
-                    {search.query}
-                  </div>
-                </div>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    deleteMutation.mutate({ id: search.id })
-                  }}
-                  className="p-1.5 text-muted hover:text-accent opacity-0 group-hover:opacity-100 shrink-0 transition-opacity"
-                >
-                  <Trash2 className="size-4" />
-                </button>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="px-4 py-6 text-sm text-muted text-center">
-            No saved searches yet
-          </div>
-        )}
-      </PopoverPanel>
-    </Popover>
+      </div>
+      {adding && (
+        <form
+          className="flex gap-2"
+          onSubmit={(e) => {
+            e.preventDefault()
+            if (name.trim())
+              save.mutate({ name: name.trim(), query: currentQuery })
+          }}
+        >
+          <input
+            autoFocus
+            aria-label="Search name"
+            placeholder="Search name"
+            className="min-w-0 flex-1 rounded bg-raised px-2 py-1 text-sm outline-none focus:ring-1 focus:ring-accent"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+          />
+          <button
+            disabled={save.isPending || !name.trim()}
+            className="rounded bg-accent-fill text-on-accent px-2 text-xs"
+          >
+            Save
+          </button>
+        </form>
+      )}
+    </div>
   )
 }

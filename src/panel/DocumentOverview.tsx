@@ -5,7 +5,6 @@ import {
 import { Aggregate } from './Aggregate'
 import { useAtomValue, useSetAtom } from 'jotai'
 import { docAtom, focusedLineAtom } from '@/editor/state'
-import { ChevronDown } from 'lucide-react'
 import { useState } from 'react'
 import { cn } from '@/lib/utils'
 import { scrollToLine } from '@/editor/navigation'
@@ -27,7 +26,10 @@ export const TOCItem = ({ item }: { item: TableOfContentsItem }) => {
   return (
     <div
       style={{ paddingLeft: `${item.indentLevel * 12}px` }}
-      className={cn(item.isActive ? 'font-bold' : '', 'cursor-pointer')}
+      className={cn(
+        item.isActive ? 'text-text' : 'text-text-2',
+        'cursor-pointer py-1'
+      )}
       onClick={() => {
         setFocusedLine(item.lineIdx)
         scrollToLine(item.lineIdx)
@@ -40,7 +42,7 @@ export const TOCItem = ({ item }: { item: TableOfContentsItem }) => {
 
 export const TableOfContents = ({ toc }: { toc: TableOfContentsItem[] }) => {
   return (
-    <div className="px-4">
+    <div className="px-0">
       {toc.map((item) => (
         <TOCItem key={item.lineIdx} item={item} />
       ))}
@@ -60,18 +62,14 @@ export const DocumentOverviewSection = ({
   const [collapsed, setCollapsed] = useState(false)
 
   return (
-    <div className={cn('flex flex-col gap-2 py-3', !flush && 'px-4')}>
+    <div className={cn('flex flex-col gap-2 pb-5 pt-1', !flush && 'px-3')}>
       <h2 className={flush ? 'px-3' : undefined}>
         <button
           type="button"
           aria-expanded={!collapsed}
-          className="flex w-full items-center gap-1.5 rounded px-2 py-1 text-left text-xs font-medium text-text-2 hover:text-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text-2 cursor-pointer"
+          className="flex w-full items-center gap-1.5 rounded px-0 py-1 text-left text-xs font-semibold text-muted hover:text-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text-2 cursor-pointer"
           onClick={() => setCollapsed(!collapsed)}
         >
-          <ChevronDown
-            aria-hidden="true"
-            className={`size-3.5 ${collapsed ? '-rotate-90' : ''}`}
-          />
           {label}
         </button>
       </h2>
@@ -87,11 +85,11 @@ export const DocumentOverview = () => {
   return (
     <div>
       {toc.length > 0 && (
-        <DocumentOverviewSection label="Table of Contents">
+        <DocumentOverviewSection label="Outline">
           <TableOfContents toc={toc} />
         </DocumentOverviewSection>
       )}
-      <DocumentOverviewSection label="Aggregate" flush>
+      <DocumentOverviewSection label="Tags on this page" flush>
         <Aggregate />
       </DocumentOverviewSection>
     </div>

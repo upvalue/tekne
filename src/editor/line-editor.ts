@@ -150,7 +150,6 @@ export const useCodeMirror = (lineInfo: LineWithIdx) => {
         const idx = getLineIdx()
         const line = store.get(docAtom).children[idx]
         if (!line) return ''
-        if (line.collapsed) return ' + collapsed lines'
         return 'New line. Try /task or /countdown 25m'
       },
       (view) => {
@@ -159,7 +158,7 @@ export const useCodeMirror = (lineInfo: LineWithIdx) => {
         const idx = getLineIdx()
 
         if (!doc || !doc.children || !doc.children[idx]) return false
-        if (doc.children[idx].collapsed) return true
+        if (doc.children[idx].collapsed) return false
 
         // Don't show placeholder if:
         // There's any content on the line
@@ -233,6 +232,10 @@ export const useCodeMirror = (lineInfo: LineWithIdx) => {
     }
   }, [mdContent])
 
+  // Sets up new editor on mount
+  // oxlint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(makeEditor, [])
+
   /**
    * Focus management.
    *
@@ -297,10 +300,6 @@ export const useCodeMirror = (lineInfo: LineWithIdx) => {
       if (retry !== null) clearTimeout(retry)
     }
   }, [requestFocusLine, lineIdx, setRequestFocusLine, store])
-
-  // Sets up new editor on mount
-  // oxlint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(makeEditor, [])
 
   // Most line events are handled once at document level (see
   // useDocumentLineEvents); collapse stays here because it needs this

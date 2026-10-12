@@ -18,7 +18,7 @@ export const RunningTimerPill = () => {
   const seconds =
     timer.mode === 'countdown'
       ? timerRemainingSeconds(timer)
-      : timerElapsedSeconds(timer)
+      : (timer.baseTimeSeconds ?? 0) + timerElapsedSeconds(timer)
   return (
     <button
       className="rounded-full bg-accent-tint px-3 py-1.5 text-xs text-accent font-mono max-w-64 truncate"

@@ -81,6 +81,7 @@ export const hydrateTimer = (
           isActive: true,
           lineId: timer.lineId,
           lineContent: timer.lineContent,
+          baseTimeSeconds: timer.baseTimeSeconds ?? 0,
           noteTitle: timer.noteTitle,
           mode: timer.mode,
           timeMode: timer.timeMode,

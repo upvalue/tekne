@@ -1,3 +1,4 @@
+import { flushSync } from 'react-dom'
 import {
   useCallback,
   useEffect,
@@ -438,7 +439,7 @@ export const TEditor = () => {
       >
         <div
           ref={containerRef}
-          className={`TEditor-scroll h-[calc(100dvh-144px)] max-md:h-[calc(100dvh-116px)] overflow-y-auto px-3 md:px-0 ${
+          className={`TEditor-scroll h-[calc(100dvh-132px)] max-md:h-[calc(100dvh-116px)] overflow-y-auto px-3 md:px-0 ${
             touchMode ? 'TEditor-scroll-touch' : 'pb-4'
           } ${
             dragSelectedLineIds.length > 0 ? 'TEditor-has-drag-selection' : ''
@@ -481,17 +482,25 @@ export const TEditor = () => {
             />
           ))}
           {(doc.children.at(-1)?.mdContent ||
-            doc.children.at(-1)?.collapsed) && (
+            doc.children.at(-1)?.collapsed ||
+            collapsedStates.at(-1) === 'collapsed') && (
             <input
               aria-label="New line"
               placeholder="New line. Try /task or /countdown 25m"
               className="ml-24 max-md:ml-0 w-[calc(100%-7rem)] bg-transparent py-2 pl-6 text-[15px] text-muted outline-none"
               onFocus={() => {
                 const lineIdx = doc.children.length
-                setDoc((draft) => {
-                  draft.children.push(lineMake(0, ''))
+                const line = lineMake(0, '')
+                flushSync(() => {
+                  setDoc((draft) => {
+                    draft.children.push(line)
+                  })
+                  if (touchMode) {
+                    store.set(touchSelectedLineIdAtom, line.id)
+                    store.set(touchEditingLineIdAtom, line.id)
+                  }
+                  setRequestFocusLine({ lineIdx, pos: 0 })
                 })
-                setRequestFocusLine({ lineIdx, pos: 0 })
               }}
             />
           )}

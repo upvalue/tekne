@@ -7,8 +7,7 @@ import { EditorState } from '@codemirror/state'
 import { syntaxPlugin } from './line-editor/syntax-plugin'
 import { Checkbox } from '@/components/vendor/Checkbox'
 import { Clock } from 'lucide-react'
-import { BadgeButton } from '@/components/vendor/Badge'
-import { formatTimeDisplay } from '@/lib/time'
+import { renderTime } from '@/lib/time'
 import { cn } from '@/lib/utils'
 import {
   baseLineThemeSpec,
@@ -78,7 +77,7 @@ const ReadOnlyCheckbox = ({
 }) => {
   return (
     <Checkbox
-      className="ml-2 pointer-events-none"
+      className="pointer-events-none"
       tabIndex={-1}
       {...checkboxStateProps(status)}
       onCheckedChange={() => {}}
@@ -87,21 +86,12 @@ const ReadOnlyCheckbox = ({
 }
 
 // Display-only timer badge - shows time without dialog
-const ReadOnlyTimerBadge = ({ time }: { time: number }) => {
-  return (
-    <div className="ml-1 flex">
-      <BadgeButton
-        className="whitespace-nowrap pointer-events-none"
-        badgeClassName="px-[4px] py-[1px]"
-      >
-        <div className="flex items-center gap-1">
-          <Clock style={{ width: '16px', height: '16px' }} />
-          {time > 0 && <span>{formatTimeDisplay(time)}</span>}
-        </div>
-      </BadgeButton>
-    </div>
-  )
-}
+const ReadOnlyTimerBadge = ({ time }: { time: number }) => (
+  <span className="inline-flex items-center gap-1 text-xs font-mono text-muted whitespace-nowrap ml-2">
+    <Clock size={11} />
+    {renderTime(time)}
+  </span>
+)
 
 export interface ReadOnlyLineProps {
   content: string
@@ -133,6 +123,8 @@ export const ReadOnlyLine = ({
     <div
       className={cn(
         'ReadOnlyLine w-full py-1 flex items-start',
+        datumTaskStatus === 'incomplete' && 'ELine-cancelled',
+        datumTaskStatus === 'complete' && 'ELine-complete',
         onClick && 'cursor-pointer',
         className
       )}
@@ -146,27 +138,17 @@ export const ReadOnlyLine = ({
         }}
       />
 
-      {/* Line icon (bullet/pin) */}
-      <div className="ELine-leading">
-        <LineGlyph pinned={!!datumPinnedAt} className="text-muted shrink-0" />
+      <div className="ELine-leading w-4 justify-center">
+        {datumTaskStatus ? (
+          <ReadOnlyCheckbox status={datumTaskStatus} />
+        ) : (
+          <LineGlyph pinned={!!datumPinnedAt} />
+        )}
       </div>
 
-      {/* Task checkbox */}
-      {datumTaskStatus && (
-        <div className="ELine-leading">
-          <ReadOnlyCheckbox status={datumTaskStatus} />
-        </div>
-      )}
-
-      {/* Timer badge */}
-      {datumTimeSeconds !== undefined && (
-        <div className="ELine-leading">
-          <ReadOnlyTimerBadge time={datumTimeSeconds} />
-        </div>
-      )}
-
       {/* CodeMirror content */}
-      <div className="cm-editor-container w-full ml-2" ref={cmRef} />
+      <div className="cm-editor-container flex-1 min-w-0 ml-2" ref={cmRef} />
+      {!!datumTimeSeconds && <ReadOnlyTimerBadge time={datumTimeSeconds} />}
     </div>
   )
 }

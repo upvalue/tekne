@@ -3,7 +3,7 @@ import { EditorView, keymap } from '@codemirror/view'
 import { createStore } from 'jotai'
 import { describe, expect, test } from 'vitest'
 import { docMake, lineMake } from '@/docs/schema'
-import { docAtom } from '../state'
+import { docAtom, timerRowRequestAtom } from '../state'
 import { makeKeymap } from './line-operations'
 
 describe('Enter', () => {
@@ -39,4 +39,30 @@ describe('Enter', () => {
 
     view.destroy()
   })
+})
+
+test('Option-Shift-T opens the row even when the keyboard layout produces another character', () => {
+  const store = createStore()
+  store.set(docAtom, docMake([lineMake(0, 'Task')]))
+  const view = new EditorView({
+    state: EditorState.create({
+      doc: 'Task',
+      extensions: [makeKeymap(store, () => 0).keymap],
+    }),
+  })
+  view.contentDOM.dispatchEvent(
+    new KeyboardEvent('keydown', {
+      key: 'ˇ',
+      code: 'KeyT',
+      altKey: true,
+      shiftKey: true,
+      bubbles: true,
+      cancelable: true,
+    })
+  )
+  expect(store.get(timerRowRequestAtom)).toEqual({
+    lineIdx: 0,
+    mode: 'stopwatch',
+  })
+  view.destroy()
 })

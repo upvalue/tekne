@@ -24,6 +24,7 @@ import {
 import { getLineId, getOutlineIds, getOutlineRange } from './outline-selection'
 import { moveSelectedLines } from './line-reorder'
 import { cancelTimer } from './timer/timer-controller'
+import { toast } from 'sonner'
 
 type EditorStore = ReturnType<typeof useStore>
 
@@ -110,14 +111,23 @@ export const toggleCollapse = (
 }
 
 export const togglePin = (store: EditorStore, lineIdx: number): void => {
+  const line = store.get(docAtom).children[lineIdx]
+  if (!line) return
+  const before = line.datumPinnedAt
+  const next = before ? undefined : new Date().toISOString()
   store.set(docAtom, (draft) => {
-    const line = draft.children[lineIdx]
-    if (!line) return
-    if (line.datumPinnedAt) {
-      delete line.datumPinnedAt
-    } else {
-      line.datumPinnedAt = new Date().toISOString()
-    }
+    draft.children[lineIdx].datumPinnedAt = next
+  })
+  toast.success(next ? 'Line pinned' : 'Line unpinned', {
+    action: {
+      label: 'Undo',
+      onClick: () =>
+        store.set(docAtom, (draft) => {
+          const current = draft.children.find((item) => item.id === line.id)
+          if (current && current.datumPinnedAt === next)
+            current.datumPinnedAt = before
+        }),
+    },
   })
 }
 
@@ -136,16 +146,36 @@ export const toggleTask = (store: EditorStore, lineIdx: number): void => {
 
 /** Checkbox tap: unset -> complete -> incomplete -> unset. */
 export const cycleTaskStatus = (store: EditorStore, lineIdx: number): void => {
+  const line = store.get(docAtom).children[lineIdx]
+  if (!line) return
+  const before = line.datumTaskStatus
+  const cycle = {
+    unset: 'complete',
+    complete: 'incomplete',
+    incomplete: 'unset',
+  } as const
+  const next = cycle[before || 'unset']
   store.set(docAtom, (draft) => {
-    const line = draft.children[lineIdx]
-    if (!line) return
-    const cycle = {
-      unset: 'complete',
-      complete: 'incomplete',
-      incomplete: 'unset',
-    } as const
-    line.datumTaskStatus = cycle[line.datumTaskStatus || 'unset']
+    draft.children[lineIdx].datumTaskStatus = next
   })
+  toast.success(
+    next === 'complete'
+      ? 'Task completed'
+      : next === 'incomplete'
+        ? 'Task cancelled'
+        : 'Task reopened',
+    {
+      action: {
+        label: 'Undo',
+        onClick: () =>
+          store.set(docAtom, (draft) => {
+            const current = draft.children.find((item) => item.id === line.id)
+            if (current?.datumTaskStatus === next)
+              current.datumTaskStatus = before
+          }),
+      },
+    }
+  )
 }
 
 /**

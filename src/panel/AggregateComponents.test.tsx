@@ -26,15 +26,15 @@ test('aggregate rows retain task, time, page contribution, and pinned data', () 
   )
   const row = within(view.getByRole('listitem'))
   for (const text of [
-    'project',
-    '12',
-    '3',
-    '4',
+    '#project',
+    '· 12 done',
+    '· 3 cancelled',
+    '· 4 open',
     '1h 30m',
-    '5',
-    '6',
-    '7',
-    '10m',
+    '+5 done',
+    '6 cancelled',
+    '7 open',
+    '+10m',
     'A longer project description',
   ]) {
     expect(row.getByText(text)).not.toBeNull()
@@ -85,10 +85,11 @@ test('a pinned description without metrics is still visible', () => {
   expect(view.getByRole('listitem').children).toHaveLength(2)
 })
 
-test('search aggregates keep the existing card display', () => {
+test('search aggregates use the same quiet tag summaries', () => {
   const view = render(
     <ResultCardGrid data={[{ tag: 'search', complete_tasks: 2 }]} />
   )
-  expect(view.container.querySelector('.border.rounded-lg')).not.toBeNull()
-  expect(view.queryByRole('list', { name: 'Tag aggregates' })).toBeNull()
+  expect(view.getByRole('list', { name: 'Tag aggregates' })).not.toBeNull()
+  expect(view.getByText('#search')).not.toBeNull()
+  expect(view.getByText('2 done')).not.toBeNull()
 })

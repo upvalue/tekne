@@ -18,6 +18,9 @@
     "pnpm-lock.yaml",
     "docs/**",
     "src/documentation/generated/**",
-    "src/routeTree.gen.ts"
+    "src/routeTree.gen.ts",
+    "redesign-mockups/**",
+    "redesign-prototype.md",
+    "redesign-sesh.md"
   ]
 }

@@ -137,7 +137,8 @@ const ELineImpl = (lineInfo: ELineProps) => {
       : line.mdContent.startsWith('# ')
         ? 1
         : 0
-  const style: CSSProperties = {
+  const style: CSSProperties & { '--line-indent': string } = {
+    '--line-indent': `${line.indent * INDENT_WIDTH_PIXELS}px`,
     transform: CSS.Transform.toString(transform),
     transition,
   }
@@ -185,6 +186,7 @@ const ELineImpl = (lineInfo: ELineProps) => {
         }
       />
       <div
+        className="ELine-indent"
         style={{
           flex: 'none',
           width: `${line.indent * INDENT_WIDTH_PIXELS}px`,
@@ -227,7 +229,7 @@ const ELineImpl = (lineInfo: ELineProps) => {
 
       {(lineInfo.hiddenCount ?? 0) > 0 && (
         <button
-          className="text-muted text-xs rounded-full bg-white/5 px-1.5 mx-1 mt-0.5"
+          className="ELine-hidden-count text-muted text-xs rounded-full bg-white/5 px-1.5 mx-1 mt-0.5"
           onClick={() => toggleCollapse(store, lineInfo.lineIdx)}
         >
           +{lineInfo.hiddenCount}

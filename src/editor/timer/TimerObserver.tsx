@@ -46,7 +46,7 @@ export const TimerObserver = () => {
         const seconds =
           active.mode === 'countdown'
             ? Math.max(0, active.targetDuration - elapsed)
-            : elapsed
+            : (active.baseTimeSeconds ?? 0) + elapsed
         setTimerDisplay(
           `${active.runningSince === null ? 'Ⅱ' : '●'} ${formatTimeDisplay(seconds)} · ${active.lineContent || active.noteTitle}`
         )

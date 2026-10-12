@@ -13,14 +13,14 @@ export function Version() {
 
       <div className="space-y-4">
         <div>
-          <h3 className="text-sm font-medium text-zinc-400 mb-2">Git Commit</h3>
-          <div className="bg-zinc-800 rounded p-3 font-mono text-sm">
+          <h3 className="text-sm font-medium text-text-2 mb-2">Git Commit</h3>
+          <div className="bg-raised rounded p-3 font-mono text-sm">
             <div className="mb-2">
-              <span className="text-zinc-400">Hash:</span>{' '}
+              <span className="text-text-2">Hash:</span>{' '}
               <span className="text-white">{fullHash}</span>
             </div>
             <div>
-              <span className="text-zinc-400">Message:</span>{' '}
+              <span className="text-text-2">Message:</span>{' '}
               <span className="text-white">{message}</span>
             </div>
           </div>

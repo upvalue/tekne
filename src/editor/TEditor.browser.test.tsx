@@ -79,7 +79,7 @@ test.each([320, 390])(
   }
 )
 
-test('desktop gutter and zero outer inset return at the 768px breakpoint', async () => {
+test('desktop gutter and document inset return at the 768px breakpoint', async () => {
   await page.viewport(768, 800)
   const store = createStore()
   store.set(docAtom, docMake([lineMake(0, 'Desktop line')]))
@@ -90,8 +90,44 @@ test('desktop gutter and zero outer inset return at the 768px breakpoint', async
   )
   const editor = view.container.querySelector('.TEditor-scroll')!
   const gutter = view.container.querySelector('.ELine-gutter')!
-  expect(getComputedStyle(editor).paddingLeft).toBe('0px')
+  expect(getComputedStyle(editor).paddingLeft).toBe('14px')
   expect(getComputedStyle(editor).paddingRight).toBe('0px')
   expect(getComputedStyle(gutter).display).toBe('grid')
-  expect(gutter.getBoundingClientRect().width).toBe(178)
+  expect(gutter.getBoundingClientRect().width).toBe(96)
+})
+
+test('collapsed children stay hidden when line chips and timer rows use the grid', () => {
+  const store = createStore()
+  store.set(
+    docAtom,
+    docMake([
+      lineMake(0, 'Parent', { collapsed: true }),
+      lineMake(1, 'Child'),
+      lineMake(0, 'Next'),
+    ])
+  )
+  const view = render(
+    <Provider store={store}>
+      <TEditor />
+    </Provider>
+  )
+  const child = view.container.querySelector('[data-line-idx="1"]')!
+  expect(child.getClientRects()).toHaveLength(0)
+  fireEvent.click(view.getByRole('button', { name: '+1' }))
+  expect(child.getClientRects().length).toBeGreaterThan(0)
+})
+
+test('the new-line field transfers focus synchronously so initial keystrokes are not lost', () => {
+  const store = createStore()
+  store.set(docAtom, docMake([lineMake(0, 'Existing line')]))
+  const view = render(
+    <Provider store={store}>
+      <TEditor />
+    </Provider>
+  )
+  fireEvent.focus(view.getByRole('textbox', { name: 'New line' }))
+  const content = view.container.querySelector(
+    '[data-line-idx="1"] .cm-content'
+  )!
+  expect(document.activeElement).toBe(content)
 })

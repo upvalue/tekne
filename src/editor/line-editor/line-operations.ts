@@ -1,3 +1,4 @@
+import { Prec } from '@codemirror/state'
 import { acceptCompletion } from '@codemirror/autocomplete'
 import {
   startTimer,
@@ -90,35 +91,42 @@ export const makeKeymap = (
     return false
   }
 
-  const keymapExtension = keymap.of([
-    {
-      key: codeMirrorKey('openTimerRow'),
-      run: () => {
-        store.set(timerRowRequestAtom, {
-          lineIdx: getLineIdx(),
-          mode: 'stopwatch',
-        })
-        return true
-      },
-    },
-    {
-      key: codeMirrorKey('toggleStopwatch'),
-      run: () => {
-        const timer = store.get(globalTimerAtom)
-        const line = getDoc().children[getLineIdx()]
-        if (!line) return false
-        if (timer.isActive && timer.lineId === line.id)
-          void (isTimerPaused(timer) ? resumeTimer(store) : pauseTimer(store))
-        else
-          void startTimer(store, {
-            line,
+  // Option produces a different character on macOS; use the physical T key.
+  const timerKeys = Prec.high(
+    EditorView.domEventHandlers({
+      keydown: (event) => {
+        if (
+          !event.altKey ||
+          event.metaKey ||
+          event.ctrlKey ||
+          (event.code !== 'KeyT' && event.key.toLowerCase() !== 't')
+        )
+          return false
+        if (event.shiftKey) {
+          store.set(timerRowRequestAtom, {
+            lineIdx: getLineIdx(),
             mode: 'stopwatch',
-            timeMode: 'additive',
-            targetDuration: 1500,
           })
+        } else {
+          const timer = store.get(globalTimerAtom)
+          const line = getDoc().children[getLineIdx()]
+          if (!line) return false
+          if (timer.isActive && timer.lineId === line.id)
+            void (isTimerPaused(timer) ? resumeTimer(store) : pauseTimer(store))
+          else
+            void startTimer(store, {
+              line,
+              mode: 'stopwatch',
+              timeMode: 'additive',
+              targetDuration: 1500,
+            })
+        }
         return true
       },
-    },
+    })
+  )
+
+  const keymapExtension = keymap.of([
     {
       key: 'Tab',
       run: (view) =>
@@ -269,7 +277,7 @@ export const makeKeymap = (
   })
 
   return {
-    keymap: keymapExtension,
+    keymap: [timerKeys, keymapExtension],
     undoRedoHandler,
   }
 }

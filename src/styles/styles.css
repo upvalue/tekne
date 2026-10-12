@@ -35,8 +35,6 @@
 body {
   margin: 0;
   font-family: var(--font-stack);
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
 }
 
 [data-sonner-toast] {

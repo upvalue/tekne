@@ -2,71 +2,45 @@ import { DevTools } from '@/dev/DevTools'
 import { Help } from './Help'
 import { Search } from './Search'
 import { Tools } from './Tools'
-import { Wrench, CircleHelp, Database, SearchIcon, Zap, X } from 'lucide-react'
+import { X } from 'lucide-react'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { DocumentOverview } from './DocumentOverview'
-import {
-  useActivePanelTab,
-  useSetPanelVisible,
-  type PanelTab,
-} from '@/hooks/panel-state'
+import { useActivePanelTab, useSetPanelVisible } from '@/hooks/panel-state'
 import { cn } from '@/lib/utils'
-
-const TABS: Array<{
-  id: PanelTab
-  label: string
-  icon: typeof Database
-}> = [
-  { id: 'document', label: 'Document', icon: Database },
-  { id: 'search', label: 'Search', icon: SearchIcon },
-  { id: 'tools', label: 'Tools', icon: Zap },
-  { id: 'devtools', label: 'Dev tools', icon: Wrench },
-  { id: 'help', label: 'Help', icon: CircleHelp },
-]
-
-function RailButton({
-  icon: Icon,
-  label,
-  current,
-  onClick,
-}: {
-  icon: typeof Database
-  label: string
-  current?: boolean
-  onClick: () => void
-}) {
-  return (
-    <div className="relative group">
-      <button
-        onClick={onClick}
-        aria-label={label}
-        aria-current={current ? 'true' : undefined}
-        className={cn(
-          'p-2 rounded transition-colors',
-          current
-            ? 'bg-raised text-text'
-            : 'text-text-2 hover:bg-raised hover:text-text'
-        )}
-      >
-        <Icon className="w-5 h-5" />
-      </button>
-      <div
-        role="tooltip"
-        className="absolute right-full top-1/2 -translate-y-1/2 mr-2 px-2 py-1 rounded bg-raised text-text text-xs whitespace-nowrap shadow-md pointer-events-none opacity-0 transition-opacity delay-150 group-hover:opacity-100 group-focus-within:opacity-100 z-20"
-      >
-        {label}
-      </div>
-    </div>
-  )
-}
 
 export function Panel() {
   const [activeTab, setActiveTab] = useActivePanelTab()
   const setPanelVisible = useSetPanelVisible()
-
   return (
-    <div className="flex h-dvh">
-      <div className="flex-1 overflow-auto min-w-0">
+    <aside className="flex flex-col h-dvh pt-[68px] max-lg:pt-6 pr-1">
+      <nav
+        aria-label="Panel sections"
+        className="flex items-center gap-1 pb-3 px-3 text-xs"
+      >
+        {(['document', 'search'] as const).map((tab) => (
+          <button
+            key={tab}
+            aria-current={activeTab === tab ? 'page' : undefined}
+            className={cn(
+              'rounded-lg px-3 py-2',
+              activeTab === tab
+                ? 'bg-white/7 text-text'
+                : 'text-text-2 hover:text-text'
+            )}
+            onClick={() => setActiveTab(tab)}
+          >
+            {tab === 'document' ? 'This page' : 'Search'}
+          </button>
+        ))}
+        <button
+          aria-label="Hide panel"
+          className="ml-auto p-2 text-muted lg:hidden"
+          onClick={() => setPanelVisible(false)}
+        >
+          <X size={16} />
+        </button>
+      </nav>
+      <div className="flex-1 overflow-auto min-w-0 pb-6">
         <ErrorBoundary title="Panel crashed">
           {activeTab === 'document' && <DocumentOverview />}
           {activeTab === 'search' && <Search />}
@@ -79,26 +53,6 @@ export function Panel() {
           )}
         </ErrorBoundary>
       </div>
-      <nav
-        aria-label="Panel sections"
-        className="flex flex-col items-center gap-1 border-l border-raised px-1.5 py-2 flex-shrink-0"
-      >
-        <RailButton
-          icon={X}
-          label="Hide panel"
-          onClick={() => setPanelVisible(false)}
-        />
-        <div className="w-5 border-b border-raised my-1" />
-        {TABS.map(({ id, label, icon }) => (
-          <RailButton
-            key={id}
-            icon={icon}
-            label={label}
-            current={activeTab === id}
-            onClick={() => setActiveTab(id)}
-          />
-        ))}
-      </nav>
-    </div>
+    </aside>
   )
 }
