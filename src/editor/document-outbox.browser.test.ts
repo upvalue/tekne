@@ -1,7 +1,7 @@
 import { expect, test } from 'vitest'
 import { docMake, lineMake, type ZDoc } from '@/docs/schema'
 import { applyDocumentPatch, diffDocuments } from '@/docs/document-patch'
-import { openDocumentOutbox } from './document-outbox'
+import { openDocumentOutbox, openOutboxDatabase } from './document-outbox'
 import { SaveQueue, type SaveQueueState, type SaveResult } from './save-queue'
 
 const stateFor = (text: string): SaveQueueState<ZDoc> => {
@@ -122,3 +122,50 @@ test('blocked requests, closing, recovery and a lost acknowledgement persist edi
   expect(clean.recovered).toBeNull()
   clean.close()
 })
+
+test.each([false, true])(
+  'upgrades a v1 recovery database (existing index: %s) without losing drafts',
+  async (hasIndex) => {
+    const name = `tekne-outbox-upgrade-test-${crypto.randomUUID()}`
+    const record = {
+      id: crypto.randomUUID(),
+      scope: 'production',
+      title: 'Unsaved note',
+      state: stateFor('do not lose this'),
+    }
+    const legacy = await new Promise<IDBDatabase>((resolve, reject) => {
+      const request = indexedDB.open(name, 1)
+      request.onupgradeneeded = () => {
+        const drafts = request.result.createObjectStore('drafts', {
+          keyPath: 'id',
+        })
+        if (hasIndex) drafts.createIndex('document', ['scope', 'title'])
+        drafts.put(record)
+      }
+      request.onsuccess = () => resolve(request.result)
+      request.onerror = () => reject(request.error)
+    })
+    legacy.close()
+    const upgraded = await openOutboxDatabase(name)
+    try {
+      expect(upgraded.version).toBe(2)
+      const drafts = await new Promise<unknown[]>((resolve, reject) => {
+        const request = upgraded
+          .transaction('drafts')
+          .objectStore('drafts')
+          .index('document')
+          .getAll(IDBKeyRange.only([record.scope, record.title]))
+        request.onsuccess = () => resolve(request.result)
+        request.onerror = () => reject(request.error)
+      })
+      expect(drafts).toEqual([record])
+    } finally {
+      upgraded.close()
+      await new Promise<void>((resolve, reject) => {
+        const request = indexedDB.deleteDatabase(name)
+        request.onsuccess = () => resolve()
+        request.onerror = () => reject(request.error)
+      })
+    }
+  }
+)

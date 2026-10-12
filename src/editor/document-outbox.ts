@@ -30,19 +30,22 @@ type Record = {
 }
 let database: Promise<IDBDatabase> | undefined
 
-const openDatabase = () => {
-  database ??= new Promise<IDBDatabase>((resolve, reject) => {
-    const request = indexedDB.open(DATABASE, 1)
-    request.onupgradeneeded = () =>
-      request.result
-        .createObjectStore(STORE, { keyPath: 'id' })
-        .createIndex('document', ['scope', 'title'])
+export const openOutboxDatabase = (name = DATABASE): Promise<IDBDatabase> =>
+  new Promise<IDBDatabase>((resolve, reject) => {
+    const request = indexedDB.open(name, 2)
+    request.onupgradeneeded = () => {
+      const db = request.result
+      // Early v1 databases have drafts but no document index. Upgrade in place
+      // so pending edits remain available to recovery.
+      const drafts = db.objectStoreNames.contains(STORE)
+        ? request.transaction!.objectStore(STORE)
+        : db.createObjectStore(STORE, { keyPath: 'id' })
+      if (!drafts.indexNames.contains('document'))
+        drafts.createIndex('document', ['scope', 'title'])
+    }
     request.onsuccess = () => {
       const db = request.result
-      db.onversionchange = () => {
-        db.close()
-        database = undefined
-      }
+      db.onversionchange = () => db.close()
       resolve(db)
     }
     request.onerror = () => reject(request.error)
@@ -50,10 +53,20 @@ const openDatabase = () => {
       reject(
         new Error('Local recovery storage is blocked by another browser tab')
       )
-  }).catch((error) => {
-    database = undefined
-    throw error
   })
+
+const openDatabase = () => {
+  database ??= openOutboxDatabase()
+    .then((db) => {
+      db.addEventListener('versionchange', () => {
+        database = undefined
+      })
+      return db
+    })
+    .catch((error) => {
+      database = undefined
+      throw error
+    })
   return database
 }
 
