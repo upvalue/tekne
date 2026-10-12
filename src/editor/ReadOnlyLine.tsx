@@ -146,9 +146,10 @@ export const ReadOnlyLine = ({
         )}
       </div>
 
+      {!!datumTimeSeconds && <ReadOnlyTimerBadge time={datumTimeSeconds} />}
+
       {/* CodeMirror content */}
       <div className="cm-editor-container flex-1 min-w-0 ml-2" ref={cmRef} />
-      {!!datumTimeSeconds && <ReadOnlyTimerBadge time={datumTimeSeconds} />}
     </div>
   )
 }

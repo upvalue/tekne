@@ -32,12 +32,13 @@ afterEach(async () => {
 })
 
 test.each([
-  { viewport: 320, panel: 270 },
-  { viewport: 390, panel: 340 },
-  { viewport: 1280, panel: 270 },
+  { viewport: 320, panel: 270, columns: 1 },
+  { viewport: 390, panel: 340, columns: 1 },
+  { viewport: 1280, panel: 270, columns: 1 },
+  { viewport: 1280, panel: 520, columns: 2 },
 ])(
-  'aggregate uses one inset at $viewport viewport / $panel content width',
-  async ({ viewport, panel }) => {
+  'aggregate cards fit a $panel content width in $columns column(s)',
+  async ({ viewport, panel, columns }) => {
     await page.viewport(viewport, 800)
     fixture.data = [
       {
@@ -73,34 +74,38 @@ test.each([
       </QueryClientProvider>
     )
     const list = view.getByRole('list', { name: 'Tag aggregates' })
+    const listBounds = list.getBoundingClientRect()
+    expect(listBounds.width).toBe(panel - 24)
     const rows = view.getAllByRole('listitem')
-    expect(list.getBoundingClientRect().width).toBe(panel)
     for (const row of rows) {
-      const bounds = row.getBoundingClientRect()
-      expect(bounds.width).toBe(panel)
-      expect(row.scrollWidth).toBeLessThanOrEqual(row.clientWidth)
-      expect(getComputedStyle(row).paddingLeft).toBe('12px')
-      expect(getComputedStyle(row).paddingRight).toBe('12px')
-      expect(getComputedStyle(row).borderWidth).toBe('0px')
-      expect(getComputedStyle(row).borderRadius).toBe('0px')
-      for (const element of row.querySelectorAll('span, p, svg')) {
+      const card = row.firstElementChild as HTMLElement
+      const bounds = card.getBoundingClientRect()
+      expect(bounds.left).toBeGreaterThanOrEqual(listBounds.left)
+      expect(bounds.right).toBeLessThanOrEqual(listBounds.right)
+      expect(card.scrollWidth).toBeLessThanOrEqual(card.clientWidth)
+      expect(getComputedStyle(card).borderWidth).toBe('0px')
+      for (const element of card.querySelectorAll('span, p, svg')) {
         expect(element.getBoundingClientRect().right).toBeLessThanOrEqual(
-          bounds.right - 12
+          bounds.right
         )
       }
     }
-    expect(rows[1].getBoundingClientRect().top).toBe(
-      rows[0].getBoundingClientRect().bottom
+    const lefts = new Set(
+      rows.map((row) => Math.round(row.getBoundingClientRect().left))
     )
-    expect(getComputedStyle(rows[0]).backgroundColor).toBe(
-      getComputedStyle(rows[1]).backgroundColor
-    )
-    expect(getComputedStyle(rows[0]).backgroundColor).toBe(
-      getComputedStyle(rows[2]).backgroundColor
-    )
-    expect(view.getByText('· 12 done').getBoundingClientRect().top).toBe(
-      view.getByText('1h 30m').getBoundingClientRect().top
-    )
+    expect(lefts.size).toBe(columns)
+    const metrics = Array.from(
+      rows[0].querySelectorAll<HTMLElement>(
+        '[aria-label="All-time totals"] > span'
+      )
+    ).map((element) => element.getBoundingClientRect())
+    for (let i = 1; i < metrics.length; i++) {
+      const previous = metrics[i - 1]
+      const current = metrics[i]
+      expect(
+        current.top >= previous.bottom || current.left >= previous.right
+      ).toBe(true)
+    }
     const description = view.getByText(fixture.data[1].pinned_desc!)
     expect(description.getBoundingClientRect().height).toBeGreaterThan(20)
 
@@ -110,7 +115,7 @@ test.each([
     expect(list.getClientRects()).toHaveLength(0)
     fireEvent.click(toggle)
     expect(toggle.getAttribute('aria-expanded')).toBe('true')
-    expect(list.getBoundingClientRect().width).toBe(panel)
+    expect(list.getBoundingClientRect().width).toBe(panel - 24)
   }
 )
 
@@ -132,13 +137,18 @@ test('empty aggregate retains one inset and wraps within a small panel', async (
   expect(view.queryByRole('list')).toBeNull()
 })
 
-test('search summaries remain a single column without card borders', () => {
+test('search cards stack in a narrow panel without borders or extra inset', () => {
   const view = render(
-    <ResultCardGrid data={[{ tag: 'search-one' }, { tag: 'search-two' }]} />
+    <div style={{ width: 270 }}>
+      <ResultCardGrid data={[{ tag: 'search-one' }, { tag: 'search-two' }]} />
+    </div>
   )
   const rows = view.getAllByRole('listitem')
   expect(rows[1].getBoundingClientRect().top).toBeGreaterThanOrEqual(
     rows[0].getBoundingClientRect().bottom
   )
-  expect(getComputedStyle(rows[0]).borderLeftWidth).toBe('0px')
+  expect(view.getByRole('list').getBoundingClientRect().width).toBe(270)
+  expect(getComputedStyle(rows[0].firstElementChild!).borderLeftWidth).toBe(
+    '0px'
+  )
 })

@@ -96,9 +96,6 @@ export const StatusBar = ({
     (sum, line) => sum + (line.datumTimeSeconds ?? 0),
     0
   )
-  const openTasks = lines.filter(
-    (line) => line.datumTaskStatus === 'unset'
-  ).length
   const weekday = /^\d{4}-\d{2}-\d{2}$/.test(title)
     ? new Date(`${title}T12:00:00`).toLocaleDateString(undefined, {
         weekday: 'long',
@@ -117,8 +114,6 @@ export const StatusBar = ({
       ) : (
         <>
           <span>{lines.length} lines</span>
-          <span>·</span>
-          <span>{openTasks} open</span>
           {totalTime > 0 && (
             <>
               <span>·</span>

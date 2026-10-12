@@ -1,7 +1,7 @@
 import { DevTools } from '@/dev/DevTools'
 import { Search } from './Search'
 import { Tools } from './Tools'
-import { X, Database, SearchIcon, Zap, CircleHelp, Wrench } from 'lucide-react'
+import { X, FileText, SearchIcon, Zap, CircleHelp, Wrench } from 'lucide-react'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { DocumentOverview } from './DocumentOverview'
 import {
@@ -25,29 +25,25 @@ export function Panel() {
           {
             id: 'document' as const,
             label: 'This page',
-            description: 'Outline, tag totals, and pinned notes',
-            icon: Database,
+            icon: FileText,
           },
           {
             id: 'search' as const,
             label: 'Search',
-            description: 'Search documents, tasks, and logged time',
             icon: SearchIcon,
           },
           {
             id: 'tools' as const,
             label: 'Tools',
-            description: 'Manage tasks, tags, and timers',
             icon: Zap,
           },
           {
             id: 'devtools' as const,
             label: 'Dev tools',
-            description: 'Inspect data and preview appearance and errors',
             icon: Wrench,
           },
-        ].map(({ id, label, description, icon: Icon }) => (
-          <Tooltip key={id} label={label} description={description}>
+        ].map(({ id, label, icon: Icon }) => (
+          <Tooltip key={id} label={label}>
             <button
               aria-label={label}
               aria-current={activeTab === id ? 'page' : undefined}
@@ -63,10 +59,7 @@ export function Panel() {
             </button>
           </Tooltip>
         ))}
-        <Tooltip
-          label="Help"
-          description="Syntax, keyboard shortcuts, and commands"
-        >
+        <Tooltip label="Help">
           <button
             aria-label="Help"
             aria-haspopup="dialog"
@@ -76,10 +69,7 @@ export function Panel() {
             <CircleHelp size={16} />
           </button>
         </Tooltip>
-        <Tooltip
-          label="Hide panel"
-          description="Use the panel shortcut to show it again."
-        >
+        <Tooltip label="Hide panel">
           <button
             aria-label="Hide panel"
             className="p-2 text-muted hover:text-text"

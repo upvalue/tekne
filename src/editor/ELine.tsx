@@ -232,6 +232,7 @@ const ELineImpl = (lineInfo: ELineProps) => {
           )}
         </div>
       )}
+      <TimerBadge lineInfo={lineInfo} time={line.datumTimeSeconds ?? 0} />
       <div
         className={cn(
           'cm-editor-container min-w-0 ml-2 pr-0',
@@ -273,7 +274,6 @@ const ELineImpl = (lineInfo: ELineProps) => {
           }
         }}
       />
-      <TimerBadge lineInfo={lineInfo} time={line.datumTimeSeconds ?? 0} />
 
       {lineInfo.touchMode && !lineInfo.isTouchEditing && (
         <button

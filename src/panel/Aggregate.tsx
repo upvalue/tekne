@@ -18,13 +18,13 @@ export const Aggregate = () => {
   if (isLoading)
     return (
       <div className="px-3">
-        <LoadingIndicator label="Loading tag totals" />
+        <LoadingIndicator label="Loading aggregate data" />
       </div>
     )
   if (error)
     return (
       <ErrorState
-        title="Could not load tag totals"
+        title="Could not load aggregate data"
         detail={error.message}
         onRetry={() => void refetch()}
         busy={isFetching}

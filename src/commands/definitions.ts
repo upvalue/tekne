@@ -379,7 +379,7 @@ const panelCommands: Command[] = [
   {
     id: 'page-panel',
     name: 'This page',
-    description: 'Outline and tag totals',
+    description: 'Outline and aggregate data',
     requiresEditor: false,
     execute: () => openPanelTab('document'),
   },

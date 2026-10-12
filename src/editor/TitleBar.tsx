@@ -1,26 +1,13 @@
 import { apiErrorMessage } from '@/api/errors'
 import { useMutation } from '@tanstack/react-query'
 import { useState, useRef, useLayoutEffect } from 'react'
-import { useAtom } from 'jotai'
 import { orpc } from '@/api/client'
 import { useNavigate } from '@tanstack/react-router'
-import { errorMessageAtom } from './state'
 import { StatusBar } from './StatusBar'
 import { DateNavigation } from './DateNavigation'
-import {
-  Dialog,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/vendor/Dialog'
 import { Button } from '@/components/vendor/Button'
-import { EditorDialogContent } from '@/components/EditorDialogContent'
 import { toast } from 'sonner'
 
-/*
- * Title bar; allows user to change the title of a document
- */
 export const TitleBar = ({
   title,
   allowTitleEdit = false,
@@ -31,94 +18,81 @@ export const TitleBar = ({
   isLoading?: boolean
 }) => {
   const [proposedTitle, setProposedTitle] = useState(title)
-  const [, setErrorMessage] = useAtom(errorMessageAtom)
-  const [showConfirmDialog, setShowConfirmDialog] = useState<{
-    show: boolean
+  const [reviewing, setReviewing] = useState(false)
+  const [preview, setPreview] = useState<{
+    newName: string
     linksToUpdate: Array<{ title: string }>
-  }>({ show: false, linksToUpdate: [] })
-  const editableRef = useRef<HTMLDivElement>(null)
+  } | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const generation = useRef(0)
   const navigate = useNavigate()
   const isDate = /^\d{4}-\d{2}-\d{2}$/.test(title)
+  const editable = allowTitleEdit && !isDate
+  const propose = useMutation(orpc.doc.renameDocPropose.mutationOptions())
+  const execute = useMutation(orpc.doc.renameDocExecute.mutationOptions())
 
-  const setDisplayedTitle = (title: string) => {
+  const reset = () => {
+    generation.current++
     setProposedTitle(title)
-    if (editableRef.current) {
-      editableRef.current.textContent = title
-    }
+    setReviewing(false)
+    setPreview(null)
+    setError(null)
   }
-
-  const renameDocExecuteMutation = useMutation(
-    orpc.doc.renameDocExecute.mutationOptions({
-      onSuccess: () => {
-        toast.success(`Document renamed to "${proposedTitle.trim()}"`)
-        navigate({
-          to: '/n/$title',
-          params: { title: proposedTitle.trim() },
-        })
-      },
-      onError: (error) => {
-        setErrorMessage(error.message)
-        setDisplayedTitle(title)
-      },
-    })
-  )
-
-  const renameDocProposeMutation = useMutation(
-    orpc.doc.renameDocPropose.mutationOptions({
-      onSuccess: (res) => {
-        setErrorMessage(null)
-
-        if (res.docAlreadyExists) {
-          setErrorMessage(
-            `Document with name "${proposedTitle.trim()}" already exists`
-          )
-          setDisplayedTitle(title)
-          return
-        }
-
-        // Show confirmation dialog when renaming is possible
-        setShowConfirmDialog({
-          show: true,
-          linksToUpdate: res.linksToUpdate,
-        })
-      },
-      onError: (error) => {
-        setErrorMessage(apiErrorMessage(error))
-
-        // Revert the title to the original
-        setDisplayedTitle(title)
-      },
-    })
-  )
 
   useLayoutEffect(() => {
+    generation.current++
     setProposedTitle(title)
-    if (editableRef.current) {
-      editableRef.current.textContent = title
-    }
+    setReviewing(false)
+    setPreview(null)
+    setError(null)
   }, [title])
 
-  const handleSubmit = () => {
-    if (proposedTitle.trim() !== title && allowTitleEdit) {
-      renameDocProposeMutation.mutate({
-        oldName: title,
-        newName: proposedTitle.trim(),
-      })
-    } else {
-      setErrorMessage(null)
+  const review = async () => {
+    const newName = proposedTitle.trim()
+    if (!editable || execute.isPending || newName === title) return
+    if (reviewing && preview?.newName === newName) return
+    const request = ++generation.current
+    setReviewing(true)
+    setPreview(null)
+    setError(null)
+    if (!newName) {
+      setError('Enter a title.')
+      return
+    }
+    try {
+      const result = await propose.mutateAsync({ oldName: title, newName })
+      if (request !== generation.current) return
+      if (result.docAlreadyExists) {
+        setError(`Document with name "${newName}" already exists`)
+      } else {
+        setPreview({ newName, linksToUpdate: result.linksToUpdate })
+      }
+    } catch (error) {
+      if (request === generation.current)
+        setError(
+          apiErrorMessage(
+            error instanceof Error ? error : new Error(String(error))
+          )
+        )
     }
   }
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      e.preventDefault()
-      handleSubmit()
-    } else if (e.key === 'Escape') {
-      setProposedTitle(title)
-      if (editableRef.current) {
-        editableRef.current.textContent = title
-      }
-      setErrorMessage(null)
+  const save = async () => {
+    if (!preview || execute.isPending) return
+    const newName = preview.newName
+    const request = generation.current
+    try {
+      await execute.mutateAsync({ oldName: title, newName })
+      if (request !== generation.current) return
+      toast.success(`Document renamed to "${newName}"`)
+      await navigate({ to: '/n/$title', params: { title: newName } })
+    } catch (error) {
+      if (request === generation.current)
+        setError(
+          apiErrorMessage(
+            error instanceof Error ? error : new Error(String(error))
+          )
+        )
     }
   }
 
@@ -133,74 +107,57 @@ export const TitleBar = ({
         />
       )}
       <div className="flex items-center gap-3 min-w-0">
-        <div
-          ref={editableRef}
-          contentEditable={allowTitleEdit && !isDate}
-          suppressContentEditableWarning
+        <input
           aria-label="Document title"
-          className="text-lg font-normal text-text-2 outline-none min-w-0 truncate"
-          onInput={(e) => setProposedTitle(e.currentTarget.textContent || '')}
-          onBlur={handleSubmit}
-          onKeyDown={handleKeyDown}
+          aria-invalid={!!error}
+          readOnly={!editable || execute.isPending}
+          value={proposedTitle}
+          className="flex-1 w-full text-2xl font-normal text-text-2 bg-transparent outline-none min-w-0"
+          onChange={(event) => {
+            generation.current++
+            setProposedTitle(event.target.value)
+            setReviewing(false)
+            setPreview(null)
+            setError(null)
+          }}
+          onBlur={() => void review()}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter') {
+              event.preventDefault()
+              event.currentTarget.blur()
+            } else if (event.key === 'Escape' && !execute.isPending) {
+              event.preventDefault()
+              reset()
+            }
+          }}
         />
-      </div>
-      <StatusBar title={title} isLoading={isLoading} />
-
-      <Dialog
-        open={showConfirmDialog.show}
-        onOpenChange={(open) =>
-          setShowConfirmDialog((sc) => ({ ...sc, show: open }))
-        }
-      >
-        <EditorDialogContent>
-          <DialogHeader>
-            <DialogTitle>Confirm Rename</DialogTitle>
-            <DialogDescription>
-              Confirm the rename of the document
-            </DialogDescription>
-          </DialogHeader>
-          <div>
-            Are you sure you want to rename "{title}" to "{proposedTitle.trim()}
-            "?
-          </div>
-
-          {showConfirmDialog.linksToUpdate.length > 0 && (
-            <>
-              <div>
-                This will update {showConfirmDialog.linksToUpdate.length} other
-                document{showConfirmDialog.linksToUpdate.length > 1 ? 's' : ''}.
-              </div>
-              <div>
-                {showConfirmDialog.linksToUpdate.map((link) => (
-                  <div key={link.title}>{link.title}</div>
-                ))}
-              </div>
-            </>
-          )}
-          <DialogFooter>
+        {reviewing && (
+          <div className="flex shrink-0 gap-1">
             <Button
-              outline
-              onClick={() => {
-                setShowConfirmDialog((sc) => ({ ...sc, show: false }))
-                setDisplayedTitle(title)
-              }}
+              plain
+              disabled={!preview || execute.isPending}
+              onClick={() => void save()}
             >
+              {execute.isPending ? 'Saving…' : 'Save'}
+            </Button>
+            <Button plain disabled={execute.isPending} onClick={reset}>
               Cancel
             </Button>
-            <Button
-              onClick={() => {
-                setShowConfirmDialog((sc) => ({ ...sc, show: false }))
-                renameDocExecuteMutation.mutate({
-                  oldName: title,
-                  newName: proposedTitle.trim(),
-                })
-              }}
-            >
-              Rename
-            </Button>
-          </DialogFooter>
-        </EditorDialogContent>
-      </Dialog>
+          </div>
+        )}
+      </div>
+      {error && (
+        <p role="alert" className="mt-1 text-sm text-text-2">
+          {error}
+        </p>
+      )}
+      {reviewing && preview && preview.linksToUpdate.length > 0 && (
+        <p className="mt-1 text-xs text-muted">
+          Also updates links in{' '}
+          {preview.linksToUpdate.map((link) => link.title).join(', ')}.
+        </p>
+      )}
+      <StatusBar title={title} isLoading={isLoading} />
     </header>
   )
 }

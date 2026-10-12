@@ -48,6 +48,12 @@ test.each([320, 390])(
     expect(rows[0].getBoundingClientRect().left).toBe(12)
     expect(rows[0].getBoundingClientRect().right).toBe(width - 12)
     expect(editor.scrollWidth).toBeLessThanOrEqual(editor.clientWidth)
+    expect(
+      rows[2].querySelector('.TimerChip')!.getBoundingClientRect().right
+    ).toBeLessThanOrEqual(
+      rows[2].querySelector('.cm-editor-container')!.getBoundingClientRect()
+        .left
+    )
     const plainText = rows[0].querySelector('.cm-editor-container')!
     const indentedText = rows[1].querySelector('.cm-editor-container')!
     expect(

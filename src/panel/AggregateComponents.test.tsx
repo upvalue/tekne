@@ -27,17 +27,29 @@ test('aggregate rows retain task, time, page contribution, and pinned data', () 
   const row = within(view.getByRole('listitem'))
   for (const text of [
     '#project',
-    '· 12 done',
-    '· 3 cancelled',
-    '· 4 open',
+    '12',
+    '3',
+    '4',
     '1h 30m',
-    '+5 done',
-    '6 cancelled',
-    '7 open',
-    '+10m',
+    '5',
+    '6',
+    '7',
+    '10m',
     'A longer project description',
   ]) {
     expect(row.getByText(text)).not.toBeNull()
+  }
+  for (const title of [
+    '12 done',
+    '4 open',
+    '3 cancelled',
+    '1h 30m logged',
+    '5 done on this page',
+    '7 open on this page',
+    '6 cancelled on this page',
+    '10m logged on this page',
+  ]) {
+    expect(row.getByTitle(title)).not.toBeNull()
   }
 })
 
@@ -61,7 +73,7 @@ test('sparse and zero-value rows have no empty metric or description blocks', ()
   )
   expect(view.getAllByRole('listitem')).toHaveLength(2)
   for (const row of view.getAllByRole('listitem')) {
-    expect(row.children).toHaveLength(1)
+    expect(row.firstElementChild!.children).toHaveLength(1)
     expect(row.querySelector('svg')).toBeNull()
     expect(row.querySelector('p')).toBeNull()
   }
@@ -82,14 +94,14 @@ test('a pinned description without metrics is still visible', () => {
     />
   )
   expect(view.getByText('Useful context')).not.toBeNull()
-  expect(view.getByRole('listitem').children).toHaveLength(2)
+  expect(view.getByRole('listitem').firstElementChild!.children).toHaveLength(2)
 })
 
-test('search aggregates use the same quiet tag summaries', () => {
+test('search aggregates use the same tag cards', () => {
   const view = render(
     <ResultCardGrid data={[{ tag: 'search', complete_tasks: 2 }]} />
   )
   expect(view.getByRole('list', { name: 'Tag aggregates' })).not.toBeNull()
   expect(view.getByText('#search')).not.toBeNull()
-  expect(view.getByText('2 done')).not.toBeNull()
+  expect(view.getByTitle('2 done')).not.toBeNull()
 })

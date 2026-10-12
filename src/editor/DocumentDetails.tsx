@@ -1,55 +1,41 @@
 import { LoadingIndicator } from '@/components/LoadingIndicator'
+import { ErrorState } from '@/components/ErrorState'
 import { useQuery } from '@tanstack/react-query'
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/vendor/Dialog'
-import { FileText } from 'lucide-react'
-import { useState } from 'react'
 import { orpc } from '@/api/client'
-import { DialogDescription } from '@/components/vendor/Dialog'
 
-const DocumentDetails = ({ title }: { title: string }) => {
-  const { isLoading, data } = useQuery(
-    orpc.doc.loadDocDetails.queryOptions({
-      input: {
-        name: title,
-      },
-    })
+export const DocumentDetails = ({ title }: { title: string }) => {
+  const { isLoading, data, error, refetch, isFetching } = useQuery(
+    orpc.doc.loadDocDetails.queryOptions({ input: { name: title } })
   )
 
-  return (
-    <div>
-      {isLoading && <LoadingIndicator label="Loading document details" />}
-      {!isLoading && (
-        <div>
-          <p>Created at: {data?.createdAt.toISOString()}</p>
-          <p>Updated at: {data?.updatedAt.toISOString()}</p>
-          <p>Revision: {data?.revision}</p>
-        </div>
-      )}
-    </div>
-  )
-}
-
-export const DocumentDetailsButton = ({ title }: { title: string }) => {
-  const [open, setOpen] = useState(false)
+  if (isLoading) return <LoadingIndicator label="Loading document details" />
+  if (error)
+    return (
+      <ErrorState
+        title="Could not load document details"
+        detail={error.message}
+        onRetry={() => void refetch()}
+        busy={isFetching}
+      />
+    )
+  if (!data) return null
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger>
-        <FileText className="w-4 h-4 cursor-pointer text-muted" />
-      </DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Document Details</DialogTitle>
-        </DialogHeader>
-        <DialogDescription>Document details</DialogDescription>
-        {open && <DocumentDetails title={title} />}
-      </DialogContent>
-    </Dialog>
+    <dl className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-1 text-xs text-muted">
+      <dt>Created</dt>
+      <dd>
+        <time dateTime={data.createdAt.toISOString()}>
+          {data.createdAt.toLocaleString()}
+        </time>
+      </dd>
+      <dt>Updated</dt>
+      <dd>
+        <time dateTime={data.updatedAt.toISOString()}>
+          {data.updatedAt.toLocaleString()}
+        </time>
+      </dd>
+      <dt>Revision</dt>
+      <dd>{data.revision}</dd>
+    </dl>
   )
 }

@@ -2,6 +2,8 @@ import {
   generateTableOfContents,
   type TableOfContentsItem,
 } from '@/docs/table-of-contents'
+import { DocumentDetails } from '@/editor/DocumentDetails'
+import { useDocTitle } from '@/hooks/useDocTitle'
 import { Aggregate } from './Aggregate'
 import { useAtomValue, useSetAtom } from 'jotai'
 import { docAtom, focusedLineAtom } from '@/editor/state'
@@ -28,7 +30,7 @@ export const TOCItem = ({ item }: { item: TableOfContentsItem }) => {
       style={{ paddingLeft: `${item.indentLevel * 12}px` }}
       className={cn(
         item.isActive ? 'text-text' : 'text-text-2',
-        'cursor-pointer py-1'
+        'cursor-pointer'
       )}
       onClick={() => {
         setFocusedLine(item.lineIdx)
@@ -79,6 +81,7 @@ export const DocumentOverviewSection = ({
 }
 
 export const DocumentOverview = () => {
+  const title = useDocTitle()
   const doc = useAtomValue(docAtom)
   const focusedLineIdx = useAtomValue(focusedLineAtom)
   const toc = generateTableOfContents(doc.children, focusedLineIdx ?? undefined)
@@ -89,9 +92,14 @@ export const DocumentOverview = () => {
           <TableOfContents toc={toc} />
         </DocumentOverviewSection>
       )}
-      <DocumentOverviewSection label="Tags on this page" flush>
+      <DocumentOverviewSection label="Aggregate" flush>
         <Aggregate />
       </DocumentOverviewSection>
+      {title && (
+        <DocumentOverviewSection label="Document details">
+          <DocumentDetails title={title} />
+        </DocumentOverviewSection>
+      )}
     </div>
   )
 }

@@ -1,31 +1,17 @@
 declare const TEKNE_GIT_INFO: { hash: string; message: string }
 
-import React from 'react'
-
 export function Version() {
-  const gitInfo = TEKNE_GIT_INFO
-  const fullHash = gitInfo.hash
-  const message = gitInfo.message
+  const { hash, message } = TEKNE_GIT_INFO
 
   return (
-    <div className="p-4">
-      <h2 className="text-lg font-semibold mb-4">Version Information</h2>
-
-      <div className="space-y-4">
-        <div>
-          <h3 className="text-sm font-medium text-text-2 mb-2">Git Commit</h3>
-          <div className="bg-raised rounded p-3 font-mono text-sm">
-            <div className="mb-2">
-              <span className="text-text-2">Hash:</span>{' '}
-              <span className="text-white">{fullHash}</span>
-            </div>
-            <div>
-              <span className="text-text-2">Message:</span>{' '}
-              <span className="text-white">{message}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+    <p className="flex items-center gap-2 min-w-0 text-xs text-text-2">
+      <span className="shrink-0">Version</span>
+      <code className="shrink-0 text-text" title={hash}>
+        {hash.slice(0, 7)}
+      </code>
+      <span className="truncate" title={message}>
+        {message}
+      </span>
+    </p>
   )
 }

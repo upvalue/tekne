@@ -1,15 +1,6 @@
 {
   "files": [
     {
-      "sourceFile": "../docs/development.mdx",
-      "outputFile": "generated/development.tsx",
-      "metadata": {
-        "title": "Development"
-      },
-      "sourceHash": "e72d14c538abfbde37d5b3f599b39c8d48da0dd284a8073c9526459743f20309",
-      "size": 1384
-    },
-    {
       "sourceFile": "../docs/getting-started.mdx",
       "outputFile": "generated/getting-started.tsx",
       "metadata": {
@@ -19,5 +10,5 @@
       "size": 889
     }
   ],
-  "totalFiles": 2
+  "totalFiles": 1
 }

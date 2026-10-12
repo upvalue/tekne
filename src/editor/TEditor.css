@@ -71,6 +71,7 @@
 
 .ELine-gutter-timestamp-base {
   display: block;
+  color: color-mix(in srgb, var(--color-muted) 75%, var(--color-page));
 }
 
 .ELine-gutter-timestamp-full {
@@ -269,7 +270,7 @@
     padding: 16px 44px 10px 16px;
   }
   .TitleBar [aria-label='Document title'] {
-    font-size: 18px;
+    font-size: 24px;
   }
 }
 .TimerChip-hover {
@@ -317,10 +318,10 @@
 
 .ELine {
   display: grid;
-  grid-template-columns: 144px var(--line-indent, 0px) 16px minmax(
+  grid-template-columns: 144px var(--line-indent, 0px) 16px max-content minmax(
       0,
       max-content
-    ) max-content max-content minmax(16px, 1fr);
+    ) max-content minmax(16px, 1fr);
 }
 .ELine > .ELine-gutter {
   grid-column: 1;
@@ -335,17 +336,17 @@
   grid-row: 1;
 }
 .ELine > .cm-editor-container {
-  grid-column: 4;
+  grid-column: 5;
   grid-row: 1;
   width: auto;
 }
 .ELine > .ELine-hidden-count {
-  grid-column: 5;
+  grid-column: 6;
   grid-row: 1;
   align-self: start;
 }
 .ELine > .TimerChip {
-  grid-column: 6;
+  grid-column: 4;
   grid-row: 1;
 }
 .ELine > .TimerRow {
@@ -356,14 +357,14 @@
 .ELine > .ELine-header-1,
 .ELine > .ELine-header-2,
 .ELine > .ELine-header-3 {
-  grid-column: 4;
+  grid-column: 5;
 }
 @media (max-width: 767px) {
   .ELine {
-    grid-template-columns: 44px var(--line-indent, 0px) 16px minmax(
+    grid-template-columns: 44px var(--line-indent, 0px) 16px max-content minmax(
         0,
         max-content
-      ) max-content max-content minmax(16px, 1fr);
+      ) max-content minmax(16px, 1fr);
   }
   .ELine > .TimerRow {
     grid-column: 1 / -1;
@@ -521,8 +522,7 @@
 }
 @media (max-width: 767px) {
   .ELine > .TimerChip-active {
-    grid-column: 4 / 8;
-    grid-row: 2;
+    max-width: 160px;
     flex-wrap: wrap;
   }
   .ELine > .TimerRow {
@@ -538,7 +538,7 @@
 }
 
 .ELine-empty > .cm-editor-container {
-  grid-column: 4 / -1;
+  grid-column: 5 / -1;
   min-height: 22px;
 }
 .ELine-empty > .ELine-tail {

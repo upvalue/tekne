@@ -32,6 +32,7 @@ import { useAtom, useAtomValue, useSetAtom, useStore } from 'jotai'
 import { useCodemirrorEvent } from './line-editor'
 import {
   docAtom,
+  focusedLineAtom,
   dragSelectedLineIdsAtom,
   dragSelectionAnchorIdAtom,
   requestFocusLineAtom,
@@ -177,6 +178,13 @@ export const TEditor = () => {
   const store = useStore()
   const touchMode = useDisplayMode() === 'touch'
   const touchSelectedLineId = useAtomValue(touchSelectedLineIdAtom)
+  const focusedLine = useAtomValue(focusedLineAtom)
+  const lastLine = doc.children.at(-1)
+  const showWritingPrompt =
+    !!lastLine &&
+    (touchMode
+      ? touchSelectedLineId === lastLine.id
+      : focusedLine === doc.children.length - 1)
   const touchEditingLineId = useAtomValue(touchEditingLineIdAtom)
   const [activeDragLineId, setActiveDragLineId] = useState<string | null>(null)
   const [dropIntent, setDropIntent] = useState<DropIntent | null>(null)
@@ -486,10 +494,9 @@ export const TEditor = () => {
 
           <input
             aria-label="New line"
-            placeholder={writingPrompt(
-              promptIndex,
-              doc.children.at(-1)?.id ?? 'empty'
-            )}
+            placeholder={
+              showWritingPrompt ? writingPrompt(promptIndex, lastLine?.id) : ''
+            }
             className="NewLinePrompt ml-36 max-md:ml-0 w-[calc(100%-9rem)] max-md:w-full bg-transparent py-1 pl-6 text-[15px] text-muted outline-none"
             onFocus={() => {
               const lineIdx = doc.children.length
