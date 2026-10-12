@@ -21,44 +21,46 @@ export function Panel() {
         aria-label="Panel sections"
         className="flex items-center gap-1 pb-2 px-1 text-xs"
       >
-        {[
-          {
-            id: 'document' as const,
-            label: 'This page',
-            icon: FileText,
-          },
-          {
-            id: 'search' as const,
-            label: 'Search',
-            icon: SearchIcon,
-          },
-          {
-            id: 'tools' as const,
-            label: 'Tools',
-            icon: Zap,
-          },
-          {
-            id: 'devtools' as const,
-            label: 'Dev tools',
-            icon: Wrench,
-          },
-        ].map(({ id, label, icon: Icon }) => (
-          <Tooltip key={id} label={label}>
-            <button
-              aria-label={label}
-              aria-current={activeTab === id ? 'page' : undefined}
-              className={cn(
-                'rounded p-2',
-                activeTab === id
-                  ? 'bg-white/7 text-text'
-                  : 'text-text-2 hover:text-text'
-              )}
-              onClick={() => setActiveTab(id)}
-            >
-              <Icon size={16} />
-            </button>
-          </Tooltip>
-        ))}
+        <div className="flex gap-0.5 rounded-lg bg-white/[0.04] p-0.5">
+          {[
+            {
+              id: 'document' as const,
+              label: 'This page',
+              icon: FileText,
+            },
+            {
+              id: 'search' as const,
+              label: 'Search',
+              icon: SearchIcon,
+            },
+            {
+              id: 'tools' as const,
+              label: 'Tools',
+              icon: Zap,
+            },
+            {
+              id: 'devtools' as const,
+              label: 'Dev tools',
+              icon: Wrench,
+            },
+          ].map(({ id, label, icon: Icon }) => (
+            <Tooltip key={id} label={label}>
+              <button
+                aria-label={label}
+                aria-current={activeTab === id ? 'page' : undefined}
+                className={cn(
+                  'flex size-7 items-center justify-center rounded-md transition-colors',
+                  activeTab === id
+                    ? 'bg-white/10 text-text shadow-[inset_0_0_0_0.5px_rgba(255,255,255,0.14),0_1px_2px_rgba(0,0,0,0.35)]'
+                    : 'text-muted hover:text-text-2'
+                )}
+                onClick={() => setActiveTab(id)}
+              >
+                <Icon size={15} />
+              </button>
+            </Tooltip>
+          ))}
+        </div>
         <Tooltip label="Help">
           <button
             aria-label="Help"

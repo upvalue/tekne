@@ -235,7 +235,7 @@ export const CommandPalette = ({
                 }
               : undefined
           }
-          className="CommandPalette-container fixed top-[18vh] left-1/2 -translate-x-1/2 z-50 w-[calc(100%-2rem)] max-w-xl rounded-xl bg-raised p-2 text-text shadow-xl outline-none"
+          className="CommandPalette-container fixed top-[18vh] left-1/2 -translate-x-1/2 z-50 w-[calc(100%-2rem)] max-w-xl rounded-xl p-2 text-text outline-none"
         >
           <Dialog.Title className="sr-only">Command palette</Dialog.Title>
           <input
@@ -249,7 +249,7 @@ export const CommandPalette = ({
               setQuery(e.target.value)
               setActive(-1)
             }}
-            className="w-full bg-transparent px-3 py-3 text-base outline-none placeholder:text-muted"
+            className="mb-1 w-full border-b border-white/8 bg-transparent px-3 py-3 text-base outline-none placeholder:text-muted"
             placeholder={
               searchMode
                 ? 'Find a command or document…'

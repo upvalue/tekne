@@ -7,7 +7,7 @@ import {
 } from '@/hooks/panel-state'
 import { useAtomValue } from 'jotai'
 import { PanelRight } from 'lucide-react'
-import { useCallback } from 'react'
+import { useCallback, useState } from 'react'
 
 interface EditorLayoutProps {
   editor: React.ReactNode
@@ -18,10 +18,12 @@ export function EditorLayout({ editor, sidepanel }: EditorLayoutProps) {
   const wide = useAtomValue(isWideViewportAtom, { store: uiStore })
   const [panelVisible, setPanelVisible] = usePanelVisible()
   const [panelWidth, setPanelWidth] = usePanelWidth()
+  const [resizing, setResizing] = useState(false)
 
   const startResize = useCallback(
     (e: React.PointerEvent) => {
       e.preventDefault()
+      setResizing(true)
       document.body.style.cursor = 'col-resize'
       document.body.style.userSelect = 'none'
       const onMove = (ev: PointerEvent) => {
@@ -34,6 +36,7 @@ export function EditorLayout({ editor, sidepanel }: EditorLayoutProps) {
         )
       }
       const stop = () => {
+        setResizing(false)
         document.body.style.cursor = ''
         document.body.style.userSelect = ''
         window.removeEventListener('pointermove', onMove)
@@ -65,6 +68,8 @@ export function EditorLayout({ editor, sidepanel }: EditorLayoutProps) {
           <div
             inert={!panelVisible}
             aria-hidden={!panelVisible}
+            data-open={panelVisible || undefined}
+            data-resizing={resizing || undefined}
             className="hidden lg:block relative flex-shrink-0 PanelShell"
             style={{
               width: panelVisible ? panelWidth : 0,
@@ -89,9 +94,14 @@ export function EditorLayout({ editor, sidepanel }: EditorLayoutProps) {
           </div>
         )}
 
-        {/* Mobile panel (fullscreen overlay) */}
-        {panelVisible && !wide && (
-          <div className="fixed inset-0 z-50 bg-page lg:hidden Panel overflow-auto">
+        {/* Mobile panel (fullscreen overlay, slides in from the right) */}
+        {!wide && (
+          <div
+            inert={!panelVisible}
+            aria-hidden={!panelVisible}
+            data-open={panelVisible || undefined}
+            className="fixed inset-0 z-50 bg-page lg:hidden Panel PanelOverlay overflow-auto"
+          >
             {sidepanel}
           </div>
         )}
