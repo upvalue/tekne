@@ -12,6 +12,7 @@ export const CommandPaletteProvider: React.FC<{
   const [paletteOpen, setPaletteOpen] = useAtom(commandPaletteOpenAtom)
   const focusedLineIdx = useAtomValue(focusedLineAtom)
 
+  useGlobalKeybinding('documentSearch', () => setPaletteOpen(true))
   useGlobalKeybinding('commandPalette', () => setPaletteOpen((open) => !open))
 
   // Global fallback palette (when no line is focused)

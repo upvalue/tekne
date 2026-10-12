@@ -8,7 +8,8 @@ const panelState = vi.hoisted(() => ({
   setTarget: vi.fn(),
 }))
 
-vi.mock('@/hooks/panel-state', () => ({
+vi.mock('@/hooks/panel-state', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/hooks/panel-state')>()),
   useTagManagerTarget: () => [panelState.target, panelState.setTarget],
 }))
 

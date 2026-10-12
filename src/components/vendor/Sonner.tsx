@@ -4,6 +4,7 @@ const Toaster = ({ ...props }: ToasterProps) => {
   return (
     <Sonner
       theme="dark"
+      hotkey={['altKey', 'shiftKey', 'KeyN']}
       className="toaster group "
       style={
         {

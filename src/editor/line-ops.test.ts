@@ -1,7 +1,7 @@
 import { describe, test, expect, beforeEach, vi } from 'vitest'
 import { createStore } from 'jotai'
 import { docMake, lineMake, type ZDoc } from '@/docs/schema'
-import { docAtom, globalTimerAtom, timerDialogRequestAtom } from './state'
+import { docAtom, globalTimerAtom, timerRowRequestAtom } from './state'
 import { resetUndoHistory, undo } from './undo'
 import {
   canMoveBlockDown,
@@ -13,7 +13,7 @@ import {
   insertLineBelow,
   moveBlockDown,
   moveBlockUp,
-  openTimerDialog,
+  openTimerRow,
   outdentLine,
   toggleCollapse,
   togglePin,
@@ -205,12 +205,12 @@ describe('toggleTimer', () => {
   })
 })
 
-describe('openTimerDialog', () => {
-  test('ensures a timer datum and requests the dialog', () => {
+describe('openTimerRow', () => {
+  test('ensures a timer datum and requests the inline row', () => {
     const store = makeStore(doc(['a', 0]))
-    openTimerDialog(store, 0, 'countdown')
+    openTimerRow(store, 0, 'countdown')
     expect(store.get(docAtom).children[0].datumTimeSeconds).toBe(0)
-    expect(store.get(timerDialogRequestAtom)).toEqual({
+    expect(store.get(timerRowRequestAtom)).toEqual({
       lineIdx: 0,
       mode: 'countdown',
     })

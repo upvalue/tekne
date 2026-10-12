@@ -92,3 +92,11 @@ export const openPanelTab = (tab: PanelTab) => {
   uiStore.set(activePanelTabAtom, tab)
   uiStore.set(panelVisibleAtom, true)
 }
+
+export const activeToolTabAtom = atom<'tasks' | 'tags' | 'timers'>('tasks')
+export const useActiveToolTab = () =>
+  useAtom(activeToolTabAtom, { store: uiStore })
+export const openToolTab = (tab: 'tasks' | 'tags' | 'timers') => {
+  uiStore.set(activeToolTabAtom, tab)
+  openPanelTab('tools')
+}

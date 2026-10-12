@@ -4,9 +4,10 @@ import { Clock, ChevronDown, Pause, X } from 'lucide-react'
 import type { LineWithIdx } from './line-editor'
 import {
   docAtom,
+  focusedLineAtom,
   globalTimerAtom,
   timerBusyAtom,
-  timerDialogRequestAtom,
+  timerRowRequestAtom,
 } from './state'
 import { Button } from '@/components/vendor/Button'
 import { formatTimeDisplay, renderTime } from '@/lib/time'
@@ -40,7 +41,7 @@ export const TimerBadge = ({
   const store = useStore()
   const timer = useAtomValue(globalTimerAtom)
   const busy = useAtomValue(timerBusyAtom)
-  const [request, setRequest] = useAtom(timerDialogRequestAtom)
+  const [request, setRequest] = useAtom(timerRowRequestAtom)
   const [open, setOpen] = useState(false)
   const [countdown, setCountdown] = useState('')
   const [manual, setManual] = useState('')
@@ -109,7 +110,10 @@ export const TimerBadge = ({
       >
         {runningHere || time > 0 ? (
           <button
-            onClick={() => setOpen(!open)}
+            onClick={() => {
+              store.set(focusedLineAtom, lineInfo.lineIdx)
+              setOpen(!open)
+            }}
             aria-label={`Time for line ${lineInfo.lineIdx + 1}`}
             aria-expanded={open}
             className={cn(
@@ -149,7 +153,10 @@ export const TimerBadge = ({
               className="px-1 hover:text-text"
               aria-label={`Open timer row for line ${lineInfo.lineIdx + 1}`}
               aria-expanded={open}
-              onClick={() => setOpen(!open)}
+              onClick={() => {
+                store.set(focusedLineAtom, lineInfo.lineIdx)
+                setOpen(!open)
+              }}
             >
               <ChevronDown size={12} />
             </button>

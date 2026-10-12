@@ -12,7 +12,7 @@ import {
   docAtom,
   globalTimerAtom,
   requestFocusLineAtom,
-  timerDialogRequestAtom,
+  timerRowRequestAtom,
   type TimerMode,
 } from './state'
 import {
@@ -186,8 +186,8 @@ export const toggleTimer = async (
   })
 }
 
-/** Ensure the line has a timer datum and request the timer dialog on it. */
-export const openTimerDialog = (
+/** Ensure the line has a timer datum and request the timer row on it. */
+export const openTimerRow = (
   store: EditorStore,
   lineIdx: number,
   mode: TimerMode
@@ -197,7 +197,7 @@ export const openTimerDialog = (
       draft.children[lineIdx].datumTimeSeconds = 0
     }
   })
-  store.set(timerDialogRequestAtom, { lineIdx, mode })
+  store.set(timerRowRequestAtom, { lineIdx, mode })
 }
 
 /**

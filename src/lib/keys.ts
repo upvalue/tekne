@@ -28,7 +28,7 @@ export const keybindings = {
     key: 'mod+o',
     name: 'document-search',
     description: 'Open a document',
-    type: 'kbar' as const,
+    type: 'global' as const,
   },
   searchPanel: {
     key: 'mod+/',
@@ -47,6 +47,18 @@ export const keybindings = {
     name: 'command-palette',
     description: 'Open command palette',
     type: 'global' as const,
+  },
+  toggleStopwatch: {
+    key: 'alt+t',
+    name: 'toggle-stopwatch',
+    description: 'Start or pause a stopwatch on this line',
+    type: 'codemirror' as const,
+  },
+  openTimerRow: {
+    key: 'alt+shift+t',
+    name: 'open-timer-row',
+    description: 'Open this line’s timer controls',
+    type: 'codemirror' as const,
   },
   toggleCollapse: {
     key: 'mod+.',

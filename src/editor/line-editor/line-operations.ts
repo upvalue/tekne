@@ -1,3 +1,11 @@
+import { acceptCompletion } from '@codemirror/autocomplete'
+import {
+  startTimer,
+  pauseTimer,
+  resumeTimer,
+  isTimerPaused,
+} from '../timer/timer-controller'
+import { globalTimerAtom, timerRowRequestAtom } from '../state'
 // line-operations.ts - line operations and key bindings.
 // The document transformations themselves live in line-mutations.ts; this
 // file is the CodeMirror keymap layer that reads editor state, applies a
@@ -84,12 +92,42 @@ export const makeKeymap = (
 
   const keymapExtension = keymap.of([
     {
+      key: codeMirrorKey('openTimerRow'),
+      run: () => {
+        store.set(timerRowRequestAtom, {
+          lineIdx: getLineIdx(),
+          mode: 'stopwatch',
+        })
+        return true
+      },
+    },
+    {
+      key: codeMirrorKey('toggleStopwatch'),
+      run: () => {
+        const timer = store.get(globalTimerAtom)
+        const line = getDoc().children[getLineIdx()]
+        if (!line) return false
+        if (timer.isActive && timer.lineId === line.id)
+          void (isTimerPaused(timer) ? resumeTimer(store) : pauseTimer(store))
+        else
+          void startTimer(store, {
+            line,
+            mode: 'stopwatch',
+            timeMode: 'additive',
+            targetDuration: 1500,
+          })
+        return true
+      },
+    },
+    {
       key: 'Tab',
-      run: () => indentLineOp(store, getLineIdx()),
+      run: (view) =>
+        acceptCompletion(view) || indentLineOp(store, getLineIdx()),
     },
     {
       key: 'Enter',
       run: (view) => {
+        if (acceptCompletion(view)) return true
         const doc = getDoc()
         const lineIdx = getLineIdx()
         const { state } = view

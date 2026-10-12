@@ -5,7 +5,7 @@ import type { ZDoc } from '@/docs/schema'
 import { useAtomValue } from 'jotai'
 import { useEffect, useMemo, useState } from 'react'
 import { orpc } from '@/api/client'
-import { useTagManagerTarget } from '@/hooks/panel-state'
+import { useTagManagerTarget, useActiveToolTab } from '@/hooks/panel-state'
 import { TagCard } from './tags/TagCard'
 import { TagRenameDialog } from './tags/TagRenameDialog'
 import { Input } from '@/components/vendor/Input'
@@ -89,15 +89,13 @@ export const Tools = () => {
   const [renameTarget, setRenameTarget] = useState<string | null>(null)
   const [filter, setFilter] = useState('')
   const [highlightTarget, setHighlightTarget] = useTagManagerTarget()
-  const [activeToolTab, setActiveToolTab] = useState<
-    'tasks' | 'tags' | 'timers'
-  >(() => (highlightTarget ? 'tags' : 'tasks'))
+  const [activeToolTab, setActiveToolTab] = useActiveToolTab()
 
   const [showArchived, setShowArchived] = useState(false)
 
   useEffect(() => {
     if (highlightTarget) setActiveToolTab('tags')
-  }, [highlightTarget])
+  }, [highlightTarget, setActiveToolTab])
 
   const tagsList = useQuery(orpc.tags.list.queryOptions({ input: undefined }))
   const meta = useMemo(() => {

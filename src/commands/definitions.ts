@@ -4,9 +4,16 @@
 import { registerCommands, type Command } from '@/editor/command-registry'
 import { emitCodemirrorEvent } from '@/editor/line-editor/cm-events'
 import { deleteLine } from '@/editor/line-ops'
+import { docAtom, timerRowRequestAtom } from '@/editor/state'
+import { startTimer } from '@/editor/timer/timer-controller'
 import { formatDate, getDocTitle } from '@/lib/utils'
 import { orpcClient } from '@/api/client'
-import { openPanelTab, panelVisibleAtom, uiStore } from '@/hooks/panel-state'
+import {
+  openPanelTab,
+  openToolTab,
+  panelVisibleAtom,
+  uiStore,
+} from '@/hooks/panel-state'
 import { setDisplayModeOverride } from '@/hooks/display-mode'
 import { appPath, stripAppBasePath } from '@/lib/app-path'
 
@@ -47,57 +54,30 @@ const editorCommands: Command[] = [
     },
   },
   {
-    id: 'timer',
-    name: 'Timer',
-    description: 'Timer commands',
-    shortcut: 't',
-    displayShortcut: 'T',
-    keywords: ['timer', 'time', 'track', 'clock'],
+    id: 'stopwatch',
+    name: 'Start stopwatch',
+    description: 'Start timing this line',
     requiresEditor: true,
-    subcommands: [
-      {
-        key: 't',
-        displayKey: 'T',
-        name: 'Toggle timer',
-        description: 'Add or remove a timer on the current line',
-        execute: ({ lineIdx }) => {
-          if (lineIdx === null) return
-          emitCodemirrorEvent('lineTimerToggle', { lineIdx })
-        },
-      },
-      {
-        key: '1',
-        displayKey: '1',
-        name: 'Stopwatch',
-        description: 'Open timer in stopwatch mode (counts up)',
-        execute: ({ lineIdx }) => {
-          if (lineIdx === null) return
-          emitCodemirrorEvent('lineTimerOpen', { lineIdx, mode: 'stopwatch' })
-        },
-      },
-      {
-        key: '2',
-        displayKey: '2',
-        name: 'Countdown',
-        description: 'Open timer in countdown mode',
-        execute: ({ lineIdx }) => {
-          if (lineIdx === null) return
-          emitCodemirrorEvent('lineTimerOpen', { lineIdx, mode: 'countdown' })
-        },
-      },
-      {
-        key: '3',
-        displayKey: '3',
-        name: 'Manual',
-        description: 'Open timer in manual entry mode',
-        execute: ({ lineIdx }) => {
-          if (lineIdx === null) return
-          emitCodemirrorEvent('lineTimerOpen', { lineIdx, mode: 'manual' })
-        },
-      },
-    ],
-    execute: () => {
-      // Parent command doesn't execute directly when subcommands exist
+    execute: ({ store, lineIdx }) => {
+      if (lineIdx === null) return
+      const line = store.get(docAtom).children[lineIdx]
+      if (line)
+        void startTimer(store, {
+          line,
+          mode: 'stopwatch',
+          timeMode: 'additive',
+          targetDuration: 1500,
+        })
+    },
+  },
+  {
+    id: 'timer',
+    name: 'Timer controls',
+    description: 'Countdown, stopwatch or manual time',
+    requiresEditor: true,
+    execute: ({ store, lineIdx }) => {
+      if (lineIdx !== null)
+        store.set(timerRowRequestAtom, { lineIdx, mode: 'stopwatch' })
     },
   },
   {
@@ -349,4 +329,48 @@ const navigationCommands: Command[] = [
   },
 ]
 
-registerCommands([...editorCommands, ...navigationCommands])
+const panelCommands: Command[] = [
+  {
+    id: 'page-panel',
+    name: 'This page',
+    description: 'Outline and tag totals',
+    requiresEditor: false,
+    execute: () => openPanelTab('document'),
+  },
+  {
+    id: 'cleanup',
+    name: 'Bulk cleanup',
+    description: 'Cancel stale tasks',
+    requiresEditor: false,
+    execute: () => openToolTab('tasks'),
+  },
+  {
+    id: 'rename-tags',
+    name: 'Rename tags',
+    description: 'Manage and rename tags',
+    requiresEditor: false,
+    execute: () => openToolTab('tags'),
+  },
+  {
+    id: 'tools',
+    name: 'Tools',
+    description: 'Tasks, tags and timers',
+    requiresEditor: false,
+    execute: () => openPanelTab('tools'),
+  },
+  {
+    id: 'devtools',
+    name: 'Developer tools',
+    description: 'Database and feature flags',
+    requiresEditor: false,
+    execute: () => openPanelTab('devtools'),
+  },
+  {
+    id: 'help',
+    name: 'Help',
+    description: 'Keyboard shortcuts and documentation',
+    requiresEditor: false,
+    execute: () => openPanelTab('help'),
+  },
+]
+registerCommands([...editorCommands, ...navigationCommands, ...panelCommands])

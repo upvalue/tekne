@@ -48,10 +48,10 @@ export const showLineNumbersAtom = atom<boolean>(false)
 export type TimerMode = 'stopwatch' | 'countdown' | 'manual'
 
 /**
- * Request to open the timer dialog for a specific line with a specific mode.
+ * Request to open the timer row for a specific line with a specific mode.
  * TimerBadge watches this and opens when its lineIdx matches.
  */
-export const timerDialogRequestAtom = atom<{
+export const timerRowRequestAtom = atom<{
   lineIdx: number
   mode: TimerMode
 } | null>(null)
@@ -62,6 +62,7 @@ export const timerBusyAtom = atom(false)
 
 export type GlobalTimerState = {
   noteTitle?: string
+  baseTimeSeconds?: number
   isActive: boolean
   lineId: string | null
   lineContent: string | null

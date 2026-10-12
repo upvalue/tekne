@@ -10,7 +10,7 @@
 // CodeMirror view and stays in useCodeMirror.
 import { useStore } from 'jotai'
 import { useCodemirrorEvent } from './line-editor/cm-events'
-import { openTimerDialog, togglePin, toggleTask, toggleTimer } from './line-ops'
+import { openTimerRow, togglePin, toggleTask, toggleTimer } from './line-ops'
 
 export const useDocumentLineEvents = () => {
   const store = useStore()
@@ -20,7 +20,7 @@ export const useDocumentLineEvents = () => {
   })
 
   useCodemirrorEvent('lineTimerOpen', (event) => {
-    openTimerDialog(store, event.lineIdx, event.mode)
+    openTimerRow(store, event.lineIdx, event.mode)
   })
 
   useCodemirrorEvent('linePinToggle', (event) => {

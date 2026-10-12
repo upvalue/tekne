@@ -3,7 +3,6 @@ import { Outlet, createRootRouteWithContext } from '@tanstack/react-router'
 import { useGlobalKeybinding } from '@/hooks/useGlobalKeybinding'
 import { orpc } from '@/api/client'
 import { Toaster } from '@/components/vendor/Sonner'
-import { DocumentSearch } from '@/controls/DocumentSearch'
 import { TemplateDialog } from '@/controls/TemplateDialog'
 import { openPanelTab, useSetPanelVisible } from '@/hooks/panel-state'
 // Registers all commands with the editor's command registry.
@@ -21,12 +20,12 @@ const RootComponent = () => {
   useGlobalKeybinding('togglePanel', () => setPanelVisible((v) => !v))
 
   return (
-    <DocumentSearch>
+    <>
       <TimerObserver />
       <Outlet />
       <Toaster />
       <TemplateDialog />
-    </DocumentSearch>
+    </>
   )
 }
 
