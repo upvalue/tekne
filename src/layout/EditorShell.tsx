@@ -3,7 +3,6 @@ import type { createStore } from 'jotai'
 import { CommandPaletteProvider } from '@/commands/CommandPaletteProvider'
 import { EditorLayout } from './EditorLayout'
 import { TitleBar } from '@/editor/TitleBar'
-import { StatusBar } from '@/editor/StatusBar'
 import { Panel } from '@/panel/Panel'
 import { TouchBar } from '@/editor/touch/TouchBar'
 import { useSyncDisplayMode } from '@/hooks/display-mode'
@@ -37,8 +36,11 @@ export const EditorShell = ({
         <EditorLayout
           editor={
             <>
-              <TitleBar title={title} allowTitleEdit={allowTitleEdit} />
-              <StatusBar isLoading={isLoading} />
+              <TitleBar
+                title={title}
+                allowTitleEdit={allowTitleEdit}
+                isLoading={isLoading}
+              />
               {children}
               <TouchBar />
             </>

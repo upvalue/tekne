@@ -59,7 +59,7 @@ function RouteComponent() {
       loadDocQuery.error.code === 'NOT_FOUND'
     ) {
       // Special case tutorial - auto-create it
-      if (title === 'Tutorial') {
+      if (title === 'Tutorial' || /^\d{4}-\d{2}-\d{2}$/.test(title)) {
         // Skip if mutation is already in flight
         if (createDocMutation.isPending) {
           return

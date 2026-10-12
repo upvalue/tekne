@@ -41,7 +41,7 @@ import {
 } from '@/hooks/panel-state'
 import { useDocumentLineEvents } from './useDocumentLineEvents'
 import { generateGutterTimestamps, type GutterTimestamp } from '@/docs/gutters'
-import type { ZLine } from '@/docs/schema'
+import { lineMake, type ZLine } from '@/docs/schema'
 import { generateCollapse } from '@/docs/collapse'
 import { ELine } from './ELine'
 import {
@@ -182,6 +182,18 @@ export const TEditor = () => {
   useEffect(() => {
     dragSelectedLineIdsRef.current = dragSelectedLineIds
   }, [dragSelectedLineIds])
+
+  useEffect(() => {
+    const id = window.location.hash.replace('#line-', '')
+    if (!id) return
+    const index = doc.children.findIndex((line) => line.id === id)
+    if (index < 0) return
+    setDoc((draft) => {
+      for (let i = 0; i < index; i++) delete draft.children[i].collapsed
+    })
+    setRequestFocusLine({ lineIdx: index, pos: 0 })
+    history.replaceState(null, '', window.location.pathname)
+  }, [doc.children, setDoc, setRequestFocusLine])
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -426,7 +438,7 @@ export const TEditor = () => {
       >
         <div
           ref={containerRef}
-          className={`TEditor-scroll h-[calc(100dvh-6.5rem)] overflow-y-auto px-3 md:px-0 ${
+          className={`TEditor-scroll h-[calc(100dvh-144px)] max-md:h-[calc(100dvh-116px)] overflow-y-auto px-3 md:px-0 ${
             touchMode ? 'TEditor-scroll-touch' : 'pb-4'
           } ${
             dragSelectedLineIds.length > 0 ? 'TEditor-has-drag-selection' : ''
@@ -443,6 +455,19 @@ export const TEditor = () => {
               lineIdx={i}
               timestamp={gutterTimestamps[i]}
               collapseState={collapsedStates[i]}
+              hiddenCount={
+                l.collapsed
+                  ? (() => {
+                      let end = i + 1
+                      while (
+                        end < doc.children.length &&
+                        doc.children[end].indent > l.indent
+                      )
+                        end++
+                      return end - i - 1
+                    })()
+                  : 0
+              }
               isDragSelected={dragSelectedLineIds.includes(l.id)}
               isActiveDragLine={activeDragLineId === l.id}
               dropEdge={dropIntent?.targetId === l.id ? dropIntent.edge : null}
@@ -455,6 +480,21 @@ export const TEditor = () => {
               onTouchSelect={handleTouchSelect}
             />
           ))}
+          {(doc.children.at(-1)?.mdContent ||
+            doc.children.at(-1)?.collapsed) && (
+            <input
+              aria-label="New line"
+              placeholder="New line. Try /task or /countdown 25m"
+              className="ml-24 max-md:ml-0 w-[calc(100%-7rem)] bg-transparent py-2 pl-6 text-[15px] text-muted outline-none"
+              onFocus={() => {
+                const lineIdx = doc.children.length
+                setDoc((draft) => {
+                  draft.children.push(lineMake(0, ''))
+                })
+                setRequestFocusLine({ lineIdx, pos: 0 })
+              }}
+            />
+          )}
           <EditorBoundaryDropZone
             id={DOC_END_DROP_ID}
             isLineDragActive={isLineDragActive}

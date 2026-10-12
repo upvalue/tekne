@@ -3,7 +3,6 @@ import {
   usePanelVisible,
   usePanelWidth,
 } from '@/hooks/panel-state'
-import { Menu } from 'lucide-react'
 import { useCallback } from 'react'
 
 interface EditorLayoutProps {
@@ -12,7 +11,7 @@ interface EditorLayoutProps {
 }
 
 export function EditorLayout({ editor, sidepanel }: EditorLayoutProps) {
-  const [panelVisible, setPanelVisible] = usePanelVisible()
+  const [panelVisible] = usePanelVisible()
   const [panelWidth, setPanelWidth] = usePanelWidth()
 
   const startResize = useCallback(
@@ -49,17 +48,6 @@ export function EditorLayout({ editor, sidepanel }: EditorLayoutProps) {
         >
           {editor}
         </div>
-
-        {/* Reopen button — when the panel is open, its rail carries the close button */}
-        {!panelVisible && (
-          <button
-            onClick={() => setPanelVisible(true)}
-            className="fixed top-2 right-2 z-[60] p-1.5 rounded bg-raised hover:bg-raised text-text-2 hover:text-text transition-colors"
-            aria-label="Show panel"
-          >
-            <Menu className="w-5 h-5" />
-          </button>
-        )}
 
         {/* Desktop panel (side-by-side, drag left edge to resize) */}
         {panelVisible && (

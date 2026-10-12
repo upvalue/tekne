@@ -270,3 +270,79 @@
 .cm-editor.cm-focused .cm-inline-code {
   @apply bg-accent-tint;
 }
+
+.TitleBar {
+  height: 144px;
+  padding: 60px 24px 20px 104px;
+}
+.ELine,
+.ReadOnlyLine {
+  font-size: 15px;
+  min-height: 30px;
+  --eline-first-line-height: 22px;
+}
+.ELine-gutter {
+  width: 96px;
+  font-size: 10px;
+  grid-template-columns: minmax(0, 1fr) 16px;
+  column-gap: 0;
+  padding-right: 4px;
+}
+.ELine-gutter-timestamp-base {
+  overflow: hidden;
+  text-overflow: clip;
+}
+.ELine-gutter-timestamp-full {
+  background: var(--color-page);
+}
+.ELine-drag-handle {
+  width: 16px;
+}
+.ELine-header-1,
+.ELine-header-2,
+.ELine-header-3 {
+  font-size: 18px;
+  margin: 0;
+}
+.ELine:has(.ELine-header-1),
+.ELine:has(.ELine-header-2),
+.ELine:has(.ELine-header-3) {
+  margin-top: 18px;
+}
+.ELine-header-1 .cm-line,
+.ELine-header-2 .cm-line,
+.ELine-header-3 .cm-line {
+  font-weight: 650;
+}
+.cm-scroller {
+  line-height: 22px !important;
+}
+.cm-tag {
+  color: var(--color-accent);
+}
+.cm-link,
+.cm-internal-link {
+  color: var(--color-text);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.ELine-focused {
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 6px;
+}
+.ELine-cancelled .cm-line {
+  text-decoration: line-through;
+  color: var(--color-muted);
+}
+.ELine-complete .cm-line {
+  color: var(--color-muted);
+}
+@media (max-width: 767px) {
+  .TitleBar {
+    height: 116px;
+    padding: 32px 16px 16px;
+  }
+  .TitleBar [aria-label='Document title'] {
+    font-size: 22px;
+  }
+}

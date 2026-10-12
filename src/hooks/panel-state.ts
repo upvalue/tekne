@@ -56,7 +56,9 @@ export const PANEL_MIN_WIDTH = 320
 
 /** Desktop panel width in px, persisted across sessions. Defaults to the pre-resize 40% split. */
 const getDefaultPanelWidth = () =>
-  typeof window !== 'undefined' ? Math.round(window.innerWidth * 0.4) : 480
+  typeof window !== 'undefined'
+    ? Math.max(320, Math.round(window.innerWidth * 0.28))
+    : 360
 
 export const panelWidthAtom = atomWithStorage<number>(
   'tekne.panelWidth',

@@ -151,7 +151,7 @@ export const useCodeMirror = (lineInfo: LineWithIdx) => {
         const line = store.get(docAtom).children[idx]
         if (!line) return ''
         if (line.collapsed) return ' + collapsed lines'
-        return 'The world is your canvas'
+        return 'New line. Try /task or /countdown 25m'
       },
       (view) => {
         // If line is collapsed, we show a placeholder indicating collapsed line details
@@ -165,14 +165,7 @@ export const useCodeMirror = (lineInfo: LineWithIdx) => {
         // There's any content on the line
         if (view.state.doc.length > 0) return false
 
-        // This isn't the first line of the doc
-        if (idx !== 0) return false
-
-        // There's more than one line in the doc
-        if (doc.children.length > 1) return false
-
-        // Otherwise, do show the placeholder
-        return true
+        return idx === doc.children.length - 1
       }
     )
 

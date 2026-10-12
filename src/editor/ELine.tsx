@@ -5,7 +5,7 @@ import {
   commandPaletteOpenAtom,
   showLineNumbersAtom,
 } from './state'
-import { cycleTaskStatus } from './line-ops'
+import { cycleTaskStatus, toggleCollapse } from './line-ops'
 import { Checkbox } from '@/components/vendor/Checkbox'
 import { GripVertical } from 'lucide-react'
 import { useCodeMirror, type LineWithIdx } from './line-editor'
@@ -27,6 +27,7 @@ import { CSS } from '@dnd-kit/utilities'
 import type { DropEdge } from './line-reorder'
 
 type ELineProps = LineWithIdx & {
+  hiddenCount?: number
   timestamp: GutterTimestamp | null
   collapseState: CollapseState
   isDragSelected: boolean
@@ -149,6 +150,8 @@ const ELineImpl = (lineInfo: ELineProps) => {
       style={style}
       className={cn(
         'ELine relative w-full py-1 flex items-start',
+        line.datumTaskStatus === 'incomplete' && 'ELine-cancelled',
+        line.datumTaskStatus === 'complete' && 'ELine-complete',
         collapseState === 'collapsed' && 'hidden',
         isFocused && 'ELine-focused',
         lineInfo.isTouchSelected && 'ELine-touch-selected',
@@ -190,24 +193,29 @@ const ELineImpl = (lineInfo: ELineProps) => {
         }}
       />
       {!lineIsHeader && (
-        <div className="ELine-leading">
-          <LineGlyph
-            pinned={!!line.datumPinnedAt}
-            collapseStart={collapseState === 'collapse-start'}
-          />
+        <div className="ELine-leading w-4 justify-center">
+          {line.datumTaskStatus ? (
+            <Checkbox
+              tabIndex={-1}
+              aria-label={`Task status for line ${lineInfo.lineIdx + 1}`}
+              {...checkboxStateProps(line.datumTaskStatus)}
+              onCheckedChange={() => cycleTaskStatus(store, lineInfo.lineIdx)}
+            />
+          ) : (
+            <button
+              aria-label={`Toggle collapse for line ${lineInfo.lineIdx + 1}`}
+              className="flex items-center justify-center w-4 h-[22px]"
+              tabIndex={-1}
+              onClick={() => toggleCollapse(store, lineInfo.lineIdx)}
+            >
+              <LineGlyph
+                pinned={!!line.datumPinnedAt}
+                collapseStart={collapseState === 'collapse-start'}
+              />
+            </button>
+          )}
         </div>
       )}
-      {line.datumTaskStatus && (
-        <div className="ELine-leading">
-          <Checkbox
-            className="ml-2"
-            tabIndex={-1}
-            {...checkboxStateProps(line.datumTaskStatus)}
-            onCheckedChange={() => cycleTaskStatus(store, lineInfo.lineIdx)}
-          />
-        </div>
-      )}
-
       {(line.datumTimeSeconds !== undefined ||
         (timer.isActive && timer.lineId === line.id)) && (
         <div className="ELine-leading">
@@ -217,7 +225,7 @@ const ELineImpl = (lineInfo: ELineProps) => {
 
       <div
         className={cn(
-          'cm-editor-container w-full ml-2 pr-2 md:pr-[138px]',
+          'cm-editor-container min-w-0 flex-1 ml-2 pr-2',
           lineIsHeader && `ELine-header-${headerLevel}`
         )}
         ref={cmRef}
@@ -225,6 +233,15 @@ const ELineImpl = (lineInfo: ELineProps) => {
         onPointerDown={lineInfo.onEditorInteract}
         onFocus={lineInfo.onEditorInteract}
       />
+
+      {(lineInfo.hiddenCount ?? 0) > 0 && (
+        <button
+          className="text-muted text-xs rounded-full bg-white/5 px-1.5 mx-1 mt-0.5"
+          onClick={() => toggleCollapse(store, lineInfo.lineIdx)}
+        >
+          +{lineInfo.hiddenCount}
+        </button>
+      )}
 
       {lineInfo.touchMode && !lineInfo.isTouchEditing && (
         <button

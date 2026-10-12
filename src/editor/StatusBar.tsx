@@ -1,34 +1,16 @@
-import { useAtomValue, useSetAtom, useAtom, useStore } from 'jotai'
-import { useEffect, useRef, useMemo, useState } from 'react'
-import { docAtom, focusedLineAtom } from './state'
+import { useAtomValue, useSetAtom, useAtom } from 'jotai'
+import { useEffect, useRef, useState } from 'react'
 import {
+  docAtom,
   errorMessageAtom,
-  globalTimerAtom,
   goToLineOpenAtom,
   showLineNumbersAtom,
   requestFocusLineAtom,
-  findLineById,
 } from './state'
-import {
-  X,
-  TriangleAlert,
-  Square,
-  List,
-  Clock,
-  Pause,
-  Play,
-} from 'lucide-react'
-import { TimerInfo } from './TimerInfo'
-import { formatTimeDisplay } from '@/lib/time'
-import {
-  isTimerPaused,
-  pauseTimer,
-  resumeTimer,
-  stopAndSaveTimer,
-} from './timer/timer-controller'
+import { List } from 'lucide-react'
+import { renderTime } from '@/lib/time'
 import { useGlobalKeybinding } from '@/hooks/useGlobalKeybinding'
-
-const STATUS_BAR_TRUNCATE_LENGTH = 50
+import { toast } from 'sonner'
 
 const LoadingDots = () => {
   const [dots, setDots] = useState(0)
@@ -100,135 +82,68 @@ const GoToLineInput = ({
   )
 }
 
-export const StatusBar = ({ isLoading }: { isLoading: boolean }) => {
+export const StatusBar = ({
+  isLoading,
+  title,
+}: {
+  isLoading: boolean
+  title: string
+}) => {
   const doc = useAtomValue(docAtom)
   const errorMessage = useAtomValue(errorMessageAtom)
   const setErrorMessage = useSetAtom(errorMessageAtom)
-  const globalTimer = useAtomValue(globalTimerAtom)
-  const store = useStore()
-  const focusedLine = useAtomValue(focusedLineAtom)
   const [goToLineOpen, setGoToLineOpen] = useAtom(goToLineOpenAtom)
-
   useGlobalKeybinding('goToLine', () => setGoToLineOpen((open) => !open))
-
-  const totalDocTime = useMemo(() => {
-    return doc.children.reduce(
-      (acc, line) => acc + (line.datumTimeSeconds || 0),
-      0
-    )
-  }, [doc.children])
-
-  const currentLineBaseTime = useMemo(() => {
-    if (globalTimer.isActive && globalTimer.lineId !== null) {
-      const found = findLineById(doc, globalTimer.lineId)
-      return found?.line.datumTimeSeconds || 0
-    }
-    return 0
-  }, [globalTimer.isActive, globalTimer.lineId, doc])
-
   useEffect(() => {
-    if (errorMessage) {
-      const timer = setTimeout(() => {
-        setErrorMessage(null)
-      }, 5000)
-
-      return () => clearTimeout(timer)
-    }
+    if (!errorMessage) return
+    toast.error(errorMessage)
+    setErrorMessage(null)
   }, [errorMessage, setErrorMessage])
-
+  const lines = doc.children.filter(
+    (line) =>
+      line.mdContent.trim() || line.datumTaskStatus || line.datumTimeSeconds
+  )
+  const totalTime = lines.reduce(
+    (sum, line) => sum + (line.datumTimeSeconds ?? 0),
+    0
+  )
+  const openTasks = lines.filter(
+    (line) => line.datumTaskStatus === 'unset'
+  ).length
+  const weekday = /^\d{4}-\d{2}-\d{2}$/.test(title)
+    ? new Date(`${title}T12:00:00`).toLocaleDateString(undefined, {
+        weekday: 'long',
+      })
+    : null
   return (
-    <div className="StatusBar font-mono w-full h-10 bg-raised px-4 md:px-[138px] flex items-center justify-between">
-      <div className="flex items-center gap-4">
-        {isLoading && <LoadingDots />}
-        {errorMessage && (
-          <div className="flex items-center gap-2">
-            <TriangleAlert className="w-4 h-4 text-accent" />
-            <div className="text-sm text-accent">{errorMessage}</div>
-            <button
-              onClick={() => setErrorMessage(null)}
-              className="cursor-pointer"
-            >
-              <X className="w-4 h-4 text-text-2" />
-            </button>
-          </div>
-        )}
-        {globalTimer.isActive && (
-          <div className="flex items-center gap-2 text-sm">
-            {isTimerPaused(globalTimer) ? (
-              <Play
-                className="w-4 h-4 text-accent cursor-pointer hover:text-accent"
-                onClick={() => resumeTimer(store)}
-              />
-            ) : (
-              <Pause
-                className="w-4 h-4 text-accent cursor-pointer hover:text-accent"
-                onClick={() => pauseTimer(store)}
-              />
-            )}
-            <Square
-              className="w-4 h-4 text-accent cursor-pointer hover:text-accent"
-              onClick={() => {
-                stopAndSaveTimer(store)
-              }}
-            />
-            <div
-              className={`flex items-center gap-1 ${
-                isTimerPaused(globalTimer) ? 'text-accent' : 'text-accent'
-              }`}
-            >
-              <div
-                className={`w-2 h-2 rounded-full ${
-                  isTimerPaused(globalTimer)
-                    ? 'bg-accent'
-                    : 'bg-accent animate-pulse'
-                }`}
-              />
-              <TimerInfo
-                baseTime={currentLineBaseTime}
-                globalTimer={globalTimer}
-                isThisTimer={true}
-                className="font-mono"
-              />
-            </div>
-            <div className="text-text-2">
-              {globalTimer.noteTitle && `${globalTimer.noteTitle}: `}
-              {globalTimer.lineContent
-                ? globalTimer.lineContent.substring(
-                    0,
-                    STATUS_BAR_TRUNCATE_LENGTH
-                  ) + '...'
-                : globalTimer.lineContent}
-            </div>
-          </div>
-        )}
-      </div>
-      <div className="flex items-center gap-4">
-        {!isLoading &&
-          doc.children.length > 1 &&
-          (goToLineOpen ? (
-            <GoToLineInput
-              totalLines={doc.children.length}
-              onClose={() => setGoToLineOpen(false)}
-            />
-          ) : (
-            <div className="text-sm text-text-2 flex items-center">
-              {focusedLine !== null ? (
-                `${focusedLine + 1}/`
-              ) : (
-                <span>&nbsp;&nbsp;</span>
-              )}
-              {doc.children.length}
-              &nbsp;
-              <List className="w-4 h-4" />
-            </div>
-          ))}
-        {totalDocTime > 0 && (
-          <div className="text-sm text-text-2 flex items-center gap-2">
-            {formatTimeDisplay(totalDocTime)}
-            <Clock className="w-4 h-4" />
-          </div>
-        )}
-      </div>
+    <div className="DocumentSummary flex items-center gap-1.5 text-xs text-muted mt-2">
+      {weekday && (
+        <>
+          <span>{weekday}</span>
+          <span>·</span>
+        </>
+      )}
+      {isLoading ? (
+        <LoadingDots />
+      ) : (
+        <>
+          <span>{lines.length} lines</span>
+          <span>·</span>
+          <span>{openTasks} open</span>
+          {totalTime > 0 && (
+            <>
+              <span>·</span>
+              <span>{renderTime(totalTime)} logged</span>
+            </>
+          )}
+        </>
+      )}
+      {goToLineOpen && (
+        <GoToLineInput
+          totalLines={doc.children.length}
+          onClose={() => setGoToLineOpen(false)}
+        />
+      )}
     </div>
   )
 }

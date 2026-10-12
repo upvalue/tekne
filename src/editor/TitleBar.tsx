@@ -5,7 +5,12 @@ import { useAtom } from 'jotai'
 import { orpc } from '@/api/client'
 import { useNavigate } from '@tanstack/react-router'
 import { errorMessageAtom } from './state'
-import { DocumentDetailsButton } from './DocumentDetails'
+import { StatusBar } from './StatusBar'
+import { usePanelVisible } from '@/hooks/panel-state'
+import { commandPaletteOpenAtom } from './state'
+import { ChevronLeft, ChevronRight, PanelRight } from 'lucide-react'
+import { formatDate } from '@/lib/utils'
+import { RunningTimerPill } from './timer/RunningTimerPill'
 import {
   Dialog,
   DialogDescription,
@@ -16,7 +21,6 @@ import {
 import { Button } from '@/components/vendor/Button'
 import { EditorDialogContent } from '@/components/EditorDialogContent'
 import { toast } from 'sonner'
-import { GUTTER_WIDTH_PIXELS } from './constants'
 
 /*
  * Title bar; allows user to change the title of a document
@@ -24,9 +28,11 @@ import { GUTTER_WIDTH_PIXELS } from './constants'
 export const TitleBar = ({
   title,
   allowTitleEdit = false,
+  isLoading = false,
 }: {
   title: string
   allowTitleEdit?: boolean
+  isLoading?: boolean
 }) => {
   const [proposedTitle, setProposedTitle] = useState(title)
   const [, setErrorMessage] = useAtom(errorMessageAtom)
@@ -36,6 +42,14 @@ export const TitleBar = ({
   }>({ show: false, linksToUpdate: [] })
   const editableRef = useRef<HTMLDivElement>(null)
   const navigate = useNavigate()
+  const [panelVisible, setPanelVisible] = usePanelVisible()
+  const [, setPaletteOpen] = useAtom(commandPaletteOpenAtom)
+  const isDate = /^\d{4}-\d{2}-\d{2}$/.test(title)
+  const goDay = (offset: number) => {
+    const date = new Date(`${title}T12:00:00`)
+    date.setDate(date.getDate() + offset)
+    void navigate({ to: '/n/$title', params: { title: formatDate(date) } })
+  }
 
   const setDisplayedTitle = (title: string) => {
     setProposedTitle(title)
@@ -119,43 +133,62 @@ export const TitleBar = ({
     }
   }
 
-  const isDev = import.meta.env.DEV
-  const isDemo = import.meta.env.TEKNE_DEMO
-  const isDevServer =
-    import.meta.env.TEKNE_ORPC_URL &&
-    import.meta.env.TEKNE_ORPC_URL.includes('localhost')
-
   return (
-    <div className="flex py-2 px-4 items-center TitleBar">
-      <div
-        style={{ flexBasis: `${GUTTER_WIDTH_PIXELS}px` }}
-        className="hidden lg:flex justify-end pr-4"
-      >
-        <div className="text text-accent-fill">{isDev && '[dev]'}</div>
-        <div className="text text-accent-fill">{isDemo && '[demo]'}</div>
-        <div className="text text-accent-fill">{isDevServer && '[server]'}</div>
-      </div>
-
-      <div className="w-full">
-        <div className="flex justify-between w-full">
-          <div className="flex flex-col w-full">
-            <div
-              ref={editableRef}
-              contentEditable={allowTitleEdit}
-              suppressContentEditableWarning={true}
-              className="text-2xl text-muted outline-none w-full"
-              onInput={(e) =>
-                setProposedTitle(e.currentTarget.textContent || '')
+    <header className="TitleBar">
+      <div className="flex items-center gap-3 min-w-0">
+        <div
+          ref={editableRef}
+          contentEditable={allowTitleEdit && !isDate}
+          suppressContentEditableWarning
+          aria-label="Document title"
+          className="text-[28px] font-semibold tracking-tight outline-none min-w-0 truncate"
+          onInput={(e) => setProposedTitle(e.currentTarget.textContent || '')}
+          onBlur={handleSubmit}
+          onKeyDown={handleKeyDown}
+        />
+        {isDate && (
+          <nav
+            aria-label="Date navigation"
+            className="flex items-center gap-1 text-muted text-xs"
+          >
+            <button aria-label="Previous day" onClick={() => goDay(-1)}>
+              <ChevronLeft size={18} />
+            </button>
+            <button aria-label="Next day" onClick={() => goDay(1)}>
+              <ChevronRight size={18} />
+            </button>
+            <button
+              className="px-1 hover:text-text"
+              onClick={() =>
+                navigate({
+                  to: '/n/$title',
+                  params: { title: formatDate(new Date()) },
+                })
               }
-              onBlur={handleSubmit}
-              onKeyDown={handleKeyDown}
-            />
-          </div>
-          <div className="flex items-center">
-            <DocumentDetailsButton title={title} />
-          </div>
+            >
+              Today
+            </button>
+          </nav>
+        )}
+        <div className="ml-auto flex items-center gap-3 text-muted shrink-0">
+          <RunningTimerPill />
+          <button
+            aria-label="Open command palette"
+            onClick={() => setPaletteOpen(true)}
+            className="text-xs hover:text-text"
+          >
+            ⌘K
+          </button>
+          <button
+            aria-label={panelVisible ? 'Hide panel' : 'Show panel'}
+            onClick={() => setPanelVisible(!panelVisible)}
+            className="hover:text-text"
+          >
+            <PanelRight size={16} />
+          </button>
         </div>
       </div>
+      <StatusBar title={title} isLoading={isLoading} />
 
       <Dialog
         open={showConfirmDialog.show}
@@ -212,6 +245,6 @@ export const TitleBar = ({
           </DialogFooter>
         </EditorDialogContent>
       </Dialog>
-    </div>
+    </header>
   )
 }
