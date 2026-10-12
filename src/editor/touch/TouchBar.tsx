@@ -155,7 +155,7 @@ export const TouchButton = ({
     aria-label={label}
     disabled={disabled}
     onClick={onPress}
-    className="flex items-center justify-center min-w-10 min-h-11 rounded-lg text-zinc-300 active:bg-zinc-700 disabled:text-zinc-700"
+    className="flex items-center justify-center min-w-10 min-h-11 rounded-lg text-text-2 active:bg-raised disabled:text-raised"
   >
     {children}
   </button>
@@ -176,7 +176,7 @@ const SheetAction = ({
     type="button"
     disabled={disabled}
     onClick={onPress}
-    className="flex items-center gap-3 w-full min-h-11 px-3 rounded-lg text-left text-sm text-zinc-200 active:bg-zinc-700 disabled:text-zinc-600"
+    className="flex items-center gap-3 w-full min-h-11 px-3 rounded-lg text-left text-sm text-text active:bg-raised disabled:text-muted"
   >
     {children}
     {label}
@@ -205,7 +205,7 @@ export const TouchBar = () => {
         type="button"
         aria-label="Switch to touch mode"
         onClick={() => setDisplayModeOverride('touch')}
-        className="fixed bottom-3 right-3 z-40 flex items-center justify-center w-11 h-11 rounded-full bg-zinc-800 text-zinc-300 shadow-lg"
+        className="fixed bottom-3 right-3 z-40 flex items-center justify-center w-11 h-11 rounded-full bg-raised text-text-2 shadow-lg"
       >
         <Pointer width={18} height={18} />
       </button>
@@ -283,7 +283,7 @@ export const TouchBar = () => {
   if (editingId !== null) {
     return (
       <div
-        className="TouchBar fixed left-0 right-0 z-40 flex items-center gap-0.5 px-1 bg-zinc-800/95 backdrop-blur border-t border-zinc-700"
+        className="TouchBar fixed left-0 right-0 z-40 flex items-center gap-0.5 px-1 bg-raised/95 backdrop-blur border-t border-raised"
         style={{ bottom: viewport.keyboardInset }}
       >
         <TouchButton label="Undo" onPress={() => undo(store)}>
@@ -303,7 +303,7 @@ export const TouchBar = () => {
   return (
     <>
       {sheetOpen && line !== null && lineIdx !== null && (
-        <div className="TouchSheet fixed bottom-13 left-0 right-0 z-40 mx-2 mb-2 p-2 rounded-xl bg-zinc-800 border border-zinc-700 shadow-xl space-y-1">
+        <div className="TouchSheet fixed bottom-13 left-0 right-0 z-40 mx-2 mb-2 p-2 rounded-xl bg-raised border border-raised shadow-xl space-y-1">
           <SheetAction
             label="Insert line above"
             onPress={() => {
@@ -423,7 +423,7 @@ export const TouchBar = () => {
           <SheetAction label="Delete line" onPress={handleDelete}>
             <Trash2 width={18} height={18} />
           </SheetAction>
-          <div className="flex items-center gap-1 border-t border-zinc-700 pt-1">
+          <div className="flex items-center gap-1 border-t border-raised pt-1">
             <TouchButton label="Undo" onPress={() => undo(store)}>
               <Undo2 width={18} height={18} />
             </TouchButton>
@@ -441,7 +441,7 @@ export const TouchBar = () => {
         </div>
       )}
 
-      <div className="TouchBar fixed bottom-0 left-0 right-0 z-40 flex items-center justify-between gap-0.5 px-1 bg-zinc-800/95 backdrop-blur border-t border-zinc-700 pb-[env(safe-area-inset-bottom)]">
+      <div className="TouchBar fixed bottom-0 left-0 right-0 z-40 flex items-center justify-between gap-0.5 px-1 bg-raised/95 backdrop-blur border-t border-raised pb-[env(safe-area-inset-bottom)]">
         <TouchButton label="Previous line" onPress={() => step(-1)}>
           <ChevronUp width={20} height={20} />
         </TouchButton>

@@ -33,21 +33,21 @@ export const CommandItem: React.FC<{
   onMouseEnter,
 }) => (
   <div
-    className={cn('p-2 cursor-pointer', isActive && 'bg-zinc-800')}
+    className={cn('p-2 cursor-pointer', isActive && 'bg-raised')}
     onClick={onClick}
     onMouseEnter={onMouseEnter}
   >
     <div className="p-2 rounded-md flex items-center justify-between">
       <div>
         <div className="font-medium">{name}</div>
-        <div className="text-sm text-gray-500">{description}</div>
+        <div className="text-sm text-muted">{description}</div>
       </div>
       {showShortcut && shortcut && (
         <div className="flex items-center gap-1">
-          <div className="text-xs text-gray-400 font-mono bg-zinc-800 px-2 py-1 rounded border border-gray-700">
+          <div className="text-xs text-text-2 font-mono bg-raised px-2 py-1 rounded border border-raised">
             {shortcut}
           </div>
-          {hasSubcommands && <span className="text-xs text-gray-500">...</span>}
+          {hasSubcommands && <span className="text-xs text-muted">...</span>}
         </div>
       )}
     </div>
@@ -308,7 +308,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
         style={{ backdropFilter: 'blur(3px)' }}
       />
       <div
-        className="CommandPalette-container w-full max-w-xl relative z-10 p-2 rounded-lg shadow-xl text-white"
+        className="CommandPalette-container w-full max-w-xl relative z-10 p-2 rounded-lg shadow-xl text-text"
         style={{
           background:
             'radial-gradient(100% 100% at 50% 0, #0c0d0f 0, #07080a 150%)',
@@ -318,15 +318,13 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
       >
         {/* Subcommand mode header */}
         {mode.kind === 'sub' && (
-          <div className="px-4 py-3 border-b border-gray-700 flex items-center gap-2">
-            <div className="text-xs text-gray-400 font-mono bg-zinc-800 px-2 py-1 rounded border border-gray-700">
+          <div className="px-4 py-3 border-b border-raised flex items-center gap-2">
+            <div className="text-xs text-text-2 font-mono bg-raised px-2 py-1 rounded border border-raised">
               {mode.command.displayShortcut || mode.command.shortcut}
             </div>
-            <span className="text-gray-400">+</span>
-            <span className="text-gray-400 text-sm">...</span>
-            <span className="ml-auto text-xs text-gray-500">
-              ESC to go back
-            </span>
+            <span className="text-text-2">+</span>
+            <span className="text-text-2 text-sm">...</span>
+            <span className="ml-auto text-xs text-muted">ESC to go back</span>
           </div>
         )}
         {mode.kind === 'search' && (

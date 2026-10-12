@@ -243,11 +243,11 @@ export const PgliteDevtools = () => {
 
   return (
     <div>
-      <div className="mb-4 p-4 bg-zinc-50 dark:bg-zinc-900 rounded-lg  ">
+      <div className="mb-4 p-4 bg-text dark:bg-page rounded-lg  ">
         <div className="flex items-center justify-between">
           <div>
             <h3 className="text-sm font-medium mb-1">Current Database</h3>
-            <code className="text-xs text-zinc-600 dark:text-zinc-400">
+            <code className="text-xs text-muted dark:text-text-2">
               {currentDbPath}
             </code>
           </div>
@@ -264,7 +264,7 @@ export const PgliteDevtools = () => {
 
               <div className="space-y-6">
                 {errorMessage && (
-                  <div className="p-3 bg-red-900/20 border border-red-800 rounded-lg text-sm text-red-300">
+                  <div className="p-3 bg-accent-tint/20 border border-accent-tint rounded-lg text-sm text-accent">
                     {errorMessage}
                   </div>
                 )}
@@ -282,10 +282,10 @@ export const PgliteDevtools = () => {
                           className="flex items-center justify-between p-3 border rounded-lg"
                         >
                           <div className="flex-1">
-                            <div className="text-sm font-medium text-white">
+                            <div className="text-sm font-medium text-text">
                               {db.name}
                             </div>
-                            <div className="text-xs text-zinc-500">
+                            <div className="text-xs text-muted">
                               Version {db.version}
                             </div>
                           </div>
@@ -311,7 +311,7 @@ export const PgliteDevtools = () => {
                       ))}
                     </div>
                   ) : (
-                    <p className="text-sm text-zinc-500 py-4">
+                    <p className="text-sm text-muted py-4">
                       No databases found
                     </p>
                   )}
@@ -344,7 +344,7 @@ export const PgliteDevtools = () => {
                   <div>
                     <h4 className="text-sm font-medium mb-3">Copy Database</h4>
                     <div className="space-y-2">
-                      <div className="text-xs text-zinc-600 dark:text-zinc-400">
+                      <div className="text-xs text-muted dark:text-text-2">
                         Source: {copySourceName}
                       </div>
                       <div className="flex gap-2">

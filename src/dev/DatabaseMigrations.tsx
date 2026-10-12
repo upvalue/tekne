@@ -16,9 +16,7 @@ const Stat = ({
   color?: string
 }) => (
   <div>
-    <span className={color ?? 'text-gray-600 dark:text-gray-400'}>
-      {label}:
-    </span>
+    <span className={color ?? 'text-muted dark:text-text-2'}>{label}:</span>
     <br />
     <span className={`font-mono text-lg ${color ?? ''}`}>{value}</span>
   </div>
@@ -87,7 +85,7 @@ export const DatabaseMigrations = ({ isActive }: { isActive: boolean }) => {
 
   if (!isActive) {
     return (
-      <div className="p-4 text-gray-500">
+      <div className="p-4 text-muted">
         Migration validation will load when tab is active
       </div>
     )
@@ -112,28 +110,28 @@ export const DatabaseMigrations = ({ isActive }: { isActive: boolean }) => {
       </div>
 
       {error && (
-        <div className="p-4 bg-red-50 dark:bg-red-900/20 rounded-lg">
-          <h3 className="font-semibold text-red-800 dark:text-red-200 mb-2">
+        <div className="p-4 bg-accent dark:bg-accent-tint/20 rounded-lg">
+          <h3 className="font-semibold text-accent-tint dark:text-accent mb-2">
             Validation Error
           </h3>
-          <p className="text-red-700 dark:text-red-300">{String(error)}</p>
+          <p className="text-accent-fill dark:text-accent">{String(error)}</p>
         </div>
       )}
 
       {recomputeResults && (
         <div className="space-y-4">
           {'error' in recomputeResults ? (
-            <div className="p-4 bg-red-50 dark:bg-red-900/20 rounded-lg">
-              <h3 className="font-semibold text-red-800 dark:text-red-200 mb-2">
+            <div className="p-4 bg-accent dark:bg-accent-tint/20 rounded-lg">
+              <h3 className="font-semibold text-accent-tint dark:text-accent mb-2">
                 Recompute Error
               </h3>
-              <p className="text-red-700 dark:text-red-300">
+              <p className="text-accent-fill dark:text-accent">
                 {recomputeResults.error}
               </p>
             </div>
           ) : (
-            <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
-              <h3 className="font-semibold text-green-800 dark:text-green-200 mb-2">
+            <div className="p-4 bg-accent dark:bg-accent-tint/20 rounded-lg">
+              <h3 className="font-semibold text-accent-tint dark:text-accent mb-2">
                 ✅ Data Recompute Complete
               </h3>
               <div className="grid grid-cols-3 gap-4 text-sm">
@@ -144,12 +142,12 @@ export const DatabaseMigrations = ({ isActive }: { isActive: boolean }) => {
                 <Stat
                   label="Processed"
                   value={recomputeResults.processedDocs}
-                  color="text-green-600 dark:text-green-400"
+                  color="text-accent-fill dark:text-accent"
                 />
                 <Stat
                   label="Data Rows"
                   value={recomputeResults.totalDataRows}
-                  color="text-blue-600 dark:text-blue-400"
+                  color="text-accent-fill dark:text-accent"
                 />
               </div>
             </div>
@@ -160,17 +158,17 @@ export const DatabaseMigrations = ({ isActive }: { isActive: boolean }) => {
       {migrationResults && (
         <div className="space-y-4">
           {'error' in migrationResults ? (
-            <div className="p-4 bg-red-50 dark:bg-red-900/20 rounded-lg">
-              <h3 className="font-semibold text-red-800 dark:text-red-200 mb-2">
+            <div className="p-4 bg-accent dark:bg-accent-tint/20 rounded-lg">
+              <h3 className="font-semibold text-accent-tint dark:text-accent mb-2">
                 Migration Error
               </h3>
-              <p className="text-red-700 dark:text-red-300">
+              <p className="text-accent-fill dark:text-accent">
                 {migrationResults.error}
               </p>
             </div>
           ) : (
             <>
-              <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+              <div className="p-4 bg-accent dark:bg-accent-tint/20 rounded-lg">
                 <h3 className="font-semibold mb-2">Migration Results</h3>
                 <div className="grid grid-cols-3 gap-4 text-sm">
                   <Stat
@@ -180,7 +178,7 @@ export const DatabaseMigrations = ({ isActive }: { isActive: boolean }) => {
                   <Stat
                     label="Migrated"
                     value={migrationResults.summary.migratedDocs}
-                    color="text-blue-600 dark:text-blue-400"
+                    color="text-accent-fill dark:text-accent"
                   />
                   <Stat
                     label="Unchanged"
@@ -196,21 +194,21 @@ export const DatabaseMigrations = ({ isActive }: { isActive: boolean }) => {
                     {migrationResults.reports.map((report, idx: number) => (
                       <div
                         key={idx}
-                        className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg"
+                        className="p-3 bg-accent dark:bg-accent-tint/20 rounded-lg"
                       >
-                        <h4 className="font-semibold text-blue-800 dark:text-blue-200 mb-2">
+                        <h4 className="font-semibold text-accent-tint dark:text-accent mb-2">
                           {report.documentTitle}
                         </h4>
-                        <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                        <p className="text-sm text-muted dark:text-text-2 mb-2">
                           Schema version {report.originalVersion || 'undefined'}{' '}
                           → {report.targetVersion}
                         </p>
 
                         <div>
-                          <h5 className="text-sm font-medium text-blue-700 dark:text-blue-300 mb-1">
+                          <h5 className="text-sm font-medium text-accent-fill dark:text-accent mb-1">
                             Operations performed:
                           </h5>
-                          <ul className="text-sm text-blue-600 dark:text-blue-400 list-disc list-inside">
+                          <ul className="text-sm text-accent-fill dark:text-accent list-disc list-inside">
                             {report.operations.map((op, opIdx: number) => (
                               <li key={opIdx} className="font-mono">
                                 <span className="font-bold">
@@ -228,11 +226,11 @@ export const DatabaseMigrations = ({ isActive }: { isActive: boolean }) => {
               )}
 
               {migrationResults.summary.migratedDocs === 0 && (
-                <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
-                  <h3 className="font-semibold text-green-800 dark:text-green-200 mb-2">
+                <div className="p-4 bg-accent dark:bg-accent-tint/20 rounded-lg">
+                  <h3 className="font-semibold text-accent-tint dark:text-accent mb-2">
                     ✅ No Migrations Needed
                   </h3>
-                  <p className="text-green-700 dark:text-green-300">
+                  <p className="text-accent-fill dark:text-accent">
                     All documents are already up to date with the current
                     schema.
                   </p>
@@ -246,7 +244,7 @@ export const DatabaseMigrations = ({ isActive }: { isActive: boolean }) => {
       {validationResults && (
         <div className="space-y-4">
           <>
-            <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+            <div className="p-4 bg-text dark:bg-raised rounded-lg">
               <h3 className="font-semibold mb-2">Validation Summary</h3>
               <div className="grid grid-cols-5 gap-4 text-sm">
                 <Stat
@@ -256,22 +254,22 @@ export const DatabaseMigrations = ({ isActive }: { isActive: boolean }) => {
                 <Stat
                   label="Valid"
                   value={validationResults.summary.validDocs}
-                  color="text-green-600 dark:text-green-400"
+                  color="text-accent-fill dark:text-accent"
                 />
                 <Stat
                   label="Invalid"
                   value={validationResults.summary.invalidDocs}
-                  color="text-red-600 dark:text-red-400"
+                  color="text-accent-fill dark:text-accent"
                 />
                 <Stat
                   label="Fixable"
                   value={validationResults.summary.fixableByMigration || 0}
-                  color="text-blue-600 dark:text-blue-400"
+                  color="text-accent-fill dark:text-accent"
                 />
                 <Stat
                   label="Unfixable"
                   value={validationResults.summary.unfixable || 0}
-                  color="text-orange-600 dark:text-orange-400"
+                  color="text-accent-fill dark:text-accent"
                 />
               </div>
             </div>
@@ -282,17 +280,17 @@ export const DatabaseMigrations = ({ isActive }: { isActive: boolean }) => {
                 <div className="space-y-3">
                   {validationResults.results.map((result, idx: number) => {
                     const bgColor = result.canBeFxedByMigration
-                      ? 'bg-blue-50 dark:bg-blue-900/20'
-                      : 'bg-red-50 dark:bg-red-900/20'
+                      ? 'bg-accent dark:bg-accent-tint/20'
+                      : 'bg-accent dark:bg-accent-tint/20'
                     const textColor = result.canBeFxedByMigration
-                      ? 'text-blue-800 dark:text-blue-200'
-                      : 'text-red-800 dark:text-red-200'
+                      ? 'text-accent-tint dark:text-accent'
+                      : 'text-accent-tint dark:text-accent'
                     const subTextColor = result.canBeFxedByMigration
-                      ? 'text-blue-700 dark:text-blue-300'
-                      : 'text-red-700 dark:text-red-300'
+                      ? 'text-accent-fill dark:text-accent'
+                      : 'text-accent-fill dark:text-accent'
                     const listTextColor = result.canBeFxedByMigration
-                      ? 'text-blue-600 dark:text-blue-400'
-                      : 'text-red-600 dark:text-red-400'
+                      ? 'text-accent-fill dark:text-accent'
+                      : 'text-accent-fill dark:text-accent'
 
                     return (
                       <div key={idx} className={`p-3 rounded-lg ${bgColor}`}>
@@ -302,11 +300,11 @@ export const DatabaseMigrations = ({ isActive }: { isActive: boolean }) => {
                           </h4>
                           <div className="flex items-center gap-2">
                             {result.canBeFxedByMigration ? (
-                              <span className="px-2 py-1 text-xs bg-blue-100 text-blue-800 dark:bg-blue-800 dark:text-blue-100 rounded-full">
+                              <span className="px-2 py-1 text-xs bg-accent text-accent-tint dark:bg-accent-tint dark:text-accent rounded-full">
                                 ✅ Fixable by Migration
                               </span>
                             ) : (
-                              <span className="px-2 py-1 text-xs bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100 rounded-full">
+                              <span className="px-2 py-1 text-xs bg-accent text-accent-tint dark:bg-accent-tint dark:text-accent rounded-full">
                                 ❌ Manual Fix Required
                               </span>
                             )}
@@ -355,7 +353,7 @@ export const DatabaseMigrations = ({ isActive }: { isActive: boolean }) => {
 
                         {result.canBeFxedByMigration &&
                           result.migrationReport && (
-                            <div className="mt-2 pt-2 border-t border-blue-200 dark:border-blue-700">
+                            <div className="mt-2 pt-2 border-t border-accent dark:border-accent-fill">
                               <h5
                                 className={`text-sm font-medium ${subTextColor} mb-1`}
                               >
@@ -388,11 +386,11 @@ export const DatabaseMigrations = ({ isActive }: { isActive: boolean }) => {
             )}
 
             {validationResults.summary.invalidDocs === 0 && (
-              <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
-                <h3 className="font-semibold text-green-800 dark:text-green-200 mb-2">
+              <div className="p-4 bg-accent dark:bg-accent-tint/20 rounded-lg">
+                <h3 className="font-semibold text-accent-tint dark:text-accent mb-2">
                   ✅ All Documents Valid
                 </h3>
-                <p className="text-green-700 dark:text-green-300">
+                <p className="text-accent-fill dark:text-accent">
                   All documents in the database comply with the current schema.
                 </p>
               </div>

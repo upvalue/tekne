@@ -194,24 +194,24 @@ export const TimerBadge = ({
                 baseTime={time}
                 globalTimer={globalTimer}
                 isThisTimer={isThisTimerActive}
-                className={isThisTimerActive ? 'text-green-400' : ''}
+                className={isThisTimerActive ? 'text-accent' : ''}
               />
             )}
             {isThisTimerActive && (
-              <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
+              <div className="w-2 h-2 bg-accent rounded-full animate-pulse" />
             )}
           </div>
         </BadgeButton>
       </div>
       <DialogContent
         style={viewportStyle}
-        className="text-white flex flex-col h-144 [&>div]:shrink-0 [&_button]:items-center left-1/2 top-[var(--timer-viewport-top,0px)] w-full max-w-full max-h-[calc(var(--timer-viewport-height,100dvh)*0.9)] translate-y-0 rounded-t-none overflow-y-auto overscroll-contain p-4 pt-[max(1rem,env(safe-area-inset-top))] sm:left-[32%] sm:top-[40%] sm:w-96 sm:max-w-[calc(100%-2rem)] sm:max-h-[80dvh] sm:-translate-y-1/2 sm:rounded-lg sm:p-6"
+        className="text-text flex flex-col h-144 [&>div]:shrink-0 [&_button]:items-center left-1/2 top-[var(--timer-viewport-top,0px)] w-full max-w-full max-h-[calc(var(--timer-viewport-height,100dvh)*0.9)] translate-y-0 rounded-t-none overflow-y-auto overscroll-contain p-4 pt-[max(1rem,env(safe-area-inset-top))] sm:left-[32%] sm:top-[40%] sm:w-96 sm:max-w-[calc(100%-2rem)] sm:max-h-[80dvh] sm:-translate-y-1/2 sm:rounded-lg sm:p-6"
       >
         <DialogHeader className="flex flex-col gap-4 text-left">
           <DialogTitle>Timer</DialogTitle>
 
           {/* Mode Selection */}
-          <div className="flex justify-between items-center border-b border-gray-600 pb-2">
+          <div className="flex justify-between items-center border-b border-muted pb-2">
             <div className="grid grid-cols-3 gap-2 w-full">
               {(['stopwatch', 'countdown', 'manual'] as const).map((mode) => (
                 <Button
@@ -229,14 +229,14 @@ export const TimerBadge = ({
           </div>
 
           {/* Time Mode Selection */}
-          <div className="border-b border-gray-600 pb-2">
+          <div className="border-b border-muted pb-2">
             <SwitchField>
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div className="flex flex-col">
-                  <span className="text-sm font-medium text-white">
+                  <span className="text-sm font-medium text-text">
                     Time Entry Mode
                   </span>
-                  <span className="text-xs text-gray-400">
+                  <span className="text-xs text-text-2">
                     {globalTimer.timeMode === 'additive'
                       ? 'Add to existing time'
                       : 'Replace existing time'}
@@ -244,7 +244,7 @@ export const TimerBadge = ({
                 </div>
                 <div className="flex items-center gap-3">
                   <span
-                    className={`text-xs ${globalTimer.timeMode === 'replacement' ? 'text-white' : 'text-gray-400'}`}
+                    className={`text-xs ${globalTimer.timeMode === 'replacement' ? 'text-text' : 'text-text-2'}`}
                   >
                     Replace
                   </span>
@@ -260,7 +260,7 @@ export const TimerBadge = ({
                     color="sky"
                   />
                   <span
-                    className={`text-xs ${globalTimer.timeMode === 'additive' ? 'text-white' : 'text-gray-400'}`}
+                    className={`text-xs ${globalTimer.timeMode === 'additive' ? 'text-text' : 'text-text-2'}`}
                   >
                     Add
                   </span>
@@ -268,7 +268,7 @@ export const TimerBadge = ({
               </div>
             </SwitchField>
           </div>
-          <div className="text-sm text-gray-400 break-words max-h-24 overflow-y-auto">
+          <div className="text-sm text-text-2 break-words max-h-24 overflow-y-auto">
             {lineContent}
           </div>
         </DialogHeader>
@@ -328,7 +328,7 @@ export const TimerBadge = ({
           </div>
         </div>
         {isMobile && viewMode !== 'manual' && (
-          <div className="border-t border-zinc-700 pt-3 text-sm text-gray-400">
+          <div className="border-t border-raised pt-3 text-sm text-text-2">
             {supportsTimerNotifications() ? (
               (notificationPermission ?? Notification.permission) ===
               'granted' ? (

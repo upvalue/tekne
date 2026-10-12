@@ -17,7 +17,7 @@ export const TimerManager = () => {
     query.data?.timers.some((timer) => timer.runningSince !== null) ?? false
   )
   if (query.isPending)
-    return <p className="text-sm text-zinc-500">Loading timers…</p>
+    return <p className="text-sm text-muted">Loading timers…</p>
   if (query.isError)
     return (
       <div role="alert">
@@ -28,7 +28,7 @@ export const TimerManager = () => {
       </div>
     )
   if (!query.data.timers.length)
-    return <p className="text-sm text-zinc-500">No active timers.</p>
+    return <p className="text-sm text-muted">No active timers.</p>
   const now = query.data.serverNow + Date.now() - query.dataUpdatedAt
   return (
     <div className="space-y-4">
@@ -105,11 +105,11 @@ const TimerCard = ({ timer, now }: { timer: Timer; now: number }) => {
       ? Math.max(0, timer.targetDuration - elapsed)
       : elapsed
   return (
-    <section className="space-y-3 rounded-lg border border-zinc-800 p-4">
+    <section className="space-y-3 rounded-lg border border-raised p-4">
       <Link
         to="/n/$title"
         params={{ title: timer.noteTitle }}
-        className="text-sky-400"
+        className="text-accent"
       >
         {timer.noteTitle}
       </Link>
@@ -127,7 +127,7 @@ const TimerCard = ({ timer, now }: { timer: Timer; now: number }) => {
       <fieldset disabled={busy} className="space-y-3">
         {pending ? (
           <>
-            <p className="text-sm text-amber-400">
+            <p className="text-sm text-accent">
               {timer.completionError === 'missing_line'
                 ? 'The attached line or document was deleted.'
                 : 'The recorded time on this line changed while the timer was running.'}{' '}
@@ -153,7 +153,7 @@ const TimerCard = ({ timer, now }: { timer: Timer; now: number }) => {
               Line
               <select
                 aria-label="Target line"
-                className="mt-1 block w-full rounded border border-zinc-700 bg-zinc-900 p-2"
+                className="mt-1 block w-full rounded border border-raised bg-page p-2"
                 value={line ? lineId : ''}
                 onChange={(event) => setLineId(event.target.value)}
               >
@@ -170,7 +170,7 @@ const TimerCard = ({ timer, now }: { timer: Timer; now: number }) => {
               Recorded time
               <select
                 aria-label="Time entry mode"
-                className="mt-1 block w-full rounded border border-zinc-700 bg-zinc-900 p-2"
+                className="mt-1 block w-full rounded border border-raised bg-page p-2"
                 value={timeMode}
                 onChange={(event) =>
                   setTimeMode(event.target.value as Timer['timeMode'])
@@ -181,7 +181,7 @@ const TimerCard = ({ timer, now }: { timer: Timer; now: number }) => {
               </select>
             </label>
             {line && (
-              <p className="text-sm text-zinc-400">
+              <p className="text-sm text-text-2">
                 Currently recorded:{' '}
                 {formatTimeDisplay(line.datumTimeSeconds ?? 0)}
               </p>

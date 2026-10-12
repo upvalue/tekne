@@ -40,7 +40,7 @@ export const DocumentDetailsButton = ({ title }: { title: string }) => {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger>
-        <FileText className="w-4 h-4 cursor-pointer text-zinc-500" />
+        <FileText className="w-4 h-4 cursor-pointer text-muted" />
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>

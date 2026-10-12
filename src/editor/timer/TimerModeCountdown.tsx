@@ -51,7 +51,7 @@ export const TimerModeCountdown = ({
       />
       {!isRunningHere && (
         <div className="space-y-3">
-          <label className="text-sm text-gray-400">Set Duration:</label>
+          <label className="text-sm text-text-2">Set Duration:</label>
           <Input
             autoFocus
             type="text"
@@ -62,7 +62,7 @@ export const TimerModeCountdown = ({
             disabled={isAnyTimerActive}
           />
           {parseTime(countdownInput) === null && countdownInput && (
-            <div className="text-red-400 text-sm">
+            <div className="text-accent text-sm">
               Unable to parse duration. Try: 25m, 1h 30m, etc.
             </div>
           )}

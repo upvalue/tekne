@@ -75,7 +75,7 @@ const ToolsSection = ({
 }) => {
   return (
     <section className="space-y-3">
-      <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-500">
+      <h2 className="text-sm font-semibold uppercase tracking-wide text-muted">
         {title}
       </h2>
       {children}
@@ -144,7 +144,7 @@ export const Tools = () => {
       }}
       stats={
         tag.lineCount === 0 ? (
-          <span className="text-zinc-600">no occurrences</span>
+          <span className="text-muted">no occurrences</span>
         ) : (
           <>
             <span>{tag.lineCount} lines</span>
@@ -183,7 +183,7 @@ export const Tools = () => {
         <TabsContent value="tags" className="space-y-6 pt-4">
           <ToolsSection title="Document Tags">
             {activeTags.length === 0 ? (
-              <div className="rounded-lg border border-zinc-800 p-4 text-sm text-zinc-500">
+              <div className="rounded-lg border border-raised p-4 text-sm text-muted">
                 No active tags in this document
               </div>
             ) : (
@@ -209,7 +209,7 @@ export const Tools = () => {
                             <span>{tag.taskCount} tasks</span>
                           )}
                           {tag.uncheckedTaskCount > 0 && (
-                            <span className="text-amber-300">
+                            <span className="text-accent">
                               {tag.uncheckedTaskCount} unchecked
                             </span>
                           )}
@@ -230,11 +230,11 @@ export const Tools = () => {
               onChange={(e) => setFilter(e.target.value)}
             />
             {tagsList.isLoading ? (
-              <div className="rounded-lg border border-zinc-800 p-4 text-sm text-zinc-500">
+              <div className="rounded-lg border border-raised p-4 text-sm text-muted">
                 Loading tags…
               </div>
             ) : liveTags.length === 0 ? (
-              <div className="rounded-lg border border-zinc-800 p-4 text-sm text-zinc-500">
+              <div className="rounded-lg border border-raised p-4 text-sm text-muted">
                 {filter ? 'No tags match the filter' : 'No tags yet'}
               </div>
             ) : (
@@ -245,7 +245,7 @@ export const Tools = () => {
               <div className="space-y-2">
                 <button
                   type="button"
-                  className="flex w-full items-center gap-1.5 text-xs text-zinc-500 hover:text-zinc-300"
+                  className="flex w-full items-center gap-1.5 text-xs text-muted hover:text-text-2"
                   onClick={() => setShowArchived((v) => !v)}
                 >
                   <ChevronRight

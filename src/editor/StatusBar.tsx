@@ -40,7 +40,7 @@ const LoadingDots = () => {
     return () => clearInterval(interval)
   }, [])
 
-  return <div className="text-sm text-zinc-400">Loading{'.'.repeat(dots)}</div>
+  return <div className="text-sm text-text-2">Loading{'.'.repeat(dots)}</div>
 }
 
 const GoToLineInput = ({
@@ -70,7 +70,7 @@ const GoToLineInput = ({
   }
 
   return (
-    <div className="text-sm text-zinc-400 flex items-center gap-1">
+    <div className="text-sm text-text-2 flex items-center gap-1">
       <span>Go to:</span>
       <input
         ref={inputRef}
@@ -91,7 +91,7 @@ const GoToLineInput = ({
           }
         }}
         onBlur={onClose}
-        className="w-12 bg-zinc-600 text-zinc-200 text-sm px-1 outline-none font-mono"
+        className="w-12 bg-muted text-text text-sm px-1 outline-none font-mono"
         placeholder={`1-${totalLines}`}
       />
       <span>/ {totalLines}</span>
@@ -137,18 +137,18 @@ export const StatusBar = ({ isLoading }: { isLoading: boolean }) => {
   }, [errorMessage, setErrorMessage])
 
   return (
-    <div className="StatusBar font-mono w-full h-10 bg-zinc-800 px-4 md:px-[138px] flex items-center justify-between">
+    <div className="StatusBar font-mono w-full h-10 bg-raised px-4 md:px-[138px] flex items-center justify-between">
       <div className="flex items-center gap-4">
         {isLoading && <LoadingDots />}
         {errorMessage && (
           <div className="flex items-center gap-2">
-            <TriangleAlert className="w-4 h-4 text-red-400" />
-            <div className="text-sm text-red-400">{errorMessage}</div>
+            <TriangleAlert className="w-4 h-4 text-accent" />
+            <div className="text-sm text-accent">{errorMessage}</div>
             <button
               onClick={() => setErrorMessage(null)}
               className="cursor-pointer"
             >
-              <X className="w-4 h-4 text-zinc-400" />
+              <X className="w-4 h-4 text-text-2" />
             </button>
           </div>
         )}
@@ -156,31 +156,31 @@ export const StatusBar = ({ isLoading }: { isLoading: boolean }) => {
           <div className="flex items-center gap-2 text-sm">
             {isTimerPaused(globalTimer) ? (
               <Play
-                className="w-4 h-4 text-green-400 cursor-pointer hover:text-green-300"
+                className="w-4 h-4 text-accent cursor-pointer hover:text-accent"
                 onClick={() => resumeTimer(store)}
               />
             ) : (
               <Pause
-                className="w-4 h-4 text-amber-400 cursor-pointer hover:text-amber-300"
+                className="w-4 h-4 text-accent cursor-pointer hover:text-accent"
                 onClick={() => pauseTimer(store)}
               />
             )}
             <Square
-              className="w-4 h-4 text-red-400 cursor-pointer hover:text-red-300"
+              className="w-4 h-4 text-accent cursor-pointer hover:text-accent"
               onClick={() => {
                 stopAndSaveTimer(store)
               }}
             />
             <div
               className={`flex items-center gap-1 ${
-                isTimerPaused(globalTimer) ? 'text-amber-400' : 'text-green-400'
+                isTimerPaused(globalTimer) ? 'text-accent' : 'text-accent'
               }`}
             >
               <div
                 className={`w-2 h-2 rounded-full ${
                   isTimerPaused(globalTimer)
-                    ? 'bg-amber-400'
-                    : 'bg-green-400 animate-pulse'
+                    ? 'bg-accent'
+                    : 'bg-accent animate-pulse'
                 }`}
               />
               <TimerInfo
@@ -190,7 +190,7 @@ export const StatusBar = ({ isLoading }: { isLoading: boolean }) => {
                 className="font-mono"
               />
             </div>
-            <div className="text-zinc-400">
+            <div className="text-text-2">
               {globalTimer.noteTitle && `${globalTimer.noteTitle}: `}
               {globalTimer.lineContent
                 ? globalTimer.lineContent.substring(
@@ -211,7 +211,7 @@ export const StatusBar = ({ isLoading }: { isLoading: boolean }) => {
               onClose={() => setGoToLineOpen(false)}
             />
           ) : (
-            <div className="text-sm text-zinc-400 flex items-center">
+            <div className="text-sm text-text-2 flex items-center">
               {focusedLine !== null ? (
                 `${focusedLine + 1}/`
               ) : (
@@ -223,7 +223,7 @@ export const StatusBar = ({ isLoading }: { isLoading: boolean }) => {
             </div>
           ))}
         {totalDocTime > 0 && (
-          <div className="text-sm text-zinc-400 flex items-center gap-2">
+          <div className="text-sm text-text-2 flex items-center gap-2">
             {formatTimeDisplay(totalDocTime)}
             <Clock className="w-4 h-4" />
           </div>

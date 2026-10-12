@@ -16,8 +16,8 @@ export const TimerDisplay = ({
 }) => (
   <div className="text-center">
     <div className="text-4xl font-mono mb-2">{formatTimeDisplay(seconds)}</div>
-    <div className="text-sm text-gray-400">
-      {isPaused ? <span className="text-amber-400">Paused</span> : caption}
+    <div className="text-sm text-text-2">
+      {isPaused ? <span className="text-accent">Paused</span> : caption}
     </div>
   </div>
 )

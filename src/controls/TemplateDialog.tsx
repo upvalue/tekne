@@ -77,10 +77,10 @@ export const TemplateDialog = () => {
         {!selectedTemplate ? (
           <div className="flex flex-col gap-2">
             {templatesQuery.isLoading && (
-              <p className="text-sm text-zinc-500">Loading templates...</p>
+              <p className="text-sm text-muted">Loading templates...</p>
             )}
             {templatesQuery.data?.length === 0 && (
-              <p className="text-sm text-zinc-500">
+              <p className="text-sm text-muted">
                 No templates found. Create a document with a $ prefix to use as
                 a template.
               </p>

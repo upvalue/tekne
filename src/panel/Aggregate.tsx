@@ -17,8 +17,8 @@ export const Aggregate = () => {
   return data && data.length > 0 ? (
     <AggregateList data={data} />
   ) : (
-    <div className="flex flex-col items-center justify-center text-center text-zinc-500 text-sm gap-2 px-3 py-4">
-      <Database className="size-8 text-zinc-500" />
+    <div className="flex flex-col items-center justify-center text-center text-muted text-sm gap-2 px-3 py-4">
+      <Database className="size-8 text-muted" />
       <span>No tags with data in current document</span>
       <span>See help for more information</span>
     </div>

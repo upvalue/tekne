@@ -32,8 +32,8 @@ import type { ZDoc } from '@/docs/schema'
 const LARGE_DOC_BYTES = 150_000
 
 const Unavailable = ({ reason }: { reason?: string }) => (
-  <div className="p-4 text-sm text-zinc-400">
-    <p className="mb-2 font-medium text-zinc-300">Agent unavailable</p>
+  <div className="p-4 text-sm text-text-2">
+    <p className="mb-2 font-medium text-text-2">Agent unavailable</p>
     <p>
       The agent needs the tekne server with an <code>LLM_API_KEY</code>{' '}
       configured{reason ? ` (${reason})` : ''}. In development, run{' '}
@@ -53,24 +53,24 @@ const TranscriptView = ({
     {transcript.map((entry, idx) =>
       entry.kind === 'text' ? (
         entry.text.trim() !== '' && (
-          <div key={idx} className="whitespace-pre-wrap text-sm text-zinc-300">
+          <div key={idx} className="whitespace-pre-wrap text-sm text-text-2">
             {entry.text}
           </div>
         )
       ) : (
         <div key={idx}>
-          <span className="inline-flex items-center gap-1 rounded bg-zinc-800 px-2 py-0.5 text-xs text-zinc-300">
+          <span className="inline-flex items-center gap-1 rounded bg-raised px-2 py-0.5 text-xs text-text-2">
             <Sparkles className="size-3" />
             edit · {entry.opCount} op{entry.opCount === 1 ? '' : 's'}
             {entry.failures > 0 && (
-              <span className="text-red-400">({entry.failures} failed)</span>
+              <span className="text-accent">({entry.failures} failed)</span>
             )}
           </span>
         </div>
       )
     )}
     {thinking && (
-      <div className="animate-pulse text-sm text-zinc-500">Thinking…</div>
+      <div className="animate-pulse text-sm text-muted">Thinking…</div>
     )}
   </div>
 )
@@ -134,13 +134,13 @@ const ActiveSession = ({
       <TranscriptView transcript={state.transcript} thinking={state.thinking} />
 
       {state.error && (
-        <div className="rounded border border-red-900 bg-red-950/40 px-3 py-2 text-sm text-red-300">
+        <div className="rounded border border-accent-tint bg-accent-tint/40 px-3 py-2 text-sm text-accent">
           {state.error}
         </div>
       )}
 
-      <div className="min-h-0 flex-1 overflow-y-auto rounded-lg border border-zinc-800">
-        <div className="border-b border-zinc-800 bg-zinc-900/60 px-3 py-1.5 text-xs text-zinc-400">
+      <div className="min-h-0 flex-1 overflow-y-auto rounded-lg border border-raised">
+        <div className="border-b border-raised bg-page/60 px-3 py-1.5 text-xs text-text-2">
           {proposalSummary(changes)}
         </div>
         <ChangeRows changes={changes} />
@@ -152,7 +152,7 @@ const ActiveSession = ({
             <CircleStop data-slot="icon" />
             Stop
           </Button>
-          <span className="text-xs text-zinc-500">Working…</span>
+          <span className="text-xs text-muted">Working…</span>
         </div>
       ) : (
         <div className="flex flex-col gap-2">
@@ -178,7 +178,7 @@ const ActiveSession = ({
             }}
           >
             <input
-              className="min-w-0 flex-1 rounded border border-zinc-700 bg-zinc-900 px-2 py-1 text-sm text-zinc-200 placeholder:text-zinc-500"
+              className="min-w-0 flex-1 rounded border border-raised bg-page px-2 py-1 text-sm text-text placeholder:text-muted"
               placeholder="Follow up to refine the proposal…"
               value={followUp}
               onChange={(e) => setFollowUp(e.target.value)}
@@ -252,18 +252,18 @@ export const AgentPanel = () => {
         if (instruction.trim() !== '' && availability !== 'loading') start()
       }}
     >
-      <p className="text-sm text-zinc-400">
+      <p className="text-sm text-text-2">
         Describe a change to this document. The agent proposes edits as a diff;
         nothing is applied until you accept it.
       </p>
       <textarea
-        className="min-h-24 rounded border border-zinc-700 bg-zinc-900 px-2 py-1.5 text-sm text-zinc-200 placeholder:text-zinc-500"
+        className="min-h-24 rounded border border-raised bg-page px-2 py-1.5 text-sm text-text placeholder:text-muted"
         placeholder="e.g. Reword the top section to be terser, and group the loose tasks under a heading"
         value={instruction}
         onChange={(e) => setInstruction(e.target.value)}
       />
       {docBytes > LARGE_DOC_BYTES && (
-        <p className="text-xs text-amber-400">
+        <p className="text-xs text-accent">
           This document is large (~{Math.round(docBytes / 1024)} KB); the agent
           reads all of it on every request.
         </p>

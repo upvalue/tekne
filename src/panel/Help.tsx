@@ -58,7 +58,7 @@ const Keybindings = () => {
       <h3 className="text-base font-semibold mb-2 mt-6">
         Command Palette Shortcuts
       </h3>
-      <p className="text-sm text-gray-400 mb-2">
+      <p className="text-sm text-text-2 mb-2">
         Press{' '}
         <Badge className="inline">
           {displayKey(keybindings.commandPalette)}
@@ -71,12 +71,12 @@ const Keybindings = () => {
             {command.subcommands?.length ? (
               // Command with subcommands - show parent and children
               <>
-                <DescriptionTerm className="text-gray-400">
+                <DescriptionTerm className="text-text-2">
                   {command.name}
                 </DescriptionTerm>
                 <DescriptionDetails>
                   <Badge>{command.displayShortcut || command.shortcut}</Badge>
-                  <span className="text-gray-500 ml-1">+ ...</span>
+                  <span className="text-muted ml-1">+ ...</span>
                 </DescriptionDetails>
                 {command.subcommands.map((sub) => (
                   <React.Fragment key={sub.key}>
@@ -87,7 +87,7 @@ const Keybindings = () => {
                       <Badge>
                         {command.displayShortcut || command.shortcut}
                       </Badge>
-                      <span className="text-gray-500 mx-1">then</span>
+                      <span className="text-muted mx-1">then</span>
                       <Badge>{sub.displayKey || sub.key.toUpperCase()}</Badge>
                     </DescriptionDetails>
                   </React.Fragment>
@@ -231,7 +231,7 @@ export const Help = React.memo(() => {
     // Render doc component
     const DocComponent = DOC_COMPONENTS[selectedPage]
     if (!DocComponent) {
-      return <div className="p-4 text-red-400">Unknown page</div>
+      return <div className="p-4 text-accent">Unknown page</div>
     }
     return (
       <ErrorBoundary title="Error loading documentation">
@@ -246,7 +246,7 @@ export const Help = React.memo(() => {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="border-b border-zinc-800 p-4 flex-shrink-0">
+      <div className="border-b border-raised p-4 flex-shrink-0">
         <div className="flex flex-wrap gap-2">
           {allItems.map((item) => (
             <Button

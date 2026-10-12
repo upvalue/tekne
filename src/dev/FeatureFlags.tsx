@@ -22,18 +22,18 @@ export function FeatureFlags({ isActive }: { isActive: boolean }) {
 
   if (!isActive) {
     return (
-      <div className="p-4 text-gray-500">
+      <div className="p-4 text-muted">
         Feature flags will load when tab is active
       </div>
     )
   }
 
   if (flagsQuery.isLoading) {
-    return <div className="p-4 text-gray-500">Loading flags...</div>
+    return <div className="p-4 text-muted">Loading flags...</div>
   }
 
   if (KNOWN_FLAGS.length === 0) {
-    return <div className="p-4 text-gray-500">No feature flags defined</div>
+    return <div className="p-4 text-muted">No feature flags defined</div>
   }
 
   return (
@@ -43,17 +43,17 @@ export function FeatureFlags({ isActive }: { isActive: boolean }) {
         return (
           <div
             key={flag.key}
-            className="flex justify-between items-center p-3 border border-zinc-700 rounded-lg"
+            className="flex justify-between items-center p-3 border border-raised rounded-lg"
           >
             <div>
               <div className="font-bold text-sm">{flag.label}</div>
-              <div className="text-xs text-zinc-500">{flag.description}</div>
+              <div className="text-xs text-muted">{flag.description}</div>
             </div>
             <button
               onClick={() => handleToggle(flag.key, value)}
               disabled={setFlagMutation.isPending}
               className={`px-3 py-1 rounded text-sm font-bold min-w-[50px] border-none cursor-pointer ${
-                value ? 'bg-green-400 text-black' : 'bg-zinc-600 text-white'
+                value ? 'bg-accent text-on-accent' : 'bg-muted text-text'
               }`}
             >
               {value ? 'ON' : 'OFF'}

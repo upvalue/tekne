@@ -14,8 +14,8 @@ const DiffRow = ({ line, tone }: { line: DiffLine; tone: 'red' | 'green' }) => (
     datumPinnedAt={line.datumPinnedAt}
     className={
       tone === 'red'
-        ? 'border-l-2 border-red-500/50 bg-red-950/20'
-        : 'border-l-2 border-green-500/50 bg-green-950/20'
+        ? 'border-l-2 border-accent-fill/50 bg-accent-tint/20'
+        : 'border-l-2 border-accent-fill/50 bg-accent-tint/20'
     }
   />
 )
@@ -38,7 +38,7 @@ export const ChangeRows = ({ changes }: { changes: ProposedLineChange[] }) => {
   const hiddenCount = changes.length - visible.length
 
   return (
-    <div className="divide-y divide-zinc-800/60">
+    <div className="divide-y divide-raised/60">
       {visible.map((change, idx) => (
         <div key={idx} className="px-2 py-1">
           {'before' in change && <DiffRow line={change.before} tone="red" />}
@@ -48,7 +48,7 @@ export const ChangeRows = ({ changes }: { changes: ProposedLineChange[] }) => {
       {hiddenCount > 0 && (
         <button
           type="button"
-          className="w-full px-3 py-1.5 text-xs text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200"
+          className="w-full px-3 py-1.5 text-xs text-text-2 hover:bg-page hover:text-text"
           onClick={() => setShowAll(true)}
         >
           Show {hiddenCount} more change{hiddenCount === 1 ? '' : 's'}

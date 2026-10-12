@@ -4,6 +4,17 @@
 @import '@fontsource/inter/700.css';
 
 @theme {
+  --color-page: #141414;
+  --color-raised: #2e2e2e;
+  --color-mark: #4b4b4b;
+  --color-text: #e4e4e4;
+  --color-text-2: #bababa;
+  --color-muted: #838383;
+  --color-accent: #6fc2fa;
+  --color-accent-fill: #0c8aca;
+  --color-on-accent: #011523;
+  --color-accent-tint: #03314a;
+  --color-done: #8fc982;
   --font-sans:
     Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
     'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif,
@@ -29,27 +40,46 @@ body {
 }
 
 [data-sonner-toast] {
-  background-color: var(--color-zinc-700) !important;
+  background-color: var(--color-raised) !important;
 }
 
-.bg-zinc-editor-main {
-  background-color: var(--color-zinc-900);
-}
-
-.Editor {
-  background-color: var(--color-zinc-900);
-}
-
+.Editor,
 .Panel {
-  background-color: color-mix(in srgb, var(--color-zinc-900) 98%, white);
-  border-left: 1px solid var(--color-zinc-800);
+  background: var(--color-page);
+}
+
+/* Change panel separation here when trying another treatment. */
+.Panel {
+  padding-left: 40px;
+}
+@media (max-width: 1023px) {
+  .Panel {
+    padding-left: 0;
+  }
 }
 
 * {
   scrollbar-width: thin;
-  scrollbar-color: #888 transparent;
+  scrollbar-color: var(--color-mark) transparent;
 }
-
 .link-styles a {
-  @apply text-sky-400;
+  color: var(--color-text);
+  text-decoration: underline;
+}
+:root {
+  color-scheme: dark;
+}
+body {
+  background: var(--color-page);
+  color: var(--color-text);
+}
+button {
+  cursor: pointer;
+}
+button:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+:focus-visible {
+  outline-color: var(--color-accent);
 }

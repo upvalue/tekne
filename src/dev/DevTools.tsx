@@ -76,7 +76,7 @@ const RawDocument = ({ isActive }: { isActive: boolean }) => {
 
   if (!isActive) {
     return (
-      <div className="p-4 text-gray-500">
+      <div className="p-4 text-muted">
         Document content will load when tab is active
       </div>
     )
@@ -95,9 +95,7 @@ const RawDocument = ({ isActive }: { isActive: boolean }) => {
           Paste JSON as copy
         </Button>
         {message && (
-          <span className="text-sm text-gray-600 dark:text-gray-400">
-            {message}
-          </span>
+          <span className="text-sm text-muted dark:text-text-2">{message}</span>
         )}
       </div>
       <div className="whitespace-pre-wrap font-mono">
@@ -112,7 +110,7 @@ const TreeDocument = ({ isActive }: { isActive: boolean }) => {
 
   if (!isActive) {
     return (
-      <div className="p-4 text-gray-500">
+      <div className="p-4 text-muted">
         Tree document will load when tab is active
       </div>
     )
@@ -134,7 +132,7 @@ const DocumentData = ({ isActive }: { isActive: boolean }) => {
 
   if (!isActive) {
     return (
-      <div className="p-4 text-gray-500">
+      <div className="p-4 text-muted">
         Document data will load when tab is active
       </div>
     )
@@ -178,18 +176,14 @@ export const DevTools = () => {
       </TabsContent>
       {DatabaseMigrations && (
         <TabsContent value="migrations">
-          <Suspense
-            fallback={<div className="p-4 text-gray-500">Loading…</div>}
-          >
+          <Suspense fallback={<div className="p-4 text-muted">Loading…</div>}>
             <DatabaseMigrations isActive={activeTab === 'migrations'} />
           </Suspense>
         </TabsContent>
       )}
       {usingPglite && PgliteDevtools && (
         <TabsContent value="pglite">
-          <Suspense
-            fallback={<div className="p-4 text-gray-500">Loading…</div>}
-          >
+          <Suspense fallback={<div className="p-4 text-muted">Loading…</div>}>
             <PgliteDevtools />
           </Suspense>
         </TabsContent>

@@ -68,21 +68,21 @@ export const CancelStaleTasks = () => {
 
   return (
     <>
-      <div className="rounded-lg border border-zinc-800 bg-zinc-900/40 p-3">
+      <div className="rounded-lg border border-raised bg-page/40 p-3">
         <div className="flex items-start gap-3">
-          <CalendarX className="mt-0.5 size-4 shrink-0 text-zinc-500" />
+          <CalendarX className="mt-0.5 size-4 shrink-0 text-muted" />
           <div className="min-w-0 flex-1 space-y-3">
             <div>
-              <div className="text-sm font-medium text-zinc-100">
+              <div className="text-sm font-medium text-text">
                 Cancel old checkboxes
               </div>
-              <p className="mt-1 text-xs leading-relaxed text-zinc-400">
+              <p className="mt-1 text-xs leading-relaxed text-text-2">
                 Find unchecked tasks created before a date. Templates are left
                 out.
               </p>
             </div>
             <div className="flex items-end gap-2">
-              <label className="min-w-0 flex-1 text-xs text-zinc-400">
+              <label className="min-w-0 flex-1 text-xs text-text-2">
                 Older than
                 <Input
                   className="mt-1"
@@ -115,7 +115,7 @@ export const CancelStaleTasks = () => {
           </DialogHeader>
 
           <div className="flex h-[52vh] min-h-0 flex-col">
-            <div className="pb-2 text-xs text-zinc-500">
+            <div className="pb-2 text-xs text-muted">
               {proposal
                 ? `${proposal.totalChanges} unchecked task${proposal.totalChanges === 1 ? '' : 's'} across ${proposal.documents.length} document${proposal.documents.length === 1 ? '' : 's'}`
                 : 'Computing changes…'}

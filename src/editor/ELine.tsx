@@ -63,14 +63,14 @@ export const Gutter = ({
     Boolean(timestamp) && isTimestampHovered && !disableTimestampHover
 
   return (
-    <div className="ELine-gutter text-zinc-600 text-sm font-mono">
+    <div className="ELine-gutter text-muted text-sm font-mono">
       <span
         className="ELine-gutter-text"
         onMouseEnter={() => setIsTimestampHovered(true)}
         onMouseLeave={() => setIsTimestampHovered(false)}
       >
         {showLineNumbers ? (
-          <span className="text-zinc-500">{lineIdx + 1}</span>
+          <span className="text-muted">{lineIdx + 1}</span>
         ) : (
           <>
             <span className="ELine-gutter-timestamp-base">

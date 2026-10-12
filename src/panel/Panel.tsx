@@ -44,15 +44,15 @@ function RailButton({
         className={cn(
           'p-2 rounded transition-colors',
           current
-            ? 'bg-zinc-700 text-zinc-100'
-            : 'text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200'
+            ? 'bg-raised text-text'
+            : 'text-text-2 hover:bg-raised hover:text-text'
         )}
       >
         <Icon className="w-5 h-5" />
       </button>
       <div
         role="tooltip"
-        className="absolute right-full top-1/2 -translate-y-1/2 mr-2 px-2 py-1 rounded bg-zinc-800 text-zinc-100 text-xs whitespace-nowrap shadow-md pointer-events-none opacity-0 transition-opacity delay-150 group-hover:opacity-100 group-focus-within:opacity-100 z-20"
+        className="absolute right-full top-1/2 -translate-y-1/2 mr-2 px-2 py-1 rounded bg-raised text-text text-xs whitespace-nowrap shadow-md pointer-events-none opacity-0 transition-opacity delay-150 group-hover:opacity-100 group-focus-within:opacity-100 z-20"
       >
         {label}
       </div>
@@ -81,14 +81,14 @@ export function Panel() {
       </div>
       <nav
         aria-label="Panel sections"
-        className="flex flex-col items-center gap-1 border-l border-zinc-800 px-1.5 py-2 flex-shrink-0"
+        className="flex flex-col items-center gap-1 border-l border-raised px-1.5 py-2 flex-shrink-0"
       >
         <RailButton
           icon={X}
           label="Hide panel"
           onClick={() => setPanelVisible(false)}
         />
-        <div className="w-5 border-b border-zinc-800 my-1" />
+        <div className="w-5 border-b border-raised my-1" />
         {TABS.map(({ id, label, icon }) => (
           <RailButton
             key={id}

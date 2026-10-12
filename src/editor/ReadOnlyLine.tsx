@@ -148,10 +148,7 @@ export const ReadOnlyLine = ({
 
       {/* Line icon (bullet/pin) */}
       <div className="ELine-leading">
-        <LineGlyph
-          pinned={!!datumPinnedAt}
-          className="text-zinc-500 shrink-0"
-        />
+        <LineGlyph pinned={!!datumPinnedAt} className="text-muted shrink-0" />
       </div>
 
       {/* Task checkbox */}

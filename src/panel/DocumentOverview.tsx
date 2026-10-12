@@ -65,7 +65,7 @@ export const DocumentOverviewSection = ({
         <button
           type="button"
           aria-expanded={!collapsed}
-          className="flex w-full items-center gap-1.5 rounded px-2 py-1 text-left text-xs font-medium text-zinc-400 hover:text-zinc-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-400 cursor-pointer"
+          className="flex w-full items-center gap-1.5 rounded px-2 py-1 text-left text-xs font-medium text-text-2 hover:text-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text-2 cursor-pointer"
           onClick={() => setCollapsed(!collapsed)}
         >
           <ChevronDown

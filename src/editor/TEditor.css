@@ -10,7 +10,7 @@
 }
 
 .cm-editor .cm-tooltip {
-  @apply bg-zinc-800;
+  @apply bg-raised;
   @apply rounded-md;
   @apply p-2;
   font-size: 1rem;
@@ -112,11 +112,11 @@
 }
 
 .TEditor-boundary-drop-zone-over {
-  box-shadow: inset 0 2px 0 var(--color-emerald-400);
+  box-shadow: inset 0 2px 0 var(--color-accent);
 }
 
 .ELine-focused {
-  background-color: color-mix(in srgb, var(--color-sky-400) 12%, transparent);
+  background-color: color-mix(in srgb, var(--color-accent) 12%, transparent);
 }
 
 /* Touch mode: the tap target covering a line; selection without CM focus. */
@@ -129,26 +129,18 @@
 }
 
 .ELine-touch-selected {
-  background-color: color-mix(
-    in srgb,
-    var(--color-emerald-400) 14%,
-    transparent
-  );
+  background-color: color-mix(in srgb, var(--color-accent) 14%, transparent);
 }
 
 .ELine-drag-selected {
-  background-color: color-mix(
-    in srgb,
-    var(--color-emerald-400) 12%,
-    transparent
-  );
+  background-color: color-mix(in srgb, var(--color-accent) 12%, transparent);
 }
 
 .ELine-focused.ELine-drag-selected {
   background-color: color-mix(
     in srgb,
-    var(--color-sky-400) 10%,
-    var(--color-emerald-400) 10%
+    var(--color-accent) 10%,
+    var(--color-accent) 10%
   );
 }
 
@@ -161,15 +153,15 @@
 }
 
 .ELine-drop-before {
-  box-shadow: inset 0 2px 0 var(--color-emerald-400);
+  box-shadow: inset 0 2px 0 var(--color-accent);
 }
 
 .ELine-drop-after {
-  box-shadow: inset 0 -2px 0 var(--color-emerald-400);
+  box-shadow: inset 0 -2px 0 var(--color-accent);
 }
 
 .ELine-drag-handle {
-  @apply inline-flex items-center justify-center text-zinc-600 hover:text-zinc-300;
+  @apply inline-flex items-center justify-center text-muted hover:text-text-2;
   align-self: center;
   width: 24px;
   min-height: var(--eline-first-line-height);
@@ -200,7 +192,7 @@
 }
 
 .ELine-drag-handle-selected {
-  @apply text-emerald-300;
+  @apply text-accent;
 }
 
 .ELine-header {
@@ -233,7 +225,7 @@
   /*
   background-color: color-mix(
     in srgb,
-    var(--color-sky-300) 10%,
+    var(--color-accent) 10%,
     transparent
   );*/
 }
@@ -266,15 +258,15 @@
 .cm-tag,
 .cm-internal-link,
 .cm-link {
-  @apply text-sky-500;
+  @apply text-accent-fill;
   @apply cursor-pointer;
 }
 
 .cm-inline-code {
   font-family: var(--font-mono);
-  @apply bg-zinc-800;
+  @apply bg-raised;
 }
 
 .cm-editor.cm-focused .cm-inline-code {
-  @apply bg-sky-900;
+  @apply bg-accent-tint;
 }

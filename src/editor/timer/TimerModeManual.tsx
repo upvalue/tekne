@@ -27,10 +27,8 @@ export const TimerModeManual = ({
       }}
     >
       <div className="text-center">
-        <div className="text-2xl font-mono mb-2 text-gray-400">
-          Manual Entry
-        </div>
-        <div className="text-sm text-gray-400">
+        <div className="text-2xl font-mono mb-2 text-text-2">Manual Entry</div>
+        <div className="text-sm text-text-2">
           Enter time directly without running a timer. <br />
           {timeMode === 'additive'
             ? 'Adds to existing time.'
@@ -39,7 +37,7 @@ export const TimerModeManual = ({
       </div>
       <div className="space-y-4">
         <div className="space-y-2">
-          <label className="text-sm text-gray-400">Enter Time:</label>
+          <label className="text-sm text-text-2">Enter Time:</label>
           <Input
             autoFocus
             type="text"
@@ -48,7 +46,7 @@ export const TimerModeManual = ({
             placeholder="e.g., 2h 30m, 45m, 1h"
           />
           {parseTime(timeInput) === null && timeInput && (
-            <div className="text-red-400 text-sm">
+            <div className="text-accent text-sm">
               Unable to parse duration. Try: 2h 30m, 45m, etc.
             </div>
           )}

@@ -54,7 +54,7 @@ export function EditorLayout({ editor, sidepanel }: EditorLayoutProps) {
         {!panelVisible && (
           <button
             onClick={() => setPanelVisible(true)}
-            className="fixed top-2 right-2 z-[60] p-1.5 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-zinc-200 transition-colors"
+            className="fixed top-2 right-2 z-[60] p-1.5 rounded bg-raised hover:bg-raised text-text-2 hover:text-text transition-colors"
             aria-label="Show panel"
           >
             <Menu className="w-5 h-5" />
@@ -73,7 +73,7 @@ export function EditorLayout({ editor, sidepanel }: EditorLayoutProps) {
           >
             <div
               onPointerDown={startResize}
-              className="absolute inset-y-0 -left-1 w-2 cursor-col-resize z-10 hover:bg-zinc-600/40 transition-colors"
+              className="absolute inset-y-0 -left-1 w-2 cursor-col-resize z-10 hover:bg-muted/40 transition-colors"
               role="separator"
               aria-orientation="vertical"
               aria-label="Resize panel"
@@ -84,7 +84,7 @@ export function EditorLayout({ editor, sidepanel }: EditorLayoutProps) {
 
         {/* Mobile panel (fullscreen overlay) */}
         {panelVisible && (
-          <div className="fixed inset-0 z-50 bg-zinc-900 lg:hidden Panel overflow-auto">
+          <div className="fixed inset-0 z-50 bg-page lg:hidden Panel overflow-auto">
             {sidepanel}
           </div>
         )}

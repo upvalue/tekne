@@ -66,19 +66,19 @@ export class ErrorBoundary extends React.Component<
       return (
         <div className="p-8 text-center">
           <div className="max-w-md space-y-4 mx-auto">
-            <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-100">
+            <h2 className="text-xl font-semibold text-page dark:text-text">
               {this.props.title || 'Something went wrong'}
             </h2>
-            <p className="text-zinc-600 dark:text-zinc-400">
+            <p className="text-muted dark:text-text-2">
               An unexpected error occurred.
             </p>
             <Button onClick={this.handleRetry} color="zinc">
               Try again
             </Button>
             {this.state.error && (
-              <div className="text-left bg-zinc-100 dark:bg-zinc-800 p-3 rounded text-sm">
+              <div className="text-left bg-text dark:bg-raised p-3 rounded text-sm">
                 <div className="font-medium mb-2">Error details</div>
-                <div className="text-zinc-700 dark:text-zinc-300">
+                <div className="text-raised dark:text-text-2">
                   <div>
                     <strong>Type:</strong> {this.state.error.name}
                   </div>

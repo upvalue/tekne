@@ -131,9 +131,9 @@ export const TitleBar = ({
         style={{ flexBasis: `${GUTTER_WIDTH_PIXELS}px` }}
         className="hidden lg:flex justify-end pr-4"
       >
-        <div className="text text-sky-500">{isDev && '[dev]'}</div>
-        <div className="text text-sky-500">{isDemo && '[demo]'}</div>
-        <div className="text text-sky-500">{isDevServer && '[server]'}</div>
+        <div className="text text-accent-fill">{isDev && '[dev]'}</div>
+        <div className="text text-accent-fill">{isDemo && '[demo]'}</div>
+        <div className="text text-accent-fill">{isDevServer && '[server]'}</div>
       </div>
 
       <div className="w-full">
@@ -143,7 +143,7 @@ export const TitleBar = ({
               ref={editableRef}
               contentEditable={allowTitleEdit}
               suppressContentEditableWarning={true}
-              className="text-2xl text-zinc-500 outline-none w-full"
+              className="text-2xl text-muted outline-none w-full"
               onInput={(e) =>
                 setProposedTitle(e.currentTarget.textContent || '')
               }

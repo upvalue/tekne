@@ -21,15 +21,15 @@ export const KBarResultRenderer = () => {
       items={results}
       onRender={({ item, active }) =>
         typeof item === 'string' ? (
-          <div className="p-2 text-sm text-gray-500 uppercase font-medium">
+          <div className="p-2 text-sm text-muted uppercase font-medium">
             {item}
           </div>
         ) : (
           <div className={`p-1 cursor-pointer`}>
-            <div className={cn('p-2 rounded-md', active && 'bg-zinc-900')}>
+            <div className={cn('p-2 rounded-md', active && 'bg-page')}>
               <div className="font-medium">{item.name}</div>
               {item.subtitle && (
-                <div className="text-sm text-gray-600">{item.subtitle}</div>
+                <div className="text-sm text-muted">{item.subtitle}</div>
               )}
             </div>
           </div>
@@ -57,7 +57,7 @@ export const KBarModal: React.FC<{ children: React.ReactNode }> = ({
     <KBarPortal>
       <KBarPositioner className="KBarModal-positioner fixed inset-0 z-50 flex items-start justify-center">
         <KBarAnimator className="w-full max-w-xl">
-          <div className="KBarModal-container p-2 rounded-lg shadow-xl overflow-hidden text-white">
+          <div className="KBarModal-container p-2 rounded-lg shadow-xl overflow-hidden text-text">
             {children}
           </div>
         </KBarAnimator>

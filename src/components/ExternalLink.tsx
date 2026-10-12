@@ -13,12 +13,12 @@ export const ExternalLink = ({
   return (
     <div className="inline">
       <div
-        className={cn('text-sky-400 inline-flex items-center gap-1', className)}
+        className={cn('text-accent inline-flex items-center gap-1', className)}
       >
         <a href={href} target="_blank" rel="noopener noreferrer">
           {children}
         </a>
-        <LinkGlyph className="w-4 h-4 text-sky-400" />
+        <LinkGlyph className="w-4 h-4 text-accent" />
       </div>
     </div>
   )

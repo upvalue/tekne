@@ -112,17 +112,17 @@ export const TagRenameDialog = ({
             onChange={(e) => setNewName(e.target.value)}
             autoFocus
           />
-          {nameError && <div className="text-xs text-red-400">{nameError}</div>}
+          {nameError && <div className="text-xs text-accent">{nameError}</div>}
 
           {isMerge && (
-            <div className="rounded border border-amber-500/40 bg-amber-950/30 px-3 py-2 text-xs text-amber-300">
+            <div className="rounded border border-accent-fill/40 bg-accent-tint/30 px-3 py-2 text-xs text-accent">
               #{newName} already exists — this will <b>merge</b> #{tag} into #
               {newName}. Lines carrying both tags keep a single #{newName}.
             </div>
           )}
 
           {proposal && proposal.childTags.length > 0 && (
-            <label className="flex items-center gap-2 text-sm text-zinc-300">
+            <label className="flex items-center gap-2 text-sm text-text-2">
               <Checkbox
                 checked={includeChildren}
                 onCheckedChange={(checked) => setIncludeChildren(checked)}
@@ -141,7 +141,7 @@ export const TagRenameDialog = ({
               or re-proposing */}
           {(propose.isPending || proposal) && (
             <div className="flex h-[45vh] flex-col">
-              <div className="pb-2 text-xs text-zinc-500">
+              <div className="pb-2 text-xs text-muted">
                 {propose.isPending || !proposal
                   ? 'Computing changes…'
                   : `${proposal.totalLines} line${proposal.totalLines === 1 ? '' : 's'} across ${proposal.docs.length} document${proposal.docs.length === 1 ? '' : 's'}`}

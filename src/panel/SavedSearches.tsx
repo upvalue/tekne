@@ -65,8 +65,8 @@ export const SavedSearches = ({
         className={cn(
           'flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg transition-all w-full focus:outline-none',
           open
-            ? 'bg-zinc-700 text-zinc-100'
-            : 'text-zinc-300 hover:text-zinc-100 hover:bg-zinc-800'
+            ? 'bg-raised text-text'
+            : 'text-text-2 hover:text-text hover:bg-raised'
         )}
       >
         <Bookmark className="size-4" />
@@ -75,18 +75,18 @@ export const SavedSearches = ({
         </span>
         <ChevronDown
           className={cn(
-            'size-4 transition-transform text-zinc-400',
+            'size-4 transition-transform text-text-2',
             open && 'rotate-180'
           )}
         />
       </PopoverButton>
 
-      <PopoverPanel className="bg-zinc-800 border border-zinc-600 rounded-xl shadow-xl max-h-72 overflow-auto">
+      <PopoverPanel className="bg-raised border border-muted rounded-xl shadow-xl max-h-72 overflow-auto">
         {/* Save current search option */}
         {currentQuery.trim() && !isAdding && (
           <button
             onClick={() => setIsAdding(true)}
-            className="w-full px-4 py-3 text-sm text-left text-zinc-300 hover:text-zinc-100 hover:bg-zinc-700 flex items-center gap-2 border-b border-zinc-700"
+            className="w-full px-4 py-3 text-sm text-left text-text-2 hover:text-text hover:bg-raised flex items-center gap-2 border-b border-raised"
           >
             <Plus className="size-4" />
             Save current search
@@ -95,14 +95,14 @@ export const SavedSearches = ({
 
         {/* Save form */}
         {isAdding && (
-          <div className="p-3 border-b border-zinc-700 space-y-3">
+          <div className="p-3 border-b border-raised space-y-3">
             <input
               type="text"
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
               placeholder="Search name..."
               autoFocus
-              className="w-full px-3 py-2 text-sm bg-zinc-900 border border-zinc-600 rounded-lg text-zinc-100 placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 text-sm bg-page border border-muted rounded-lg text-text placeholder-muted focus:outline-none focus:ring-2 focus:ring-accent-fill focus:border-transparent"
               onKeyDown={(e) => {
                 if (e.key === 'Enter') handleSave()
                 if (e.key === 'Escape') setIsAdding(false)
@@ -112,13 +112,13 @@ export const SavedSearches = ({
               <button
                 onClick={handleSave}
                 disabled={!newName.trim() || saveMutation.isPending}
-                className="flex-1 px-3 py-2 text-sm font-medium bg-blue-600 hover:bg-blue-500 disabled:opacity-50 rounded-lg text-white transition-colors"
+                className="flex-1 px-3 py-2 text-sm font-medium bg-accent-fill hover:bg-accent-fill disabled:opacity-50 rounded-lg text-text transition-colors"
               >
                 Save
               </button>
               <button
                 onClick={() => setIsAdding(false)}
-                className="px-3 py-2 text-sm text-zinc-300 hover:text-zinc-100 hover:bg-zinc-700 rounded-lg transition-colors"
+                className="px-3 py-2 text-sm text-text-2 hover:text-text hover:bg-raised rounded-lg transition-colors"
               >
                 Cancel
               </button>
@@ -132,17 +132,17 @@ export const SavedSearches = ({
             {savedSearches.map((search) => (
               <div
                 key={search.id}
-                className="flex items-center justify-between px-4 py-3 hover:bg-zinc-700 cursor-pointer group transition-colors"
+                className="flex items-center justify-between px-4 py-3 hover:bg-raised cursor-pointer group transition-colors"
                 onClick={() => {
                   onSelectSearch(search.query)
                   setOpen(false)
                 }}
               >
                 <div className="flex-1 min-w-0">
-                  <div className="text-sm font-medium text-zinc-100 truncate">
+                  <div className="text-sm font-medium text-text truncate">
                     {search.name}
                   </div>
-                  <div className="text-xs text-zinc-400 truncate mt-0.5">
+                  <div className="text-xs text-text-2 truncate mt-0.5">
                     {search.query}
                   </div>
                 </div>
@@ -151,7 +151,7 @@ export const SavedSearches = ({
                     e.stopPropagation()
                     deleteMutation.mutate({ id: search.id })
                   }}
-                  className="p-1.5 text-zinc-500 hover:text-red-400 opacity-0 group-hover:opacity-100 shrink-0 transition-opacity"
+                  className="p-1.5 text-muted hover:text-accent opacity-0 group-hover:opacity-100 shrink-0 transition-opacity"
                 >
                   <Trash2 className="size-4" />
                 </button>
@@ -159,7 +159,7 @@ export const SavedSearches = ({
             ))}
           </div>
         ) : (
-          <div className="px-4 py-6 text-sm text-zinc-500 text-center">
+          <div className="px-4 py-6 text-sm text-muted text-center">
             No saved searches yet
           </div>
         )}

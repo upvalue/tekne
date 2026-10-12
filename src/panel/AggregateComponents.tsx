@@ -49,22 +49,18 @@ export const TaskStatusDisplay = ({
         <TaskStatusItem
           icon={CircleCheck}
           count={complete}
-          className="text-green-400"
+          className="text-accent"
         />
       )}
       {incomplete !== undefined && incomplete > 0 && (
         <TaskStatusItem
           icon={CircleX}
           count={incomplete}
-          className="text-zinc-400"
+          className="text-text-2"
         />
       )}
       {unset !== undefined && unset > 0 && (
-        <TaskStatusItem
-          icon={Ellipsis}
-          count={unset}
-          className="text-zinc-400"
-        />
+        <TaskStatusItem icon={Ellipsis} count={unset} className="text-text-2" />
       )}
     </div>
   )
@@ -78,7 +74,7 @@ export const TimerDisplay = ({
   className?: string
 }) => {
   return (
-    <div className={cn('flex items-center text-zinc-200 space-x-1', className)}>
+    <div className={cn('flex items-center text-text space-x-1', className)}>
       <Clock className="size-4" />
       <span className="text-lg font-medium">{renderTime(time)}</span>
     </div>
@@ -106,31 +102,31 @@ const PageContribution = ({
   return (
     <div
       className={cn(
-        'flex items-center space-x-1.5 text-sm text-zinc-500',
+        'flex items-center space-x-1.5 text-sm text-muted',
         className
       )}
     >
       <Plus className="size-3.5" />
       {pageComplete !== undefined && pageComplete > 0 && (
-        <div className="flex items-center space-x-1 text-green-400">
+        <div className="flex items-center space-x-1 text-accent">
           <CircleCheck className="size-3.5" />
           <span>{pageComplete}</span>
         </div>
       )}
       {pageIncomplete !== undefined && pageIncomplete > 0 && (
-        <div className="flex items-center space-x-1 text-red-400">
+        <div className="flex items-center space-x-1 text-accent">
           <CircleX className="size-3.5" />
           <span>{pageIncomplete}</span>
         </div>
       )}
       {pageUnset !== undefined && pageUnset > 0 && (
-        <div className="flex items-center space-x-1 text-zinc-400">
+        <div className="flex items-center space-x-1 text-text-2">
           <Ellipsis className="size-3.5" />
           <span>{pageUnset}</span>
         </div>
       )}
       {pageTime !== undefined && pageTime > 0 && (
-        <div className="flex items-center space-x-1 text-zinc-400">
+        <div className="flex items-center space-x-1 text-text-2">
           <Clock className="size-3.5" />
           <span>{renderTime(pageTime)}</span>
         </div>
@@ -141,7 +137,7 @@ const PageContribution = ({
 
 export const PinnedDisplay = ({ pinnedDesc }: { pinnedDesc: string }) => {
   return (
-    <div className="flex items-center text-zinc-500 space-x-1 text-sm">
+    <div className="flex items-center text-muted space-x-1 text-sm">
       <span>{pinnedDesc}</span>
     </div>
   )
@@ -175,10 +171,10 @@ export const AggregateList = ({ data }: { data: ResultCardData[] }) => {
         return (
           <li
             key={tagData.tag}
-            className="min-w-0 space-y-1 px-3 py-2.5 odd:bg-zinc-800/40"
+            className="min-w-0 space-y-1 px-3 py-2.5 odd:bg-raised/40"
           >
             <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
-              <span className="min-w-0 text-sm font-medium text-zinc-200 [overflow-wrap:anywhere]">
+              <span className="min-w-0 text-sm font-medium text-text [overflow-wrap:anywhere]">
                 {tagData.tag}
               </span>
               <PageContribution
@@ -206,7 +202,7 @@ export const AggregateList = ({ data }: { data: ResultCardData[] }) => {
               </div>
             )}
             {tagData.pinned_at && tagData.pinned_desc && (
-              <p className="text-sm text-zinc-400 [overflow-wrap:anywhere]">
+              <p className="text-sm text-text-2 [overflow-wrap:anywhere]">
                 {tagData.pinned_desc}
               </p>
             )}
@@ -220,7 +216,7 @@ export const AggregateList = ({ data }: { data: ResultCardData[] }) => {
 export const ResultCard = ({ tagData }: { tagData: ResultCardData }) => {
   return (
     <div className="relative">
-      <div className="bg-zinc-800 border border-zinc-700 rounded-lg shadow-sm p-4 flex flex-col space-y-2">
+      <div className="bg-raised border border-raised rounded-lg shadow-sm p-4 flex flex-col space-y-2">
         <div className="flex items-center gap-2">
           <span className="text-sm">{tagData.tag}</span>
           <PageContribution

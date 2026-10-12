@@ -24,7 +24,7 @@ const OPERATOR_HELP: Array<{ operator: string; description: string }> = [
 ]
 
 const PanelEmptyState = ({ children }: { children: React.ReactNode }) => (
-  <div className="text-center text-zinc-400 text-sm py-8">{children}</div>
+  <div className="text-center text-text-2 text-sm py-8">{children}</div>
 )
 
 // Search result card - shows document title and ReadOnlyLine
@@ -37,17 +37,17 @@ const SearchResultCard = ({
 }) => {
   return (
     <div
-      className="rounded-lg border border-zinc-800 hover:border-zinc-700 transition-colors overflow-hidden cursor-pointer"
+      className="rounded-lg border border-raised hover:border-raised transition-colors overflow-hidden cursor-pointer"
       onClick={onNavigate}
     >
       {/* Document header */}
-      <div className="px-3 py-2 bg-zinc-800/50 border-b border-zinc-800">
+      <div className="px-3 py-2 bg-raised/50 border-b border-raised">
         <div className="flex items-center justify-between">
-          <span className="text-xs font-medium text-zinc-300">
+          <span className="text-xs font-medium text-text-2">
             {item.note_title}
           </span>
           {item.child_count > 0 && (
-            <span className="text-xs text-zinc-500">
+            <span className="text-xs text-muted">
               +{item.child_count} line{item.child_count !== 1 ? 's' : ''}
             </span>
           )}
@@ -93,7 +93,7 @@ const LinesResults = ({
 
   return (
     <>
-      <div className="text-xs text-zinc-500 px-1 mb-3">
+      <div className="text-xs text-muted px-1 mb-3">
         {items.length} result{items.length !== 1 ? 's' : ''}
       </div>
       <div className="space-y-3">
@@ -106,7 +106,7 @@ const LinesResults = ({
         ))}
       </div>
       {data?.nextCursor && (
-        <div className="text-center text-zinc-500 text-sm py-3">
+        <div className="text-center text-muted text-sm py-3">
           More results available...
         </div>
       )}
@@ -137,7 +137,7 @@ const AggregateResults = ({
 
   return (
     <>
-      <div className="text-xs text-zinc-500 mb-4">
+      <div className="text-xs text-muted mb-4">
         {rows.length} tag{rows.length !== 1 ? 's' : ''}
       </div>
       <ResultCardGrid data={rows} />
@@ -147,16 +147,16 @@ const AggregateResults = ({
 
 const SearchHelp = () => (
   <div className="p-4 space-y-4">
-    <p className="text-sm text-zinc-300 font-medium">
+    <p className="text-sm text-text-2 font-medium">
       Search across all documents
     </p>
     <div className="space-y-2">
       {OPERATOR_HELP.map(({ operator, description }) => (
         <div key={operator} className="flex items-start gap-3 text-sm">
-          <code className="bg-zinc-800 text-zinc-200 px-2 py-1 rounded font-mono text-xs shrink-0">
+          <code className="bg-raised text-text px-2 py-1 rounded font-mono text-xs shrink-0">
             {operator}
           </code>
-          <span className="text-zinc-400">{description}</span>
+          <span className="text-text-2">{description}</span>
         </div>
       ))}
     </div>
@@ -209,23 +209,23 @@ export const Search = () => {
   return (
     <div className="flex flex-col h-full">
       {/* Search header */}
-      <div className="p-4 space-y-3 border-b border-zinc-800">
+      <div className="p-4 space-y-3 border-b border-raised">
         <SavedSearches currentQuery={query} onSelectSearch={setQuery} />
 
         {/* Search input */}
         <div className="relative">
-          <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 size-5 text-zinc-400" />
+          <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 size-5 text-text-2" />
           <input
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="#exercise age:90d..."
-            className="w-full pl-10 pr-4 py-2.5 text-sm bg-zinc-800 border border-zinc-600 rounded-lg text-zinc-100 placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-shadow"
+            className="w-full pl-10 pr-4 py-2.5 text-sm bg-raised border border-muted rounded-lg text-text placeholder-muted focus:outline-none focus:ring-2 focus:ring-accent-fill focus:border-transparent transition-shadow"
           />
         </div>
 
         {parsedQuery.errors.length > 0 && (
-          <div className="text-red-400 text-sm font-medium bg-red-500/10 px-3 py-2 rounded-lg">
+          <div className="text-accent text-sm font-medium bg-accent-fill/10 px-3 py-2 rounded-lg">
             {parsedQuery.errors.map((e, i) => (
               <div key={i}>{e.message}</div>
             ))}
@@ -234,14 +234,14 @@ export const Search = () => {
 
         {/* View mode toggle */}
         {hasValidQuery && (
-          <div className="flex gap-1 bg-zinc-800 p-1 rounded-lg">
+          <div className="flex gap-1 bg-raised p-1 rounded-lg">
             <button
               onClick={() => setViewMode('text')}
               className={cn(
                 'flex-1 flex items-center justify-center gap-2 py-2 text-sm font-medium rounded-md transition-all',
                 viewMode === 'text'
-                  ? 'bg-zinc-700 text-zinc-100 shadow-sm'
-                  : 'text-zinc-400 hover:text-zinc-200'
+                  ? 'bg-raised text-text shadow-sm'
+                  : 'text-text-2 hover:text-text'
               )}
             >
               <AlignLeft className="size-4" />
@@ -252,8 +252,8 @@ export const Search = () => {
               className={cn(
                 'flex-1 flex items-center justify-center gap-2 py-2 text-sm font-medium rounded-md transition-all',
                 viewMode === 'aggregate'
-                  ? 'bg-zinc-700 text-zinc-100 shadow-sm'
-                  : 'text-zinc-400 hover:text-zinc-200'
+                  ? 'bg-raised text-text shadow-sm'
+                  : 'text-text-2 hover:text-text'
               )}
             >
               <ChartColumn className="size-4" />
