@@ -11,7 +11,7 @@ import { useGlobalKeybinding } from '@/hooks/useGlobalKeybinding'
 import { orpc } from '@/api/client'
 import { Toaster } from '@/components/vendor/Sonner'
 import { TemplateDialog } from '@/controls/TemplateDialog'
-import { openPanelTab, useSetPanelVisible } from '@/hooks/panel-state'
+import { openSearch, useSetPanelVisible } from '@/hooks/panel-state'
 // Registers all commands with the editor's command registry.
 import '@/commands/definitions'
 
@@ -31,7 +31,7 @@ const RootComponent = () => {
   })
   const setPanelVisible = useSetPanelVisible()
 
-  useGlobalKeybinding('searchPanel', () => openPanelTab('search'))
+  useGlobalKeybinding('searchPanel', openSearch)
 
   useGlobalKeybinding('togglePanel', () => setPanelVisible((v) => !v))
 

@@ -3,7 +3,7 @@ import { LoadingIndicator } from '@/components/LoadingIndicator'
 import { useQuery } from '@tanstack/react-query'
 // Search panel - sidebar-friendly search interface
 
-import { useState, useCallback, useMemo } from 'react'
+import { useState, useCallback, useEffect, useMemo, useRef } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { useDebouncedValue } from '@/hooks/useDebouncedValue'
 import { orpc, type RouterOutputs } from '@/api/client'
@@ -14,6 +14,7 @@ import { ReadOnlyLine } from '@/editor/ReadOnlyLine'
 import { SavedSearches } from './SavedSearches'
 import { Search as SearchIcon, AlignLeft, ChartColumn } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useSearchFocusRequested } from '@/hooks/panel-state'
 
 const OPERATOR_HELP: Array<{ operator: string; description: string }> = [
   { operator: '#tag', description: 'Filter by tag (prefix match)' },
@@ -170,6 +171,15 @@ export const Search = () => {
   const [query, setQuery] = useState('')
   const [viewMode, setViewMode] = useState<SearchViewMode>('text')
   const navigate = useNavigate()
+  const inputRef = useRef<HTMLInputElement>(null)
+  const [focusRequested, setFocusRequested] = useSearchFocusRequested()
+
+  useEffect(() => {
+    if (!focusRequested) return
+    inputRef.current?.focus()
+    inputRef.current?.select()
+    setFocusRequested(false)
+  }, [focusRequested, setFocusRequested])
 
   // Debounce query for API calls (300ms)
   const debouncedQuery = useDebouncedValue(query, 300)
@@ -217,6 +227,7 @@ export const Search = () => {
         <div className="relative">
           <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 size-5 text-text-2" />
           <input
+            ref={inputRef}
             aria-label="Search query"
             type="text"
             value={query}

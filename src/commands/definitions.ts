@@ -12,6 +12,7 @@ import { orpcClient } from '@/api/client'
 import {
   openHelp,
   openPanelTab,
+  openSearch,
   openToolTab,
   panelVisibleAtom,
   uiStore,
@@ -215,7 +216,7 @@ const navigationCommands: Command[] = [
     keywords: ['search', 'find', 'query'],
     requiresEditor: false,
     execute: () => {
-      openPanelTab('search')
+      openSearch()
     },
   },
   {

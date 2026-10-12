@@ -100,6 +100,17 @@ export const openPanelTab = (tab: PanelTab) => {
   uiStore.set(panelVisibleAtom, true)
 }
 
+/** Set by openSearch and cleared once the search input has taken focus. */
+export const searchFocusRequestedAtom = atom(false)
+export const useSearchFocusRequested = () =>
+  useAtom(searchFocusRequestedAtom, { store: uiStore })
+
+/** Show the search tab and focus its query input. */
+export const openSearch = () => {
+  uiStore.set(searchFocusRequestedAtom, true)
+  openPanelTab('search')
+}
+
 export const activeToolTabAtom = atom<'tasks' | 'tags' | 'timers'>('tasks')
 export const useActiveToolTab = () =>
   useAtom(activeToolTabAtom, { store: uiStore })
