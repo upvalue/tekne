@@ -7,6 +7,9 @@ search or navigate that data.
 User-local configuration is in `AGENTS.local.md`; read that as well before
 beginning work.
 
+It is very likely that other agents are working in the same repository at the
+same time, just try to resolve conflicts as they occur.
+
 ## Conventions
 
 - docs/ are hand-written human docs, don't alter them. Same with README.md
