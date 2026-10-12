@@ -1,51 +1,35 @@
-// TimerBadge.tsx - the per-line timer badge and its dialog shell. The timer
-// engine itself lives in timer/timer-controller.ts; the per-mode dialog
-// bodies live in timer/.
-import * as React from 'react'
-import { BadgeButton } from '@/components/vendor/Badge'
-
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/vendor/Dialog'
+import { useEffect, useState } from 'react'
+import { useAtom, useAtomValue, useStore } from 'jotai'
+import { Clock, ChevronDown, Pause, X } from 'lucide-react'
 import type { LineWithIdx } from './line-editor'
 import {
-  useDocLine,
+  docAtom,
   globalTimerAtom,
-  notificationPermissionAtom,
+  timerBusyAtom,
   timerDialogRequestAtom,
-  type TimerMode,
 } from './state'
 import { Button } from '@/components/vendor/Button'
-import { Switch, SwitchField } from '@/components/vendor/Switch'
-import { Clock } from 'lucide-react'
-import { useAtom, useStore } from 'jotai'
-import { renderTime } from '@/lib/time'
-import { TimerInfo } from './TimerInfo'
+import { formatTimeDisplay, renderTime } from '@/lib/time'
+import { cn } from '@/lib/utils'
+import { parseTime } from './timer/parse-time'
+import { useTimerTick } from './timer/useTimerTick'
 import {
   cancelTimer,
+  extendTimer,
+  isTimerPaused,
   pauseTimer,
   resumeTimer,
   startTimer,
   stopAndSaveTimer,
+  timerElapsedSeconds,
+  timerRemainingSeconds,
 } from './timer/timer-controller'
-import { TimerModeStopwatch } from './timer/TimerModeStopwatch'
-import { TimerModeCountdown } from './timer/TimerModeCountdown'
-import { TimerModeManual } from './timer/TimerModeManual'
-import { parseTime } from './timer/parse-time'
-import { isIOS, isMobile } from '@/lib/platform'
+import { toast } from 'sonner'
 import {
   enableTimerNotifications,
   supportsTimerNotifications,
 } from './timer/timer-notifications'
-import { toast } from 'sonner'
 
-/**
- * Timer badge; shows time spent and allows user to control
- * the global timer state
- */
 export const TimerBadge = ({
   lineInfo,
   time,
@@ -53,330 +37,278 @@ export const TimerBadge = ({
   lineInfo: LineWithIdx
   time: number
 }) => {
-  const [open, setOpen] = React.useState(false)
-  const [viewportStyle, setViewportStyle] = React.useState<React.CSSProperties>(
-    {}
-  )
-  React.useEffect(() => {
-    const viewport = window.visualViewport
-    if (!open || !viewport) return
-    const update = () =>
-      setViewportStyle({
-        '--timer-viewport-height': `${viewport.height}px`,
-        '--timer-viewport-top': `${viewport.offsetTop}px`,
-      } as React.CSSProperties)
-    update()
-    viewport.addEventListener('resize', update)
-    viewport.addEventListener('scroll', update)
-    return () => {
-      viewport.removeEventListener('resize', update)
-      viewport.removeEventListener('scroll', update)
-    }
-  }, [open])
   const store = useStore()
-  const [, setLine] = useDocLine(lineInfo.lineIdx)
-  const [globalTimer, setGlobalTimer] = useAtom(globalTimerAtom)
-  // Which tab the dialog shows. Pure view state, deliberately separate from
-  // globalTimer.mode (the running timer's mode): browsing tabs must never
-  // touch the engine, so switching tabs can't reset an active timer.
-  const [viewMode, setViewMode] = React.useState<TimerMode>('stopwatch')
-  const [notificationPermission, setNotificationPermission] = useAtom(
-    notificationPermissionAtom
-  )
-  const [enablingNotifications, setEnablingNotifications] =
-    React.useState(false)
-
-  const isThisTimerActive =
-    globalTimer.isActive && globalTimer.lineId === lineInfo.line.id
-  const isAnyTimerActive = globalTimer.isActive
-
-  const [timeInput, setTimeInput] = React.useState(renderTime(time))
-  const [countdownInput, setCountdownInput] = React.useState('30m')
-  const [timerDialogRequest, setTimerDialogRequest] = useAtom(
-    timerDialogRequestAtom
-  )
-
-  // Handle programmatic dialog open requests (from command palette)
-  React.useEffect(() => {
-    if (timerDialogRequest && timerDialogRequest.lineIdx === lineInfo.lineIdx) {
-      // Select the tab and open the dialog
-      setViewMode(timerDialogRequest.mode)
-      setOpen(true)
-      // Clear the request
-      setTimerDialogRequest(null)
+  const timer = useAtomValue(globalTimerAtom)
+  const busy = useAtomValue(timerBusyAtom)
+  const [request, setRequest] = useAtom(timerDialogRequestAtom)
+  const [open, setOpen] = useState(false)
+  const [countdown, setCountdown] = useState('')
+  const [manual, setManual] = useState('')
+  const runningHere = timer.isActive && timer.lineId === lineInfo.line.id
+  const paused = isTimerPaused(timer)
+  useTimerTick(runningHere && !paused)
+  useEffect(() => {
+    if (request?.lineIdx !== lineInfo.lineIdx) return
+    setOpen(true)
+    setRequest(null)
+  }, [request, lineInfo.lineIdx, setRequest])
+  const elapsed = timerElapsedSeconds(timer)
+  const remaining = timerRemainingSeconds(timer)
+  const start = (mode: 'stopwatch' | 'countdown', duration = 25 * 60) => {
+    if (supportsTimerNotifications() && Notification.permission === 'default') {
+      void enableTimerNotifications().catch(() => {})
     }
-  }, [timerDialogRequest, lineInfo.lineIdx, setTimerDialogRequest])
-
-  const requestNotificationPermission = React.useCallback(async () => {
-    try {
-      if (
-        !isMobile &&
-        notificationPermission === null &&
-        'Notification' in window
-      ) {
-        const permission = await Notification.requestPermission()
-        setNotificationPermission(permission)
-      }
-    } catch (error) {
-      console.error('Notification permission failed', error)
-    }
-  }, [notificationPermission, setNotificationPermission])
-
-  const handleStart = React.useCallback(async () => {
-    if (viewMode === 'manual') return
-
-    let targetDuration = store.get(globalTimerAtom).targetDuration
-    if (viewMode === 'countdown') {
-      const parsedDuration = parseTime(countdownInput)
-      if (parsedDuration === null) return
-      targetDuration = parsedDuration
-    }
-    void requestNotificationPermission()
-
-    const started = await startTimer(store, {
+    void startTimer(store, {
       line: lineInfo.line,
-      mode: viewMode,
-      timeMode: store.get(globalTimerAtom).timeMode,
-      targetDuration,
+      mode,
+      timeMode: 'additive',
+      targetDuration: duration,
     })
-    if (started) setOpen(false)
-  }, [
-    store,
-    viewMode,
-    countdownInput,
-    lineInfo.line,
-    requestNotificationPermission,
-  ])
-
-  const handleStop = React.useCallback(() => {
-    stopAndSaveTimer(store)
-  }, [store])
-
-  const handlePause = React.useCallback(() => pauseTimer(store), [store])
-  const handleResume = React.useCallback(() => resumeTimer(store), [store])
-
-  const handleDiscard = React.useCallback(() => {
-    if (isThisTimerActive) {
-      cancelTimer(store)
-    }
-  }, [isThisTimerActive, store])
-
-  const lineContent = lineInfo.line.mdContent
-
+  }
+  const log = (replace: boolean) => {
+    const duration = parseTime(manual)
+    if (duration === null) return
+    const id = lineInfo.line.id
+    const before = store
+      .get(docAtom)
+      .children.find((line) => line.id === id)?.datumTimeSeconds
+    const next = replace ? duration : (before ?? 0) + duration
+    store.set(docAtom, (draft) => {
+      const line = draft.children.find((line) => line.id === id)
+      if (line) {
+        line.datumTimeSeconds = next
+        line.timeUpdated = new Date().toISOString()
+      }
+    })
+    setManual('')
+    toast.success(
+      `${replace ? 'Set total to' : 'Added'} ${renderTime(duration)}`,
+      {
+        action: {
+          label: 'Undo',
+          onClick: () =>
+            store.set(docAtom, (draft) => {
+              const line = draft.children.find((line) => line.id === id)
+              if (line?.datumTimeSeconds !== next) return
+              if (before === undefined) delete line.datumTimeSeconds
+              else line.datumTimeSeconds = before
+            }),
+        },
+      }
+    )
+  }
+  const inputClass =
+    'w-full min-w-0 rounded bg-white/5 px-2 py-1.5 text-sm font-mono outline-none focus:ring-1 focus:ring-accent'
   return (
-    <Dialog
-      open={open}
-      onOpenChange={(open) => {
-        if (open) {
-          // Land on the running timer's tab so its controls are in view
-          if (isThisTimerActive) {
-            setViewMode(globalTimer.mode)
-          }
-        }
-        setOpen(open)
-      }}
-    >
-      {/* flex, not block: a block wrapper gains a line-height strut taller
-          than the badge, which breaks first-line centering */}
-      <div className="ml-1 flex">
-        <BadgeButton
-          className="cursor-pointer whitespace-nowrap"
-          badgeClassName="px-[4px] py-[1px]"
-          onClick={() => {
-            if (isThisTimerActive) setViewMode(globalTimer.mode)
-            setOpen(true)
-          }}
-        >
-          <div className="flex items-center gap-1">
-            <Clock style={{ width: '16px', height: '16px' }} />
-            {(time > 0 || isThisTimerActive) && (
-              <TimerInfo
-                baseTime={time}
-                globalTimer={globalTimer}
-                isThisTimer={isThisTimerActive}
-                className={isThisTimerActive ? 'text-accent' : ''}
-              />
-            )}
-            {isThisTimerActive && (
-              <div className="w-2 h-2 bg-accent rounded-full animate-pulse" />
-            )}
-          </div>
-        </BadgeButton>
-      </div>
-      <DialogContent
-        style={viewportStyle}
-        className="text-text flex flex-col h-144 [&>div]:shrink-0 [&_button]:items-center left-1/2 top-[var(--timer-viewport-top,0px)] w-full max-w-full max-h-[calc(var(--timer-viewport-height,100dvh)*0.9)] translate-y-0 rounded-t-none overflow-y-auto overscroll-contain p-4 pt-[max(1rem,env(safe-area-inset-top))] sm:left-[32%] sm:top-[40%] sm:w-96 sm:max-w-[calc(100%-2rem)] sm:max-h-[80dvh] sm:-translate-y-1/2 sm:rounded-lg sm:p-6"
+    <>
+      <div
+        className={cn(
+          'ELine-leading TimerChip mr-4 ml-2',
+          !runningHere && time === 0 && !open && 'TimerChip-hover'
+        )}
       >
-        <DialogHeader className="flex flex-col gap-4 text-left">
-          <DialogTitle>Timer</DialogTitle>
-
-          {/* Mode Selection */}
-          <div className="flex justify-between items-center border-b border-muted pb-2">
-            <div className="grid grid-cols-3 gap-2 w-full">
-              {(['stopwatch', 'countdown', 'manual'] as const).map((mode) => (
-                <Button
-                  key={mode}
-                  {...(viewMode === mode
-                    ? { color: 'sky' }
-                    : { outline: true })}
-                  onClick={() => setViewMode(mode)}
-                  className="capitalize text-xs px-2 py-2 max-sm:py-1 max-sm:text-xs max-sm:leading-5 sm:min-h-11"
-                >
-                  {mode}
-                </Button>
-              ))}
-            </div>
-          </div>
-
-          {/* Time Mode Selection */}
-          <div className="border-b border-muted pb-2">
-            <SwitchField>
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div className="flex flex-col">
-                  <span className="text-sm font-medium text-text">
-                    Time Entry Mode
-                  </span>
-                  <span className="text-xs text-text-2">
-                    {globalTimer.timeMode === 'additive'
-                      ? 'Add to existing time'
-                      : 'Replace existing time'}
-                  </span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <span
-                    className={`text-xs ${globalTimer.timeMode === 'replacement' ? 'text-text' : 'text-text-2'}`}
-                  >
-                    Replace
-                  </span>
-                  <Switch
-                    disabled={isAnyTimerActive}
-                    checked={globalTimer.timeMode === 'additive'}
-                    onCheckedChange={(checked) => {
-                      setGlobalTimer((prev) => ({
-                        ...prev,
-                        timeMode: checked ? 'additive' : 'replacement',
-                      }))
-                    }}
-                    color="sky"
-                  />
-                  <span
-                    className={`text-xs ${globalTimer.timeMode === 'additive' ? 'text-text' : 'text-text-2'}`}
-                  >
-                    Add
-                  </span>
-                </div>
-              </div>
-            </SwitchField>
-          </div>
-          <div className="text-sm text-text-2 break-words max-h-24 overflow-y-auto">
-            {lineContent}
-          </div>
-        </DialogHeader>
-        <div className="text-primary flex flex-col gap-4 py-2">
-          <div className="flex-1 flex flex-col justify-center">
-            {viewMode === 'stopwatch' && (
-              <TimerModeStopwatch
-                globalTimer={globalTimer}
-                isRunningHere={
-                  isThisTimerActive && globalTimer.mode === 'stopwatch'
-                }
-                isAnyTimerActive={isAnyTimerActive}
-                onStart={handleStart}
-                onPause={handlePause}
-                onResume={handleResume}
-                onStop={handleStop}
-                onDiscard={handleDiscard}
-              />
+        {runningHere || time > 0 ? (
+          <button
+            onClick={() => setOpen(!open)}
+            aria-label={`Time for line ${lineInfo.lineIdx + 1}`}
+            aria-expanded={open}
+            className={cn(
+              'flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-mono whitespace-nowrap',
+              runningHere
+                ? paused
+                  ? 'bg-white/5 text-muted'
+                  : 'bg-accent-tint text-accent'
+                : 'text-muted hover:bg-white/5'
             )}
-
-            {viewMode === 'countdown' && (
-              <TimerModeCountdown
-                globalTimer={globalTimer}
-                isRunningHere={
-                  isThisTimerActive && globalTimer.mode === 'countdown'
-                }
-                isAnyTimerActive={isAnyTimerActive}
-                countdownInput={countdownInput}
-                onCountdownInputChange={setCountdownInput}
-                onStart={handleStart}
-                onPause={handlePause}
-                onResume={handleResume}
-                onStop={handleStop}
-                onDiscard={handleDiscard}
-              />
-            )}
-
-            {viewMode === 'manual' && (
-              <TimerModeManual
-                timeMode={globalTimer.timeMode}
-                timeInput={timeInput}
-                onTimeInputChange={setTimeInput}
-                onSubmit={(duration) => {
-                  setLine((line) => {
-                    if (!line) return
-                    if (globalTimer.timeMode === 'additive') {
-                      line.datumTimeSeconds =
-                        (line.datumTimeSeconds || 0) + duration
-                    } else {
-                      line.datumTimeSeconds = duration
-                    }
-                  })
-                  setOpen(false)
-                }}
-              />
-            )}
-          </div>
-        </div>
-        {isMobile && viewMode !== 'manual' && (
-          <div className="border-t border-raised pt-3 text-sm text-text-2">
-            {supportsTimerNotifications() ? (
-              (notificationPermission ?? Notification.permission) ===
-              'granted' ? (
-                <p>
-                  One notification when you start a timer. Tap it to return
-                  here.
-                </p>
-              ) : (notificationPermission ?? Notification.permission) ===
-                'denied' ? (
-                <p>
-                  Timer notifications are blocked. You can allow them in your
-                  browser or app settings.
-                </p>
+          >
+            {runningHere ? (
+              paused ? (
+                <Pause size={11} />
               ) : (
-                <Button
-                  outline
-                  className="w-full min-h-11"
-                  disabled={enablingNotifications}
-                  onClick={async () => {
-                    setEnablingNotifications(true)
-                    try {
-                      setNotificationPermission(
-                        await enableTimerNotifications()
-                      )
-                    } catch (error) {
-                      console.error('Timer notification setup failed', error)
-                      toast.error(
-                        'Could not enable timer notifications. Try again.'
-                      )
-                    } finally {
-                      setEnablingNotifications(false)
-                    }
-                  }}
-                >
-                  {enablingNotifications
-                    ? 'Enabling notifications…'
-                    : 'Enable timer notifications'}
-                </Button>
+                <span>●</span>
               )
-            ) : isIOS ? (
-              <p>
-                Add Tekne to your Home Screen and open it there to enable timer
-                notifications.
-              </p>
-            ) : null}
+            ) : (
+              <Clock size={11} />
+            )}
+            {runningHere
+              ? timer.mode === 'countdown'
+                ? `${formatTimeDisplay(remaining)} left`
+                : formatTimeDisplay(time + elapsed)
+              : renderTime(time)}
+          </button>
+        ) : (
+          <div className="flex rounded bg-white/5 text-muted text-xs whitespace-nowrap">
+            <button
+              className="px-2 py-1 hover:text-text"
+              disabled={busy}
+              onClick={() => start('stopwatch')}
+            >
+              ▶ Stopwatch
+            </button>
+            <button
+              className="px-1 hover:text-text"
+              aria-label={`Open timer row for line ${lineInfo.lineIdx + 1}`}
+              aria-expanded={open}
+              onClick={() => setOpen(!open)}
+            >
+              <ChevronDown size={12} />
+            </button>
           </div>
         )}
-      </DialogContent>
-    </Dialog>
+      </div>
+      {open && (
+        <section
+          className="TimerRow relative rounded-lg bg-raised p-4 mt-2 mb-3 overflow-hidden"
+          aria-label={`Timer for line ${lineInfo.lineIdx + 1}`}
+        >
+          <button
+            aria-label="Close timer row"
+            className="absolute right-3 top-3 text-muted hover:text-text"
+            onClick={() => setOpen(false)}
+          >
+            <X size={14} />
+          </button>
+          <fieldset disabled={busy} className="min-w-0">
+            {runningHere ? (
+              <>
+                <div className="text-xs text-text-2 mb-2">
+                  {timer.mode === 'countdown'
+                    ? `Countdown · ${renderTime(timer.targetDuration)}`
+                    : 'Stopwatch'}
+                  {paused && ' · Paused'}
+                </div>
+                <div className="font-mono text-3xl text-accent">
+                  {formatTimeDisplay(
+                    timer.mode === 'countdown' ? remaining : elapsed
+                  )}
+                </div>
+                <p className="text-xs text-muted mt-2 mb-4">
+                  {timer.mode === 'countdown' &&
+                    !paused &&
+                    `Ends at ${new Date(Date.now() + remaining * 1000).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })} · `}
+                  {renderTime(time)} logged before
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {timer.mode === 'countdown' && (
+                    <Button onClick={() => void extendTimer(store)}>+5m</Button>
+                  )}
+                  <Button
+                    onClick={() =>
+                      void (paused ? resumeTimer(store) : pauseTimer(store))
+                    }
+                  >
+                    {paused ? 'Resume' : 'Pause'}
+                  </Button>
+                  <Button
+                    color="accent"
+                    onClick={() => void stopAndSaveTimer(store, 'additive')}
+                  >
+                    Stop · add {formatTimeDisplay(elapsed)}
+                  </Button>
+                  {time > 0 && (
+                    <Button
+                      onClick={() =>
+                        void stopAndSaveTimer(store, 'replacement', time)
+                      }
+                    >
+                      Stop · replace {renderTime(time)}
+                    </Button>
+                  )}
+                  <Button plain onClick={() => void cancelTimer(store)}>
+                    Discard
+                  </Button>
+                </div>
+                {timer.mode === 'countdown' && (
+                  <div
+                    className="absolute bottom-0 left-0 h-[3px] bg-accent-fill"
+                    style={{
+                      width: `${Math.min(100, (elapsed / timer.targetDuration) * 100)}%`,
+                    }}
+                  />
+                )}
+              </>
+            ) : (
+              <>
+                <div className="text-xs text-muted mb-4">
+                  <span className="font-mono text-text-2">
+                    {renderTime(time)}
+                  </span>{' '}
+                  logged on this line
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+                  <div>
+                    <h3 className="text-sm mb-3">Stopwatch</h3>
+                    <Button color="accent" onClick={() => start('stopwatch')}>
+                      Start
+                    </Button>
+                  </div>
+                  <div>
+                    <h3 className="text-sm mb-3">Countdown</h3>
+                    <div className="flex gap-1 mb-2">
+                      {[15, 25, 50].map((minutes) => (
+                        <Button
+                          key={minutes}
+                          className="px-2"
+                          onClick={() => start('countdown', minutes * 60)}
+                        >
+                          {minutes}m
+                        </Button>
+                      ))}
+                    </div>
+                    <form
+                      className="flex gap-1"
+                      onSubmit={(e) => {
+                        e.preventDefault()
+                        const duration = parseTime(countdown)
+                        if (duration !== null && duration > 0)
+                          start('countdown', duration)
+                      }}
+                    >
+                      <input
+                        aria-label="Countdown length"
+                        className={inputClass}
+                        placeholder="25m"
+                        value={countdown}
+                        onChange={(e) => setCountdown(e.target.value)}
+                      />
+                      <Button type="submit" disabled={!parseTime(countdown)}>
+                        Start
+                      </Button>
+                    </form>
+                  </div>
+                  <div>
+                    <h3 className="text-sm mb-3">Enter time</h3>
+                    <input
+                      aria-label="Time to log"
+                      className={inputClass}
+                      placeholder="45m, 1h 20m"
+                      value={manual}
+                      onChange={(e) => setManual(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') log(false)
+                      }}
+                    />
+                    <div className="flex flex-wrap gap-1 mt-2">
+                      <Button
+                        disabled={parseTime(manual) === null}
+                        onClick={() => log(false)}
+                      >
+                        Add
+                      </Button>
+                      <Button
+                        disabled={parseTime(manual) === null}
+                        onClick={() => log(true)}
+                      >
+                        Set total
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
+          </fieldset>
+        </section>
+      )}
+    </>
   )
 }

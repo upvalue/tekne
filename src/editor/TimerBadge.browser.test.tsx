@@ -1,12 +1,6 @@
 import { afterEach, expect, test } from 'vitest'
 import { page } from '@vitest/browser/context'
-import {
-  act,
-  cleanup,
-  fireEvent,
-  render,
-  waitFor,
-} from '@testing-library/react'
+import { cleanup, fireEvent, render } from '@testing-library/react'
 import { createStore, Provider } from 'jotai'
 import { TimerBadge } from './TimerBadge'
 import { docMake, lineMake } from '@/docs/schema'
@@ -18,7 +12,7 @@ afterEach(async () => {
   await page.viewport(1280, 800)
 })
 
-test('mobile timer stays pinned to the top with compact tabs as the viewport shrinks', async () => {
+test('inline timer remains usable on a narrow screen without a modal or mode tabs', async () => {
   await page.viewport(320, 568)
   const store = createStore()
   const line = lineMake(0, 'A long task name '.repeat(20))
@@ -32,32 +26,44 @@ test('mobile timer stays pinned to the top with compact tabs as the viewport shr
   })
   const view = render(
     <Provider store={store}>
-      <TimerBadge lineInfo={{ line, lineIdx: 0 }} time={0} />
+      <div className="ELine flex flex-wrap">
+        <TimerBadge lineInfo={{ line, lineIdx: 0 }} time={0} />
+      </div>
     </Provider>
   )
-  fireEvent.click(view.getByRole('button'))
-  const dialog = await view.findByRole('dialog')
+  fireEvent.click(view.getByRole('button', { name: 'Time for line 1' }))
+  const row = view.getByRole('region', { name: 'Timer for line 1' })
+  expect(view.queryByRole('dialog')).toBeNull()
+  expect(view.queryByRole('tab')).toBeNull()
   const resume = view.getByRole('button', { name: 'Resume' })
-  view.getByRole('button', { name: 'Stop & Save' })
-  await act(() => new Promise((resolve) => setTimeout(resolve, 250)))
-  const bounds = dialog.getBoundingClientRect()
-  expect(bounds.left).toBeGreaterThanOrEqual(0)
-  expect(bounds.right).toBeLessThanOrEqual(320)
-  expect(bounds.top).toBe(0)
-  expect(bounds.bottom).toBeLessThanOrEqual(568)
-  expect(dialog.scrollWidth).toBeLessThanOrEqual(dialog.clientWidth)
+  view.getByRole('button', { name: /Stop · add/ })
+  view.getByRole('button', { name: '+5m' })
+  expect(row.getBoundingClientRect().right).toBeLessThanOrEqual(320)
+  expect(row.scrollWidth).toBeLessThanOrEqual(row.clientWidth)
   expect(resume.getBoundingClientRect().height).toBeGreaterThanOrEqual(44)
-  for (const name of ['stopwatch', 'countdown', 'manual']) {
-    const tab = view.getByRole('button', { name })
-    expect(tab.getBoundingClientRect().height).toBeLessThanOrEqual(32)
-    expect(getComputedStyle(tab).paddingTop).toBe('4px')
-    expect(getComputedStyle(tab).paddingBottom).toBe('4px')
-  }
-  await act(() => page.viewport(320, 320))
-  await waitFor(() =>
-    expect(dialog.getBoundingClientRect().height).toBeLessThanOrEqual(288)
+})
+
+test('manual time adds or replaces and exposes all three choices together', () => {
+  const store = createStore()
+  const line = lineMake(0, 'task', { datumTimeSeconds: 600 })
+  store.set(docAtom, docMake([line]))
+  const view = render(
+    <Provider store={store}>
+      <TimerBadge lineInfo={{ line, lineIdx: 0 }} time={600} />
+    </Provider>
   )
-  expect(dialog.getBoundingClientRect().top).toBe(bounds.top)
-  resume.scrollIntoView()
-  expect(resume.getBoundingClientRect().bottom).toBeLessThanOrEqual(320)
+  fireEvent.click(view.getByRole('button', { name: 'Time for line 1' }))
+  view.getByRole('heading', { name: 'Stopwatch' })
+  view.getByRole('heading', { name: 'Countdown' })
+  view.getByRole('heading', { name: 'Enter time' })
+  fireEvent.change(view.getByLabelText('Time to log'), {
+    target: { value: '45m' },
+  })
+  fireEvent.click(view.getByRole('button', { name: /^Add$/ }))
+  expect(store.get(docAtom).children[0].datumTimeSeconds).toBe(3300)
+  fireEvent.change(view.getByLabelText('Time to log'), {
+    target: { value: '1h 20m' },
+  })
+  fireEvent.click(view.getByRole('button', { name: 'Set total' }))
+  expect(store.get(docAtom).children[0].datumTimeSeconds).toBe(4800)
 })

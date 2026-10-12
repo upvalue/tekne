@@ -181,7 +181,10 @@ export const timersRouter = {
           'discard',
           'complete',
           'retarget',
+          'extend',
         ]),
+        timeMode: z.enum(['additive', 'replacement']).optional(),
+        expectedTimeSeconds: z.number().nonnegative().nullable().optional(),
         target: z
           .object({
             noteTitle: z.string(),

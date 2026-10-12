@@ -2,7 +2,8 @@ import { useEffect, useRef } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { orpc, orpcClient } from '@/api/client'
 import { elapsedMilliseconds } from '@/docs/timer'
-import { setDetailTitle, setTimerActive } from '@/lib/title'
+import { setDetailTitle, setTimerActive, setTimerDisplay } from '@/lib/title'
+import { formatTimeDisplay } from '@/lib/time'
 import { playTimerCompleteSound } from '@/lib/sound'
 import { dismissTimerNotification } from './timer-notifications'
 import { toast } from 'sonner'
@@ -37,6 +38,19 @@ export const TimerObserver = () => {
     const data = query.data
     const check = () => {
       const serverNow = data.serverNow + Date.now() - query.dataUpdatedAt
+      const active = data.timers.find((timer) => timer.completedAt === null)
+      if (active) {
+        const elapsed = Math.floor(
+          elapsedMilliseconds(active, serverNow) / 1000
+        )
+        const seconds =
+          active.mode === 'countdown'
+            ? Math.max(0, active.targetDuration - elapsed)
+            : elapsed
+        setTimerDisplay(
+          `${active.runningSince === null ? 'Ⅱ' : '●'} ${formatTimeDisplay(seconds)} · ${active.lineContent || active.noteTitle}`
+        )
+      } else setTimerDisplay(null)
       for (const timer of data.timers) {
         if (
           timer.mode !== 'countdown' ||

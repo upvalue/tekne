@@ -23,7 +23,16 @@ export const presentTimer = (row: DBTimer): Timer => ({
 export type TimerAction = {
   id: string
   revision: number
-  action: 'pause' | 'resume' | 'save' | 'discard' | 'complete' | 'retarget'
+  action:
+    | 'pause'
+    | 'resume'
+    | 'save'
+    | 'discard'
+    | 'complete'
+    | 'retarget'
+    | 'extend'
+  timeMode?: Timer['timeMode']
+  expectedTimeSeconds?: number | null
   target?: {
     noteTitle: string
     lineId: string
@@ -63,6 +72,35 @@ export const changeTimer = async (
       timer.running_since !== null &&
       elapsed(timer, now) >= timer.target_duration * 1000
     if (input.action === 'complete' && !due) return presentTimer(timer)
+    if (input.action === 'extend') {
+      if (timer.mode !== 'countdown' || timer.completed_at !== null)
+        throw new ORPCError('BAD_REQUEST', {
+          message: 'Only an active countdown can be extended',
+        })
+      if (!due) {
+        return presentTimer(
+          await tx
+            .updateTable('timers')
+            .set({
+              target_duration: Math.min(31536000, timer.target_duration + 300),
+              revision: timer.revision + 1,
+            })
+            .where('id', '=', timer.id)
+            .returningAll()
+            .executeTakeFirstOrThrow()
+        )
+      }
+    }
+    if (input.action === 'save' && input.timeMode) {
+      timer = {
+        ...timer,
+        time_mode: input.timeMode,
+        base_time_seconds:
+          input.expectedTimeSeconds === undefined
+            ? timer.base_time_seconds
+            : input.expectedTimeSeconds,
+      }
+    }
     if (input.action === 'retarget') {
       if (timer.completed_at === null || !input.target)
         throw new ORPCError('BAD_REQUEST', {

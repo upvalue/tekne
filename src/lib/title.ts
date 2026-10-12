@@ -1,6 +1,7 @@
 let mainTitle: string | null = null
 let detailTitle: string | null = null
 let timerActive = false
+let timerDisplay: string | null = null
 
 const formatTitle = (
   main: string | null,
@@ -17,7 +18,7 @@ const formatTitle = (
 
 const updateTitle = () => {
   const formattedTitle = formatTitle(mainTitle, detailTitle, timerActive)
-  document.title = formattedTitle
+  document.title = timerDisplay ?? formattedTitle
 }
 
 export const setDetailTitle = (title: string | null) => {
@@ -32,5 +33,10 @@ export const setMainTitle = (title: string | null) => {
 
 export const setTimerActive = (active: boolean) => {
   timerActive = active
+  updateTitle()
+}
+
+export const setTimerDisplay = (display: string | null) => {
+  timerDisplay = display
   updateTitle()
 }

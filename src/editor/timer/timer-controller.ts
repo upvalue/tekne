@@ -3,6 +3,7 @@ import type { ZLine } from '@/docs/schema'
 import { elapsedMilliseconds, type Timer } from '@/docs/timer'
 import { orpcClient } from '@/api/client'
 import { toast } from 'sonner'
+import { appPath } from '@/lib/app-path'
 import { showTimerStartedNotification } from './timer-notifications'
 import {
   DEFAULT_COUNTDOWN_SECONDS,
@@ -131,8 +132,23 @@ export const startTimer = (
   }
 ) =>
   run(store, async (binding) => {
-    if (binding.timer)
-      throw new Error('A timer is already active. Manage it in Tools → Timers.')
+    if (binding.timer) {
+      const current = binding.timer
+      toast.info(
+        `Timer already running: ${current.lineContent || current.noteTitle}`,
+        {
+          action: {
+            label: 'Jump to line',
+            onClick: () => {
+              window.location.href = appPath(
+                `/n/${encodeURIComponent(current.noteTitle)}#line-${current.lineId}`
+              )
+            },
+          },
+        }
+      )
+      return
+    }
     await binding.flush()
     const timer = await orpcClient.timers.start({
       id: crypto.randomUUID(),
@@ -146,7 +162,9 @@ export const startTimer = (
   })
 const change = (
   store: EditorStore,
-  action: 'pause' | 'resume' | 'save' | 'discard'
+  action: 'pause' | 'resume' | 'save' | 'discard' | 'extend',
+  timeMode?: GlobalTimerState['timeMode'],
+  expectedTimeSeconds?: number | null
 ) =>
   run(store, async (binding) => {
     const timer = binding.timer
@@ -156,6 +174,7 @@ const change = (
       id: timer.id,
       revision: timer.revision,
       action,
+      ...(timeMode ? { timeMode, expectedTimeSeconds } : {}),
     })
     if (result?.completionError)
       toast.warning(
@@ -164,7 +183,12 @@ const change = (
   })
 export const pauseTimer = (store: EditorStore) => change(store, 'pause')
 export const resumeTimer = (store: EditorStore) => change(store, 'resume')
-export const stopAndSaveTimer = (store: EditorStore) => change(store, 'save')
+export const stopAndSaveTimer = (
+  store: EditorStore,
+  timeMode?: GlobalTimerState['timeMode'],
+  expectedTimeSeconds?: number | null
+) => change(store, 'save', timeMode, expectedTimeSeconds)
+export const extendTimer = (store: EditorStore) => change(store, 'extend')
 export const cancelTimer = (store: EditorStore) => change(store, 'discard')
 
 /** Detach this view without changing the persisted timer. */

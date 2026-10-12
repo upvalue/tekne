@@ -1,7 +1,6 @@
 import { useAtomValue, useSetAtom, useStore } from 'jotai'
 import {
   focusedLineAtom,
-  globalTimerAtom,
   commandPaletteOpenAtom,
   showLineNumbersAtom,
 } from './state'
@@ -99,7 +98,6 @@ export const Gutter = ({
  */
 const ELineImpl = (lineInfo: ELineProps) => {
   const { cmRef, cmView } = useCodeMirror(lineInfo)
-  const timer = useAtomValue(globalTimerAtom)
   const {
     attributes,
     listeners,
@@ -149,7 +147,7 @@ const ELineImpl = (lineInfo: ELineProps) => {
       ref={setNodeRef}
       style={style}
       className={cn(
-        'ELine relative w-full py-1 flex items-start',
+        'ELine relative w-full py-1 flex flex-wrap items-start',
         line.datumTaskStatus === 'incomplete' && 'ELine-cancelled',
         line.datumTaskStatus === 'complete' && 'ELine-complete',
         collapseState === 'collapsed' && 'hidden',
@@ -216,16 +214,9 @@ const ELineImpl = (lineInfo: ELineProps) => {
           )}
         </div>
       )}
-      {(line.datumTimeSeconds !== undefined ||
-        (timer.isActive && timer.lineId === line.id)) && (
-        <div className="ELine-leading">
-          <TimerBadge lineInfo={lineInfo} time={line.datumTimeSeconds ?? 0} />
-        </div>
-      )}
-
       <div
         className={cn(
-          'cm-editor-container min-w-0 flex-1 ml-2 pr-2',
+          'cm-editor-container min-w-0 ml-2 pr-0',
           lineIsHeader && `ELine-header-${headerLevel}`
         )}
         ref={cmRef}
@@ -242,6 +233,8 @@ const ELineImpl = (lineInfo: ELineProps) => {
           +{lineInfo.hiddenCount}
         </button>
       )}
+
+      <TimerBadge lineInfo={lineInfo} time={line.datumTimeSeconds ?? 0} />
 
       {lineInfo.touchMode && !lineInfo.isTouchEditing && (
         <button

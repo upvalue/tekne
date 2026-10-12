@@ -2,7 +2,7 @@
 @import 'tw-animate-css';
 
 .cm-editor-container [contenteditable] {
-  caret-color: white;
+  caret-color: var(--color-text);
 }
 
 .cm-editor .cm-scroller {
@@ -272,8 +272,8 @@
 }
 
 .TitleBar {
-  height: 144px;
-  padding: 60px 24px 20px 104px;
+  height: 132px;
+  padding: 60px 24px 20px 110px;
 }
 .ELine,
 .ReadOnlyLine {
@@ -344,5 +344,57 @@
   }
   .TitleBar [aria-label='Document title'] {
     font-size: 22px;
+  }
+}
+.TimerChip-hover {
+  opacity: 0;
+  pointer-events: none;
+}
+.ELine:hover .TimerChip-hover,
+.ELine:focus-within .TimerChip-hover {
+  opacity: 1;
+  pointer-events: auto;
+}
+.TimerRow {
+  margin-left: 120px;
+  margin-right: 16px;
+  flex-basis: calc(100% - 136px);
+}
+@media (max-width: 767px) {
+  .TimerRow {
+    margin-left: 0;
+    margin-right: 0;
+    flex-basis: 100%;
+  }
+  .TimerRow button {
+    min-height: 44px;
+  }
+  .TimerChip {
+    margin-right: 0;
+  }
+}
+@media (pointer: coarse) {
+  .TimerChip-hover {
+    opacity: 1;
+    pointer-events: auto;
+  }
+}
+
+.ELine > .cm-editor-container {
+  flex: 0 1 auto;
+  width: max-content;
+}
+.ELine-gutter {
+  position: relative;
+  grid-template-columns: minmax(0, 1fr);
+  padding-right: 8px;
+}
+.ELine-gutter > .ELine-drag-handle {
+  position: absolute;
+  left: 0;
+}
+@media (min-width: 768px) {
+  .TEditor-scroll {
+    padding-left: 14px;
   }
 }

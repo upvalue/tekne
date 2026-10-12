@@ -265,3 +265,73 @@ test('status uses current text and surrounding lines and never changes expired t
   expect(await note()).toEqual(before)
   expect((await timers.list()).timers).toHaveLength(1)
 })
+
+test('save chooses addition or replacement at stop time', async () => {
+  const { timer } = await setup('stopwatch', 'replacement')
+  await changeTimer(
+    db,
+    { id: timer.id, revision: 0, action: 'save', timeMode: 'additive' },
+    timer.runningSince! + 5000
+  )
+  expect((await note()).body.children[0].datumTimeSeconds).toBe(15)
+  const next = await setup('stopwatch', 'additive')
+  await changeTimer(
+    db,
+    {
+      id: next.timer.id,
+      revision: 0,
+      action: 'save',
+      timeMode: 'replacement',
+      expectedTimeSeconds: 10,
+    },
+    next.timer.runningSince! + 5000
+  )
+  expect((await note()).body.children[0].datumTimeSeconds).toBe(5)
+})
+
+test('replacement still retains elapsed time when the displayed total is stale', async () => {
+  const { timer } = await setup('stopwatch', 'additive')
+  const result = await changeTimer(
+    db,
+    {
+      id: timer.id,
+      revision: 0,
+      action: 'save',
+      timeMode: 'replacement',
+      expectedTimeSeconds: 9,
+    },
+    timer.runningSince! + 5000
+  )
+  expect(result?.completionError).toBe('time_changed')
+  expect((await note()).body.children[0].datumTimeSeconds).toBe(10)
+})
+
+test('extending a paused countdown preserves elapsed time and completes at the new target', async () => {
+  const { timer } = await setup('countdown', 'additive')
+  const paused = await changeTimer(
+    db,
+    { id: timer.id, revision: 0, action: 'pause' },
+    timer.runningSince! + 5000
+  )
+  const extended = await changeTimer(
+    db,
+    { id: timer.id, revision: paused!.revision, action: 'extend' },
+    timer.runningSince! + 10000
+  )
+  expect(extended).toMatchObject({
+    targetDuration: 360,
+    accumulatedMs: 5000,
+    runningSince: null,
+  })
+  const resumed = await changeTimer(
+    db,
+    { id: timer.id, revision: extended!.revision, action: 'resume' },
+    timer.runningSince! + 15000
+  )
+  await changeTimer(
+    db,
+    { id: timer.id, revision: resumed!.revision, action: 'complete' },
+    timer.runningSince! + 370000
+  )
+  expect((await note()).body.children[0].datumTimeSeconds).toBe(370)
+})
