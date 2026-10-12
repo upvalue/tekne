@@ -494,7 +494,7 @@ export const TEditor = () => {
           <input
             aria-label="New line"
             placeholder={showWritingPrompt ? writingPrompt(lastLine?.id) : ''}
-            className="NewLinePrompt ml-36 max-md:ml-0 w-[calc(100%-9rem)] max-md:w-full bg-transparent py-1 pl-6 text-base leading-6 text-muted outline-none"
+            className="NewLinePrompt ml-[156px] max-md:ml-0 w-[calc(100%-156px)] max-md:w-full bg-transparent py-1 pl-6 text-base leading-6 text-muted outline-none"
             onFocus={() => {
               const lineIdx = doc.children.length
               const line = lineMake(0, '')

@@ -40,10 +40,11 @@
   display: grid;
   align-items: center;
   align-self: start;
-  width: 144px;
+  width: 156px;
   font-size: 12px;
   position: relative;
   grid-template-columns: minmax(0, 1fr);
+  /* Leaves 96px for the timestamp and a 12px gap before the drag handle. */
   padding-right: 60px;
 }
 
@@ -287,7 +288,7 @@
     margin-inline: auto;
   }
   .TitleBar {
-    padding-left: 216px;
+    padding-left: 228px;
     padding-right: 48px;
   }
   .TEditor-scroll {
@@ -297,7 +298,7 @@
 
 .ELine {
   display: grid;
-  grid-template-columns: 144px var(--line-indent, 0px) 16px max-content minmax(
+  grid-template-columns: 156px var(--line-indent, 0px) 16px max-content minmax(
       0,
       max-content
     ) max-content minmax(16px, 1fr);
@@ -474,7 +475,7 @@
 }
 
 .ELine-gutter > .ELine-drag-handle {
-  left: 96px;
+  left: 108px;
 }
 
 .ELine-empty > .cm-editor-container {

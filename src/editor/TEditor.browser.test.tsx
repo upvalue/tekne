@@ -99,7 +99,7 @@ test('desktop gutter and document inset return at the 768px breakpoint', async (
   expect(getComputedStyle(editor).paddingLeft).toBe('48px')
   expect(getComputedStyle(editor).paddingRight).toBe('48px')
   expect(getComputedStyle(gutter).display).toBe('grid')
-  expect(gutter.getBoundingClientRect().width).toBe(144)
+  expect(gutter.getBoundingClientRect().width).toBe(156)
 })
 
 test('collapsed children stay hidden when line chips and timer rows use the grid', () => {
