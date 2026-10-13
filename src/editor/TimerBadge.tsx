@@ -172,7 +172,7 @@ export const TimerBadge = ({
           <div className="ELine-leading TimerChip ml-2 text-xs tabular-nums whitespace-nowrap">
             <PopoverButton
               className={cn(
-                'flex items-center gap-1.5 rounded px-1.5 leading-5',
+                'flex h-5 items-center gap-1.5 rounded px-1.5 leading-5',
                 runningHere && !paused
                   ? 'bg-accent-tint text-accent hover:brightness-125 data-popup-open:brightness-125'
                   : 'bg-white/7 text-text-2 hover:bg-white/11 hover:text-text data-popup-open:bg-white/11'
@@ -184,7 +184,7 @@ export const TimerBadge = ({
               }}
             >
               {!runningHere ? (
-                <Clock size={11} />
+                <Clock size={time > 0 ? 11 : 14} />
               ) : paused ? (
                 <Pause size={11} />
               ) : (

@@ -42,7 +42,7 @@ body {
 .Panel {
   background: var(--color-panel);
   border-left: 1px solid color-mix(in srgb, var(--color-text) 3%, transparent);
-  padding: 0 8px 0 24px;
+  padding: 0 8px;
 }
 @media (max-width: 1023px) {
   .Panel {
