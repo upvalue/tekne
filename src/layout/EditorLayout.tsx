@@ -13,9 +13,11 @@ import { useCallback, useState } from 'react'
 interface EditorLayoutProps {
   editor: React.ReactNode
   sidepanel: React.ReactNode
+  /** Stays usable while a document mutation makes the editor inert. */
+  footer?: React.ReactNode
 }
 
-export function EditorLayout({ editor, sidepanel }: EditorLayoutProps) {
+export function EditorLayout({ editor, sidepanel, footer }: EditorLayoutProps) {
   const mutationPending = useAtomValue(documentMutationPendingAtom)
   const wide = useAtomValue(isWideViewportAtom, { store: uiStore })
   const [panelVisible, setPanelVisible] = usePanelVisible()
@@ -51,18 +53,24 @@ export function EditorLayout({ editor, sidepanel }: EditorLayoutProps) {
   )
 
   return (
-    <div
-      inert={mutationPending}
-      aria-busy={mutationPending}
-      className="w-full flex flex-col relative"
-    >
+    <div className="w-full flex flex-col relative">
       <div className="flex flex-grow">
-        <div className="flex-1 min-w-0 Editor">{editor}</div>
+        <div className="flex-1 min-w-0 Editor">
+          <div
+            inert={mutationPending}
+            aria-busy={mutationPending}
+            className="contents"
+          >
+            {editor}
+          </div>
+          {footer}
+        </div>
 
         {!panelVisible && (
           <button
             aria-label="Show panel"
             title="Show panel"
+            disabled={mutationPending}
             onClick={() => setPanelVisible(true)}
             className="absolute right-3 top-4 z-20 p-2 text-muted hover:text-text rounded bg-panel"
           >
@@ -72,7 +80,7 @@ export function EditorLayout({ editor, sidepanel }: EditorLayoutProps) {
         {/* Desktop panel (side-by-side, drag left edge to resize) */}
         {wide && (
           <div
-            inert={!panelVisible}
+            inert={!panelVisible || mutationPending}
             aria-hidden={!panelVisible}
             data-open={panelVisible || undefined}
             data-resizing={resizing || undefined}
@@ -103,7 +111,7 @@ export function EditorLayout({ editor, sidepanel }: EditorLayoutProps) {
         {/* Mobile panel (fullscreen overlay, slides in from the right) */}
         {!wide && (
           <div
-            inert={!panelVisible}
+            inert={!panelVisible || mutationPending}
             aria-hidden={!panelVisible}
             data-open={panelVisible || undefined}
             className="fixed inset-x-0 top-0 bottom-[var(--notification-bar-height)] z-50 bg-page lg:hidden Panel PanelOverlay overflow-auto"

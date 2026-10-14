@@ -5,11 +5,13 @@ import { EditorLayout } from './EditorLayout'
 import { TitleBar } from '@/editor/TitleBar'
 import { Panel } from '@/panel/Panel'
 import { TouchBar } from '@/editor/touch/TouchBar'
+import { NotificationScratchpad } from '@/components/NotificationScratchpad'
+import { RunningTimerPill } from '@/editor/timer/RunningTimerPill'
 import { useSyncDisplayMode } from '@/hooks/display-mode'
 
 /**
  * The editor page shell: a (per-document) Jotai store, command palette
- * wiring, and the editor/panel layout with title and status bars. The main
+ * wiring, and the editor/panel layout with title, status and bottom bars. The main
  * editor route, /lab, and the doc-not-found page all render through this so
  * they exercise the same tree.
  */
@@ -46,6 +48,9 @@ export const EditorShell = ({
             </>
           }
           sidepanel={<Panel />}
+          footer={
+            <NotificationScratchpad embedded timer={<RunningTimerPill />} />
+          }
         />
       </CommandPaletteProvider>
     </Provider>

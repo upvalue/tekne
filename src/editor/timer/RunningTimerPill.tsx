@@ -28,7 +28,7 @@ export const RunningTimerPill = () => {
     : formatTimeDisplay(timer.mode === 'countdown' ? remaining : elapsed)
   return (
     <button
-      className="rounded bg-accent-tint px-2 py-0.5 text-xs text-accent tabular-nums max-w-64 truncate"
+      className="shrink-0 rounded bg-accent-tint px-2 py-0.5 text-xs text-accent tabular-nums max-w-64 truncate"
       aria-label="Jump to running timer"
       onClick={() => {
         const index = store
@@ -50,7 +50,7 @@ export const RunningTimerPill = () => {
           {additive ? ` · ${formatTimeDisplay(remaining)} left` : ' left'}
         </span>
       )}{' '}
-      <span className="font-sans hidden xl:inline">{timer.lineContent}</span>
+      <span className="font-sans hidden md:inline">{timer.lineContent}</span>
     </button>
   )
 }

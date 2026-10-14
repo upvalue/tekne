@@ -11,6 +11,7 @@ import {
 import { useGlobalKeybinding } from '@/hooks/useGlobalKeybinding'
 import { orpc } from '@/api/client'
 import { NotificationScratchpad } from '@/components/NotificationScratchpad'
+import { useEmbeddedNotificationBar } from '@/components/embedded-notification-bar'
 import { notifications } from '@/lib/notifications'
 import { useEffect, useRef } from 'react'
 import { TemplateDialog } from '@/controls/TemplateDialog'
@@ -41,6 +42,7 @@ const RootComponent = () => {
     })
   })
   const setPanelVisible = useSetPanelVisible()
+  const embeddedBar = useEmbeddedNotificationBar()
 
   useGlobalKeybinding('searchPanel', openSearch)
 
@@ -49,10 +51,10 @@ const RootComponent = () => {
   return (
     <>
       <TimerObserver />
-      <div className="AppContent">
+      <div className="AppContent" data-embedded-bar={embeddedBar || undefined}>
         <Outlet />
       </div>
-      <NotificationScratchpad />
+      {!embeddedBar && <NotificationScratchpad />}
       <TemplateDialog />
       <HelpDialog />
     </>

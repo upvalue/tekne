@@ -276,15 +276,18 @@
 @media (min-width: 768px) {
   .TitleBar {
     width: 100%;
-    max-width: 1040px;
+    max-width: var(--doc-column-width);
     margin-inline: auto;
-    padding-left: 228px;
-    padding-right: 48px;
+    padding-left: var(--doc-text-start);
+    padding-right: var(--doc-column-inset);
   }
   /* Spans the whole editor area so the scrollbar sits at its edge; the
-     padding centers a 1040px column inside it, matching the title bar. */
+     padding centers the document column inside it, matching the title bar. */
   .TEditor-scroll {
-    padding-inline: max(48px, calc((100% - 1040px) / 2 + 48px));
+    padding-inline: max(
+      var(--doc-column-inset),
+      calc((100% - var(--doc-column-width)) / 2 + var(--doc-column-inset))
+    );
   }
 }
 
@@ -367,7 +370,7 @@
 .Editor {
   display: flex;
   flex-direction: column;
-  height: calc(100dvh - var(--notification-bar-height, 0px));
+  height: 100dvh;
 }
 .TitleBar {
   flex: none;

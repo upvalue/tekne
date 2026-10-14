@@ -12,7 +12,6 @@ import { List } from 'lucide-react'
 import { renderTime } from '@/lib/time'
 import { useGlobalKeybinding } from '@/hooks/useGlobalKeybinding'
 import { notifications } from '@/lib/notifications'
-import { RunningTimerPill } from './timer/RunningTimerPill'
 
 const GoToLineInput = ({
   totalLines,
@@ -122,7 +121,6 @@ export const StatusBar = ({
           )}
         </>
       )}
-      <RunningTimerPill />
       {goToLineOpen && (
         <GoToLineInput
           totalLines={doc.children.length}

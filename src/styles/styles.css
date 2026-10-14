@@ -152,14 +152,42 @@ button:disabled {
 
 :root {
   --notification-bar-height: calc(2rem + env(safe-area-inset-bottom, 0px));
+  /* The document column. The title bar, lines and bottom bar all use these
+     so their text lines up. */
+  --doc-column-width: 1040px;
+  --doc-column-inset: 48px;
+  --doc-text-start: 228px;
 }
 .AppContent {
   padding-bottom: var(--notification-bar-height);
 }
+/* Editor pages put the bar at the bottom of the document column instead. */
+.AppContent[data-embedded-bar] {
+  padding-bottom: 0;
+}
 .AppViewport {
-  height: calc(100dvh - var(--notification-bar-height));
+  height: 100dvh;
+}
+.PanelOverlay .AppViewport {
+  height: 100%;
 }
 .NotificationBar {
   height: var(--notification-bar-height);
   padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+/* Pinned to the bottom even while the document is still loading. */
+.Editor > .NotificationBar {
+  margin-top: auto;
+}
+.NotificationBar-column {
+  padding-inline: 16px 12px;
+}
+@media (min-width: 768px) {
+  .NotificationBar-column {
+    width: 100%;
+    max-width: var(--doc-column-width);
+    margin-inline: auto;
+    padding-left: var(--doc-text-start);
+    padding-right: var(--doc-column-inset);
+  }
 }

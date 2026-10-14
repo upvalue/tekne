@@ -1,4 +1,4 @@
-import { useState, useSyncExternalStore } from 'react'
+import { useState, useSyncExternalStore, type ReactNode } from 'react'
 import {
   CircleAlert,
   CircleCheck,
@@ -16,6 +16,8 @@ import {
 } from './vendor/Dialog'
 import { Button } from './vendor/Button'
 import { Tooltip } from './vendor/Tooltip'
+import { cn } from '@/lib/utils'
+import { useClaimNotificationBar } from './embedded-notification-bar'
 
 const icons = {
   error: CircleAlert,
@@ -24,7 +26,15 @@ const icons = {
   info: Info,
 }
 
-export function NotificationScratchpad() {
+export function NotificationScratchpad({
+  embedded = false,
+  timer,
+}: {
+  /** Rendered as the last row of the document column instead of fixed. */
+  embedded?: boolean
+  timer?: ReactNode
+}) {
+  useClaimNotificationBar(embedded)
   const { entries, currentId } = useSyncExternalStore(
     notifications.subscribe,
     notifications.getSnapshot
@@ -34,8 +44,18 @@ export function NotificationScratchpad() {
   const Icon = current ? icons[current.kind] : Info
   return (
     <>
-      <div className="NotificationBar fixed inset-x-0 bottom-0 z-50 border-t border-white/7 bg-panel text-xs text-text-2">
-        <div className="flex h-full min-w-0 items-center gap-2 px-3">
+      <div
+        className={cn(
+          'NotificationBar border-t border-white/7 bg-panel text-xs text-text-2',
+          embedded ? 'flex-none' : 'fixed inset-x-0 bottom-0 z-50'
+        )}
+      >
+        <div
+          className={cn(
+            'flex h-full min-w-0 items-center gap-2',
+            embedded ? 'NotificationBar-column' : 'px-3'
+          )}
+        >
           <div
             role="status"
             aria-live="polite"
@@ -66,6 +86,7 @@ export function NotificationScratchpad() {
           >
             <X className="size-3.5" />
           </button>
+          {timer}
           <Tooltip
             label="Notification history"
             description="The latest 50 messages stay here until you reload this tab. Open a message to read its full text. Actions are available until you change pages."
@@ -76,7 +97,10 @@ export function NotificationScratchpad() {
               aria-label={`Notification history (${entries.length})`}
             >
               <History className="size-3.5" />
-              <span>History ({entries.length})</span>
+              <span className="hidden md:inline">
+                History ({entries.length})
+              </span>
+              <span className="md:hidden">{entries.length}</span>
             </button>
           </Tooltip>
         </div>
