@@ -56,6 +56,7 @@ export function NotificationScratchpad({
             embedded ? 'NotificationBar-column' : 'px-3'
           )}
         >
+          {timer}
           <div
             role="status"
             aria-live="polite"
@@ -86,7 +87,6 @@ export function NotificationScratchpad({
           >
             <X className="size-3.5" />
           </button>
-          {timer}
           <Tooltip
             label="Notification history"
             description="The latest 50 messages stay here until you reload this tab. Open a message to read its full text. Actions are available until you change pages."
