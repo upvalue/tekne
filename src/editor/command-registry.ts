@@ -1,5 +1,3 @@
-// Command system types and registry mechanism
-
 import type { EditorView } from '@codemirror/view'
 import type { useStore } from 'jotai'
 
@@ -21,13 +19,11 @@ export interface SubCommand {
   /** Display version of key */
   displayKey?: string
 
-  /** Display name for UI */
   name: string
 
   /** Description shown in command palette */
   description: string
 
-  /** Execute the subcommand */
   execute: (context: CommandContext) => void | Promise<void>
 }
 
@@ -35,7 +31,6 @@ export interface Command {
   /** Unique identifier (e.g., 'toggle-pin') */
   id: string
 
-  /** Display name for UI (e.g., 'Toggle pin') */
   name: string
 
   /** Longer description shown in command palette */
@@ -47,7 +42,6 @@ export interface Command {
   /** Display version of shortcut (e.g., 'P') */
   displayShortcut?: string
 
-  /** Keywords for search matching */
   keywords?: string[]
 
   /** Whether this command requires editor context (EditorView) */
@@ -59,10 +53,6 @@ export interface Command {
   /** Execute the command (not called if subcommands exist) */
   execute: (context: CommandContext) => void | Promise<void>
 }
-
-// ============================================================================
-// Registry
-// ============================================================================
 
 // Command definitions live in @/commands and register themselves here; the
 // editor UI (palette, slash-command plugin) and the panel's Help tab read from
@@ -79,15 +69,15 @@ export const registerCommands = (cmds: Command[]) => {
   }
 }
 
-/** All registered commands */
+/** Return all registered commands. */
 export const getAllCommands = (): readonly Command[] => commands
 
-/** Find a command by its shortcut key */
+/** Find a command by its shortcut key. */
 export const getCommandByShortcut = (key: string): Command | undefined => {
   return commands.find((cmd) => cmd.shortcut === key)
 }
 
-/** Search commands by query string */
+/** Search command names, descriptions, and keywords. */
 export const searchCommands = (query: string): Command[] => {
   const q = query.toLowerCase()
   return commands.filter((cmd) => {

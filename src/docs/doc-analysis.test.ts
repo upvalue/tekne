@@ -135,7 +135,6 @@ describe('treeifyDoc', () => {
 
     expect(result.children).toHaveLength(2)
 
-    // Root 1 structure
     const root1 = result.children[0]
     expect(root1.mdContent).toBe('Root 1')
     expect(root1.children).toHaveLength(1)
@@ -143,7 +142,6 @@ describe('treeifyDoc', () => {
     expect(root1.children[0].children).toHaveLength(1)
     expect(root1.children[0].children[0].mdContent).toBe('Grandchild 1.1.1')
 
-    // Root 2 structure
     const root2 = result.children[1]
     expect(root2.mdContent).toBe('Root 2')
     expect(root2.children).toHaveLength(2)
@@ -170,7 +168,6 @@ describe('treeifyDoc', () => {
     expect(level0.mdContent).toBe('Level 0')
     expect(level0.children).toHaveLength(2)
 
-    // The skipped level should still work
     expect(level0.children[0].mdContent).toBe('Level 2 (skipped 1)')
     expect(level0.children[1].mdContent).toBe('Level 1')
   })
@@ -198,22 +195,17 @@ describe('treeifyDoc', () => {
 
     const result = treeifyDoc(doc)
 
-    // Parent node should have its own tag
     expect(result.children[0].tags).toEqual(['#tag1'])
 
-    // Direct child should inherit parent's tags
     expect(result.children[0].children[0].tags).toEqual(['#tag1'])
 
-    // Grandchild should inherit parent's tags plus its own
     expect(result.children[0].children[0].children[0].tags).toEqual([
       '#tag2',
       '#tag1',
     ])
 
-    // Second parent should have its own tag
     expect(result.children[1].tags).toEqual(['#tag3'])
 
-    // Child of second parent should inherit second parent's tags
     expect(result.children[1].children[0].tags).toEqual(['#tag3'])
   })
 

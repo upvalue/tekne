@@ -1,5 +1,3 @@
-// prompt.ts - System prompt and task-message construction for the edit agent.
-
 import type { ZDoc } from '@/docs/schema'
 import { serializeDocForPrompt } from './serialize'
 

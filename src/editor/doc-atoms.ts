@@ -8,11 +8,7 @@ export const rawDocAtom = atom<ZDoc>(docMake([lineMake(0, '')]))
 
 export const focusedLineAtom = atom<number | null>(null)
 
-/**
- * Cursor column within the focused line, synced from CodeMirror selection
- * changes. Captured into undo entries so restores can return the cursor
- * to where it was, not just the line.
- */
+/** Cursor column captured with undo entries and restored with the focused line. */
 export const focusedPosAtom = atom<number>(0)
 
 export const requestFocusLineAtom = atom({

@@ -1,7 +1,6 @@
 import { ErrorState } from '@/components/ErrorState'
 import { LoadingIndicator } from '@/components/LoadingIndicator'
 import { useQuery } from '@tanstack/react-query'
-// Search panel - sidebar-friendly search interface
 
 import { useState, useCallback, useEffect, useMemo, useRef } from 'react'
 import { useNavigate } from '@tanstack/react-router'
@@ -181,7 +180,6 @@ export const Search = () => {
     setFocusRequested(false)
   }, [focusRequested, setFocusRequested])
 
-  // Debounce query for API calls (300ms)
   const debouncedQuery = useDebouncedValue(query, 300)
 
   // Parse both for instant validation feedback and debounced for queries
@@ -197,7 +195,6 @@ export const Search = () => {
     debouncedParsedQuery.operators.length > 0 &&
     debouncedParsedQuery.errors.length === 0
 
-  // Search queries use debounced value
   const linesQuery = useQuery(
     orpc.search.searchLines.queryOptions({
       input: { operators: debouncedParsedQuery.operators },
@@ -221,9 +218,7 @@ export const Search = () => {
 
   return (
     <div className="flex flex-col h-full">
-      {/* Search header */}
       <div className="px-3 py-2 space-y-3">
-        {/* Search input */}
         <div className="relative">
           <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 size-5 text-text-2" />
           <input
@@ -275,7 +270,6 @@ export const Search = () => {
           </div>
         )}
 
-        {/* View mode toggle */}
         {hasValidQuery && (
           <div className="flex gap-1 bg-raised p-1 rounded-lg">
             <button
@@ -306,7 +300,6 @@ export const Search = () => {
         )}
       </div>
 
-      {/* Results */}
       <div className="flex-1 overflow-auto">
         {!hasValidQuery ? (
           query.trim() ? (

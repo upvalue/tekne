@@ -1,11 +1,5 @@
-// Panel state atoms.
-//
-// These are app-level UI state, not document state. The editor routes each
-// create their own Jotai store for the document, so anything here must be
-// read and written through one shared store — otherwise a command registered
-// outside a route's <Provider> (e.g. the command palette's "toggle panel")
-// writes to a store the mounted panel never reads. The hooks below pin every
-// consumer to `uiStore`; use them instead of useAtom on the raw atoms.
+// App-level UI uses uiStore so commands and document-scoped Providers share state.
+// Use these hooks instead of reading the raw atoms through a route store.
 
 import { atom, getDefaultStore, useAtom, useSetAtom } from 'jotai'
 import { atomWithStorage } from 'jotai/utils'

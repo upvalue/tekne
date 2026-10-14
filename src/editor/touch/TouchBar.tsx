@@ -1,6 +1,4 @@
-// The touch-mode control bar: line navigation and actions as buttons, so a
-// phone drives the editor without the software keyboard. Rendered by
-// EditorShell; decides its own visibility from the display mode.
+// Line navigation and editing controls for touch mode.
 import { useEffect, useState, type ReactNode } from 'react'
 import { useAtomValue, useStore } from 'jotai'
 import {

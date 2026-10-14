@@ -20,16 +20,10 @@ const DiffRow = ({ line, tone }: { line: DiffLine; tone: 'red' | 'green' }) => (
   />
 )
 
-/**
- * The shared body of every proposed-diff preview: one entry per changed
- * line, rendered as red (before) / green (after) rows. Shells around it
- * (tag-rename's document pager, the agent panel's live view) differ per
- * feature; the rows do not.
- */
+/** Changed lines as before/after rows, shared by all edit previews. */
 export const ChangeRows = ({ changes }: { changes: ProposedLineChange[] }) => {
   const [showAll, setShowAll] = useState(false)
 
-  // A new proposal resets the cap
   useEffect(() => {
     setShowAll(false)
   }, [changes])

@@ -1,6 +1,5 @@
 import { AnimatedMetric } from '@/components/AnimatedMetric'
 import { AnimatePresence, motion } from 'framer-motion'
-// Shared aggregate display components for use in Aggregate panel and Search
 
 import { renderTime } from '@/lib/time'
 import { cn } from '@/lib/utils'

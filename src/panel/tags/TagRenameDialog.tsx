@@ -19,12 +19,7 @@ import { TagRenameDiff } from './TagRenameDiff'
 
 const PROPOSE_DEBOUNCE_MS = 400
 
-/**
- * Rename/merge dialog for a tag. Shows a live diff of every line across all
- * documents that the operation would rewrite; committing flushes the open
- * editor, executes server-side, then reloads the page so every cache
- * (document, tags, aggregates, search) starts fresh.
- */
+/** Preview a tag rename or merge; flush pending edits before applying it. */
 export const TagRenameDialog = ({
   tag,
   onClose,

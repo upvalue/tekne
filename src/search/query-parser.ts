@@ -1,6 +1,3 @@
-// Query parser for search feature
-// Parses query strings like "from:2026-01-02 tag:proj/tekne age:90d"
-
 import type { ParsedQuery, ParseError, SearchOperator } from './types'
 import type { NoteDataStatus, NoteDataType } from '@/db/types'
 
@@ -84,7 +81,6 @@ export function parseQuery(query: string): ParsedQuery {
   let position = 0
 
   for (const token of tokens) {
-    // Check for #tag syntax first (e.g., #exercise, #proj/tekne)
     const tagMatch = token.match(TAG_PATTERN)
     if (tagMatch) {
       // Store with # prefix since that's how tags are stored in DB
@@ -189,31 +185,21 @@ export function parseQuery(query: string): ParsedQuery {
         }
       }
     } else {
-      // Bare text - full-text search
-      // Strip quotes if present
       let text = token.replace(/^"|"$/g, '')
       if (text) {
-        // Detect wildcard patterns:
-        // run* = prefix (words starting with "run")
-        // *ing = suffix (words ending with "ing")
-        // *run* = none/contains (default)
-        // run = exact word match when no wildcards
+        // run* and *ing match word boundaries; bare text and *run* match substrings.
         let wildcard: 'none' | 'prefix' | 'suffix' | 'exact' = 'none'
 
         if (text.startsWith('*') && text.endsWith('*')) {
-          // *run* = contains (same as default)
           text = text.slice(1, -1)
           wildcard = 'none'
         } else if (text.endsWith('*')) {
-          // run* = prefix match
           text = text.slice(0, -1)
           wildcard = 'prefix'
         } else if (text.startsWith('*')) {
-          // *ing = suffix match
           text = text.slice(1)
           wildcard = 'suffix'
         } else {
-          // no wildcards = contains match (most intuitive default)
           wildcard = 'none'
         }
 
@@ -251,7 +237,6 @@ export function serializeQuery(operators: SearchOperator[]): string {
           return `doc:${op.value}`
         case 'text': {
           let text = op.value
-          // Re-add wildcards for serialization
           if (op.wildcard === 'prefix') text = `${text}*`
           else if (op.wildcard === 'suffix') text = `*${text}`
           return text.includes(' ') ? `"${text}"` : text

@@ -2,7 +2,6 @@ import type { ZDoc } from '@/docs/schema'
 import type { ParsedMdNode } from '@/docs/parser'
 import type { ColumnType } from 'kysely'
 
-// Custom column type that handles Zod validation
 type ZodJsonColumn<T> = ColumnType<T, T, T>
 
 /**
@@ -73,7 +72,6 @@ export type DBFeatureFlag = {
   updated_at: ColumnType<Date, Date | undefined, Date>
 }
 
-// Define your database schema interface here
 export type Database = {
   document_patch_receipts: {
     request_id: string

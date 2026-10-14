@@ -1,9 +1,3 @@
-// edit-ops.ts - The agent's edit operations against an outline document.
-//
-// Operations address lines by their stable id (`id`) and apply
-// sequentially to a draft copy of the document. Failures are per-op results
-// (fed back to the model as tool output), never exceptions.
-
 import { Type, type Static } from '@earendil-works/pi-ai'
 import { lineMake, type ZDoc } from '@/docs/schema'
 

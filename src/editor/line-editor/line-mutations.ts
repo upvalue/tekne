@@ -1,8 +1,4 @@
-// Pure document transformations behind the line keymap (Enter, Tab,
-// Backspace, delete-line). Each takes the current document and returns the
-// next one — no store, no CodeMirror view — so the destructive editing paths
-// are directly testable. The keymap in line-operations.ts is the thin layer
-// that reads editor state, calls these, and requests focus.
+// Pure document transformations used by the line keymap.
 import { produce } from 'immer'
 import { lineMake, type ZDoc } from '@/docs/schema'
 

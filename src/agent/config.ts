@@ -1,11 +1,4 @@
-// config.ts - Client-side discovery of the agent relay.
-
-/**
- * Where the agent's stream relay lives. Mirrors how the oRPC client picks
- * its endpoint (src/api/client.ts): same origin in production; the
- * TEKNE_ORPC_URL origin when the client is pointed at a separate server;
- * unavailable in client-only dev, where no server process exists.
- */
+/** Same endpoint origin as the API client; unavailable in client-only dev. */
 export const resolveAgentProxy = (): {
   available: boolean
   baseUrl: string

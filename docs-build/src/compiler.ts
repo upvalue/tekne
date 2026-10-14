@@ -123,7 +123,6 @@ export async function processFile(
   await fs.mkdir(outputDir, { recursive: true })
   await fs.writeFile(outputPath, result.code, 'utf-8')
 
-  // Generate hash for the source content
   const sourceHash = createHash('sha256').update(content).digest('hex')
 
   const manifest: FileManifest = {

@@ -11,12 +11,10 @@ async function buildDocs() {
   console.log('🚀 Building documentation...\n')
 
   try {
-    // Step 1: Run docs-build to compile MDX files
     console.log('📝 Compiling MDX files...')
     process.chdir(path.join(projectRoot, 'docs-build'))
     execSync('pnpm build', { stdio: 'inherit' })
 
-    // Step 2: Create src/docs directory
     const srcDocsDir = path.join(
       projectRoot,
       'src',
@@ -27,7 +25,6 @@ async function buildDocs() {
     await fs.rm(srcDocsDir, { recursive: true, force: true })
     await fs.mkdir(srcDocsDir, { recursive: true })
 
-    // Step 3: Copy generated files to src/docs
     const generatedDir = path.join(projectRoot, 'docs-build', 'generated')
     console.log('📋 Copying generated files to src/documentation...')
 

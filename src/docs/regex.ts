@@ -1,7 +1,3 @@
-// regex.ts - regex for syntax within lines
-
-// (probably should eventually not use regex and parse everything properly)
-// (but good enough for now)
 export const DOCUMENT_NAME_BODY = String.raw`[a-zA-Z0-9\s\-_.,:;()[\]{}'"/\\&*+~\x60|]`
 
 export const DocumentNameRegex = new RegExp(`^\\$?${DOCUMENT_NAME_BODY}+$`)

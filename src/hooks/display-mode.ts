@@ -1,8 +1,4 @@
-// Display mode: desktop (keyboard-first, the classic editor) vs touch
-// (tap-to-select lines plus the bottom touch bar). Resolved from viewport
-// width and pointer type, with a persisted per-device override. Like the
-// panel atoms, everything lives on uiStore so commands registered outside a
-// route's <Provider> read and write the same state the UI renders.
+// Viewport and pointer choose the default; the per-device override lives on uiStore.
 import { atom, useAtom, useAtomValue } from 'jotai'
 import { atomWithStorage } from 'jotai/utils'
 import { useEffect } from 'react'
@@ -24,11 +20,7 @@ export const resolveDisplayMode = (
   return isNarrow || isCoarse ? 'touch' : 'desktop'
 }
 
-/**
- * The user's explicit mode choice. localStorage rather than a server flag
- * on purpose: this is a per-device preference, and syncing a phone's choice
- * to a desktop would be wrong.
- */
+/** Stored locally so a phone's mode choice does not affect the desktop. */
 export const displayModeOverrideAtom = atomWithStorage<DisplayModeOverride>(
   'tekne.displayMode',
   'auto',

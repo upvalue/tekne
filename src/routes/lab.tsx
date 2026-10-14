@@ -12,11 +12,7 @@ export const Route = createFileRoute('/lab')({
   component: RouteComponent,
 })
 
-/**
- * Standalone document editor for testing in isolation from the rest of the
- * app. Renders through the same EditorShell as the real editor route, so
- * what happens here is what happens there — minus the server sync.
- */
+/** Isolated editor using the real EditorShell without server sync. */
 function RouteComponent() {
   useCodemirrorEvent('internalLinkClick', (data) => {
     notifications.info(`Clicked internal link ${data.link}`)

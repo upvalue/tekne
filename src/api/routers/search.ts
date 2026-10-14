@@ -1,5 +1,4 @@
 import { outputs } from '../outputs'
-// search.ts - ORPC router for search functionality
 import { z } from 'zod'
 import { sql } from 'kysely'
 import { ORPCError } from '@orpc/server'
@@ -18,7 +17,6 @@ import {
 
 const TAG_IN_CONTENT_REGEX = new RegExp(TAG_REGEX_MATCH_BEFORE_STR, 'g')
 
-// Zod schemas for search operators
 const searchOperatorSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('tag'), value: z.string() }),
   z.object({ type: z.literal('from'), value: z.coerce.date() }),
@@ -40,7 +38,6 @@ const searchOperatorSchema = z.discriminatedUnion('type', [
   }),
 ])
 
-// Helper to build common filter conditions
 function buildFilterConditions(operators: SearchOperator[]) {
   const conditions: {
     fromDate?: Date
@@ -73,9 +70,7 @@ function buildFilterConditions(operators: SearchOperator[]) {
 }
 
 export const searchRouter = {
-  /**
-   * Search for lines matching the query operators
-   */
+  /** Search for lines matching the query operators. */
   searchLines: proc
     .route({
       method: 'POST',
@@ -96,12 +91,10 @@ export const searchRouter = {
     .handler(async ({ input, context: { db } }) => {
       const { operators, limit, cursor } = input
 
-      // Determine if we need datum filters (tag, status, has)
       const hasDatumFilters = operators.some((op) =>
         ['tag', 'status', 'has'].includes(op.type)
       )
 
-      // Base query starts from note_lines (has all lines)
       let query = db
         .selectFrom('note_lines')
         .select([
@@ -112,7 +105,6 @@ export const searchRouter = {
           'note_lines.time_created',
           'note_lines.time_updated',
         ])
-        // Exclude templates
         .where('note_lines.note_title', 'not ilike', '$%')
         // Tiebreakers keep the order stable when many lines share a
         // creation timestamp; without them offset pagination can repeat
@@ -126,7 +118,6 @@ export const searchRouter = {
         query = query.offset(cursor)
       }
 
-      // Apply non-datum filters first (these work on note_lines directly)
       for (const op of operators as SearchOperator[]) {
         switch (op.type) {
           case 'from':
@@ -163,10 +154,8 @@ export const searchRouter = {
               op.wildcard
             )
             if (useRegex) {
-              // Use case-insensitive regex for word boundary matching
               query = query.where(sql`note_lines.content`, '~*', pattern)
             } else {
-              // Use ILIKE for simple contains
               query = query.where('note_lines.content', 'ilike', pattern)
             }
             break
@@ -174,7 +163,6 @@ export const searchRouter = {
         }
       }
 
-      // If we have datum filters, use EXISTS subquery to filter
       if (hasDatumFilters) {
         query = query.where(({ exists, selectFrom }) => {
           let subquery = selectFrom('note_data')
@@ -182,7 +170,6 @@ export const searchRouter = {
             .whereRef('note_data.note_title', '=', 'note_lines.note_title')
             .whereRef('note_data.line_idx', '=', 'note_lines.line_idx')
 
-          // Apply datum-specific filters to subquery
           for (const op of operators as SearchOperator[]) {
             switch (op.type) {
               case 'tag':
@@ -211,7 +198,6 @@ export const searchRouter = {
 
       const results = await query.execute()
 
-      // Check if there are more results
       const hasMore = results.length > limit
       const items = hasMore ? results.slice(0, limit) : results
 
@@ -264,9 +250,7 @@ export const searchRouter = {
       }
     }),
 
-  /**
-   * Get aggregate stats for tags matching the query
-   */
+  /** Get aggregate statistics for tags matching the query. */
   searchAggregate: proc
     .route({
       method: 'POST',
@@ -299,12 +283,10 @@ export const searchRouter = {
 
         const filters = buildFilterConditions(operators as SearchOperator[])
 
-        // First, find all matching tags
         let tagQuery = db
           .selectFrom('note_data')
           .select(['datum_tag as tag'])
           .where('datum_type', '=', 'tag')
-          // Exclude templates
           .where('note_title', 'not ilike', '$%')
           .distinct()
 
@@ -317,7 +299,6 @@ export const searchRouter = {
           )
         }
 
-        // Apply date filters to tag query
         if (filters.fromDate) {
           tagQuery = tagQuery.where('time_created', '>=', filters.fromDate)
         }
@@ -349,9 +330,7 @@ export const searchRouter = {
       }
     ),
 
-  /**
-   * Get all saved searches
-   */
+  /** Get all saved searches. */
   getSavedSearches: proc
     .route({
       method: 'GET',
@@ -370,9 +349,7 @@ export const searchRouter = {
         .execute()
     }),
 
-  /**
-   * Save a new search
-   */
+  /** Save a new search. */
   saveSearch: proc
     .route({
       method: 'POST',
@@ -401,9 +378,7 @@ export const searchRouter = {
       return result
     }),
 
-  /**
-   * Delete a saved search
-   */
+  /** Delete a saved search. */
   deleteSavedSearch: proc
     .route({
       method: 'DELETE',

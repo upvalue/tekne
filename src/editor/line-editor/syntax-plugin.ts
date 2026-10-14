@@ -1,5 +1,3 @@
-// syntax-plugin.ts - handles subset of markdown behavior
-// and custom syntax like [[InternalLinks]]
 import {
   Decoration,
   EditorView,
@@ -81,8 +79,7 @@ class TagWidget extends WidgetType {
   }
 }
 
-// Table to make the code a bit easier to follow
-// Simple string => create a span with that classname
+// String entries map syntax nodes to span class names.
 const syntaxTable: {
   [key: string]: string
 } = {
@@ -91,13 +88,7 @@ const syntaxTable: {
   Strikethrough: 'cm-strikethrough',
 }
 
-/**
- * The syntax plugin handles editor syntax -- implements a subset
- * of Markdown based on the @lezer/markdown parser and some custom
- * extensions to it. Then converts these into decoration marks for
- * rendering and actually servicing functionality (e.g. clickable
- * internal links)
- */
+/** Decorate parsed Markdown and custom syntax, including clickable internal links. */
 class SyntaxPlugin implements PluginValue {
   decorations = Decoration.none
 
@@ -117,9 +108,6 @@ class SyntaxPlugin implements PluginValue {
     const { hasFocus, state } = view
     const src = state.sliceDoc(0, view.state.doc.length)
     const tree = TEKNE_MD_PARSER.parse(src)
-
-    // TODO: Quite a bit of redundant code here that could
-    // be simplified
 
     visitMdTree(tree.topNode, src, 0, (node: any) => {
       const tableEntry = syntaxTable[node.type.name]

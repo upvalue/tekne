@@ -56,7 +56,6 @@ const RawDocument = ({ isActive }: { isActive: boolean }) => {
       const text = await navigator.clipboard.readText()
       const parsedDoc = JSON.parse(text)
 
-      // Validate the JSON structure
       const validatedDoc = zdoc.parse(parsedDoc)
 
       setDoc(

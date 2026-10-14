@@ -61,9 +61,7 @@ type LineSpecificEvents = {
     : never
 }[keyof CodemirrorEvents]
 
-/**
- * Listens for events for a speciifc line (ignores events for other lines)
- */
+/** Subscribe only to events for this line. */
 export const useLineEvent = <K extends LineSpecificEvents>(
   event: K,
   lineIdx: number,

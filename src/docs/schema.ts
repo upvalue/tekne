@@ -1,4 +1,3 @@
-// schema.ts - schema definition and raw line operations (eg no external dependencies)
 import { z } from 'zod'
 import { lineIdMake, LINE_ID_PATTERN } from './line-identity'
 
@@ -11,19 +10,11 @@ const zline = z.object({
   timeUpdated: z.iso.datetime(),
   collapsed: z.boolean().optional(),
 
-  /**
-   * Time recorded (in seconds)
-   */
   datumTimeSeconds: z.number().optional(),
 
-  /**
-   * Task completion status
-   */
   datumTaskStatus: z.optional(z.enum(['complete', 'incomplete', 'unset'])),
 
-  /**
-   * If a line was pinned, when
-   */
+  /** When the line was pinned. */
   datumPinnedAt: z.optional(z.iso.datetime()),
 })
 

@@ -9,7 +9,6 @@ import { cn } from '@/lib/utils'
 import { scrollToLine } from '@/editor/navigation'
 
 export const TOCContent = ({ content }: { content: string }) => {
-  // Strip leading #
   const strippedContent = content.replace(/^#+ /, '')
 
   return (

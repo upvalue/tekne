@@ -7,10 +7,7 @@ import {
   isTimerPaused,
 } from '../timer/timer-controller'
 import { globalTimerAtom, timerRowRequestAtom } from '../state'
-// line-operations.ts - line operations and key bindings.
-// The document transformations themselves live in line-mutations.ts; this
-// file is the CodeMirror keymap layer that reads editor state, applies a
-// mutation, and requests focus.
+// CodeMirror key bindings adapt the document transformations in line-mutations.ts.
 import { keymap, EditorView } from '@codemirror/view'
 import { docAtom, requestFocusLineAtom } from '../state'
 import { undo, redo } from '../undo'
@@ -176,10 +173,7 @@ export const makeKeymap = (
           lineIdx: lineIdx + 1,
           pos: 0,
         })
-        // The dispatch above synchronously updates docAtom through
-        // CodeMirror's update listener. Split that updated document rather
-        // than the snapshot from before dispatch, whose current line still
-        // contains the remainder.
+        // Dispatch already updated docAtom; split that document to avoid duplicating the remainder.
         store.set(docAtom, splitLine(getDoc(), lineIdx, remainder))
 
         return true

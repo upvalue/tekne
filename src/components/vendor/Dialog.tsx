@@ -36,7 +36,7 @@ function DialogOverlay({
     <DialogPrimitive.Backdrop
       data-slot="dialog-overlay"
       // fill-mode-forwards holds the exit animation's final frame: Base UI
-      // (unlike Radix) unmounts a beat after animationend, and without it
+      // unmounts a beat after animationend, and without it
       // the backdrop snaps back to full darkness for that beat. duration-200
       // keeps it in lockstep with the popup, which Base UI waits on.
       className={cn(

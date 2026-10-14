@@ -1,6 +1,3 @@
-// Shared translation of search-language operators into SQL predicates, used
-// by both the line search and the aggregate search so the two views cannot
-// drift apart in how they read a query.
 import type { SearchOperator } from '@/search/types'
 
 /**
@@ -34,7 +31,6 @@ export const buildTextCondition = (
   value: string,
   wildcard: string
 ): { pattern: string; useRegex: boolean } => {
-  // Escape special regex characters in the value
   const escaped = value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 
   switch (wildcard) {
@@ -45,20 +41,14 @@ export const buildTextCondition = (
       // Word ending with value: \M = word boundary end
       return { pattern: `${escaped}\\M`, useRegex: true }
     case 'exact':
-      // Exact word: both boundaries
       return { pattern: `\\m${escaped}\\M`, useRegex: true }
     case 'none':
     default:
-      // Contains anywhere (simple ILIKE)
       return { pattern: `%${escapeLike(value)}%`, useRegex: false }
   }
 }
 
-/**
- * Operators the aggregate view cannot honor: they filter individual lines,
- * while aggregates are computed over every line a tag touches. Rejecting them
- * loudly beats silently returning unfiltered totals.
- */
+/** Line filters cannot apply to aggregates, which include every line for a tag. */
 export const unsupportedAggregateOperators = (
   operators: SearchOperator[]
 ): string[] => [

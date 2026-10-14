@@ -1,11 +1,5 @@
-// agent-stream.ts - SSE relay between the browser-side agent and the LLM.
-//
-// The client's pi streamProxy POSTs {model, context, options} to
-// /api/stream; this route runs the actual provider call with server-held
-// credentials and streams back the slim proxy event format (deltas without
-// the `partial` field). The client-supplied model is ignored: provider,
-// model, and key come exclusively from the server environment, keeping the
-// app provider-agnostic (swap models by editing .env).
+// Relay pi streamProxy events using server-configured credentials and model.
+// Client-supplied models are ignored; deltas omit the reconstructible `partial` field.
 
 import express, { type Express, type Request, type Response } from 'express'
 import {
@@ -144,7 +138,6 @@ const sanitizeOptions = (options: unknown) => {
 }
 
 export const registerAgentRoutes = (app: Express) => {
-  // Availability probe for the panel's empty state
   app.get('/api/agent/config', (_req: Request, res: Response) => {
     res.json({ available: Boolean(process.env.LLM_API_KEY) })
   })

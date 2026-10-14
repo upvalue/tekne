@@ -1,6 +1,5 @@
 import { ORPCError } from '@orpc/server'
 import { outputs } from '../outputs'
-// analysis.ts - currently aggregate data related stuff
 import { uniqBy } from 'lodash-es'
 import z from 'zod'
 import { proc } from '../init'
@@ -107,9 +106,7 @@ export const analysisRouter = {
 
         const [overall, onThisPage] = await Promise.all([
           aggregateTagData(db, tagsInDoc, { excludeTemplates: true }),
-          // Already narrowed to one document, and that document may itself be a
-          // template. Pins are a global notion, so there is no page-scoped one
-          // to look up.
+          // Include templates when viewing their own totals; pins are global only.
           aggregateTagData(
             db,
             tagsInDoc,

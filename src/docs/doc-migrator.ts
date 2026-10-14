@@ -1,7 +1,3 @@
-// doc-migrator.ts
-
-// This is a pretty hacky and slop-coded document migrator, intended
-// to make it relatively easy to change the document schema on the fly
 import {
   CURRENT_SCHEMA_VERSION,
   zdoc,
@@ -45,14 +41,7 @@ export interface MigrationReport {
   migrated: boolean
 }
 
-/**
- * Migrates a document body to the current schema version and provides
- * a detailed report of what changes were made.
- *
- * @param title - Document title (used for reporting only)
- * @param body - Document body to migrate
- * @returns The migrated body and a migration report
- */
+/** Migrate the body and report changes; title is used only in the report. */
 export const migrateDocWithReport = (
   title: string,
   body: ZDoc
@@ -65,7 +54,6 @@ export const migrateDocWithReport = (
     migrated: false,
   }
 
-  // Clone the body to avoid mutations
   // We cast through unknown because we need to handle legacy fields not in ZDoc
   let migratedBody = JSON.parse(JSON.stringify(body)) as ZDoc & {
     children?: Array<
@@ -73,7 +61,6 @@ export const migrateDocWithReport = (
     >
   }
 
-  // Ensure body has correct structure
   if (!migratedBody || typeof migratedBody !== 'object') {
     migratedBody = {
       type: 'doc',
@@ -89,7 +76,6 @@ export const migrateDocWithReport = (
     report.migrated = true
   }
 
-  // Ensure children array exists
   if (!migratedBody.children) {
     migratedBody.children = []
     report.operations.push({
@@ -101,9 +87,7 @@ export const migrateDocWithReport = (
     report.migrated = true
   }
 
-  // Migrate each child line
   migratedBody.children = migratedBody.children.map((child, index: number) => {
-    // Cast to handle legacy fields
     const legacyChild = child as ZLine & {
       createdAt?: string
       updatedAt?: string
@@ -121,7 +105,6 @@ export const migrateDocWithReport = (
       report.migrated = true
     }
 
-    // Migrate createdAt -> timeCreated
     if (legacyChild.createdAt) {
       mod.timeCreated = legacyChild.createdAt
       delete (mod as typeof legacyChild).createdAt
@@ -135,7 +118,6 @@ export const migrateDocWithReport = (
       report.migrated = true
     }
 
-    // Migrate updatedAt -> timeUpdated
     if (legacyChild.updatedAt) {
       mod.timeUpdated = legacyChild.updatedAt
       delete (mod as typeof legacyChild).updatedAt
@@ -149,7 +131,6 @@ export const migrateDocWithReport = (
       report.migrated = true
     }
 
-    // Migrate datumTime -> datumTimeSeconds
     if (legacyChild.datumTime !== undefined) {
       mod.datumTimeSeconds = legacyChild.datumTime
       delete (mod as typeof legacyChild).datumTime
@@ -166,7 +147,6 @@ export const migrateDocWithReport = (
     return mod
   })
 
-  // Update schema version if it's outdated
   if (migratedBody.schemaVersion !== CURRENT_SCHEMA_VERSION) {
     const oldVersion = migratedBody.schemaVersion
     migratedBody.schemaVersion = CURRENT_SCHEMA_VERSION
@@ -183,13 +163,7 @@ export const migrateDocWithReport = (
   return { migratedBody, report }
 }
 
-/**
- * Migrates a document body to the current schema version.
- *
- * @param title - Document title (used for reporting only)
- * @param body - Document body to migrate
- * @returns The migrated body
- */
+/** Migrate the body to the current schema. */
 export const docMigrator = (title: string, body: ZDoc): ZDoc => {
   const { migratedBody } = migrateDocWithReport(title, body)
   return migratedBody
@@ -205,13 +179,7 @@ export interface ValidationResult {
   migrationReport?: MigrationReport
 }
 
-/**
- * Validates a document body against the current schema and checks if migration can fix issues.
- *
- * @param title - Document title (used for reporting)
- * @param body - Document body to validate
- * @returns Validation result with migration info if applicable
- */
+/** Validate the body and report whether migration can repair it. */
 export const validateDocumentWithMigrationCheck = (
   title: string,
   body: ZDoc
@@ -225,7 +193,6 @@ export const validateDocumentWithMigrationCheck = (
     canBeFxedByMigration: false,
   }
 
-  // First, try validating the original document
   try {
     zdoc.parse(body)
 
@@ -242,12 +209,10 @@ export const validateDocumentWithMigrationCheck = (
     }
   }
 
-  // If document is already valid, no need to check migration
   if (validationResult.valid) {
     return validationResult
   }
 
-  // Document is invalid, check if migration can fix it
   try {
     const { migratedBody, report } = migrateDocWithReport(title, body)
     validationResult.migrationReport = report

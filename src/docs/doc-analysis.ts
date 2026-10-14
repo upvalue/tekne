@@ -1,4 +1,3 @@
-// doc-analysis.ts - tree structure conversion and data analysis functions
 import type { ZDoc, ZLine } from './schema'
 import { TEKNE_MD_PARSER, visitMdTree } from './parser'
 
@@ -8,15 +7,10 @@ export type ZTreeLine = ZLine & {
   arrayIdx: number
 }
 
-/**
- * For analysis purpose -- lines are converted into a tree struct
- * and information from mdContent is pulled out
- */
+/** Outline tree with tags extracted from line content. */
 export type ZDocTree = Omit<ZDoc, 'children'> & { children: ZTreeLine[] }
 
-/**
- * Converts document into a real tree structure
- */
+/** Build an outline tree and propagate tags from parent lines. */
 export const treeifyDoc = (doc: ZDoc): ZDocTree => {
   const root: ZDocTree = {
     ...doc,
@@ -31,8 +25,6 @@ export const treeifyDoc = (doc: ZDoc): ZDocTree => {
       tags: [],
       arrayIdx: i,
     }
-
-    // Handle multiple matches
 
     const mdTree = TEKNE_MD_PARSER.parse(node.mdContent)
     visitMdTree(mdTree.topNode, node.mdContent, 0, (mdNode) => {

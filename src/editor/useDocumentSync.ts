@@ -6,13 +6,7 @@ import {
 import { diffDocuments } from '@/docs/document-patch'
 import { ORPCError } from '@orpc/client'
 import { useQueryClient, useMutation, useQuery } from '@tanstack/react-query'
-// Load/save synchronization between a document's Jotai store and the server.
-//
-// Loads the named document into docAtom, tracks edits with a per-document
-// SaveQueue (immediate, serialized, locally durable), saves before
-// in-app navigation, best-effort saves on tab hide/close, answers
-// tekne:request-save flushes from other UI trees, and surfaces revision
-// conflicts for the user to resolve instead of clobbering either side.
+// Hydrate document state, queue durable saves, and surface revision conflicts.
 import {
   useCallback,
   useEffect,

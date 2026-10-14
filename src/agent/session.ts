@@ -1,9 +1,4 @@
-// session.ts - Wires the pi agent loop to a document-edit session.
-//
-// The agent loop and the edit tool both run in the browser; LLM calls are
-// relayed through the tekne server (which holds the credentials and picks
-// the model) via pi's streamProxy. This is the only file that imports
-// pi-agent-core.
+// The agent loop and edit tool run in the browser; LLM calls use the server relay.
 
 import {
   Agent,
@@ -203,8 +198,7 @@ export const createAgentSession = (opts: {
         break
       }
       case 'tool_execution_end': {
-        // Note: despite the AgentEvent type, the runtime does not include
-        // `args` on this event -- counts ride on the tool result's details.
+        // The runtime omits `args`; counts come from the tool result details.
         const details = (event.result as { details?: unknown })?.details as
           | { opCount?: number; failures?: number }
           | undefined

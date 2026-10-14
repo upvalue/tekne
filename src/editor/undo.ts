@@ -17,21 +17,13 @@ export type UndoEntry = {
 
 export const UNDO_STACK_LIMIT = 1000
 
-/**
- * Consecutive text-only edits to the same line within this window collapse
- * into one undo entry, so undoing a typed run takes one keypress instead
- * of one per character.
- */
+/** Coalesce consecutive text edits to one line within this window. */
 export const COALESCE_WINDOW_MS = 1000
 
 export const undoStackAtom = atom<UndoEntry[]>([])
 export const redoStackAtom = atom<UndoEntry[]>([])
 
-/**
- * Guard flag: when true, writes to docAtom skip undo capture.
- * Set during undo/redo restores to prevent the restore itself
- * from being recorded as a new undo entry.
- */
+/** Suppress undo capture while restoring an undo/redo snapshot. */
 export const suppressUndoCaptureAtom = atom<boolean>(false)
 
 /**
@@ -107,13 +99,11 @@ const snapshotCurrent = (store: ReturnType<typeof useStore>): UndoEntry => ({
 })
 
 const restoreEntry = (store: ReturnType<typeof useStore>, entry: UndoEntry) => {
-  // Restore without capturing undo
   store.set(suppressUndoCaptureAtom, true)
   store.set(rawDocAtom, entry.doc)
   store.set(suppressUndoCaptureAtom, false)
   store.set(lastCaptureAtom, null)
 
-  // Request focus on the line and column that were focused at snapshot time
   const targetLine = Math.min(entry.focusedLine, entry.doc.children.length - 1)
   const lineLength = entry.doc.children[targetLine]?.mdContent.length ?? 0
   store.set(requestFocusLineAtom, {
@@ -128,10 +118,8 @@ export const undo = (store: ReturnType<typeof useStore>) => {
 
   const entry = undoStack[undoStack.length - 1]
 
-  // Push current state to redo
   store.set(redoStackAtom, (prev) => [...prev, snapshotCurrent(store)])
 
-  // Pop undo stack
   store.set(undoStackAtom, undoStack.slice(0, -1))
 
   restoreEntry(store, entry)
@@ -143,10 +131,8 @@ export const redo = (store: ReturnType<typeof useStore>) => {
 
   const entry = redoStack[redoStack.length - 1]
 
-  // Push current state to undo
   store.set(undoStackAtom, (prev) => [...prev, snapshotCurrent(store)])
 
-  // Pop redo stack
   store.set(redoStackAtom, redoStack.slice(0, -1))
 
   restoreEntry(store, entry)

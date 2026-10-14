@@ -69,8 +69,6 @@ describe('matchesKeybinding', () => {
   })
 
   test('requires modifiers to match exactly, so Shift is not swallowed', () => {
-    // The old hand-rolled Cmd+/ handler never checked shift, so Cmd+? opened
-    // the search panel too.
     const withShift = modDown('/', { shiftKey: true })
 
     expect(matchesKeybinding(keybindings.searchPanel, withShift)).toBe(false)

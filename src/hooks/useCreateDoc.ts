@@ -15,7 +15,6 @@ export const useCreateDoc = (options?: {
   return useMutation(
     orpc.doc.createDoc.mutationOptions({
       onSuccess: (data) => {
-        // Invalidate search query to show newly created doc
         void utils.invalidateQueries({ queryKey: orpc.doc.searchDocs.key() })
 
         if (options?.onSuccess) {

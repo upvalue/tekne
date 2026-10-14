@@ -1,10 +1,6 @@
 import { useEffect, useReducer } from 'react'
 
-/**
- * Re-render once a second while `active`, for components that display a
- * running duration derived from Date.now(). Keeping the tick local to the
- * displaying component means a running timer doesn't re-render anything else.
- */
+/** Tick locally so running timers only re-render their display components. */
 export const useTimerTick = (active: boolean): void => {
   const [, tick] = useReducer((c: number) => c + 1, 0)
 

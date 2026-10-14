@@ -16,7 +16,6 @@ export class TypedEventEmitter<TEvents extends Record<string, any>> {
     const listenersSet = this.listeners.get(event)!
     listenersSet.add(listener as any)
 
-    // Return unsubscribe function
     return () => {
       listenersSet.delete(listener as any)
       if (listenersSet.size === 0) {
@@ -58,7 +57,6 @@ export class TypedEventEmitter<TEvents extends Record<string, any>> {
   }
 }
 
-// Hook: useEventListener
 export function useEmitterEventListener<
   TEvents extends Record<string, any>,
   K extends keyof TEvents,
@@ -77,7 +75,6 @@ export function useEmitterEventListener<
   })
 
   useEffect(() => {
-    // Create stable wrapper that calls current handler
     const wrapper = (data: any) => {
       handlerRef.current(data)
     }

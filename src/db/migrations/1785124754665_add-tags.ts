@@ -1,6 +1,6 @@
 import { sql, type Kysely } from 'kysely'
 
-// `any` is required here since migrations should be frozen in time. alternatively, keep a "snapshot" db interface.
+// Keep migrations independent of the current database types.
 export async function up(db: Kysely<any>): Promise<void> {
   // Tag metadata. Tag existence is derived from note_data; rows here exist
   // only for tags with metadata (currently just a description). tag_name is
@@ -24,7 +24,6 @@ export async function up(db: Kysely<any>): Promise<void> {
     .execute()
 }
 
-// `any` is required here since migrations should be frozen in time. alternatively, keep a "snapshot" db interface.
 export async function down(db: Kysely<any>): Promise<void> {
   await db.schema.dropIndex('note_data_datum_tag_idx').execute()
   await db.schema.dropTable('tags').execute()

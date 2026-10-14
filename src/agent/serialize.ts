@@ -1,5 +1,3 @@
-// serialize.ts - Document rendering for the agent's prompt.
-
 import type { ZDoc } from '@/docs/schema'
 
 /**

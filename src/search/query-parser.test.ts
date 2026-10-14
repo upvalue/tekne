@@ -1,5 +1,3 @@
-// query-parser.test.ts - Unit tests for search query parser
-
 import { describe, it, expect } from 'vitest'
 import { parseQuery, serializeQuery } from './query-parser'
 

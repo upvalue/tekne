@@ -1,9 +1,4 @@
-// AgentPanel.tsx - Instruct an LLM agent to propose edits to the current
-// document, review the proposal as a live diff, and apply or discard it.
-//
-// The agent loop and its edit tool run in this tab against a draft copy of
-// the doc; only the LLM call is relayed through the server. Applying is a
-// single docAtom write (one undo entry); the route's autosave persists it.
+// Applying the draft writes docAtom once for one undo entry; autosave persists it.
 
 import { useEffect, useMemo, useState, useSyncExternalStore } from 'react'
 import { useStore } from 'jotai'
@@ -101,9 +96,7 @@ const ActiveSession = ({
     if (current === baseDoc) {
       next = session.getDraft()
     } else {
-      // The user edited the doc while the agent ran: replay the recorded
-      // ops onto the current doc. Id-addressed ops only fail if the user
-      // deleted the exact line an op targets.
+      // Replay onto the current document to preserve edits made while the agent ran.
       const replay = applyEditOps(current, session.getOps())
       next = replay.doc
       const failed = replay.results.filter((r) => !r.ok).length

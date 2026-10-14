@@ -1,5 +1,3 @@
-// platform.ts -- Platform and input-modality detection
-
 /**
  * iOS or iPadOS. Modern iPadOS reports `navigator.platform` as 'MacIntel',
  * so a real Mac is distinguished by having no touch points.

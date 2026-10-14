@@ -18,7 +18,7 @@ function Tabs({
 
 function TabsList({
   className,
-  // Radix activated tabs on focus; keep that behavior (Base UI defaults to false)
+  // Activate tabs on focus so arrow-key navigation also selects the tab.
   activateOnFocus = true,
   ...props
 }: React.ComponentProps<typeof TabsPrimitive.List>) {

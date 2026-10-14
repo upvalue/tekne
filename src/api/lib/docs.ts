@@ -4,11 +4,8 @@ import type { ZDoc } from '@/docs/schema'
 import { extractDocData, treeifyDoc } from '@/docs/doc-analysis'
 import { jsonifyMdTree, TEKNE_MD_PARSER } from '@/docs/parser'
 
-/**
- * Process a document and return the derived data for database insertion
- */
+/** Extract tagged document data as rows for database insertion. */
 export const processDocumentForData = (title: string, doc: ZDoc) => {
-  // Analyze doc to get data
   const tree = treeifyDoc(doc)
   const data = extractDocData(tree.children)
 
@@ -56,13 +53,9 @@ export const deriveNoteRows = (title: string, body: ZDoc) => {
   return { parsedBody, noteData, noteLines }
 }
 
-/**
- * Recompute all document data across all documents in the database
- * This does NOT alter document records themselves, only derived data
- */
+/** Rebuild derived data, including parsed_body, without changing document bodies. */
 export const recomputeAllDocumentData = async (db: Kysely<Database>) => {
   const results = await db.transaction().execute(async (tx) => {
-    // Get all documents
     const allDocs = await tx
       .selectFrom('notes')
       .selectAll()
@@ -70,7 +63,6 @@ export const recomputeAllDocumentData = async (db: Kysely<Database>) => {
       .forUpdate()
       .execute()
 
-    // Clear all existing derived data
     await tx.deleteFrom('note_data').execute()
     await tx.deleteFrom('note_lines').execute()
 
@@ -78,7 +70,6 @@ export const recomputeAllDocumentData = async (db: Kysely<Database>) => {
     let totalDataRows = 0
     let totalLineRows = 0
 
-    // Process each document
     for (const doc of allDocs) {
       const { parsedBody, noteData, noteLines } = deriveNoteRows(
         doc.title,

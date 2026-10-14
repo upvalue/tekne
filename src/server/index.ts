@@ -30,7 +30,6 @@ app.use(
     contentSecurityPolicy: {
       directives: {
         // Unsafe-inline currently required for codemirror event handlers
-        // Can probably be fixed
         'script-src': ["'self'"],
         'script-src-attr': ["'unsafe-inline'"],
       },
@@ -44,7 +43,6 @@ app.use(compression())
 // body with a larger limit (documents can exceed the 100 KB default).
 registerAgentRoutes(app)
 
-// Logging middleware
 if (NODE_ENV === 'production') {
   app.use(morgan('combined'))
 } else {
@@ -76,7 +74,6 @@ await registerApi(app, db)
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 
-// Serve static assets in production
 if (NODE_ENV === 'production') {
   app.use(
     express.static(DIST_PATH, {
@@ -107,10 +104,8 @@ app.get('/api/healthcheck', async (_req: Request, res: Response) => {
   })
 })
 
-// Register client routes in production
 registerClientRoutes(app, DIST_PATH)
 
-// Catch-all for unmatched routes
 app.use((req: Request, res: Response) => {
   if (req.path.startsWith('/api/')) {
     return res.status(404).json({ error: 'API route not found' })

@@ -52,7 +52,6 @@ const createNewDatabase = async (name: string): Promise<void> => {
   await testDb.close()
 }
 
-// IndexedDB helper functions
 const openIndexedDB = (dbName: string): Promise<IDBDatabase> => {
   return new Promise((resolve, reject) => {
     const request = indexedDB.open(dbName)
@@ -81,7 +80,6 @@ const createDatabaseWithData = (
   data: unknown[]
 ): Promise<boolean> => {
   return new Promise((resolve, reject) => {
-    // Delete existing database first
     const deleteRequest = indexedDB.deleteDatabase(dbName)
 
     deleteRequest.onsuccess = () => {
@@ -90,7 +88,6 @@ const createDatabaseWithData = (
       openRequest.onupgradeneeded = (event) => {
         const db = (event.target as IDBOpenDBRequest).result
 
-        // Create FILE_DATA object store with timestamp index
         const objectStore = db.createObjectStore('FILE_DATA')
         objectStore.createIndex('timestamp', 'timestamp', { unique: false })
       }
@@ -100,7 +97,6 @@ const createDatabaseWithData = (
         const transaction = db.transaction(['FILE_DATA'], 'readwrite')
         const objectStore = transaction.objectStore('FILE_DATA')
 
-        // Add all data
         data.forEach((item, index) => {
           objectStore.add(item, index)
         })
@@ -131,7 +127,6 @@ const copyDatabase = async (
   const sourceDbName = `/pglite/${sourceName}`
   const destDbName = `/pglite/${destinationName}`
 
-  // Check if source database exists
   const databases = await indexedDB.databases()
   const sourceExists = databases.some((db) => db.name === sourceDbName)
   if (!sourceExists) {
@@ -141,7 +136,6 @@ const copyDatabase = async (
   const sourceDb = await openIndexedDB(sourceDbName)
   const sourceVersion = sourceDb.version
 
-  // Get all data from FILE_DATA object store
   const allData = await getAllFromObjectStore(sourceDb, 'FILE_DATA')
   sourceDb.close()
 
@@ -272,7 +266,6 @@ export const PgliteDevtools = () => {
                   </div>
                 )}
 
-                {/* Available Databases */}
                 <div>
                   <h4 className="text-sm font-medium mb-3">
                     Available Databases
@@ -320,7 +313,6 @@ export const PgliteDevtools = () => {
                   )}
                 </div>
 
-                {/* Create New Database */}
                 <div>
                   <h4 className="text-sm font-medium mb-3">
                     Create New Database
@@ -342,7 +334,6 @@ export const PgliteDevtools = () => {
                   </div>
                 </div>
 
-                {/* Copy Database */}
                 {copySourceName && (
                   <div>
                     <h4 className="text-sm font-medium mb-3">Copy Database</h4>

@@ -1,7 +1,4 @@
-// Visual constants shared between the editable line (ELine / line-editor)
-// and the read-only line used in search results, so the two renders can't
-// drift. The shared LineGlyph component lives in LineGlyph.tsx (components
-// get their own file for fast refresh).
+// Shared styling for editable and read-only lines.
 
 export const INDENT_WIDTH_PIXELS = 24
 

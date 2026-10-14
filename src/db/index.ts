@@ -68,10 +68,7 @@ export const dbServer = async () => {
     }),
   })
 
-  // Keep the server schema in step with the code before any routes can use it.
-  // The browser-backed database already does this in dbMemory; without the
-  // equivalent here, deploying a migration can leave production queries
-  // failing against an older schema.
+  // Apply server migrations before routes can query the schema.
   await migrateToLatest(db)
 
   return db

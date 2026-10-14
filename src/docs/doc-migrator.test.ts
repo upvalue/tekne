@@ -6,9 +6,6 @@ import {
 } from './doc-migrator'
 import { CURRENT_SCHEMA_VERSION, docMake, lineMake, type ZDoc } from './schema'
 
-// The migrator reshapes persisted user documents, so its behavior is pinned
-// against representative legacy shapes.
-
 const legacyLine = {
   type: 'line',
   mdContent: 'timed work',

@@ -78,12 +78,7 @@ export type GlobalTimerState = {
   targetDuration: number
 }
 
-/**
- * Global timer state. Deliberately serializable — the interval and the
- * start/pause/stop transitions live in timer/timer-controller.ts, and
- * elapsed time derives from accumulatedMs + runningSince rather than a
- * tick counter.
- */
+/** Serializable timer state; elapsed time derives from accumulatedMs + runningSince. */
 export const globalTimerAtom = atom<GlobalTimerState>({
   isActive: false,
   lineId: null,
@@ -107,9 +102,7 @@ export const allTagsAtom = atomWithQuery(
   () => queryClient
 )
 
-/**
- * Update a line in the document outside of the React tree
- */
+/** Update a document line through its store outside React. */
 export const setDocLineDirect = (
   store: ReturnType<typeof useStore>,
   lineIdx: number,
@@ -123,10 +116,7 @@ export const setDocLineDirect = (
   )
 }
 
-/**
- * Allows reading or modifying a specific line
- * in the document
- */
+/** Read a document line and return a setter for modifying it. */
 export const useDocLine = (
   lineIdx: number
 ): [ZLine, (callback: (line: ZLine) => void) => void] => {
@@ -144,10 +134,7 @@ export const useDocLine = (
   return [doc.children[lineIdx], setLine]
 }
 
-/**
- * Find a line in the document by its id value.
- * Used by the timer system to resolve a stable line identity to a current index.
- */
+/** Resolve a stable line ID to its current line and index, or null if absent. */
 export const findLineById = (
   doc: ZDoc,
   id: string | null

@@ -22,11 +22,7 @@ import { tmigration as removeLineColorsMigration } from './migrations/1791770400
 import { tmigration as patchReceiptsMigration } from './migrations/1791800000000_document-patch-receipts'
 import type { Database } from './types'
 
-/**
- * Every migration, keyed by its filename (sans extension) in
- * src/db/migrations. A test asserts the keys match the directory listing, so
- * a typo'd key can't silently skip or re-run a migration.
- */
+/** Migration keys must match filenames in src/db/migrations (without extensions). */
 export const MIGRATIONS: Record<string, Migration> = {
   '1752986809444_init': initMigration,
   '1756085936353_add-doc-dates': addDocDatesMigration,
@@ -50,11 +46,8 @@ export const MIGRATIONS: Record<string, Migration> = {
 }
 
 /**
- * Provider for Tekne that hardcodes migrations
- *
- * This is workaround for using pglite -- it's not quite as nice
- * as using the FileMigrationProvider and probable that can be
- * re-implemented with some Vite/frontend awareness
+ * Uses statically imported migrations so the provider works in browser PGlite
+ * without filesystem access.
  */
 const runMigration = async (
   db: Kysely<Database>,

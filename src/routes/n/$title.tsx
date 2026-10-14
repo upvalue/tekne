@@ -45,7 +45,6 @@ function RouteComponent() {
     setMainTitle(title)
   }, [title])
 
-  // Set up Jotai store
   const store = useMemo(() => {
     return createStore()
   }, [])
@@ -54,7 +53,6 @@ function RouteComponent() {
     useDocumentSync(title, store)
   useTimerSync(title, store, flushDocument)
 
-  // Side effect to cause query to fire
   useAtom(allTagsAtom)
 
   const createDocMutation = useCreateDoc()
@@ -70,13 +68,10 @@ function RouteComponent() {
       loadDocQuery.error instanceof ORPCError &&
       loadDocQuery.error.code === 'NOT_FOUND'
     ) {
-      // Special case tutorial - auto-create it
       if (title === 'Tutorial' || /^\d{4}-\d{2}-\d{2}$/.test(title)) {
-        // Skip if mutation is already in flight
         if (createDocMutation.isPending) {
           return
         }
-        // Create the tutorial, then invalidate the query to refetch
         createDocMutation.mutate(
           { name: title },
           {
@@ -102,7 +97,6 @@ function RouteComponent() {
         )
         return
       }
-      // For non-tutorial documents
       if (notFoundRedirectedTitle.current === title) {
         return
       }

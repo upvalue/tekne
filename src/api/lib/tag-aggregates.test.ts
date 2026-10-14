@@ -198,8 +198,7 @@ describe('aggregateTagData', () => {
       })
 
       expect(results.get('#work')?.complete_tasks).toBe(0)
-      // The template's pin is newer, so it used to win: the pin queries were
-      // the ones that never excluded templates.
+      // Exclude the template's pin even though it is newer.
       expect(results.get('#work')?.pinned_desc).toBe('from a real doc')
     })
 

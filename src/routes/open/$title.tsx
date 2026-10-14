@@ -5,11 +5,7 @@ export const Route = createFileRoute('/open/$title')({
   component: RouteComponent,
 })
 
-/**
- * This component helps work around some complexity in
- * the main $title route by simply redirecting, while
- * forcing that document to be unmounted
- */
+/** Redirect through a separate route to force the current document to unmount. */
 function RouteComponent() {
   const navigate = useNavigate()
   const title = Route.useParams({

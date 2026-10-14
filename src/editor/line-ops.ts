@@ -1,11 +1,5 @@
-// line-ops.ts -- Store-level line operations.
-//
-// Every operation takes (store, lineIdx, ...) and writes through docAtom, so
-// it works with no CodeMirror view mounted and no DOM at all. The CodeMirror
-// keymap (line-editor/line-operations.ts), the document-level event handlers
-// (useDocumentLineEvents.ts) and the touch controls are all thin adapters
-// over this file. Keep @codemirror imports out of here; that is what makes
-// these directly testable and reusable.
+// Store-level operations shared by CodeMirror and touch controls. Keep DOM and
+// CodeMirror dependencies in the callers so these work without a mounted view.
 import type { useStore } from 'jotai'
 import { lineMake, type ZLine } from '@/docs/schema'
 import {

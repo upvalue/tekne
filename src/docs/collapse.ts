@@ -1,24 +1,8 @@
-// collapse.ts - Logic for calculating which lines should be visually collapsed
-
 import type { ZLine } from './schema'
 
 export type CollapseState = 'collapsed' | 'uncollapsed' | 'collapse-start'
 
-// NOTE-REDUCER: This is a document reducer that could be centralized
-
-/**
- * Generates an array of booleans indicating which lines should be visually collapsed.
- *
- * A line is visually collapsed if:
- * 1. It comes after a line that has collapsed=true
- * 2. Its indent level is greater than the collapsed line's indent level
- * 3. No line with indent <= collapsed line's indent has appeared since the collapsed line
- *
- * Note: The line with collapsed=true itself is NOT visually collapsed.
- *
- * @param lines Array of lines from the document
- * @returns Array of booleans, one for each line indicating if it should be visually collapsed
- */
+/** Mark collapsed descendants; the collapsed parent stays visible as collapse-start. */
 export function generateCollapse(lines: ZLine[]): CollapseState[] {
   const result: CollapseState[] = []
   let collapseLevel: number | null = null // The indent level that is currently collapsed
@@ -32,7 +16,6 @@ export function generateCollapse(lines: ZLine[]): CollapseState[] {
     }
     collapseLevel = null
 
-    // If this line has collapsed=true, it starts a new collapse section
     if (line.collapsed === true) {
       collapseLevel = line.indent
       result[i] = 'collapse-start' // The collapsed line itself is not visually collapsed

@@ -1,5 +1,3 @@
-// collapse.test.ts - Unit tests for collapse logic
-
 import { describe, it, expect } from 'vitest'
 import { generateCollapse } from '@/docs/collapse'
 import { lineMake } from '@/docs/schema'

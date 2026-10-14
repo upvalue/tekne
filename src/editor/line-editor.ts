@@ -1,5 +1,3 @@
-// line-editor.ts - Meat of the actual editor implementation
-// Wraps Codemirror with lots of custom behavior
 import { useEffect, useLayoutEffect, useRef } from 'react'
 
 import { EditorView, keymap } from '@codemirror/view'
@@ -31,17 +29,10 @@ import {
   touchSelectedLineIdAtom,
 } from './touch/touch-atoms'
 
-/**
- * Annotation used to mark CodeMirror transactions that come from
- * external sync (e.g. undo/redo restoring document state).
- * The updateListener skips these to prevent echo writes.
- */
+/** Mark external state updates so the listener does not echo them back to docAtom. */
 export const externalSyncAnnotation = Annotation.define<boolean>()
 
 const theme = EditorView.theme(
-  // Preferring to do these in TEditor.css
-  // but due to the css-in-js approach in some cases
-  // it's challenging
   {
     ...baseLineThemeSpec,
     '.cm-completionIcon': {
@@ -53,36 +44,12 @@ const theme = EditorView.theme(
 
 export { useCodemirrorEvent, useLineEvent } from './line-editor/cm-events'
 
-/**
- * Line with its index. Handy for being able to
- * change the document without knowing its structure:
- */
 export type LineWithIdx = {
   line: ZLine
   lineIdx: number
 }
 
-/**
- * Sets up a Codemirror editor
- *
- * How the Codemirror integration works currently.
- *
- * The hook returns a ref which the component for the actual line
- * gives to the div where Codemirror will be set up.
- *
- * On hook mount, a Codemirror view is set up with the markdown content of the line
- *
- * There's bidirectional synchronization of codemirror view and document state;
- * updates to codemirror update the document, and updates to the document update
- * codemirror (if there are any changes). This is because lines can alter the state
- * of other lines (for example, if a line is deleted via backspace, the content of that
- * line is spliced onto the previous line). This probably shouldn't work... but it seems
- * to work fine.
- *
- * It's probable that https://github.com/uiwjs/react-codemirror should be used
- * instead of this hand rolled thing, but I wanted to use vanilla codemirror because
- * various prosemirror wrappers became very confusing.
- */
+/** Mount CodeMirror into the returned ref and sync its content with document state. */
 export const useCodeMirror = (lineInfo: LineWithIdx) => {
   const cmRef = useRef<HTMLDivElement>(null)
   const cmView = useRef<EditorView | null>(null)
@@ -99,7 +66,6 @@ export const useCodeMirror = (lineInfo: LineWithIdx) => {
   lineIdxRef.current = lineInfo.lineIdx
   const getLineIdx = () => lineIdxRef.current
 
-  //
   const makeEditor = () => {
     if (!cmRef.current) return
 
@@ -113,7 +79,6 @@ export const useCodeMirror = (lineInfo: LineWithIdx) => {
         return
       }
 
-      // Skip echoed writes from external sync (undo/redo restores)
       if (
         update.transactions.some((t) => t.annotation(externalSyncAnnotation))
       ) {
@@ -136,9 +101,6 @@ export const useCodeMirror = (lineInfo: LineWithIdx) => {
       if (update.view.hasFocus) {
         setFocusedLine(getLineIdx())
         store.set(focusedPosAtom, update.state.selection.main.head)
-        // state.update({annotations: isActive.of(true) });
-      } else {
-        // state.update({annotations: isActive.of(false)});
       }
     })
 
@@ -183,18 +145,12 @@ export const useCodeMirror = (lineInfo: LineWithIdx) => {
     }
   }
 
-  // This handles taking external updates, which might happen if e.g.
-  // a user deletes a line, the remaining text is appending to the previous
-  // updates. Depending on the content string (not the props object, whose
-  // identity changes every parent render) means the comparison below only
-  // runs when this line's content actually changed.
+  // Depend on content so unrelated changes to the props object do not trigger sync.
   const mdContent = lineInfo.line.mdContent
   useLayoutEffect(() => {
     const v = cmView.current
     if (!v) return
 
-    // When the document itself is updated, we need to synchronize
-    // React state with Codemirror state
     if (v.state.doc.toString() !== mdContent) {
       v.dispatch({
         changes: {
@@ -211,31 +167,18 @@ export const useCodeMirror = (lineInfo: LineWithIdx) => {
   // oxlint-disable-next-line react-hooks/exhaustive-deps
   useLayoutEffect(makeEditor, [])
 
-  /**
-   * Focus management.
-   *
-   * Lines can request focus on a specific line / position due to
-   * line editing operations. This effect determines when that's happened,
-   * loops until Codemirror is ready to handle it, and then does so
-   */
   const lineIdx = lineInfo.lineIdx
   useEffect(() => {
     if (requestFocusLine.lineIdx !== lineIdx) {
       return
     }
 
-    // CodeMirror may not be mounted yet (the editor-creation effect runs
-    // after this one on mount), so retry until it is — and cancel the retry
-    // loop if the line unmounts first.
+    // Retry if the view is unavailable; cancel pending retries on unmount.
     let retry: ReturnType<typeof setTimeout> | null = null
 
     const obtainFocus = () => {
-      // In touch mode, focusing CodeMirror would raise the software
-      // keyboard, so with no editing session active a focus request from an
-      // operation (delete, undo, drag) is downgraded to a selection update.
-      // During an editing session the request goes through and the session
-      // follows it, so Enter-splits and joins keep the keyboard flowing
-      // across lines like on desktop.
+      // Outside a touch editing session, select without raising the keyboard.
+      // During editing, move the session to the requested line.
       if (getDisplayMode() === 'touch') {
         const line = store.get(docAtom).children[lineIdx]
         if (line) {
@@ -262,7 +205,6 @@ export const useCodeMirror = (lineInfo: LineWithIdx) => {
         scrollIntoView: true,
       })
 
-      // Clear line focus status
       setRequestFocusLine({
         lineIdx: -1,
         pos: 0,
@@ -276,10 +218,7 @@ export const useCodeMirror = (lineInfo: LineWithIdx) => {
     }
   }, [requestFocusLine, lineIdx, setRequestFocusLine, store])
 
-  // Most line events are handled once at document level (see
-  // useDocumentLineEvents); collapse stays here because it needs this
-  // line's CodeMirror view. Note that this only handles the slash
-  // command — there is also a separate key binding.
+  // Slash-command collapse needs this view; other events use useDocumentLineEvents.
   useLineEvent('lineCollapseToggle', lineInfo.lineIdx, () => {
     const view = cmView.current
     if (view) {

@@ -9,10 +9,8 @@ function RouteComponent() {
   const navigate = useNavigate()
 
   const handleContinueDemo = () => {
-    // Mark that user has visited the demo page
     localStorage.setItem('tekne-demo-visited', 'true')
 
-    // Navigate to today's date document
     void navigate({
       to: '/n/$title',
       params: {

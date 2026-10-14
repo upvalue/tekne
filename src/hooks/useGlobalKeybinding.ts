@@ -1,13 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { keybindings, matchesKeybinding, type KeybindingName } from '@/lib/keys'
 
-/**
- * Installs a window-level binding for a registry entry.
- *
- * The combo that fires and the combo the Help panel renders come from the same
- * string, so the two cannot drift. Bindings owned by kbar or CodeMirror stay
- * with those systems and read the registry through their own adapters.
- */
+/** Installs a window binding using the same registry combo shown in Help. */
 export const useGlobalKeybinding = (
   name: KeybindingName,
   handler: (e: KeyboardEvent) => void

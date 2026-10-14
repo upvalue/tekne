@@ -133,7 +133,6 @@ const Keybindings = () => {
         {commandShortcuts.map((command) => (
           <React.Fragment key={command.id}>
             {command.subcommands?.length ? (
-              // Command with subcommands - show parent and children
               <>
                 <Row label={command.name} className="text-text-2">
                   <span className="flex items-center gap-1">
@@ -156,7 +155,6 @@ const Keybindings = () => {
                 ))}
               </>
             ) : (
-              // Simple command without subcommands
               <Row label={command.name}>
                 <Keycap>{command.displayShortcut || command.shortcut}</Keycap>
               </Row>
@@ -222,7 +220,6 @@ export const Help = React.memo(() => {
     'syntax' | 'keybindings' | string
   >('getting-started')
 
-  // Build navigation items
   const allItems = useMemo(() => {
     const helpItems = [
       { id: 'syntax', title: 'Editor Syntax', type: 'help' },
@@ -252,7 +249,6 @@ export const Help = React.memo(() => {
     if (selectedPage === 'keybindings') return <Keybindings />
     if (selectedPage === 'commands') return <CommandsHelp />
 
-    // Render doc component
     const DocComponent = DOC_COMPONENTS[selectedPage]
     if (!DocComponent) {
       return <div className="text-accent">Unknown page</div>

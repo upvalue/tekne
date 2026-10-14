@@ -1,11 +1,5 @@
-// Serialized per-document save queue.
-//
-// Every local edit bumps a generation counter; a save captures the current
-// generation and snapshot, and at most one request is in flight at a time.
-// Acknowledging a save only covers the captured generation, so edits made
-// while a request runs stay dirty and get their own request. Framework-free
-// so it can be tested without React; useDocumentSync owns the wiring to the
-// Jotai store and the network.
+// One save request per document at a time. Acknowledgements cover only the
+// captured generation; edits made in flight remain dirty for the next request.
 
 export const SAVE_RETRY_MS = 5000
 

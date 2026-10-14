@@ -89,13 +89,7 @@ export const Gutter = ({
   )
 }
 
-/**
- * The individual line editor React component. Note that the bulk of
- * the logic is contained in the line-editor.ts file which handles
- * CodeMirror integration; this component handles rendering React
- * components and other functionality that doesn't need to live in
- * the codemirror layer
- */
+/** Line rendering; CodeMirror integration lives in line-editor.ts. */
 const ELineImpl = (lineInfo: ELineProps) => {
   const { cmRef, cmView } = useCodeMirror(lineInfo)
   const {
@@ -111,9 +105,7 @@ const ELineImpl = (lineInfo: ELineProps) => {
     disabled: lineInfo.collapseState === 'collapsed',
   })
 
-  // Codemirror of course doesn't receive recreated
-  // callbacks with new component state; this table
-  // lets us update them on the fly
+  // Keep callbacks current for the long-lived CodeMirror view.
 
   const { line, timestamp, collapseState } = lineInfo
 
@@ -123,7 +115,6 @@ const ELineImpl = (lineInfo: ELineProps) => {
   const isFocused = useAtomValue(focusedLineAtom) === lineInfo.lineIdx
   const paletteOpen = useAtomValue(commandPaletteOpenAtom)
 
-  // This line renders the palette if it's focused and palette is open
   const shouldRenderPalette = isFocused && paletteOpen
 
   const lineIsHeader =

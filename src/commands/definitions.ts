@@ -20,24 +20,22 @@ import {
 import { setDisplayModeOverride } from '@/hooks/display-mode'
 import { appPath, stripAppBasePath } from '@/lib/app-path'
 
-/** Check if a string is a valid YYYY-MM-DD date */
+/** Check whether a string has YYYY-MM-DD format. */
 const isDateString = (str: string): boolean => /^\d{4}-\d{2}-\d{2}$/.test(str)
 
-/** Parse YYYY-MM-DD to Date */
+/** Parse YYYY-MM-DD in the local timezone; return null for other formats. */
 const parseDate = (str: string): Date | null => {
   if (!isDateString(str)) return null
   const [year, month, day] = str.split('-').map(Number)
   return new Date(year, month - 1, day)
 }
 
-/** Navigate to a document */
+/** Navigate to the document with the given title. */
 const navigateTo = (title: string) => {
   navigateToDocument(title)
 }
 
-// ============================================================================
 // Editor Commands
-// ============================================================================
 
 const editorCommands: Command[] = [
   {
@@ -202,9 +200,7 @@ const editorCommands: Command[] = [
   },
 ]
 
-// ============================================================================
 // Navigation Commands
-// ============================================================================
 
 const navigationCommands: Command[] = [
   {

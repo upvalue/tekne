@@ -63,7 +63,6 @@ async function buildAll(options: CompilerOptions): Promise<void> {
       path.basename(f, path.extname(f))
     ));
     
-    // Generate build manifest
     const buildDuration = Date.now() - startTime;
     const buildManifest: BuildManifest = {
       files: fileManifests,
@@ -101,13 +100,11 @@ async function generateManifest(outputDir: string, manifest: BuildManifest): Pro
 async function updateSingleFile(filePath: string, options: CompilerOptions): Promise<void> {
   await processFile(filePath, options.outputDir);
   
-  // Regenerate index and manifest after single file update
   const files = await findMdxFiles(options.inputDir);
   await generateIndex(options.outputDir, files.map(f => 
     path.basename(f, path.extname(f))
   ));
   
-  // Regenerate full manifest
   const fileManifests = [];
   for (const file of files) {
     try {

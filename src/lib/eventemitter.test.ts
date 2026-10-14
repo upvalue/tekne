@@ -2,7 +2,6 @@ import { describe, test, expect, vi, beforeEach } from 'vitest'
 import { renderHook } from '@testing-library/react'
 import { TypedEventEmitter, useEmitterEventListener } from './eventemitter'
 
-// Test event types
 type TestEvents = {
   userLogin: { id: string; name: string }
   userLogout: undefined
@@ -76,7 +75,6 @@ describe('TypedEventEmitter', () => {
     test('should handle removing non-existent listener', () => {
       const listener = vi.fn()
 
-      // Try to remove listener that was never added
       expect(() => emitter.off('userLogin', listener)).not.toThrow()
       expect(emitter.listenerCount('userLogin')).toBe(0)
     })
@@ -135,12 +133,10 @@ describe('React Hooks', () => {
 
       expect(emitter.listenerCount('userLogin')).toBe(1)
 
-      // Change handler
       const newHandler = vi.fn()
       handler = newHandler
       rerender({ currentHandler: newHandler })
 
-      // Should still have only one listener
       expect(emitter.listenerCount('userLogin')).toBe(1)
 
       emitter.emit('userLogin', { id: '123', name: 'John' })
@@ -171,13 +167,11 @@ describe('React Hooks', () => {
       expect(emitter1.listenerCount('userLogin')).toBe(1)
       expect(emitter2.listenerCount('userLogin')).toBe(0)
 
-      // Change emitter
       rerender({ emitter: emitter2, event: 'userLogin' as keyof TestEvents })
 
       expect(emitter1.listenerCount('userLogin')).toBe(0)
       expect(emitter2.listenerCount('userLogin')).toBe(1)
 
-      // Change event
       rerender({ emitter: emitter2, event: 'userLogout' as keyof TestEvents })
 
       expect(emitter2.listenerCount('userLogin')).toBe(0)

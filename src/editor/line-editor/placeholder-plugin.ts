@@ -7,8 +7,7 @@ import {
 } from '@codemirror/view'
 import { clientRectsFor, flattenRect } from './vendor/dom'
 
-// This is the original placeholder plugin from CM
-// Modified to we can add more logic around whether to render a placeholder or not
+// Adapted from CodeMirror's placeholder plugin to control when the widget appears.
 
 type ContentFn = (view: EditorView) => string
 

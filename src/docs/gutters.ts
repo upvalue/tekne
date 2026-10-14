@@ -1,9 +1,6 @@
 import type { ZLine } from './schema'
 
-// Time difference threshold in minutes for showing timestamps
 export const TIME_DIFF_THRESHOLD_MINUTES = 20
-
-// NOTE-REDUCER: This is a document reducer that could be centralized
 
 export type GutterTimestamp = {
   defaultString: string | null
@@ -11,13 +8,8 @@ export type GutterTimestamp = {
 }
 
 /**
- * Generates an array of gutter timestamp strings for display.
- * Returns null for lines that don't meet display criteria, or a formatted timestamp string.
- *
- * Rules:
- * - Show date + time when date differs from most recently seen line
- * - Show time only when time differs by more than threshold from most recently seen line
- * - Return null when no timestamp should be shown
+ * Show the first timestamp, date changes, and gaps at least TIME_DIFF_THRESHOLD_MINUTES
+ * from the last shown timestamp. Hidden entries keep fullString for tooltips.
  */
 export function generateGutterTimestamps(lines: ZLine[]): GutterTimestamp[] {
   const result: GutterTimestamp[] = []
@@ -31,11 +23,9 @@ export function generateGutterTimestamps(lines: ZLine[]): GutterTimestamp[] {
     let showFullDate = false
 
     if (lastShownDate === null) {
-      // First line always shows
       shouldShow = true
       showFullDate = true
     } else {
-      // Check if date differs
       const lastDateOnly = new Date(
         lastShownDate.getFullYear(),
         lastShownDate.getMonth(),
@@ -51,7 +41,6 @@ export function generateGutterTimestamps(lines: ZLine[]): GutterTimestamp[] {
         shouldShow = true
         showFullDate = true
       } else {
-        // Same date, check time difference
         const timeDiffMs = Math.abs(
           lineDate.getTime() - lastShownDate.getTime()
         )
@@ -63,8 +52,6 @@ export function generateGutterTimestamps(lines: ZLine[]): GutterTimestamp[] {
         }
       }
     }
-
-    // Generate full date and time str
 
     const fullDateStr = lineDate.toLocaleDateString('en-US', {
       month: 'numeric',
@@ -85,7 +72,6 @@ export function generateGutterTimestamps(lines: ZLine[]): GutterTimestamp[] {
           month: 'numeric',
           day: 'numeric',
         })
-        // Format as "M/d h:mm AM/PM"
         const timeStr = lineDate.toLocaleTimeString('en-US', {
           hour: 'numeric',
           minute: '2-digit',
@@ -96,7 +82,6 @@ export function generateGutterTimestamps(lines: ZLine[]): GutterTimestamp[] {
           fullString: fullDateAndTimeStr,
         })
       } else {
-        // Format as "h:mm AM/PM"
         const timeStr = lineDate.toLocaleTimeString('en-US', {
           hour: 'numeric',
           minute: '2-digit',

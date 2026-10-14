@@ -1,8 +1,4 @@
-// doc-diff.ts - Shared "proposed change" model for diff previews
-//
-// Any feature that proposes edits to a document (tag renames, the agent
-// panel, ...) reduces its proposal to a list of ProposedLineChange values,
-// which the shared ChangeRows component renders as red/green line rows.
+// Shared line-change model for proposed edit previews.
 
 import type { ZDoc, ZLine } from '@/docs/schema'
 

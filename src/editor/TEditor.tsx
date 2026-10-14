@@ -155,9 +155,7 @@ const EditorBoundaryDropZone = ({
   )
 }
 
-/**
- * The top level editor component.
- */
+/** Render the document outline with line editing and drag reordering. */
 export const TEditor = () => {
   const [doc, setDoc] = useAtom(docAtom)
   const [dragSelectedLineIds, setDragSelectedLineIds] = useAtom(
@@ -216,11 +214,6 @@ export const TEditor = () => {
     })
   )
 
-  // Something to think about: these functions
-  // both touch every line and their logic could be combined
-  // so that we're not alloc'ing and looping unnecessarily.
-  // But for now perf is fine.
-
   const gutterTimestamps = useStableGutterTimestamps(doc.children)
 
   const collapsedStates = useMemo(() => {
@@ -232,7 +225,6 @@ export const TEditor = () => {
   }, [collapsedStates, doc.children])
 
   useCodemirrorEvent('tagClick', (event) => {
-    // Open tag management in the Tools tab, focused on the clicked tag
     setTagManagerTarget(event.name)
     setActivePanelTab('tools')
     setPanelVisible(true)

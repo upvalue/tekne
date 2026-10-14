@@ -80,14 +80,12 @@ export const upsertNoteInTx = async (
       message: `Document with name "${name}" already exists`,
     })
 
-  // Drop all data by note title
   await tx.deleteFrom('note_data').where('note_title', '=', name).execute()
 
   if (noteData.length > 0) {
     await tx.insertInto('note_data').values(noteData).execute()
   }
 
-  // Populate note_lines for text search
   await tx.deleteFrom('note_lines').where('note_title', '=', name).execute()
 
   if (noteLines.length > 0) {
@@ -523,12 +521,7 @@ export const docRouter = {
         }
 
         let linksUpdated = 0
-        // In order to be reliable about how we update InternalLinks,
-        // it gets a little complicated -- we do a real parse of the body,
-        // then use the indices we gain from that along with a library MagicString
-        // to update the body (since there could be multiple InternalLinks
-        // on the same line and a naive update might change the length of the
-        // string or miss updates)
+        // Parser offsets and MagicString keep multiple link replacements aligned.
         for (const noteToUpd of notesToUpdate) {
           let contentChanged = false
 

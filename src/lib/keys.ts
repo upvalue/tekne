@@ -1,5 +1,3 @@
-// keys.ts -- Key bindings
-
 import { isApple, modSymbol } from './platform'
 
 export interface Keybinding {
@@ -9,9 +7,7 @@ export interface Keybinding {
    * 'ctrl' means the literal Control key everywhere.
    */
   key: string
-  /** Descriptive name for the keybinding (e.g., 'document-search') */
   name: string
-  /** Human-readable description of what the keybinding does */
   description: string
   /**
    * Which system installs the binding. Each one reads `key` through the
@@ -126,7 +122,7 @@ export const codeMirrorKey = (name: KeybindingName): string =>
 
 /**
  * Whether a keydown event is this combo. Modifiers have to match exactly, so
- * Cmd+Shift+/ no longer fires the Cmd+/ binding.
+ * Cmd+Shift+/ does not fire the Cmd+/ binding.
  */
 export const matchesKeybinding = (
   binding: Keybinding,
@@ -146,7 +142,7 @@ export const matchesKeybinding = (
   )
 }
 
-/** Get all keybindings as an array */
+/** Return all registered keybindings as an array. */
 export const getAllKeybindings = (): Keybinding[] => {
   return Object.values(keybindings)
 }

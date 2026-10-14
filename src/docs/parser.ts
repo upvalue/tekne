@@ -1,4 +1,3 @@
-// parser.ts - Core markdown parsing functionality for Tekne
 import {
   parser as baseParser,
   type MarkdownConfig,
@@ -30,7 +29,6 @@ const InternalLinkConfig: MarkdownConfig = {
           return -1
         }
 
-        // Short circuit if it's not two lbrackets
         if (cx.char(pos + 1) !== LBRACKET_CHAR_CODE) {
           return -1
         }
@@ -49,10 +47,7 @@ const InternalLinkConfig: MarkdownConfig = {
           ])
         )
       },
-      // TODO: Ordering is pretty important here, we probably
-      // want InternalLink to take precedence over everything
-      // (e.g. internallinks can't contain Markdown)
-      // But for now this is probably fine
+      // TODO: Give InternalLink precedence so link titles cannot parse as Markdown.
       before: 'Link',
     },
   ],
@@ -90,12 +85,7 @@ export const TEKNE_MD_PARSER = baseParser.configure([
   TagConfig,
   Strikethrough,
   {
-    // For now, we don't support most Markdown stuff.
-
-    // Partly because some of the functionality is redundant
-    // with the top level editor (lists) and won't be added
-
-    // Other stuff just not supported yet
+    // The outline editor handles block structure; parse inline Markdown only.
     remove: [
       'BulletList',
       'OrderedList',
@@ -109,13 +99,7 @@ export const TEKNE_MD_PARSER = baseParser.configure([
   },
 ])
 
-/**
- * Touch every node in a parsed markdown tree
- * @param node
- * @param source
- * @param level
- * @param visitFn
- */
+/** Visit every node in depth-first order. */
 export function visitMdTree(
   node: SyntaxNode,
   source: string,
@@ -124,7 +108,6 @@ export function visitMdTree(
 ) {
   visitFn(node, source, level)
 
-  // Recursively walk children
   let child = node.firstChild
   while (child) {
     visitMdTree(child, source, level + 1, visitFn)

@@ -8,49 +8,29 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const routesDir = path.join(__dirname, '../src/routes')
 const outputFile = path.join(__dirname, '../src/server/client-routes.ts')
 
-/**
- * Convert TanStack Router path to Express path
- * Examples:
- * - /n/$title -> /n/:title
- * - /api/$version/users -> /api/:version/users
- * - /blog/$slug/$id -> /blog/:slug/:id
- */
+/** Convert TanStack parameters to Express syntax: /n/$title -> /n/:title. */
 function convertToExpressPath(tanstackPath) {
   return tanstackPath.replace(/\$(\w+)/g, ':$1')
 }
 
-/**
- * Convert filesystem path to route path
- * Examples:
- * - index.tsx -> /
- * - about.tsx -> /about
- * - n/$title.tsx -> /n/$title
- * - api/$version/users.tsx -> /api/$version/users
- */
+/** Convert a route filename to its URL path; index.tsx maps to /. */
 function filePathToRoutePath(filePath) {
-  // Remove the routes directory prefix
   const relativePath = path.relative(routesDir, filePath)
 
-  // Remove file extensions
   const withoutExt = relativePath.replace(/\.(tsx?|jsx?)$/, '')
 
-  // Handle index files
   if (withoutExt === 'index' || withoutExt.endsWith('/index')) {
     return withoutExt.replace(/\/?index$/, '') || '/'
   }
 
-  // Convert to route path
   let routePath = '/' + withoutExt.replace(/\\/g, '/')
 
-  // Clean up double slashes
   routePath = routePath.replace(/\/+/g, '/')
 
   return routePath
 }
 
-/**
- * Recursively scan directory for route files
- */
+/** Recursively collect route files from the routes directory. */
 function scanRoutes(dir) {
   const routes = []
 
@@ -85,9 +65,7 @@ function scanRoutes(dir) {
   return routes.sort((a, b) => a.routePath.localeCompare(b.routePath))
 }
 
-/**
- * Generate the client-routes.ts file
- */
+/** Generate the server's client-routes.ts from filesystem routes. */
 function generateClientRoutes() {
   console.log('Scanning routes directory:', routesDir)
 
@@ -129,20 +107,17 @@ export function registerClientRoutes(app: Express, distPath: string) {
 }
 `
 
-  // Ensure the server directory exists
   const serverDir = path.dirname(outputFile)
   if (!fs.existsSync(serverDir)) {
     fs.mkdirSync(serverDir, { recursive: true })
   }
 
-  // Write the file
   fs.writeFileSync(outputFile, content, 'utf8')
   console.log(`Generated client routes file: ${outputFile}`)
   console.log(`  Static routes: ${staticRoutes.length}`)
   console.log(`  Dynamic routes: ${dynamicRoutes.length}`)
 }
 
-// Run the generator
 if (import.meta.url === `file://${process.argv[1]}`) {
   generateClientRoutes()
 }

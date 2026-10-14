@@ -69,9 +69,7 @@ function parseDayOfWeekArgs(args: string): Set<DayOfWeek> {
   return result
 }
 
-/**
- * Check if a date's day of week matches the given dayofweek args string.
- */
+/** Check whether a date matches a day-of-week directive. */
 function matchesDayOfWeek(args: string, date: Date): boolean {
   const days = parseDayOfWeekArgs(args)
   const dow = JS_DAY_TO_DOW[date.getDay()]

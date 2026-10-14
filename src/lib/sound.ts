@@ -1,9 +1,4 @@
-/**
- * Synthesized 16-bit style success jingle using the Web Audio API.
- * Inspired by classic SNES/Genesis victory sounds.
- *
- * No external audio files required - entirely procedurally generated.
- */
+/** Synthesized success jingle. */
 export function playTimerCompleteSound() {
   try {
     const ctx = new AudioContext()
@@ -17,7 +12,6 @@ export function playTimerCompleteSound() {
     // never cut out audibly — the gain envelope handles the fade.
     const tail = 0.3
 
-    // Two-part success jingle: quick rising phrase + held major chord
     // Phase 1: Fast ascending notes (16-bit triangle wave style)
     const phrase: [number, number, number][] = [
       // [frequency, startTime, duration]

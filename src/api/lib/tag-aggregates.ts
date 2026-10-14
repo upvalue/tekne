@@ -4,12 +4,7 @@ import type { NoteDataType } from '@/db/types'
 import type { z } from 'zod'
 import type { outputs } from '../outputs'
 
-/**
- * Per-tag totals over note_data.
- *
- * The page_* fields are the same figures narrowed to the document being
- * viewed; only the page-scoped aggregate fills them in.
- */
+/** Per-tag totals; page_* fields hold the current document's contribution. */
 export type TagAggregateData = z.infer<
   typeof outputs.analysis.aggregateData
 >[number]
@@ -22,15 +17,7 @@ export type TagAggregateFilters = {
   /** Narrow to exactly one document */
   docTitle?: string
   excludeDocTitle?: string
-  /**
-   * Leave out documents whose title starts with '$'.
-   *
-   * Templates hold sample data, so they pad any total that spans documents --
-   * including the pin totals, which is where this used to be forgotten. A
-   * caller already narrowed to one document passes false: naming the document
-   * answers the question, and a template's own page would otherwise report
-   * nothing about itself.
-   */
+  /** Exclude '$' templates from cross-document totals; false for a single document. */
   excludeTemplates: boolean
 }
 
@@ -56,10 +43,7 @@ export const hasAggregateData = (row: TagAggregateData): boolean =>
   (row.page_unset_tasks ?? 0) > 0 ||
   (row.page_time_seconds ?? 0) > 0
 
-/**
- * The filter block every one of the queries below shares. Kept as one
- * expression so the four of them cannot drift apart again.
- */
+/** Build the shared filters for task, timer, and pin aggregates. */
 const matching = (
   eb: ExpressionBuilder<Database, 'note_data'>,
   datumType: NoteDataType,
@@ -115,8 +99,7 @@ export const aggregateTagData = async (
     db
       .selectFrom('note_data')
       // The ::int casts matter: COUNT and SUM come back as bigint, which the
-      // driver hands over as a string, and these have always been typed as
-      // numbers.
+      // driver hands over as a string. These fields must be numbers.
       .select([
         'datum_tag as tag',
         sql<number>`COUNT(CASE WHEN datum_status = 'complete' THEN 1 END)::int`.as(

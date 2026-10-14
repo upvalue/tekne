@@ -1,7 +1,5 @@
 import { sql, type Kysely } from 'kysely'
 
-// Already applied in production. Keep the historical migration even though
-// timer persistence is deferred and the application does not use this table.
 export async function up(db: Kysely<any>): Promise<void> {
   await db.schema
     .createTable('timers')
