@@ -2,11 +2,9 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { DialogPrimitive as Dialog } from '@/components/vendor/Dialog'
 import type { EditorView } from '@codemirror/view'
 import { useAtom, useStore } from 'jotai'
-import { useQuery } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
-import { orpc } from '@/api/client'
 import { useCreateDoc } from '@/hooks/useCreateDoc'
-import { useDebouncedValue } from '@/hooks/useDebouncedValue'
+import { useDocumentTitles } from '@/hooks/useDocumentTitles'
 import { getAllCommands, type CommandContext } from './command-registry'
 import { cn } from '@/lib/utils'
 import { commandPaletteSearchAtom } from './state'
@@ -42,13 +40,7 @@ export const CommandPalette = ({
   const [active, setActive] = useState(-1)
   const input = useRef<HTMLInputElement>(null)
   const list = useRef<HTMLDivElement>(null)
-  const debounced = useDebouncedValue(query, 150)
-  const docs = useQuery(
-    orpc.doc.searchDocs.queryOptions({
-      input: { query: debounced },
-      enabled: isOpen,
-    })
-  )
+  const docs = useDocumentTitles()
   const createDoc = useCreateDoc({
     onSuccess: (title) => {
       void navigate({ to: '/n/$title', params: { title } })
@@ -117,8 +109,9 @@ export const CommandPalette = ({
         },
       })
     if (
+      docs.data &&
       query.trim() &&
-      !docs.data?.some(
+      !docs.data.some(
         (doc) => doc.title.toLowerCase() === query.trim().toLowerCase()
       )
     ) {

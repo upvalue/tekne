@@ -9,6 +9,7 @@ import {
 } from '@/editor/state'
 import { CommandPalette } from '@/editor/CommandPalette'
 import { useGlobalKeybinding } from '@/hooks/useGlobalKeybinding'
+import { useDocumentTitles } from '@/hooks/useDocumentTitles'
 
 export const CommandPaletteProvider: React.FC<{
   children: React.ReactNode
@@ -16,6 +17,8 @@ export const CommandPaletteProvider: React.FC<{
   const [paletteOpen, setPaletteOpen] = useAtom(commandPaletteOpenAtom)
   const [, setSearch] = useAtom(commandPaletteSearchAtom)
   const focusedLineIdx = useAtomValue(focusedLineAtom)
+  // Keeps titles cached so the palette opens with its list already filled.
+  useDocumentTitles()
 
   useGlobalKeybinding('documentSearch', () => {
     setSearch(true)
