@@ -22,12 +22,8 @@ test('sample errors use the app status line and history', async () => {
   )
   fireEvent.click(screen.getByRole('button', { name: 'Dismiss notification' }))
   expect(screen.getByRole('status').textContent).toBe('')
-  fireEvent.click(
-    screen.getByRole('button', { name: 'Notification history (1)' })
-  )
-  expect(
-    await screen.findByRole('dialog', { name: 'Notification history' })
-  ).not.toBeNull()
+  fireEvent.click(screen.getByRole('button', { name: 'Messages (1)' }))
+  expect(await screen.findByRole('dialog', { name: 'Messages' })).not.toBeNull()
   expect(screen.getAllByRole('listitem')).toHaveLength(1)
   fireEvent.click(screen.getByRole('button', { name: 'Clear history' }))
   expect(screen.queryAllByRole('listitem')).toHaveLength(0)

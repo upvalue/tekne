@@ -2,7 +2,7 @@ import { useState, useSyncExternalStore, type ReactNode } from 'react'
 import {
   CircleAlert,
   CircleCheck,
-  History,
+  MessageSquare,
   Info,
   TriangleAlert,
   X,
@@ -88,17 +88,17 @@ export function NotificationScratchpad({
             <X className="size-3.5" />
           </button>
           <Tooltip
-            label="Notification history"
+            label="Messages"
             description="The latest 50 messages stay here until you reload this tab. Open a message to read its full text. Actions are available until you change pages."
           >
             <button
               className="flex shrink-0 items-center gap-1.5 tabular-nums hover:text-text"
               onClick={() => setOpen(true)}
-              aria-label={`Notification history (${entries.length})`}
+              aria-label={`Messages (${entries.length})`}
             >
-              <History className="size-3.5" />
+              <MessageSquare className="size-3.5" />
               <span className="hidden md:inline">
-                History ({entries.length})
+                Messages ({entries.length})
               </span>
               <span className="md:hidden">{entries.length}</span>
             </button>
@@ -111,9 +111,7 @@ export function NotificationScratchpad({
           className="OverlaySurface flex max-h-[min(70dvh,600px)] min-h-0 flex-col bg-panel text-text"
         >
           <div className="grid shrink-0 grid-cols-[1fr_auto] items-center gap-3 sm:grid-cols-[1fr_auto_auto]">
-            <DialogTitle className="min-w-0 leading-snug">
-              Notification history
-            </DialogTitle>
+            <DialogTitle className="min-w-0 leading-snug">Messages</DialogTitle>
             <Button
               outline
               disabled={!entries.length}

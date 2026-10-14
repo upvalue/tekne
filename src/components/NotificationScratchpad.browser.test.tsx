@@ -71,11 +71,9 @@ for (const embedded of [false, true])
       const preview = view.getByRole('status').querySelector('button')!
       expect(getComputedStyle(preview).whiteSpace).toBe('nowrap')
       expect(preview.scrollWidth).toBeGreaterThan(preview.clientWidth)
-      fireEvent.click(
-        view.getByRole('button', { name: 'Notification history (1)' })
-      )
+      fireEvent.click(view.getByRole('button', { name: 'Messages (1)' }))
       const dialog = await view.findByRole('dialog', {
-        name: 'Notification history',
+        name: 'Messages',
       })
       expect(dialog.textContent).toContain(message)
       expect(dialog.textContent).toContain(description)
