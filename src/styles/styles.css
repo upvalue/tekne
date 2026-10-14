@@ -144,11 +144,6 @@ button:disabled {
 .OverlaySurface {
   animation: overlay-enter 110ms ease-out;
 }
-@media (prefers-reduced-motion: reduce) {
-  .OverlaySurface {
-    animation: none;
-  }
-}
 
 :root {
   --notification-bar-height: calc(2rem + env(safe-area-inset-bottom, 0px));

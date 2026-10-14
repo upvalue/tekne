@@ -1,5 +1,5 @@
 import { AnimatedMetric } from '@/components/AnimatedMetric'
-import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
+import { AnimatePresence, motion } from 'framer-motion'
 // Shared aggregate display components for use in Aggregate panel and Search
 
 import { renderTime } from '@/lib/time'
@@ -132,7 +132,6 @@ const CardMasonry = ({
   data: ResultCardData[]
   className?: string
 }) => {
-  const reduceMotion = useReducedMotion()
   return (
     <div className={cn('@container', className)}>
       <ul aria-label="Tag aggregates" className="gap-2 @md:columns-2">
@@ -140,10 +139,10 @@ const CardMasonry = ({
           {data.map((tag) => (
             <motion.li
               key={tag.tag}
-              initial={reduceMotion ? false : { opacity: 0, y: 4 }}
+              initial={{ opacity: 0, y: 4 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={reduceMotion ? { opacity: 1 } : { opacity: 0 }}
-              transition={{ duration: reduceMotion ? 0 : 0.15 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.15 }}
               className="mb-2 break-inside-avoid"
             >
               <ResultCard tag={tag} />

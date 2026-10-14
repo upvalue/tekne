@@ -17,3 +17,7 @@ same time, just try to resolve conflicts as they occur.
 - `ticket --help` can be used to view and manage tickets
 - Code is grouped by feature (`src/editor`, `src/db`, …) and directionally layered
 - Tests live next to the file they test, not in a separate tests folder.
+- Never respect `prefers-reduced-motion`: no media queries, `motion-reduce:`/
+  `motion-safe:` classes, `matchMedia` checks or framer-motion
+  `useReducedMotion`. The developer runs macOS with Reduce motion on to quiet
+  system animations and wants the app's animations regardless.

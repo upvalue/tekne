@@ -12,8 +12,6 @@ export const AnimatedMetric = ({ value }: { value: string }) => {
     const element = current.current
     const old = outgoing.current
     if (!element || !old || before === value || !element.animate) return
-    const preference = window.matchMedia('(prefers-reduced-motion: reduce)')
-    if (preference.matches) return
     old.textContent = before
     old.style.visibility = 'visible'
     const options = { duration: 180, easing: 'ease-out' }
@@ -37,11 +35,7 @@ export const AnimatedMetric = ({ value }: { value: string }) => {
       old.style.visibility = 'hidden'
     }
     leaving.onfinish = stop
-    preference.addEventListener('change', stop)
-    return () => {
-      stop()
-      preference.removeEventListener('change', stop)
-    }
+    return stop
   }, [value])
 
   return (
