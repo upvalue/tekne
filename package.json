@@ -18,6 +18,7 @@
     "format": "oxfmt --write .",
     "kysely": "kysely",
     "generate:routes": "node scripts/generate-client-routes.js",
+    "generate:rust-client": "node --import tsx scripts/generate-rust-client.ts",
     "docs:build": "node scripts/build-docs.js",
     "server:dev": "DATABASE_URL=postgres://postgres:password@localhost/tekne tsx --watch src/server/index.ts",
     "server:build": "esbuild src/server/index.ts --bundle --platform=node --format=esm --packages=external --sourcemap --outfile=dist-server/server.mjs",
