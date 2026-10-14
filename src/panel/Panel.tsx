@@ -4,6 +4,8 @@ import { Tools } from './Tools'
 import { X, FileText, SearchIcon, Zap, CircleHelp, Wrench } from 'lucide-react'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { DocumentOverview } from './DocumentOverview'
+import { DocumentDetails } from '@/editor/DocumentDetails'
+import { useDocTitle } from '@/hooks/useDocTitle'
 import {
   openHelp,
   useActivePanelTab,
@@ -15,6 +17,7 @@ import { cn } from '@/lib/utils'
 export function Panel() {
   const [activeTab, setActiveTab] = useActivePanelTab()
   const setPanelVisible = useSetPanelVisible()
+  const title = useDocTitle()
   return (
     <aside className="flex flex-col AppViewport pt-4">
       <nav
@@ -93,6 +96,11 @@ export function Panel() {
           )}
         </ErrorBoundary>
       </div>
+      {activeTab === 'document' && title && (
+        <footer aria-label="Document details" className="PanelFooter">
+          <DocumentDetails title={title} />
+        </footer>
+      )}
     </aside>
   )
 }

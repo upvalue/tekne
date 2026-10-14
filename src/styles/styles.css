@@ -41,7 +41,7 @@ body {
 
 .Panel {
   background: var(--color-panel);
-  border-left: 1px solid color-mix(in srgb, var(--color-text) 3%, transparent);
+  border-left: 1px solid color-mix(in srgb, var(--color-text) 2%, transparent);
   padding: 0 8px;
 }
 @media (max-width: 1023px) {
@@ -169,6 +169,26 @@ button:disabled {
 .NotificationBar {
   height: var(--notification-bar-height);
   padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+/* Continues the bottom bar across the panel: same height and border, so the
+   text sits on the same line. */
+.PanelFooter {
+  container-type: inline-size;
+  flex: none;
+  display: flex;
+  align-items: center;
+  height: var(--notification-bar-height);
+  padding: 0 12px env(safe-area-inset-bottom, 0px);
+  border-top: 1px solid rgb(255 255 255 / 0.04);
+  font-size: 12px;
+  line-height: 16px;
+}
+@media (min-width: 1024px) {
+  /* .Panel pads its content by 8px; reach its edges like the bar does. */
+  .PanelFooter {
+    margin-inline: -8px;
+    padding-inline: 20px;
+  }
 }
 /* Pinned to the bottom even while the document is still loading. */
 .Editor > .NotificationBar {

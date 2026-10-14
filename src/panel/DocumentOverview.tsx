@@ -2,8 +2,6 @@ import {
   generateTableOfContents,
   type TableOfContentsItem,
 } from '@/docs/table-of-contents'
-import { DocumentDetails } from '@/editor/DocumentDetails'
-import { useDocTitle } from '@/hooks/useDocTitle'
 import { Aggregate } from './Aggregate'
 import { useAtomValue, useSetAtom } from 'jotai'
 import { docAtom, focusedLineAtom } from '@/editor/state'
@@ -52,7 +50,6 @@ export const TableOfContents = ({ toc }: { toc: TableOfContentsItem[] }) => {
 }
 
 export const DocumentOverview = () => {
-  const title = useDocTitle()
   const doc = useAtomValue(docAtom)
   const focusedLineIdx = useAtomValue(focusedLineAtom)
   const toc = generateTableOfContents(doc.children, focusedLineIdx ?? undefined)
@@ -66,11 +63,6 @@ export const DocumentOverview = () => {
       <div className="pb-3 pt-1">
         <Aggregate />
       </div>
-      {title && (
-        <footer aria-label="Document details" className="mt-auto px-3 pt-3">
-          <DocumentDetails title={title} />
-        </footer>
-      )}
     </div>
   )
 }

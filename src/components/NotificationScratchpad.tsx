@@ -46,7 +46,7 @@ export function NotificationScratchpad({
     <>
       <div
         className={cn(
-          'NotificationBar border-t border-white/7 bg-panel text-xs text-text-2',
+          'NotificationBar border-t border-white/4 bg-panel text-xs text-text-2',
           embedded ? 'flex-none' : 'fixed inset-x-0 bottom-0 z-50'
         )}
       >

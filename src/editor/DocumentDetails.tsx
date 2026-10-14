@@ -31,8 +31,9 @@ export const DocumentDetails = ({ title }: { title: string }) => {
     })
 
   return (
-    <dl className="flex flex-wrap gap-x-3 text-[10px] leading-[14px] text-muted">
-      <div className="flex gap-1">
+    <dl className="flex min-w-0 gap-x-3 overflow-hidden whitespace-nowrap text-muted">
+      {/* Only shown when the panel is wide enough to keep one line. */}
+      <div className="hidden gap-1 @md:flex">
         <dt>Created</dt>
         <dd>
           <time dateTime={data.createdAt.toISOString()}>
