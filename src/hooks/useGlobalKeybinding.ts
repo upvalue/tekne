@@ -17,6 +17,8 @@ export const useGlobalKeybinding = (
 
     const onKeyDown = (e: KeyboardEvent) => {
       if (!matchesKeybinding(binding, e)) return
+      // A reserved browser shortcut must not also open our document picker.
+      if (name === 'documentSearch' && !e.cancelable) return
       e.preventDefault()
       handlerRef.current(e)
     }

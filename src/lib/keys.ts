@@ -7,6 +7,8 @@ export interface Keybinding {
    * 'ctrl' means the literal Control key everywhere.
    */
   key: string
+  /** Alternate global shortcuts, including fallbacks for browser-reserved keys. */
+  alternatives?: string[]
   name: string
   description: string
   /**
@@ -21,7 +23,8 @@ export const modName = isApple ? 'Cmd' : 'Ctrl'
 
 export const keybindings = {
   documentSearch: {
-    key: 'mod+shift+o',
+    key: 'mod+o',
+    alternatives: ['mod+shift+o'],
     name: 'document-search',
     description: 'Open a document',
     type: 'global' as const,
@@ -84,7 +87,10 @@ const comboParts = (key: string) => key.split('+')
 
 /** Display string for a combo, e.g. 'mod+shift+k' -> '⌘ Shift K' */
 export const displayKey = (binding: Keybinding): string =>
-  comboParts(binding.key)
+  [binding.key, ...(binding.alternatives ?? [])].map(displayCombo).join(' / ')
+
+const displayCombo = (key: string): string =>
+  comboParts(key)
     .map((part) => {
       switch (part) {
         case MOD:
@@ -127,8 +133,13 @@ export const codeMirrorKey = (name: KeybindingName): string =>
 export const matchesKeybinding = (
   binding: Keybinding,
   e: KeyboardEvent
-): boolean => {
-  const parts = comboParts(binding.key)
+): boolean =>
+  [binding.key, ...(binding.alternatives ?? [])].some((key) =>
+    matchesCombo(key, e)
+  )
+
+const matchesCombo = (key: string, e: KeyboardEvent): boolean => {
+  const parts = comboParts(key)
   const finalKey = parts[parts.length - 1]
   const mods = new Set(parts.slice(0, -1))
   const usesMod = mods.has(MOD)

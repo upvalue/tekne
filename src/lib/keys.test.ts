@@ -18,7 +18,9 @@ const modDown = (key: string, rest: KeyboardEventInit = {}) =>
 
 describe('displayKey', () => {
   test('renders the combos the Help panel used to hardcode', () => {
-    expect(displayKey(keybindings.documentSearch)).toBe(`${modSymbol} Shift O`)
+    expect(displayKey(keybindings.documentSearch)).toBe(
+      `${modSymbol} O / ${modSymbol} Shift O`
+    )
     expect(displayKey(keybindings.searchPanel)).toBe(`${modSymbol} /`)
     expect(displayKey(keybindings.togglePanel)).toBe(`${modSymbol} \\`)
     expect(displayKey(keybindings.commandPalette)).toBe(`${modSymbol} K`)
@@ -44,7 +46,7 @@ describe('matchesKeybinding', () => {
     expect(matchesKeybinding(keybindings.togglePanel, modDown('\\'))).toBe(true)
   })
 
-  test('opens documents with the new shortcut and leaves Mod-O to the browser', () => {
+  test('opens documents with Mod-O and the Mod-Shift-O fallback', () => {
     expect(
       matchesKeybinding(
         keybindings.documentSearch,
@@ -52,7 +54,7 @@ describe('matchesKeybinding', () => {
       )
     ).toBe(true)
     expect(matchesKeybinding(keybindings.documentSearch, modDown('o'))).toBe(
-      false
+      true
     )
   })
 
@@ -83,7 +85,10 @@ describe('matchesKeybinding', () => {
 
 describe('the registry itself', () => {
   test('has no duplicate combos', () => {
-    const keys = getAllKeybindings().map((binding) => binding.key)
+    const keys = getAllKeybindings().flatMap((binding) => [
+      binding.key,
+      ...(binding.alternatives ?? []),
+    ])
 
     expect(new Set(keys).size).toBe(keys.length)
   })
