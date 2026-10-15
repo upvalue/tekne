@@ -2,8 +2,35 @@ import { LoadingIndicator } from '@/components/LoadingIndicator'
 import { ErrorState } from '@/components/ErrorState'
 import { useQuery } from '@tanstack/react-query'
 import { orpc } from '@/api/client'
+import { FileText } from 'lucide-react'
+import {
+  Popover,
+  PopoverButton,
+  PopoverPanel,
+} from '@/components/vendor/Popover'
 
-export const DocumentDetails = ({ title }: { title: string }) => {
+export const DocumentDetails = ({ title }: { title: string }) => (
+  <Popover>
+    <PopoverButton
+      openOnHover
+      aria-label="Document details"
+      className="inline-flex size-7 shrink-0 items-center justify-center rounded text-muted hover:bg-white/5 hover:text-text focus-visible:outline-2 focus-visible:outline-accent"
+    >
+      <FileText size={15} aria-hidden="true" />
+    </PopoverButton>
+    <PopoverPanel
+      side="top"
+      align="end"
+      aria-label="Document details"
+      className="OverlaySurface w-max max-w-[calc(100vw-24px)] p-3 text-xs text-text-2"
+    >
+      <div className="mb-2 font-medium text-text">Document details</div>
+      <DocumentDetailsContent title={title} />
+    </PopoverPanel>
+  </Popover>
+)
+
+const DocumentDetailsContent = ({ title }: { title: string }) => {
   const { isLoading, data, error, refetch, isFetching } = useQuery(
     orpc.doc.loadDocDetails.queryOptions({ input: { name: title } })
   )
@@ -31,9 +58,8 @@ export const DocumentDetails = ({ title }: { title: string }) => {
     })
 
   return (
-    <dl className="flex min-w-0 gap-x-3 overflow-hidden whitespace-nowrap text-muted">
-      {/* Only shown when the panel is wide enough to keep one line. */}
-      <div className="hidden gap-1 @md:flex">
+    <dl className="grid grid-cols-[auto_auto] gap-x-4 gap-y-1.5 whitespace-nowrap text-xs text-muted">
+      <div className="contents">
         <dt>Created</dt>
         <dd>
           <time dateTime={data.createdAt.toISOString()}>
@@ -41,7 +67,7 @@ export const DocumentDetails = ({ title }: { title: string }) => {
           </time>
         </dd>
       </div>
-      <div className="flex gap-1">
+      <div className="contents">
         <dt>Updated</dt>
         <dd>
           <time dateTime={data.updatedAt.toISOString()}>
@@ -49,8 +75,8 @@ export const DocumentDetails = ({ title }: { title: string }) => {
           </time>
         </dd>
       </div>
-      <div className="flex gap-1">
-        <dt>Rev.</dt>
+      <div className="contents">
+        <dt>Revision</dt>
         <dd>{data.revision}</dd>
       </div>
     </dl>
