@@ -5,6 +5,7 @@ import { EditorLayout } from './EditorLayout'
 import { TitleBar } from '@/editor/TitleBar'
 import { Panel } from '@/panel/Panel'
 import { TouchBar } from '@/editor/touch/TouchBar'
+import { DocumentDetails } from '@/editor/DocumentDetails'
 import { NotificationScratchpad } from '@/components/NotificationScratchpad'
 import { RunningTimerPill } from '@/editor/timer/RunningTimerPill'
 import { useSyncDisplayMode } from '@/hooks/display-mode'
@@ -49,7 +50,11 @@ export const EditorShell = ({
           }
           sidepanel={<Panel />}
           footer={
-            <NotificationScratchpad embedded timer={<RunningTimerPill />} />
+            <NotificationScratchpad
+              embedded
+              timer={<RunningTimerPill />}
+              details={<DocumentDetails title={title} />}
+            />
           }
         />
       </CommandPaletteProvider>

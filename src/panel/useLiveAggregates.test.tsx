@@ -4,7 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { afterEach, expect, test, vi } from 'vitest'
 import type { ReactNode } from 'react'
 import { docMake, lineMake } from '@/docs/schema'
-import { docAtom } from '@/editor/state'
+import { docAtom, focusedLineAtom, focusedPosAtom } from '@/editor/state'
 import { syncedDocumentAtom } from '@/editor/document-sync-state'
 import type { AggregateBaseline } from '@/docs/aggregates'
 import { useLiveAggregates } from './useLiveAggregates'
@@ -102,7 +102,7 @@ test('local edits and undo update immediately and acknowledgements do not clear 
   expect(result.current.data[0].complete_tasks).toBe(10)
 })
 
-test('new tags show local contributions while known totals remain visible, and navigation never borrows another document baseline', async () => {
+test('new tags wait for totals while known totals remain visible, and navigation never borrows another document baseline', async () => {
   mocks.fetch.mockResolvedValueOnce({
     title: 'Doc',
     revision: 0,
@@ -126,10 +126,7 @@ test('new tags show local contributions while known totals remain visible, and n
       draft.children.push(lineMake(0, '#new', { datumTaskStatus: 'complete' }))
     })
   )
-  expect(result.current.data.find((row) => row.tag === '#new')).toMatchObject({
-    page_complete_tasks: 1,
-    complete_tasks: undefined,
-  })
+  expect(result.current.data.find((row) => row.tag === '#new')).toBeUndefined()
   expect(
     result.current.data.find((row) => row.tag === '#work')?.complete_tasks
   ).toBe(10)
@@ -159,6 +156,49 @@ test('new tags show local contributions while known totals remain visible, and n
     )
     store.set(syncedDocumentAtom, { title: 'Other', revision: 0 })
   })
-  expect(result.current.data[0].complete_tasks).toBeUndefined()
-  expect(result.current.data[0].page_complete_tasks).toBe(1)
+  expect(result.current.data).toEqual([])
+})
+
+test('typing a new tag waits for a separator even after the query debounce', async () => {
+  mocks.fetch.mockImplementation(({ tags }) =>
+    Promise.resolve({
+      title: 'Doc',
+      revision: 0,
+      rows: tags.map((tag: string) => baseline(tag, 10, 0)),
+    })
+  )
+  const { store, wrapper } = setup()
+  const { result } = renderHook(() => useLiveAggregates('Doc'), { wrapper })
+  await waitFor(() => expect(result.current.data).toHaveLength(1))
+  act(() => {
+    store.set(focusedLineAtom, 3)
+    store.set(focusedPosAtom, 5)
+    store.set(docAtom, (draft) => {
+      draft.children.push(lineMake(0, '#exer', { datumTimeSeconds: 60 }))
+    })
+  })
+  await act(async () => {
+    await new Promise((resolve) => setTimeout(resolve, 300))
+  })
+  expect(mocks.fetch).toHaveBeenCalledTimes(1)
+  expect(result.current.data.map((row) => row.tag)).toEqual(['#work'])
+  act(() => {
+    store.set(focusedPosAtom, 9)
+    store.set(docAtom, (draft) => {
+      draft.children[3].mdContent = '#exercise'
+    })
+  })
+  expect(result.current.data.map((row) => row.tag)).toEqual(['#work'])
+  act(() => {
+    store.set(focusedPosAtom, 10)
+    store.set(docAtom, (draft) => {
+      draft.children[3].mdContent = '#exercise '
+    })
+  })
+  await waitFor(() =>
+    expect(
+      result.current.data.find((row) => row.tag === '#exercise')
+        ?.page_time_seconds
+    ).toBe(60)
+  )
 })

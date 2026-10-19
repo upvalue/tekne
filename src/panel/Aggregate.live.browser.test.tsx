@@ -78,8 +78,7 @@ test('shows edits before any network response and never labels unknown totals as
   )
   expect(view.getByTitle('11 done')).toBeVisible()
   expect(view.getByTitle('2 done on this page')).toBeVisible()
-  expect(view.getByText('#new')).toBeVisible()
-  expect(view.getByTitle('1 done on this page')).toBeVisible()
+  expect(view.queryByText('#new')).toBeNull()
   expect(view.queryByText(/loading totals/i)).toBeNull()
   expect(view.queryByRole('status')).toBeNull()
   await expect

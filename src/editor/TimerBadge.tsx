@@ -35,7 +35,6 @@ import {
   timerElapsedSeconds,
   timerRemainingSeconds,
 } from './timer/timer-controller'
-import { notifications } from '@/lib/notifications'
 import {
   Popover,
   PopoverButton,
@@ -134,21 +133,6 @@ export const TimerBadge = ({
     })
     setManual('')
     setOpen(false)
-    notifications.success(
-      `${replace ? 'Set total to' : 'Added'} ${renderTime(duration)}`,
-      {
-        action: {
-          label: 'Undo',
-          onClick: () =>
-            store.set(docAtom, (draft) => {
-              const line = draft.children.find((line) => line.id === id)
-              if (line?.datumTimeSeconds !== next) return
-              if (before === undefined) delete line.datumTimeSeconds
-              else line.datumTimeSeconds = before
-            }),
-        },
-      }
-    )
   }
   const inputClass =
     'w-24 min-w-0 rounded-md border border-transparent bg-page px-2 py-1.5 tabular-nums text-text outline-none focus:border-accent'

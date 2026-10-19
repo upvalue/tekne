@@ -29,10 +29,12 @@ const icons = {
 export function NotificationScratchpad({
   embedded = false,
   timer,
+  details,
 }: {
   /** Rendered as the last row of the document column instead of fixed. */
   embedded?: boolean
   timer?: ReactNode
+  details?: ReactNode
 }) {
   useClaimNotificationBar(embedded)
   const { entries, currentId } = useSyncExternalStore(
@@ -103,6 +105,7 @@ export function NotificationScratchpad({
               <span className="md:hidden">{entries.length}</span>
             </button>
           </Tooltip>
+          {details}
         </div>
       </div>
       <Dialog open={open} onOpenChange={setOpen}>

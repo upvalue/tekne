@@ -1,9 +1,23 @@
 import { act, cleanup, fireEvent, render } from '@testing-library/react'
 import { page } from '@vitest/browser/context'
-import { afterEach, expect, test } from 'vitest'
+import { afterEach, expect, test, vi } from 'vitest'
 import { NotificationScratchpad } from './NotificationScratchpad'
+import { DocumentDetails } from '@/editor/DocumentDetails'
 import { notifications } from '@/lib/notifications'
 import '@/styles/styles.css'
+
+vi.mock('@tanstack/react-query', () => ({
+  useQuery: () => ({
+    data: {
+      createdAt: new Date('2026-01-01T12:00:00Z'),
+      updatedAt: new Date('2026-10-15T12:00:00Z'),
+      revision: 123,
+    },
+  }),
+}))
+vi.mock('@/api/client', () => ({
+  orpc: { doc: { loadDocDetails: { queryOptions: () => ({}) } } },
+}))
 
 afterEach(() => {
   cleanup()
@@ -28,7 +42,11 @@ for (const embedded of [false, true])
                   Existing content
                 </div>
               </main>
-              <NotificationScratchpad embedded timer={timer} />
+              <NotificationScratchpad
+                embedded
+                timer={timer}
+                details={<DocumentDetails title="Doc" />}
+              />
             </div>
           </div>
         ) : (
