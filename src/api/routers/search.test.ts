@@ -200,3 +200,127 @@ describe('saved searches', () => {
     expect(await caller.getSavedSearches()).toHaveLength(0)
   })
 })
+
+describe('query reports', () => {
+  test('pagination preserves totals and quoted document/text filters', async () => {
+    await noteWith(
+      'My log',
+      Array.from({ length: 5 }, (_, i) => ({
+        mdContent: `100% run ${i}`,
+        datumTimeSeconds: 60,
+        timeCreated: '2026-10-18T12:00:00Z',
+        timeUpdated: '2026-10-19T12:00:00Z',
+      }))
+    )
+    await noteWith('Other', ['100x run'])
+    const query =
+      'doc:"My log" "100% run" from:2026-10-18 to:2026-10-18 updated:2026-10-19'
+    const ids: string[] = []
+    let cursor = 0
+    while (true) {
+      const page = await caller.query({ query, cursor, limit: 2 })
+      expect(page.summary.timeSeconds).toBe(300)
+      ids.push(...page.items.map((item) => item.lineId))
+      if (page.nextCursor === null) break
+      cursor = page.nextCursor
+    }
+    expect(ids).toHaveLength(5)
+    expect(new Set(ids).size).toBe(5)
+  })
+
+  test('counts unique lines, includes untagged time, and reports overlapping inherited groups', async () => {
+    await noteWith('2026-10-18', [
+      { mdContent: '#exercise #health' },
+      {
+        mdContent: 'Run',
+        indent: 1,
+        datumTimeSeconds: 2700,
+        datumTaskStatus: 'complete',
+      },
+      { mdContent: 'Stretch', indent: 1, datumTimeSeconds: 900 },
+      { mdContent: 'Untagged', datumTimeSeconds: 1800 },
+    ])
+    await noteWith('$Daily', [
+      { mdContent: 'Template', datumTimeSeconds: 9999 },
+    ])
+    const result = await caller.query({
+      query: 'doc:2026-10-18 has:timer',
+      groupBy: 'tag',
+      limit: 1,
+    })
+    expect(result.summary).toEqual({
+      matchedCount: 3,
+      timedEntryCount: 3,
+      timeSeconds: 5400,
+    })
+    expect(result.items).toHaveLength(1)
+    expect(result.nextCursor).toBe(1)
+    expect(result.groupsOverlap).toBe(true)
+    expect(result.groups).toEqual([
+      { key: '#exercise', matchedCount: 2, timeSeconds: 3600 },
+      { key: '#health', matchedCount: 2, timeSeconds: 3600 },
+      { key: null, matchedCount: 1, timeSeconds: 1800 },
+    ])
+    const filtered = await caller.query({
+      query: '#exercise #health status:complete has:timer Run',
+    })
+    expect(filtered.summary.timeSeconds).toBe(2700)
+    expect(filtered.items[0]).toMatchObject({
+      content: 'Run',
+      tags: ['#exercise', '#health'],
+      lineId: expect.any(String),
+    })
+    const all = await caller.query({ query: '', summaryOnly: true })
+    expect(all.items).toEqual([])
+    expect(all.summary.timeSeconds).toBe(5400)
+    expect(all.nextCursor).toBeNull()
+  })
+
+  test('calendar date boundaries respect timezone and DST', async () => {
+    await noteWith('Log', [
+      { mdContent: 'before', timeCreated: '2026-03-08T07:59:59Z' },
+      {
+        mdContent: 'start',
+        timeCreated: '2026-03-08T08:00:00Z',
+        datumTimeSeconds: 0,
+      },
+      {
+        mdContent: 'end',
+        timeCreated: '2026-03-09T06:59:59Z',
+        datumTimeSeconds: 1.5,
+      },
+      { mdContent: 'after', timeCreated: '2026-03-09T07:00:00Z' },
+    ])
+    const result = await caller.query({
+      query: 'created:2026-03-08 has:timer',
+      timezone: 'America/Los_Angeles',
+      groupBy: 'document',
+    })
+    expect(contentsOf(result).sort()).toEqual(['end', 'start'])
+    expect(result.summary).toEqual({
+      matchedCount: 2,
+      timedEntryCount: 2,
+      timeSeconds: 1.5,
+    })
+    expect(result.groups).toEqual([
+      { key: 'Log', matchedCount: 2, timeSeconds: 1.5 },
+    ])
+  })
+
+  test('empty reports and validation errors are explicit', async () => {
+    expect((await caller.query({ query: '#missing' })).summary).toEqual({
+      matchedCount: 0,
+      timedEntryCount: 0,
+      timeSeconds: 0,
+    })
+    for (const input of [
+      { query: 'oops:today' },
+      { query: 'created:2026-02-30' },
+      { query: '', timezone: 'Mars/Olympus' },
+    ]) {
+      await expect(caller.query(input)).rejects.toMatchObject({
+        code: 'BAD_REQUEST',
+      })
+    }
+  })
+})

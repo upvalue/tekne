@@ -6,6 +6,7 @@ use std::time::Duration;
 
 #[allow(dead_code)]
 mod generated;
+mod search;
 use generated::{
     ApiOpError, DocLoadDocResponse as Response, DocLoadDocResponseDoc as Document, HttpClient,
 };
@@ -14,7 +15,7 @@ use generated::{
 #[command(
     name = "tkne",
     version,
-    about = "Read Tekne documents from your terminal"
+    about = "Read, search, and summarize Tekne entries from your terminal"
 )]
 struct Args {
     /// Server root URL (including any reverse-proxy path prefix)
@@ -31,6 +32,8 @@ struct Args {
 
 #[derive(Subcommand)]
 enum Command {
+    /// Search entries or summarize recorded time (quote queries containing #tags)
+    Search(search::SearchArgs),
     /// Fetch a document by its exact title and render its full outline
     Show {
         name: String,
@@ -53,9 +56,7 @@ fn api_root(base: &str) -> Result<Url> {
 }
 
 async fn fetch(base: &str, name: &str) -> Result<Response> {
-    let client = Client::builder()
-        .timeout(Duration::from_secs(20))
-        .build()?;
+    let client = Client::builder().timeout(Duration::from_secs(20)).build()?;
     let client =
         HttpClient::with_client_and_config(client, false).with_base_url(api_root(base)?.as_str());
     match client.doc_load_doc(name).await {
@@ -95,7 +96,11 @@ fn render(name: &str, doc: &Document) -> Result<String> {
             bail!("Document indentation must be between 0 and 256 levels");
         }
         let padding = "  ".repeat(line.indent as usize);
-        let marker = match line.datum_task_status.as_ref().map(|status| status.as_str()) {
+        let marker = match line
+            .datum_task_status
+            .as_ref()
+            .map(|status| status.as_str())
+        {
             Some("complete") => "[x] ",
             Some("incomplete") => "[ ] ",
             _ => "",
@@ -121,16 +126,20 @@ fn render(name: &str, doc: &Document) -> Result<String> {
 }
 
 async fn run(args: Args) -> Result<()> {
-    let Command::Show { name, json } = args.command;
-    let response = fetch(&args.url, &name).await?;
-    let output = if json {
-        format!("{}\n", serde_json::to_string_pretty(&response)?)
-    } else {
-        render(&name, &response.doc)?
+    let output = match args.command {
+        Command::Show { name, json } => {
+            let response = fetch(&args.url, &name).await?;
+            if json {
+                format!("{}\n", serde_json::to_string_pretty(&response)?)
+            } else {
+                render(&name, &response.doc)?
+            }
+        }
+        Command::Search(search) => search::run(&args.url, search).await?,
     };
     match io::stdout().lock().write_all(output.as_bytes()) {
         Err(error) if error.kind() == io::ErrorKind::BrokenPipe => Ok(()),
-        result => result.context("Could not write document"),
+        result => result.context("Could not write output"),
     }
 }
 
@@ -181,7 +190,10 @@ mod tests {
         );
         let response = fetch(&url, "A & B").await.unwrap();
         assert_eq!(response.revision, 7.0);
-        assert_eq!(serde_json::to_value(&response).unwrap()["doc"]["type"], "doc");
+        assert_eq!(
+            serde_json::to_value(&response).unwrap()["doc"]["type"],
+            "doc"
+        );
         assert_eq!(render("A & B", &response.doc).unwrap(), "# A & B\n\n");
         assert!(
             server

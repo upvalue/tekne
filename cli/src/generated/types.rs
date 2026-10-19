@@ -9,6 +9,221 @@
 #![allow(unreachable_patterns)]
 use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct SearchQueryResponse {
+    #[serde(rename = "asOf")]
+    pub as_of: String,
+    #[serde(rename = "groupBy")]
+    pub group_by: Option<SearchQueryResponseGroupBy>,
+    pub groups: Vec<SearchQueryResponseGroupsItem>,
+    #[serde(rename = "groupsOverlap")]
+    pub groups_overlap: bool,
+    pub items: Vec<SearchQueryResponseItemsItem>,
+    #[serde(rename = "nextCursor")]
+    pub next_cursor: Option<f64>,
+    pub query: String,
+    pub summary: SearchQueryResponseSummary,
+    pub timezone: String,
+    pub today: String,
+}
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct SearchQueryResponseSummary {
+    #[serde(rename = "matchedCount")]
+    pub matched_count: f64,
+    #[serde(rename = "timeSeconds")]
+    pub time_seconds: f64,
+    #[serde(rename = "timedEntryCount")]
+    pub timed_entry_count: f64,
+}
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct SearchQueryResponseItemsItem {
+    pub content: String,
+    pub document: String,
+    pub indent: f64,
+    #[serde(rename = "lineId")]
+    pub line_id: String,
+    #[serde(rename = "lineIndex")]
+    pub line_index: f64,
+    pub tags: Vec<String>,
+    #[serde(rename = "taskStatus")]
+    pub task_status: Option<SearchQueryResponseItemsItemTaskStatus>,
+    #[serde(rename = "timeCreated")]
+    pub time_created: Option<String>,
+    #[serde(rename = "timeSeconds")]
+    pub time_seconds: Option<f64>,
+    #[serde(rename = "timeUpdated")]
+    pub time_updated: Option<String>,
+}
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize, Default)]
+pub enum SearchQueryResponseItemsItemTaskStatus {
+    #[default]
+    #[serde(rename = "complete")]
+    Complete,
+    #[serde(rename = "incomplete")]
+    Incomplete,
+    #[serde(rename = "unset")]
+    Unset,
+}
+impl SearchQueryResponseItemsItemTaskStatus {
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            Self::Complete => "complete",
+            Self::Incomplete => "incomplete",
+            Self::Unset => "unset",
+        }
+    }
+}
+impl ::std::fmt::Display for SearchQueryResponseItemsItemTaskStatus {
+    fn fmt(&self, f: &mut ::std::fmt::Formatter<'_>) -> ::std::fmt::Result {
+        f.write_str(self.as_str())
+    }
+}
+impl AsRef<str> for SearchQueryResponseItemsItemTaskStatus {
+    fn as_ref(&self) -> &str {
+        self.as_str()
+    }
+}
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct SearchQueryResponseGroupsItem {
+    pub key: Option<String>,
+    #[serde(rename = "matchedCount")]
+    pub matched_count: f64,
+    #[serde(rename = "timeSeconds")]
+    pub time_seconds: f64,
+}
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize, Default)]
+pub enum SearchQueryResponseGroupBy {
+    #[default]
+    #[serde(rename = "tag")]
+    Tag,
+    #[serde(rename = "document")]
+    Document,
+}
+impl SearchQueryResponseGroupBy {
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            Self::Tag => "tag",
+            Self::Document => "document",
+        }
+    }
+}
+impl ::std::fmt::Display for SearchQueryResponseGroupBy {
+    fn fmt(&self, f: &mut ::std::fmt::Formatter<'_>) -> ::std::fmt::Result {
+        f.write_str(self.as_str())
+    }
+}
+impl AsRef<str> for SearchQueryResponseGroupBy {
+    fn as_ref(&self) -> &str {
+        self.as_str()
+    }
+}
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct SearchQueryRequest {
+    ///Constraint: minimum=0, maximum=9007199254740991
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub cursor: Option<i64>,
+    #[serde(rename = "groupBy", skip_serializing_if = "Option::is_none")]
+    pub group_by: Option<SearchQueryRequestGroupBy>,
+    ///Constraint: minimum=1, maximum=100
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub limit: Option<i64>,
+    pub query: String,
+    #[serde(rename = "summaryOnly", skip_serializing_if = "Option::is_none")]
+    pub summary_only: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub timezone: Option<String>,
+}
+impl SearchQueryRequest {
+    /// Construct this request with every required wire field.
+    pub fn new(query: String) -> Self {
+        Self {
+            query,
+            cursor: None,
+            group_by: None,
+            limit: None,
+            summary_only: None,
+            timezone: None,
+        }
+    }
+    /// Start a dependency-free builder with every required wire field.
+    pub fn builder(query: String) -> SearchQueryRequestBuilder {
+        SearchQueryRequestBuilder::new(query)
+    }
+}
+/// Dependency-free builder for [`#struct_name`].
+#[derive(Debug, Clone)]
+#[must_use]
+pub struct SearchQueryRequestBuilder {
+    value: SearchQueryRequest,
+}
+impl SearchQueryRequestBuilder {
+    /// Start a builder with every required wire field.
+    pub fn new(query: String) -> Self {
+        Self {
+            value: SearchQueryRequest::new(query),
+        }
+    }
+    #[doc = concat!("Set the optional `", "cursor", "` request field.")]
+    #[must_use]
+    pub fn cursor(mut self, cursor: i64) -> Self {
+        self.value.cursor = Some(cursor);
+        self
+    }
+    #[doc = concat!("Set the optional `", "groupBy", "` request field.")]
+    #[must_use]
+    pub fn group_by(mut self, group_by: SearchQueryRequestGroupBy) -> Self {
+        self.value.group_by = Some(group_by);
+        self
+    }
+    #[doc = concat!("Set the optional `", "limit", "` request field.")]
+    #[must_use]
+    pub fn limit(mut self, limit: i64) -> Self {
+        self.value.limit = Some(limit);
+        self
+    }
+    #[doc = concat!("Set the optional `", "summaryOnly", "` request field.")]
+    #[must_use]
+    pub fn summary_only(mut self, summary_only: bool) -> Self {
+        self.value.summary_only = Some(summary_only);
+        self
+    }
+    #[doc = concat!("Set the optional `", "timezone", "` request field.")]
+    #[must_use]
+    pub fn timezone(mut self, timezone: String) -> Self {
+        self.value.timezone = Some(timezone);
+        self
+    }
+    /// Finish building the request model.
+    pub fn build(self) -> SearchQueryRequest {
+        self.value
+    }
+}
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize, Default)]
+pub enum SearchQueryRequestGroupBy {
+    #[default]
+    #[serde(rename = "tag")]
+    Tag,
+    #[serde(rename = "document")]
+    Document,
+}
+impl SearchQueryRequestGroupBy {
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            Self::Tag => "tag",
+            Self::Document => "document",
+        }
+    }
+}
+impl ::std::fmt::Display for SearchQueryRequestGroupBy {
+    fn fmt(&self, f: &mut ::std::fmt::Formatter<'_>) -> ::std::fmt::Result {
+        f.write_str(self.as_str())
+    }
+}
+impl AsRef<str> for SearchQueryRequestGroupBy {
+    fn as_ref(&self) -> &str {
+        self.as_str()
+    }
+}
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct DocLoadDocResponse {
     pub doc: DocLoadDocResponseDoc,
     pub revision: f64,
@@ -835,6 +1050,777 @@ pub struct DocLoadDocResponse409Variant {
 }
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct DocLoadDocResponse409Variant2 {
+    pub code: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub data: Option<serde_json::Value>,
+    pub defined: serde_json::Value,
+    pub message: String,
+    pub status: f64,
+}
+#[derive(Debug, Clone)]
+pub enum SearchQueryResponse400 {
+    SearchQueryResponse400Variant(SearchQueryResponse400Variant),
+    SearchQueryResponse400Variant2(SearchQueryResponse400Variant2),
+}
+impl Serialize for SearchQueryResponse400 {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        match self {
+            Self::SearchQueryResponse400Variant(value) => {
+                serde::Serialize::serialize(value, serializer)
+            }
+            Self::SearchQueryResponse400Variant2(value) => {
+                serde::Serialize::serialize(value, serializer)
+            }
+        }
+    }
+}
+impl<'de> Deserialize<'de> for SearchQueryResponse400 {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        fn exact_json_integer(number: &serde_json::Number) -> Option<i128> {
+            number.as_i64().map(i128::from).or_else(|| number.as_u64().map(i128::from))
+        }
+        fn json_numbers_have_same_value(
+            encoded: &serde_json::Number,
+            input: &serde_json::Number,
+        ) -> bool {
+            match (exact_json_integer(encoded), exact_json_integer(input)) {
+                (Some(encoded), Some(input)) => encoded == input,
+                (Some(encoded), None) => {
+                    input
+                        .as_f64()
+                        .is_some_and(|input| {
+                            input.is_finite() && input.fract() == 0.0
+                                && input as i128 == encoded
+                        })
+                }
+                (None, Some(input)) => {
+                    encoded
+                        .as_f64()
+                        .is_some_and(|encoded| {
+                            encoded.is_finite() && encoded.fract() == 0.0
+                                && encoded as i128 == input
+                        })
+                }
+                (None, None) => encoded.as_f64() == input.as_f64(),
+            }
+        }
+        /// `nulls_may_be_absent` also accepts an input `null` that the
+        /// branch omits, as a skipped `None` does. Extra encoded
+        /// keys are allowed only by the pre-existing anyOf match.
+        fn preserves_complete_json_input(
+            encoded: &serde_json::Value,
+            input: &serde_json::Value,
+            nulls_may_be_absent: bool,
+            encoded_keys_may_be_extra: bool,
+        ) -> bool {
+            match (encoded, input) {
+                (
+                    serde_json::Value::Object(encoded),
+                    serde_json::Value::Object(input),
+                ) => {
+                    (encoded_keys_may_be_extra
+                        || encoded.keys().all(|key| input.contains_key(key)))
+                        && input
+                            .iter()
+                            .all(|(key, value)| match encoded.get(key) {
+                                Some(encoded_value) => {
+                                    preserves_complete_json_input(
+                                        encoded_value,
+                                        value,
+                                        nulls_may_be_absent,
+                                        encoded_keys_may_be_extra,
+                                    )
+                                }
+                                None => nulls_may_be_absent && value.is_null(),
+                            })
+                }
+                (serde_json::Value::Array(encoded), serde_json::Value::Array(input)) => {
+                    encoded.len() == input.len()
+                        && encoded
+                            .iter()
+                            .zip(input)
+                            .all(|(encoded, input)| {
+                                preserves_complete_json_input(
+                                    encoded,
+                                    input,
+                                    nulls_may_be_absent,
+                                    encoded_keys_may_be_extra,
+                                )
+                            })
+                }
+                (
+                    serde_json::Value::Number(encoded),
+                    serde_json::Value::Number(input),
+                ) => json_numbers_have_same_value(encoded, input),
+                _ => encoded == input,
+            }
+        }
+        let input = <serde_json::Value as Deserialize>::deserialize(deserializer)?;
+        let mut matched = None;
+        let mut equivalent = None;
+        let mut equivalent_matches = 0usize;
+        if input
+            .as_object()
+            .is_some_and(|object| {
+                true
+                    && object
+                        .get("code")
+                        .is_some_and(|value| {
+                            value.is_null()
+                                || matches!(value.to_string().as_str(), "\"BAD_REQUEST\"")
+                        })
+                    && object
+                        .get("defined")
+                        .is_some_and(|value| {
+                            value.is_null()
+                                || matches!(value.to_string().as_str(), "true")
+                        })
+                    && object
+                        .get("status")
+                        .is_some_and(|value| {
+                            value.is_null()
+                                || matches!(value.to_string().as_str(), "400")
+                        })
+            })
+        {
+            if let Ok(candidate) = serde_json::from_value::<
+                SearchQueryResponse400Variant,
+            >(input.clone()) {
+                match serde_json::to_value(&candidate) {
+                    Ok(encoded) if encoded == input => {
+                        if matched.is_some() {
+                            return Err(
+                                serde::de::Error::custom(
+                                    concat!(
+                                        "ambiguous oneOf value for ",
+                                        stringify!(SearchQueryResponse400),
+                                        ": more than one branch preserved the complete input",
+                                    ),
+                                ),
+                            );
+                        }
+                        matched = Some(Self::SearchQueryResponse400Variant(candidate));
+                    }
+                    Ok(
+                        encoded,
+                    ) if preserves_complete_json_input(
+                        &encoded,
+                        &input,
+                        true,
+                        false,
+                    ) => {
+                        equivalent_matches += 1;
+                        equivalent
+                            .get_or_insert(
+                                Self::SearchQueryResponse400Variant(candidate),
+                            );
+                    }
+                    _ => {}
+                }
+            }
+        }
+        if input
+            .as_object()
+            .is_some_and(|object| {
+                true
+                    && object
+                        .get("defined")
+                        .is_some_and(|value| {
+                            value.is_null()
+                                || matches!(value.to_string().as_str(), "false")
+                        })
+            })
+        {
+            if let Ok(candidate) = serde_json::from_value::<
+                SearchQueryResponse400Variant2,
+            >(input.clone()) {
+                match serde_json::to_value(&candidate) {
+                    Ok(encoded) if encoded == input => {
+                        if matched.is_some() {
+                            return Err(
+                                serde::de::Error::custom(
+                                    concat!(
+                                        "ambiguous oneOf value for ",
+                                        stringify!(SearchQueryResponse400),
+                                        ": more than one branch preserved the complete input",
+                                    ),
+                                ),
+                            );
+                        }
+                        matched = Some(Self::SearchQueryResponse400Variant2(candidate));
+                    }
+                    Ok(
+                        encoded,
+                    ) if preserves_complete_json_input(
+                        &encoded,
+                        &input,
+                        true,
+                        false,
+                    ) => {
+                        equivalent_matches += 1;
+                        equivalent
+                            .get_or_insert(
+                                Self::SearchQueryResponse400Variant2(candidate),
+                            );
+                    }
+                    _ => {}
+                }
+            }
+        }
+        if let Some(matched) = matched {
+            return Ok(matched);
+        }
+        if equivalent_matches > 1 {
+            return Err(
+                serde::de::Error::custom(
+                    concat!(
+                        "ambiguous oneOf value for ", stringify!(SearchQueryResponse400),
+                        ": more than one branch preserved an equivalent input",
+                    ),
+                ),
+            );
+        }
+        equivalent
+            .ok_or_else(|| serde::de::Error::custom(
+                concat!(
+                    "no oneOf branch for ", stringify!(SearchQueryResponse400),
+                    " preserved the complete input",
+                ),
+            ))
+    }
+}
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct SearchQueryResponse400Variant {
+    pub code: serde_json::Value,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub data: Option<serde_json::Value>,
+    pub defined: serde_json::Value,
+    #[serde(default)]
+    pub message: String,
+    pub status: serde_json::Value,
+}
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct SearchQueryResponse400Variant2 {
+    pub code: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub data: Option<serde_json::Value>,
+    pub defined: serde_json::Value,
+    pub message: String,
+    pub status: f64,
+}
+#[derive(Debug, Clone)]
+pub enum SearchQueryResponse404 {
+    SearchQueryResponse404Variant(SearchQueryResponse404Variant),
+    SearchQueryResponse404Variant2(SearchQueryResponse404Variant2),
+}
+impl Serialize for SearchQueryResponse404 {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        match self {
+            Self::SearchQueryResponse404Variant(value) => {
+                serde::Serialize::serialize(value, serializer)
+            }
+            Self::SearchQueryResponse404Variant2(value) => {
+                serde::Serialize::serialize(value, serializer)
+            }
+        }
+    }
+}
+impl<'de> Deserialize<'de> for SearchQueryResponse404 {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        fn exact_json_integer(number: &serde_json::Number) -> Option<i128> {
+            number.as_i64().map(i128::from).or_else(|| number.as_u64().map(i128::from))
+        }
+        fn json_numbers_have_same_value(
+            encoded: &serde_json::Number,
+            input: &serde_json::Number,
+        ) -> bool {
+            match (exact_json_integer(encoded), exact_json_integer(input)) {
+                (Some(encoded), Some(input)) => encoded == input,
+                (Some(encoded), None) => {
+                    input
+                        .as_f64()
+                        .is_some_and(|input| {
+                            input.is_finite() && input.fract() == 0.0
+                                && input as i128 == encoded
+                        })
+                }
+                (None, Some(input)) => {
+                    encoded
+                        .as_f64()
+                        .is_some_and(|encoded| {
+                            encoded.is_finite() && encoded.fract() == 0.0
+                                && encoded as i128 == input
+                        })
+                }
+                (None, None) => encoded.as_f64() == input.as_f64(),
+            }
+        }
+        /// `nulls_may_be_absent` also accepts an input `null` that the
+        /// branch omits, as a skipped `None` does. Extra encoded
+        /// keys are allowed only by the pre-existing anyOf match.
+        fn preserves_complete_json_input(
+            encoded: &serde_json::Value,
+            input: &serde_json::Value,
+            nulls_may_be_absent: bool,
+            encoded_keys_may_be_extra: bool,
+        ) -> bool {
+            match (encoded, input) {
+                (
+                    serde_json::Value::Object(encoded),
+                    serde_json::Value::Object(input),
+                ) => {
+                    (encoded_keys_may_be_extra
+                        || encoded.keys().all(|key| input.contains_key(key)))
+                        && input
+                            .iter()
+                            .all(|(key, value)| match encoded.get(key) {
+                                Some(encoded_value) => {
+                                    preserves_complete_json_input(
+                                        encoded_value,
+                                        value,
+                                        nulls_may_be_absent,
+                                        encoded_keys_may_be_extra,
+                                    )
+                                }
+                                None => nulls_may_be_absent && value.is_null(),
+                            })
+                }
+                (serde_json::Value::Array(encoded), serde_json::Value::Array(input)) => {
+                    encoded.len() == input.len()
+                        && encoded
+                            .iter()
+                            .zip(input)
+                            .all(|(encoded, input)| {
+                                preserves_complete_json_input(
+                                    encoded,
+                                    input,
+                                    nulls_may_be_absent,
+                                    encoded_keys_may_be_extra,
+                                )
+                            })
+                }
+                (
+                    serde_json::Value::Number(encoded),
+                    serde_json::Value::Number(input),
+                ) => json_numbers_have_same_value(encoded, input),
+                _ => encoded == input,
+            }
+        }
+        let input = <serde_json::Value as Deserialize>::deserialize(deserializer)?;
+        let mut matched = None;
+        let mut equivalent = None;
+        let mut equivalent_matches = 0usize;
+        if input
+            .as_object()
+            .is_some_and(|object| {
+                true
+                    && object
+                        .get("code")
+                        .is_some_and(|value| {
+                            value.is_null()
+                                || matches!(value.to_string().as_str(), "\"NOT_FOUND\"")
+                        })
+                    && object
+                        .get("defined")
+                        .is_some_and(|value| {
+                            value.is_null()
+                                || matches!(value.to_string().as_str(), "true")
+                        })
+                    && object
+                        .get("status")
+                        .is_some_and(|value| {
+                            value.is_null()
+                                || matches!(value.to_string().as_str(), "404")
+                        })
+            })
+        {
+            if let Ok(candidate) = serde_json::from_value::<
+                SearchQueryResponse404Variant,
+            >(input.clone()) {
+                match serde_json::to_value(&candidate) {
+                    Ok(encoded) if encoded == input => {
+                        if matched.is_some() {
+                            return Err(
+                                serde::de::Error::custom(
+                                    concat!(
+                                        "ambiguous oneOf value for ",
+                                        stringify!(SearchQueryResponse404),
+                                        ": more than one branch preserved the complete input",
+                                    ),
+                                ),
+                            );
+                        }
+                        matched = Some(Self::SearchQueryResponse404Variant(candidate));
+                    }
+                    Ok(
+                        encoded,
+                    ) if preserves_complete_json_input(
+                        &encoded,
+                        &input,
+                        true,
+                        false,
+                    ) => {
+                        equivalent_matches += 1;
+                        equivalent
+                            .get_or_insert(
+                                Self::SearchQueryResponse404Variant(candidate),
+                            );
+                    }
+                    _ => {}
+                }
+            }
+        }
+        if input
+            .as_object()
+            .is_some_and(|object| {
+                true
+                    && object
+                        .get("defined")
+                        .is_some_and(|value| {
+                            value.is_null()
+                                || matches!(value.to_string().as_str(), "false")
+                        })
+            })
+        {
+            if let Ok(candidate) = serde_json::from_value::<
+                SearchQueryResponse404Variant2,
+            >(input.clone()) {
+                match serde_json::to_value(&candidate) {
+                    Ok(encoded) if encoded == input => {
+                        if matched.is_some() {
+                            return Err(
+                                serde::de::Error::custom(
+                                    concat!(
+                                        "ambiguous oneOf value for ",
+                                        stringify!(SearchQueryResponse404),
+                                        ": more than one branch preserved the complete input",
+                                    ),
+                                ),
+                            );
+                        }
+                        matched = Some(Self::SearchQueryResponse404Variant2(candidate));
+                    }
+                    Ok(
+                        encoded,
+                    ) if preserves_complete_json_input(
+                        &encoded,
+                        &input,
+                        true,
+                        false,
+                    ) => {
+                        equivalent_matches += 1;
+                        equivalent
+                            .get_or_insert(
+                                Self::SearchQueryResponse404Variant2(candidate),
+                            );
+                    }
+                    _ => {}
+                }
+            }
+        }
+        if let Some(matched) = matched {
+            return Ok(matched);
+        }
+        if equivalent_matches > 1 {
+            return Err(
+                serde::de::Error::custom(
+                    concat!(
+                        "ambiguous oneOf value for ", stringify!(SearchQueryResponse404),
+                        ": more than one branch preserved an equivalent input",
+                    ),
+                ),
+            );
+        }
+        equivalent
+            .ok_or_else(|| serde::de::Error::custom(
+                concat!(
+                    "no oneOf branch for ", stringify!(SearchQueryResponse404),
+                    " preserved the complete input",
+                ),
+            ))
+    }
+}
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct SearchQueryResponse404Variant {
+    pub code: serde_json::Value,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub data: Option<serde_json::Value>,
+    pub defined: serde_json::Value,
+    #[serde(default)]
+    pub message: String,
+    pub status: serde_json::Value,
+}
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct SearchQueryResponse404Variant2 {
+    pub code: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub data: Option<serde_json::Value>,
+    pub defined: serde_json::Value,
+    pub message: String,
+    pub status: f64,
+}
+#[derive(Debug, Clone)]
+pub enum SearchQueryResponse409 {
+    SearchQueryResponse409Variant(SearchQueryResponse409Variant),
+    SearchQueryResponse409Variant2(SearchQueryResponse409Variant2),
+}
+impl Serialize for SearchQueryResponse409 {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        match self {
+            Self::SearchQueryResponse409Variant(value) => {
+                serde::Serialize::serialize(value, serializer)
+            }
+            Self::SearchQueryResponse409Variant2(value) => {
+                serde::Serialize::serialize(value, serializer)
+            }
+        }
+    }
+}
+impl<'de> Deserialize<'de> for SearchQueryResponse409 {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        fn exact_json_integer(number: &serde_json::Number) -> Option<i128> {
+            number.as_i64().map(i128::from).or_else(|| number.as_u64().map(i128::from))
+        }
+        fn json_numbers_have_same_value(
+            encoded: &serde_json::Number,
+            input: &serde_json::Number,
+        ) -> bool {
+            match (exact_json_integer(encoded), exact_json_integer(input)) {
+                (Some(encoded), Some(input)) => encoded == input,
+                (Some(encoded), None) => {
+                    input
+                        .as_f64()
+                        .is_some_and(|input| {
+                            input.is_finite() && input.fract() == 0.0
+                                && input as i128 == encoded
+                        })
+                }
+                (None, Some(input)) => {
+                    encoded
+                        .as_f64()
+                        .is_some_and(|encoded| {
+                            encoded.is_finite() && encoded.fract() == 0.0
+                                && encoded as i128 == input
+                        })
+                }
+                (None, None) => encoded.as_f64() == input.as_f64(),
+            }
+        }
+        /// `nulls_may_be_absent` also accepts an input `null` that the
+        /// branch omits, as a skipped `None` does. Extra encoded
+        /// keys are allowed only by the pre-existing anyOf match.
+        fn preserves_complete_json_input(
+            encoded: &serde_json::Value,
+            input: &serde_json::Value,
+            nulls_may_be_absent: bool,
+            encoded_keys_may_be_extra: bool,
+        ) -> bool {
+            match (encoded, input) {
+                (
+                    serde_json::Value::Object(encoded),
+                    serde_json::Value::Object(input),
+                ) => {
+                    (encoded_keys_may_be_extra
+                        || encoded.keys().all(|key| input.contains_key(key)))
+                        && input
+                            .iter()
+                            .all(|(key, value)| match encoded.get(key) {
+                                Some(encoded_value) => {
+                                    preserves_complete_json_input(
+                                        encoded_value,
+                                        value,
+                                        nulls_may_be_absent,
+                                        encoded_keys_may_be_extra,
+                                    )
+                                }
+                                None => nulls_may_be_absent && value.is_null(),
+                            })
+                }
+                (serde_json::Value::Array(encoded), serde_json::Value::Array(input)) => {
+                    encoded.len() == input.len()
+                        && encoded
+                            .iter()
+                            .zip(input)
+                            .all(|(encoded, input)| {
+                                preserves_complete_json_input(
+                                    encoded,
+                                    input,
+                                    nulls_may_be_absent,
+                                    encoded_keys_may_be_extra,
+                                )
+                            })
+                }
+                (
+                    serde_json::Value::Number(encoded),
+                    serde_json::Value::Number(input),
+                ) => json_numbers_have_same_value(encoded, input),
+                _ => encoded == input,
+            }
+        }
+        let input = <serde_json::Value as Deserialize>::deserialize(deserializer)?;
+        let mut matched = None;
+        let mut equivalent = None;
+        let mut equivalent_matches = 0usize;
+        if input
+            .as_object()
+            .is_some_and(|object| {
+                true
+                    && object
+                        .get("code")
+                        .is_some_and(|value| {
+                            value.is_null()
+                                || matches!(value.to_string().as_str(), "\"CONFLICT\"")
+                        })
+                    && object
+                        .get("defined")
+                        .is_some_and(|value| {
+                            value.is_null()
+                                || matches!(value.to_string().as_str(), "true")
+                        })
+                    && object
+                        .get("status")
+                        .is_some_and(|value| {
+                            value.is_null()
+                                || matches!(value.to_string().as_str(), "409")
+                        })
+            })
+        {
+            if let Ok(candidate) = serde_json::from_value::<
+                SearchQueryResponse409Variant,
+            >(input.clone()) {
+                match serde_json::to_value(&candidate) {
+                    Ok(encoded) if encoded == input => {
+                        if matched.is_some() {
+                            return Err(
+                                serde::de::Error::custom(
+                                    concat!(
+                                        "ambiguous oneOf value for ",
+                                        stringify!(SearchQueryResponse409),
+                                        ": more than one branch preserved the complete input",
+                                    ),
+                                ),
+                            );
+                        }
+                        matched = Some(Self::SearchQueryResponse409Variant(candidate));
+                    }
+                    Ok(
+                        encoded,
+                    ) if preserves_complete_json_input(
+                        &encoded,
+                        &input,
+                        true,
+                        false,
+                    ) => {
+                        equivalent_matches += 1;
+                        equivalent
+                            .get_or_insert(
+                                Self::SearchQueryResponse409Variant(candidate),
+                            );
+                    }
+                    _ => {}
+                }
+            }
+        }
+        if input
+            .as_object()
+            .is_some_and(|object| {
+                true
+                    && object
+                        .get("defined")
+                        .is_some_and(|value| {
+                            value.is_null()
+                                || matches!(value.to_string().as_str(), "false")
+                        })
+            })
+        {
+            if let Ok(candidate) = serde_json::from_value::<
+                SearchQueryResponse409Variant2,
+            >(input.clone()) {
+                match serde_json::to_value(&candidate) {
+                    Ok(encoded) if encoded == input => {
+                        if matched.is_some() {
+                            return Err(
+                                serde::de::Error::custom(
+                                    concat!(
+                                        "ambiguous oneOf value for ",
+                                        stringify!(SearchQueryResponse409),
+                                        ": more than one branch preserved the complete input",
+                                    ),
+                                ),
+                            );
+                        }
+                        matched = Some(Self::SearchQueryResponse409Variant2(candidate));
+                    }
+                    Ok(
+                        encoded,
+                    ) if preserves_complete_json_input(
+                        &encoded,
+                        &input,
+                        true,
+                        false,
+                    ) => {
+                        equivalent_matches += 1;
+                        equivalent
+                            .get_or_insert(
+                                Self::SearchQueryResponse409Variant2(candidate),
+                            );
+                    }
+                    _ => {}
+                }
+            }
+        }
+        if let Some(matched) = matched {
+            return Ok(matched);
+        }
+        if equivalent_matches > 1 {
+            return Err(
+                serde::de::Error::custom(
+                    concat!(
+                        "ambiguous oneOf value for ", stringify!(SearchQueryResponse409),
+                        ": more than one branch preserved an equivalent input",
+                    ),
+                ),
+            );
+        }
+        equivalent
+            .ok_or_else(|| serde::de::Error::custom(
+                concat!(
+                    "no oneOf branch for ", stringify!(SearchQueryResponse409),
+                    " preserved the complete input",
+                ),
+            ))
+    }
+}
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct SearchQueryResponse409Variant {
+    pub code: serde_json::Value,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub data: Option<serde_json::Value>,
+    pub defined: serde_json::Value,
+    #[serde(default)]
+    pub message: String,
+    pub status: serde_json::Value,
+}
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct SearchQueryResponse409Variant2 {
     pub code: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub data: Option<serde_json::Value>,

@@ -3,6 +3,8 @@ import { z } from 'zod'
 import { sql } from 'kysely'
 import { ORPCError } from '@orpc/server'
 import { proc } from '../init'
+import { parseReportQuery } from '@/search/report-query'
+import { searchReport } from '../lib/search-report'
 import type { SearchOperator } from '@/search/types'
 import { TAG_REGEX_MATCH_BEFORE_STR } from '@/docs/regex'
 import { aggregateTagData, type TagAggregateData } from '../lib/tag-aggregates'
@@ -70,6 +72,49 @@ function buildFilterConditions(operators: SearchOperator[]) {
 }
 
 export const searchRouter = {
+  query: proc
+    .route({
+      method: 'POST',
+      path: '/search/query',
+      tags: ['search'],
+      summary: 'Search and summarize entries',
+      description:
+        'Search query text with tags, text, doc globs, status, has, from/to/age and created/updated dates. today/yesterday resolve in timezone. Summaries cover all matches, including untagged entries, independently of pagination. Tag groups may overlap.',
+    })
+    .input(
+      z.object({
+        query: z.string(),
+        timezone: z.string().default('UTC'),
+        limit: z.number().int().min(1).max(100).default(50),
+        cursor: z.number().int().nonnegative().default(0),
+        summaryOnly: z.boolean().default(false),
+        groupBy: z.enum(['tag', 'document']).optional(),
+      })
+    )
+    .output(outputs.search.query)
+    .handler(async ({ input, context: { db } }) => {
+      const now = new Date()
+      let parsed: ReturnType<typeof parseReportQuery>
+      try {
+        parsed = parseReportQuery(input.query, input.timezone, now)
+      } catch (error) {
+        throw new ORPCError('BAD_REQUEST', {
+          message: error instanceof Error ? error.message : 'Invalid query',
+        })
+      }
+      return {
+        query: input.query,
+        timezone: input.timezone,
+        today: parsed.today,
+        asOf: now.toISOString(),
+        groupBy: input.groupBy ?? null,
+        ...(await searchReport(db, {
+          ...input,
+          operators: parsed.operators,
+          now,
+        })),
+      }
+    }),
   /** Search for lines matching the query operators. */
   searchLines: proc
     .route({

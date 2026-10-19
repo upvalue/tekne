@@ -41,7 +41,7 @@ module_name = "tekne"
 enable_async_client = true
 
 [client]
-operations = ["doc.loadDoc"]
+operations = ["doc.loadDoc", "search.query"]
 prune_models = true
 
 [http_client]

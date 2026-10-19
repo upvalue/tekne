@@ -328,6 +328,13 @@ pub enum DocLoadDocApiError {
     Status404(DocLoadDocResponse404),
     Status409(DocLoadDocResponse409),
 }
+///Typed error responses for `search.query`. One variant per declared non-2xx response.
+#[derive(Debug, Clone)]
+pub enum SearchQueryApiError {
+    Status400(SearchQueryResponse400),
+    Status404(SearchQueryResponse404),
+    Status409(SearchQueryResponse409),
+}
 impl HttpClient {
     /// Load doc
     ///
@@ -433,6 +440,131 @@ impl HttpClient {
                     match serde_json::from_str::<DocLoadDocResponse409>(&body_text) {
                         Ok(v) => {
                             typed = Some(DocLoadDocApiError::Status409(v));
+                            parse_error = None;
+                        }
+                        Err(e) => {
+                            typed = None;
+                            parse_error = Some(e.to_string());
+                        }
+                    }
+                }
+                _ => {
+                    typed = None;
+                    parse_error = None;
+                }
+            }
+            Err(
+                ApiOpError::Api(ApiError {
+                    status: status_code,
+                    headers,
+                    body: body_text,
+                    raw_body,
+                    typed,
+                    parse_error,
+                }),
+            )
+        }
+    }
+    /// Search and summarize entries
+    ///
+    /// Search query text with tags, text, doc globs, status, has, from/to/age and created/updated dates. today/yesterday resolve in timezone. Summaries cover all matches, including untagged entries, independently of pagination. Tag groups may overlap.
+    ///
+    /// `POST /search/query`
+    pub async fn search_query(
+        &self,
+        request: SearchQueryRequest,
+    ) -> Result<SearchQueryResponse, ApiOpError<SearchQueryApiError>> {
+        let request_url = format!("{}{}", self.base_url, "/search/query");
+        let mut req = self.http_client.post(request_url);
+        req = req
+            .body(serde_json::to_vec(&request).map_err(HttpError::serialization_error)?)
+            .header("content-type", "application/json");
+        if let Some(api_key) = &self.api_key {
+            req = req.bearer_auth(api_key);
+        }
+        for (name, value) in &self.custom_headers {
+            if !name.eq_ignore_ascii_case("accept") {
+                req = req.header(name, value);
+            }
+        }
+        req = req.header(reqwest::header::ACCEPT, "application/json");
+        let response = req.send().await?;
+        let status = response.status();
+        let status_code = status.as_u16();
+        let headers = response.headers().clone();
+        let body_bytes = __read_bounded_response_body(
+                response,
+                self.max_response_body_bytes,
+            )
+            .await?;
+        let raw_body = body_bytes;
+        let body_text = String::from_utf8_lossy(&raw_body).into_owned();
+        if false || status_code == 200u16 {
+            match serde_json::from_str(&body_text) {
+                Ok(body) => Ok(body),
+                Err(e) => {
+                    Err(
+                        ApiOpError::Api(ApiError {
+                            status: status_code,
+                            headers: headers,
+                            body: body_text,
+                            raw_body,
+                            typed: None,
+                            parse_error: Some(
+                                format!("failed to deserialize 2xx response body: {}", e),
+                            ),
+                        }),
+                    )
+                }
+            }
+        } else if status.is_success() {
+            Err(
+                ApiOpError::Api(ApiError {
+                    status: status_code,
+                    headers,
+                    body: body_text,
+                    raw_body,
+                    typed: None,
+                    parse_error: Some(
+                        format!(
+                            "unexpected successful status {}; generated return type selects `{}`",
+                            status_code, "200",
+                        ),
+                    ),
+                }),
+            )
+        } else {
+            let typed: Option<SearchQueryApiError>;
+            let parse_error: Option<String>;
+            match status_code {
+                400u16 => {
+                    match serde_json::from_str::<SearchQueryResponse400>(&body_text) {
+                        Ok(v) => {
+                            typed = Some(SearchQueryApiError::Status400(v));
+                            parse_error = None;
+                        }
+                        Err(e) => {
+                            typed = None;
+                            parse_error = Some(e.to_string());
+                        }
+                    }
+                }
+                404u16 => {
+                    match serde_json::from_str::<SearchQueryResponse404>(&body_text) {
+                        Ok(v) => {
+                            typed = Some(SearchQueryApiError::Status404(v));
+                            parse_error = None;
+                        }
+                        Err(e) => {
+                            typed = None;
+                            parse_error = Some(e.to_string());
+                        }
+                    }
+                }
+                409u16 => {
+                    match serde_json::from_str::<SearchQueryResponse409>(&body_text) {
+                        Ok(v) => {
+                            typed = Some(SearchQueryApiError::Status409(v));
                             parse_error = None;
                         }
                         Err(e) => {

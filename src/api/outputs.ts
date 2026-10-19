@@ -133,6 +133,41 @@ export const outputs = {
     }),
   },
   search: {
+    query: z.object({
+      query: z.string(),
+      timezone: z.string(),
+      today: z.string(),
+      asOf: z.string(),
+      items: z.array(
+        z.object({
+          lineId: z.string(),
+          document: z.string(),
+          lineIndex: count,
+          content: z.string(),
+          indent: count,
+          timeCreated: z.string().nullable(),
+          timeUpdated: z.string().nullable(),
+          tags: z.array(z.string()),
+          taskStatus: z.enum(['complete', 'incomplete', 'unset']).nullable(),
+          timeSeconds: z.number().nullable(),
+        })
+      ),
+      summary: z.object({
+        matchedCount: count,
+        timedEntryCount: count,
+        timeSeconds: z.number(),
+      }),
+      groupBy: z.enum(['tag', 'document']).nullable(),
+      groups: z.array(
+        z.object({
+          key: z.string().nullable(),
+          matchedCount: count,
+          timeSeconds: z.number(),
+        })
+      ),
+      groupsOverlap: z.boolean(),
+      nextCursor: count.nullable(),
+    }),
     searchLines: z.object({
       items: z.array(
         z.object({

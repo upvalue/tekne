@@ -148,7 +148,7 @@ test('OpenAPI describes every procedure, inputs and outputs; reference is availa
       )
       .map(([, operation]) => operation)
   )
-  expect(operations).toHaveLength(35)
+  expect(operations).toHaveLength(36)
   for (const operation of operations) {
     expect(operation.description).toBeTruthy()
     expect(
@@ -207,7 +207,7 @@ test('plaintext guide aliases expose every live operation without duplicating sc
   )
   const index = guide.split('## Endpoint index')[1]
   expect(index.match(/^[A-Z]+ \/api\/v1\S* \([^\n]+\)$/gm)).toEqual(expected)
-  expect(expected).toHaveLength(35)
+  expect(expected).toHaveLength(36)
   for (const methods of Object.values(spec.paths)) {
     for (const [method, operation] of Object.entries(
       methods as Record<string, any>
@@ -342,4 +342,35 @@ test('line patches and aggregate snapshots work over HTTP and RPC', async () => 
     body: { status: 'conflict', serverRevision: 1 },
   })
   expect((await rpc.doc.loadDoc({ name })).doc.children[0]).toEqual(line)
+})
+
+test('query reports expose plain JSON summaries and validation errors', async () => {
+  const name = 'CLI search report'
+  await request('POST', '/documents', { name })
+  await request('PUT', '/documents/content', {
+    name,
+    expectedRevision: 0,
+    doc: docMake([
+      lineMake(0, 'An untagged timed entry', { datumTimeSeconds: 90 }),
+    ]),
+  })
+  const report = await request('POST', '/search/query', {
+    query: 'doc:"CLI search report" has:timer',
+    timezone: 'UTC',
+    summaryOnly: true,
+  })
+  expect(report).toMatchObject({
+    status: 200,
+    body: {
+      items: [],
+      nextCursor: null,
+      summary: { matchedCount: 1, timedEntryCount: 1, timeSeconds: 90 },
+    },
+  })
+  expect(
+    await request('POST', '/search/query', { query: 'tracked:today' })
+  ).toMatchObject({
+    status: 400,
+    body: { message: 'Unknown operator: tracked' },
+  })
 })

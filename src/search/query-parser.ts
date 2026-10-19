@@ -46,7 +46,7 @@ function parseAge(value: string): number | null {
   }
 }
 
-function tokenize(query: string): string[] {
+export function tokenize(query: string): string[] {
   const tokens: string[] = []
   let current = ''
   let inQuotes = false
@@ -57,7 +57,7 @@ function tokenize(query: string): string[] {
     if (char === '"') {
       inQuotes = !inQuotes
       current += char
-    } else if (char === ' ' && !inQuotes) {
+    } else if (/\s/.test(char) && !inQuotes) {
       if (current) {
         tokens.push(current)
         current = ''

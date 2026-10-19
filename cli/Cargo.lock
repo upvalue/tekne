@@ -1365,6 +1365,7 @@ dependencies = [
  "chrono",
  "clap",
  "futures-util",
+ "iana-time-zone",
  "reqwest",
  "reqwest-middleware",
  "reqwest-tracing",
