@@ -1,0 +1,37 @@
+schema = 1
+name = "Tekne"
+
+[runtime]
+kind = "node"
+version = "24"
+package_manager = "pnpm"
+
+[[setup.steps]]
+kind = "dependencies"
+locked = true
+
+[[setup.steps]]
+run = ["pnpm", "run", "build:local"]
+
+[launch]
+command = [
+  "pnpm",
+  "run",
+  "preview:local",
+  "--host",
+  "{host}",
+  "--port",
+  "{port}",
+  "--strictPort",
+]
+host = "127.0.0.1"
+port = 4173
+
+[health]
+type = "http"
+path = "/"
+timeout_seconds = 90
+
+# Browser storage and exported files are outside the managed checkout.
+[persistence]
+paths = []

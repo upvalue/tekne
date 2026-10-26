@@ -23,3 +23,5 @@ Tekne is released under the AGPL. Tekne depends on a lot of projects, here are a
 - General stack: React with tanstack-router, Express/oRPC for server, postgres (& pglite) for
   database, Jotai for state management
 - Theme was heavily inspired by Zed 
+
+[![Launch on PicoRunner](https://picorunner.com/badges/launch.svg)](https://picorunner.com/launch/?repository=https%3A%2F%2Fgithub.com%2Fupvalue%2Ftekne)
