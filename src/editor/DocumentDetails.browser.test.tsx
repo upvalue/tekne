@@ -1,8 +1,8 @@
 import { act, cleanup, fireEvent, render } from '@testing-library/react'
 import { page } from '@vitest/browser/context'
 import { afterEach, expect, test, vi } from 'vitest'
-import { NotificationScratchpad } from './NotificationScratchpad'
-import { DocumentDetails } from '@/editor/DocumentDetails'
+import { NotificationScratchpad } from '@/components/NotificationScratchpad'
+import { DocumentDetails } from './DocumentDetails'
 import { notifications } from '@/lib/notifications'
 import '@/styles/styles.css'
 
