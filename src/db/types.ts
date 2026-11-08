@@ -74,6 +74,12 @@ export type DBFeatureFlag = {
 
 export type Database = {
   document_patch_receipts: {
+    kind: ColumnType<
+      'patch' | 'edit',
+      'patch' | 'edit' | undefined,
+      'patch' | 'edit'
+    >
+    result: ColumnType<unknown, unknown, unknown>
     request_id: string
     note_title: string
     request_hash: string

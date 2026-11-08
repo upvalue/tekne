@@ -25,6 +25,9 @@ const LAYER_ORDER = [
   // API: oRPC routers (server side), derived-row logic, and the client.
   'api',
 
+  // MCP tools compose the application API.
+  'mcp',
+
   // Backend entry point: the express server. Nothing may import it (see the
   // no-import-of-entry-points rule below).
   'server',
@@ -62,6 +65,13 @@ const upwardRules = LAYER_ORDER.slice(0, -1).map((pkg, i) => ({
 module.exports = {
   forbidden: [
     ...upwardRules,
+    {
+      name: 'mcp-uses-api',
+      comment: 'MCP tools access storage through API procedures.',
+      severity: 'error',
+      from: { path: '^src/mcp/', pathNot: '\\.test\\.ts$' },
+      to: { path: '^src/db/' },
+    },
     {
       name: 'no-import-of-entry-points',
       comment: 'entry point packages must not be imported from src/',

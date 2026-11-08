@@ -2,7 +2,7 @@ import { ORPCError } from '@orpc/server'
 import type { Kysely } from 'kysely'
 import type { Database, DBTimer } from '@/db/types'
 import type { Timer } from '@/docs/timer'
-import { upsertNoteInTx } from '../routers/doc'
+import { upsertNoteInTx } from './document-write'
 
 export const presentTimer = (row: DBTimer): Timer => ({
   id: row.id,

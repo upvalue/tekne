@@ -71,6 +71,24 @@ export const outputs = {
         serverRevision: count,
       }),
     ]),
+    editDoc: z.discriminatedUnion('status', [
+      z.object({
+        status: z.literal('ok'),
+        revision: count,
+        insertedLines: z.array(
+          z.object({
+            operationIndex: count,
+            lineIndex: count,
+            id: zline.shape.id,
+          })
+        ),
+      }),
+      z.object({
+        status: z.literal('conflict'),
+        serverDoc: zdoc,
+        serverRevision: count,
+      }),
+    ]),
     renameDocPropose: z.object({
       docAlreadyExists: z.boolean(),
       linksToUpdate: z.array(z.object({ title: z.string() })),

@@ -5,7 +5,7 @@ import type { Kysely } from 'kysely'
 import { cancelUncheckedTasksBefore } from '@/docs/task-cancel'
 import type { Database } from '@/db'
 import { proc } from '../init'
-import { upsertNoteInTx } from './doc'
+import { upsertNoteInTx } from '../lib/document-write'
 
 const cutoffSchema = z.iso.datetime()
 

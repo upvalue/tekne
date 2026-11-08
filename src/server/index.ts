@@ -4,6 +4,7 @@ import cors from 'cors'
 import helmet from 'helmet'
 import compression from 'compression'
 import { registerApi } from './api'
+import { registerMcp } from './mcp'
 import { completeDueTimers } from '@/api/lib/timers'
 import { dbServer } from '@/db'
 import { sql } from 'kysely'
@@ -70,6 +71,21 @@ setInterval(async () => {
     completingTimers = false
   }
 }, 1000).unref()
+const mcpAllowedHosts = (
+  process.env.TEKNE_MCP_ALLOWED_HOSTS ||
+  `localhost:${PORT},127.0.0.1:${PORT},[::1]:${PORT}`
+)
+  .split(',')
+  .map((value) => value.trim())
+  .filter(Boolean)
+const mcpAllowedOrigins = (process.env.TEKNE_MCP_ALLOWED_ORIGINS || '')
+  .split(',')
+  .map((value) => value.trim())
+  .filter(Boolean)
+registerMcp(app, db, {
+  allowedHosts: mcpAllowedHosts,
+  allowedOrigins: mcpAllowedOrigins,
+})
 await registerApi(app, db)
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))

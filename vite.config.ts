@@ -88,6 +88,7 @@ export default defineConfig({
             '**/*.browser.test.*',
             // Agent worktrees and the pnpm store carry copies of the repo
             '.claude/**',
+            '.delta/**',
             '.pnpm-store/**',
           ],
         },

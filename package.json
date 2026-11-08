@@ -42,6 +42,7 @@
     "@lezer/common": "^1.2.3",
     "@lezer/highlight": "^1.2.1",
     "@lezer/markdown": "^1.4.3",
+    "@modelcontextprotocol/sdk": "^1.32.2",
     "@orpc/client": "^1.15.3",
     "@orpc/openapi": "^1.15.3",
     "@orpc/server": "^1.15.3",

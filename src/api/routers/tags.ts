@@ -1,3 +1,4 @@
+import { inputs } from '../inputs'
 import { outputs } from '../outputs'
 import { z } from 'zod'
 import type { Kysely } from 'kysely'
@@ -11,7 +12,7 @@ import {
   type ChangedLine,
 } from '@/docs/tag-rename'
 import type { ZDoc, ZLine } from '@/docs/schema'
-import { upsertNoteInTx } from './doc'
+import { upsertNoteInTx } from '../lib/document-write'
 
 const renameInputSchema = z
   .object({
@@ -273,7 +274,7 @@ export const tagsRouter = {
         'List tags with descriptions, archive state and usage counts. Names omit the leading #.',
     })
     .output(outputs.tags.list)
-    .input(z.object({}).optional())
+    .input(inputs.empty.optional())
     .handler(async ({ context: { db } }) => {
       const usage = await db
         .selectFrom('note_data')
@@ -337,7 +338,7 @@ export const tagsRouter = {
         'List tag names in use, excluding archived tags. Names omit the leading #.',
     })
     .output(outputs.tags.allTags)
-    .input(z.object({}).optional())
+    .input(inputs.empty.optional())
     .handler(async ({ context: { db } }) => {
       const [names, archived] = await Promise.all([
         getAllTagNames(db),

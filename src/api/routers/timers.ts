@@ -1,3 +1,4 @@
+import { inputs } from '../inputs'
 import { z } from 'zod'
 import { ORPCError } from '@orpc/server'
 import { sql } from 'kysely'
@@ -33,7 +34,7 @@ export const timersRouter = {
       description:
         'Read timers with their document title and up to five surrounding lines for external displays. Does not mutate documents or timers.',
     })
-    .input(z.object({}).optional())
+    .input(inputs.empty.optional())
     .output(
       z.object({
         timers: z.array(timerSchema.extend({ context: z.string() })),

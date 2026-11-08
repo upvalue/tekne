@@ -1,3 +1,4 @@
+import { inputs } from '../inputs'
 import { outputs } from '../outputs'
 import { z } from 'zod'
 import { sql } from 'kysely'
@@ -81,16 +82,7 @@ export const searchRouter = {
       description:
         'Search query text with tags, text, doc globs, status, has, from/to/age and created/updated dates. today/yesterday resolve in timezone. Summaries cover all matches, including untagged entries, independently of pagination. Tag groups may overlap.',
     })
-    .input(
-      z.object({
-        query: z.string(),
-        timezone: z.string().default('UTC'),
-        limit: z.number().int().min(1).max(100).default(50),
-        cursor: z.number().int().nonnegative().default(0),
-        summaryOnly: z.boolean().default(false),
-        groupBy: z.enum(['tag', 'document']).optional(),
-      })
-    )
+    .input(inputs.search.query)
     .output(outputs.search.query)
     .handler(async ({ input, context: { db } }) => {
       const now = new Date()

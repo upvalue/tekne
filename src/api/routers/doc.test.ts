@@ -526,3 +526,106 @@ describe('patchDoc', () => {
     expect((await caller.loadDoc({ name: 'Patch' })).revision).toBe(1)
   })
 })
+
+describe('editDoc', () => {
+  test('persists generated IDs in receipts, rebuilds derived rows, and acknowledges late retries', async () => {
+    await noteWith('Edits', ['Keep #old'])
+    const before = await caller.loadDoc({ name: 'Edits' })
+    const request = {
+      name: 'Edits',
+      expectedRevision: before.revision,
+      requestId: crypto.randomUUID(),
+      operations: [
+        {
+          op: 'update' as const,
+          id: before.doc.children[0].id,
+          changes: {
+            mdContent: 'Changed #new',
+            datumTaskStatus: 'complete' as const,
+          },
+        },
+        {
+          op: 'insert' as const,
+          after: before.doc.children[0].id,
+          lines: [
+            { mdContent: 'Inserted #new', indent: 1, datumTimeSeconds: 1500 },
+          ],
+        },
+      ],
+    }
+    const result = await caller.editDoc(request)
+    expect(result.status).toBe('ok')
+    if (result.status !== 'ok') throw new Error('Unexpected conflict')
+    expect(result.insertedLines).toHaveLength(1)
+    expect(await caller.editDoc(request)).toEqual(result)
+    expect(await lineContents('Edits')).toEqual([
+      'Changed #new',
+      'Inserted #new',
+    ])
+    const saved = await caller.loadDoc({ name: 'Edits' })
+    expect(saved.doc.children[1].id).toBe(result.insertedLines[0].id)
+    expect(saved.doc.children[1].datumTimeSeconds).toBe(1500)
+    await caller.updateDoc({
+      name: 'Edits',
+      expectedRevision: saved.revision,
+      doc: saved.doc,
+    })
+    expect(await caller.editDoc(request)).toEqual(result)
+    await expect(
+      caller.editDoc({ ...request, expectedRevision: 99 })
+    ).rejects.toMatchObject({ code: 'BAD_REQUEST' })
+    await expect(
+      caller.patchDoc({
+        name: request.name,
+        expectedRevision: result.revision,
+        requestId: request.requestId,
+        patch: [],
+      })
+    ).rejects.toMatchObject({ code: 'BAD_REQUEST' })
+  })
+
+  test('rolls back invalid batches and rejects stale revisions and patch receipt reuse', async () => {
+    await noteWith('Edits', ['Original'])
+    const { doc, revision } = await caller.loadDoc({ name: 'Edits' })
+    const request = {
+      name: 'Edits',
+      expectedRevision: revision,
+      requestId: crypto.randomUUID(),
+    }
+    await expect(
+      caller.editDoc({
+        ...request,
+        operations: [
+          {
+            op: 'update',
+            id: doc.children[0].id,
+            changes: { mdContent: 'Should roll back' },
+          },
+          { op: 'delete', id: 'l_abcdefghijklmnopqrstuA', scope: 'subtree' },
+        ],
+      })
+    ).rejects.toMatchObject({ code: 'BAD_REQUEST' })
+    expect(await caller.loadDoc({ name: 'Edits' })).toEqual({ doc, revision })
+    expect(
+      await db.selectFrom('document_patch_receipts').selectAll().execute()
+    ).toEqual([])
+    const operations = [
+      {
+        op: 'update' as const,
+        id: doc.children[0].id,
+        changes: { mdContent: 'Changed' },
+      },
+    ]
+    expect(
+      await caller.editDoc({
+        ...request,
+        expectedRevision: revision + 1,
+        operations,
+      })
+    ).toMatchObject({ status: 'conflict', serverRevision: revision })
+    await caller.patchDoc({ ...request, patch: [] })
+    await expect(
+      caller.editDoc({ ...request, operations })
+    ).rejects.toMatchObject({ code: 'BAD_REQUEST' })
+  })
+})

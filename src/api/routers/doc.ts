@@ -1,3 +1,7 @@
+import { inputs } from '../inputs'
+import { editDocument } from '../lib/document-edit'
+import { upsertNoteInTx } from '../lib/document-write'
+export { upsertNoteInTx } from '../lib/document-write'
 import { applyDocumentPatch, documentPatchSchema } from '@/docs/document-patch'
 import { outputs } from '../outputs'
 import z from 'zod'
@@ -12,7 +16,7 @@ import {
   migrateDocWithReport,
   validateDocumentWithMigrationCheck,
 } from '@/docs/doc-migrator'
-import { deriveNoteRows, recomputeAllDocumentData } from '@/api/lib/docs'
+import { recomputeAllDocumentData } from '@/api/lib/docs'
 import { escapeLike } from '@/api/lib/search-operators'
 import { applyTemplateDirectives } from '@/docs/template-directives'
 import { produce } from 'immer'
@@ -20,80 +24,6 @@ import { TEKNE_MD_PARSER, visitMdTree } from '@/docs/parser'
 import type { SyntaxNode } from '@lezer/common'
 import MagicString from 'magic-string'
 import { ORPCError } from '@orpc/server'
-
-/**
- * Upserts a note and rebuilds its derived data (note_data, note_lines,
- * parsed_body) inside an existing transaction. Increments the revision on
- * update so callers can detect concurrent modification via expectedRevision.
- * Returns the note's new revision.
- */
-export const upsertNoteInTx = async (
-  tx: Kysely<Database>,
-  name: string,
-  body: ZDoc,
-  insertOnly = false
-): Promise<number> => {
-  body = zdoc.parse(body)
-  const { parsedBody, noteData, noteLines } = deriveNoteRows(name, body)
-  if (body.children.length) {
-    const existing = await tx
-      .selectFrom('note_lines')
-      .select('line_id')
-      .where(
-        'line_id',
-        'in',
-        body.children.map((line) => line.id)
-      )
-      .where('note_title', '!=', name)
-      .executeTakeFirst()
-    if (existing)
-      throw new ORPCError('CONFLICT', {
-        message:
-          'A line ID belongs to another document. Generate fresh IDs when copying lines.',
-      })
-  }
-
-  const r = await tx
-    .insertInto('notes')
-    .values({
-      title: name,
-      body,
-      revision: 0,
-      parsed_body: sql`${JSON.stringify(parsedBody)}::jsonb`,
-      updatedAt: sql`now()`,
-    })
-    .onConflict((oc) =>
-      insertOnly
-        ? oc.column('title').doNothing()
-        : oc.column('title').doUpdateSet({
-            body,
-            parsed_body: sql`${JSON.stringify(parsedBody)}::jsonb`,
-            updatedAt: sql`now()`,
-            revision: sql`notes.revision + 1`,
-          })
-    )
-    .returning('revision')
-    .executeTakeFirst()
-
-  if (!r)
-    throw new ORPCError('CONFLICT', {
-      message: `Document with name "${name}" already exists`,
-    })
-
-  await tx.deleteFrom('note_data').where('note_title', '=', name).execute()
-
-  if (noteData.length > 0) {
-    await tx.insertInto('note_data').values(noteData).execute()
-  }
-
-  await tx.deleteFrom('note_lines').where('note_title', '=', name).execute()
-
-  if (noteLines.length > 0) {
-    await tx.insertInto('note_lines').values(noteLines).execute()
-  }
-
-  return r.revision
-}
 
 const insertNote = async (db: Kysely<Database>, name: string, body: ZDoc) => {
   return await db
@@ -223,11 +153,7 @@ export const docRouter = {
         'Find documents by title. Empty query returns all documents.',
     })
     .output(outputs.doc.searchDocs)
-    .input(
-      z.object({
-        query: z.string(),
-      })
-    )
+    .input(inputs.doc.searchDocs)
     .handler(async ({ input, context: { db } }) => {
       let query = db.selectFrom('notes').select(['title'])
 
@@ -254,11 +180,7 @@ export const docRouter = {
         'Read a document and its revision. Pass the exact title as name.',
     })
     .output(outputs.doc.loadDoc)
-    .input(
-      z.object({
-        name: z.string(),
-      })
-    )
+    .input(inputs.doc.loadDoc)
     .handler(
       async ({
         input,
@@ -343,6 +265,7 @@ export const docRouter = {
           .executeTakeFirst()
         if (receipt) {
           if (
+            receipt.kind !== 'patch' ||
             receipt.note_title !== input.name ||
             receipt.request_hash !== requestHash
           )
@@ -382,6 +305,19 @@ export const docRouter = {
         return { status: 'ok' as const, revision }
       })
     }),
+
+  editDoc: storedDocumentProc
+    .route({
+      method: 'POST',
+      path: '/documents/edit',
+      tags: ['doc'],
+      summary: 'Edit document lines',
+      description:
+        'Apply field-level edits atomically at expectedRevision. Omitted fields are preserved; null removes optional metadata. Delete and move require line or subtree scope. Retry a lost response with exactly the same requestId and input. Conflicts write nothing.',
+    })
+    .input(inputs.doc.editDoc)
+    .output(outputs.doc.editDoc)
+    .handler(({ input, context: { db } }) => editDocument(db, input)),
 
   updateDoc: storedDocumentProc
     .route({
@@ -575,11 +511,7 @@ export const docRouter = {
         'Create a document. Daily names use $Daily when available; Tutorial uses built-in content. Existing names return 409.',
     })
     .output(outputs.doc.createDoc)
-    .input(
-      z.object({
-        name: documentNameSchema,
-      })
-    )
+    .input(inputs.doc.createDoc)
     .handler(async ({ input, context: { db } }) => {
       const { name } = input
 
@@ -606,7 +538,7 @@ export const docRouter = {
         'Validate all stored documents and report migration options. Does not write.',
     })
     .output(outputs.doc.validateAllDocs)
-    .input(z.object({}).optional())
+    .input(inputs.empty.optional())
     .handler(async ({ context: { db } }) => {
       const allDocs = await db.selectFrom('notes').selectAll().execute()
 
@@ -741,7 +673,7 @@ export const docRouter = {
       description: 'List document titles beginning with $.',
     })
     .output(outputs.doc.listTemplates)
-    .input(z.object({}).optional())
+    .input(inputs.empty.optional())
     .handler(async ({ context: { db } }) => {
       const templates = await db
         .selectFrom('notes')
@@ -761,12 +693,7 @@ export const docRouter = {
         'Create a document from templateName with fresh line timestamps. Daily names apply date directives.',
     })
     .output(outputs.doc.createDocFromTemplate)
-    .input(
-      z.object({
-        name: documentNameSchema,
-        templateName: z.string(),
-      })
-    )
+    .input(inputs.doc.createDocFromTemplate)
     .handler(async ({ input, context: { db } }) => {
       const { name, templateName } = input
 
