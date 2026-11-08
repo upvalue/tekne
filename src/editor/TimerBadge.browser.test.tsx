@@ -38,8 +38,23 @@ test('timer popover fits a narrow screen and holds the running controls', async 
   view.getByRole('button', { name: /^Stop and set to/ })
   view.getByRole('button', { name: '+5m' })
   view.getByRole('button', { name: 'Discard this session' })
-  expect(popup.getBoundingClientRect().right).toBeLessThanOrEqual(320)
+  const bounds = popup.getBoundingClientRect()
+  expect(bounds.left).toBeGreaterThanOrEqual(12)
+  expect(bounds.right).toBeLessThanOrEqual(308)
+  expect(bounds.height).toBeGreaterThanOrEqual(530)
+  expect(bounds.bottom).toBeLessThanOrEqual(552)
+  expect(
+    view.getByRole('button', { name: 'Resume' }).getBoundingClientRect().height
+  ).toBeGreaterThanOrEqual(44)
   expect(popup.scrollWidth).toBeLessThanOrEqual(popup.clientWidth)
+  await page
+    .elementLocator(
+      document.querySelector('[data-slot="dialog-overlay"]') as HTMLElement
+    )
+    .click({ position: { x: 2, y: 2 } })
+  await expect
+    .element(page.getByRole('dialog', { name: 'Timer for line 1' }))
+    .not.toBeInTheDocument()
 })
 
 test('running chip shows logged time plus the live session', () => {

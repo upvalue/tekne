@@ -1,4 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
+import { useMediaQuery } from 'usehooks-ts'
+import {
+  Dialog,
+  DialogContent,
+  DialogTrigger,
+} from '@/components/vendor/Dialog'
 import { useAtom, useAtomValue, useStore } from 'jotai'
 import {
   Clock,
@@ -70,6 +76,10 @@ export const TimerBadge = ({
   lineInfo: LineWithIdx
   time: number
 }) => {
+  const mobile = useMediaQuery('(max-width: 767px)')
+  const TimerRoot = mobile ? Dialog : Popover
+  const TimerTrigger = mobile ? DialogTrigger : PopoverButton
+  const TimerPanel = mobile ? DialogContent : PopoverPanel
   const store = useStore()
   const timer = useAtomValue(globalTimerAtom)
   const busy = useAtomValue(timerBusyAtom)
@@ -151,10 +161,10 @@ export const TimerBadge = ({
   const lineLabel = `line ${lineInfo.lineIdx + 1}`
   return (
     <>
-      <Popover open={open} onOpenChange={setOpen}>
+      <TimerRoot open={open} onOpenChange={setOpen}>
         {showChip ? (
           <div className="ELine-leading TimerChip ml-2 text-xs tabular-nums whitespace-nowrap">
-            <PopoverButton
+            <TimerTrigger
               className={cn(
                 'flex h-5 items-center gap-1.5 rounded px-1.5 leading-5',
                 runningHere && !paused
@@ -186,7 +196,7 @@ export const TimerBadge = ({
               ) : (
                 time > 0 && renderTime(time)
               )}
-            </PopoverButton>
+            </TimerTrigger>
           </div>
         ) : (
           <span
@@ -195,17 +205,23 @@ export const TimerBadge = ({
             className="pointer-events-none col-start-5 row-start-1 h-6 w-0"
           />
         )}
-        <PopoverPanel
-          anchor={showChip ? undefined : timerAnchorRef}
-          align="start"
-          sideOffset={6}
+        <TimerPanel
+          {...(mobile
+            ? {}
+            : {
+                anchor: showChip ? undefined : timerAnchorRef,
+                align: 'start' as const,
+                sideOffset: 6,
+              })}
           aria-label={`Timer for ${lineLabel}`}
           initialFocus={() =>
-            (mode === 'countdown'
-              ? countdownRef.current
-              : mode === 'manual'
-                ? manualRef.current
-                : null) ?? true
+            mobile
+              ? false
+              : ((mode === 'countdown'
+                  ? countdownRef.current
+                  : mode === 'manual'
+                    ? manualRef.current
+                    : null) ?? true)
           }
           className="OverlaySurface TimerPopover w-[300px] max-w-[calc(100vw-24px)] p-3.5 text-[13px] text-text-2"
         >
@@ -416,8 +432,8 @@ export const TimerBadge = ({
               </form>
             )}
           </fieldset>
-        </PopoverPanel>
-      </Popover>
+        </TimerPanel>
+      </TimerRoot>
       <div className={cn('LineActions', menuOpen && 'LineActions-open')}>
         <Popover open={menuOpen} onOpenChange={setMenuOpen}>
           <PopoverButton

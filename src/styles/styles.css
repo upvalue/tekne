@@ -186,3 +186,48 @@ button:disabled {
     padding-right: var(--doc-column-inset);
   }
 }
+
+@media (max-width: 767px) {
+  .TimerPopover {
+    top: max(16px, env(safe-area-inset-top));
+    bottom: max(16px, env(safe-area-inset-bottom));
+    left: max(12px, env(safe-area-inset-left));
+    right: max(12px, env(safe-area-inset-right));
+    width: auto;
+    max-width: none;
+    max-height: calc(100dvh - 32px);
+    translate: none;
+    transform: none;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    align-content: start;
+    padding: 64px 16px 24px;
+    font-size: 16px;
+  }
+
+  .TimerPopover fieldset {
+    gap: 20px;
+  }
+
+  .TimerPopover button,
+  .TimerPopover input {
+    min-height: 44px;
+  }
+
+  .TimerPopover [aria-label='Timer type'] button {
+    padding-inline: 4px;
+    font-size: 14px;
+  }
+
+  .TimerPopover input {
+    font-size: 16px;
+  }
+
+  .TimerPopover [data-slot='dialog-close'] {
+    top: 8px;
+    right: 8px;
+    width: 44px;
+    display: grid;
+    place-items: center;
+  }
+}
