@@ -223,7 +223,10 @@ export const TimerBadge = ({
                     ? manualRef.current
                     : null) ?? true)
           }
-          className="OverlaySurface TimerPopover w-[300px] max-w-[calc(100vw-24px)] p-3.5 text-[13px] text-text-2"
+          className={cn(
+            'OverlaySurface TimerPopover w-[300px] max-w-[calc(100vw-24px)] p-3.5 text-[13px] text-text-2',
+            mobile && 'translate-x-0 translate-y-0'
+          )}
         >
           <fieldset disabled={busy} className="grid gap-3 min-w-0">
             <div

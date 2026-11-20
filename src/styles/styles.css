@@ -196,8 +196,6 @@ button:disabled {
     width: auto;
     max-width: none;
     max-height: calc(100dvh - 32px);
-    translate: none;
-    transform: none;
     overflow-y: auto;
     overscroll-behavior: contain;
     align-content: start;
